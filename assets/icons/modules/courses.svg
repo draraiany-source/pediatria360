@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96"
+     width="96" height="96" role="img" aria-label="courses">
+  <defs>
+    <linearGradient id="body-courses" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#D98B4A"/>
+      <stop offset="100%" stop-color="#A8501E"/>
+    </linearGradient>
+    <linearGradient id="gloss-courses" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.32"/>
+      <stop offset="100%" stop-color="#FFFFFF" stop-opacity="0"/>
+    </linearGradient>
+    <filter id="drop-courses" x="-30%" y="-20%" width="160%" height="160%">
+      <feDropShadow dx="0" dy="4" stdDeviation="5"
+                    flood-color="#A8501E" flood-opacity="0.35"/>
+    </filter>
+  </defs>
+  <rect x="10" y="8" width="76" height="76" rx="22"
+        fill="url(#body-courses)" filter="url(#drop-courses)"/>
+  <rect x="10" y="8" width="76" height="38" rx="22"
+        fill="url(#gloss-courses)"/>
+  <circle cx="48" cy="46" r="22" fill="#0B3A42" fill-opacity="0.28"
+          transform="translate(0,3)"/>
+  <circle cx="48" cy="46" r="22" fill="#FFFFFF" fill-opacity="0.22"/>
+  <path d="M42 36 L62 46 L42 56 Z" fill="#0B3A42" fill-opacity="0.3"
+        transform="translate(0,3)"/>
+  <path d="M42 36 L62 46 L42 56 Z" fill="#FFFFFF"/>
+</svg>

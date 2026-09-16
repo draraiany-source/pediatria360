@@ -1,0 +1,160 @@
+/// Rotas do aplicativo.
+///
+/// Nome e caminho ficam juntos: a navegacao usa `context.goNamed(Routes.xName)`
+/// e o deep link / push usa `Routes.xPath`. Nenhuma string de rota e escrita
+/// solta em tela.
+class Routes {
+  /// Lista de pacientes do profissional — porta de entrada do prontuário.
+  static const String patientsPath = '/pacientes';
+  static const String patientsName = 'pacientes';
+
+  const Routes._();
+
+  // Entrada
+  static const String splashPath = '/';
+  static const String splashName = 'splash';
+
+  static const String onboardingPath = '/onboarding';
+  static const String onboardingName = 'onboarding';
+
+  // Autenticacao
+  static const String loginPath = '/login';
+  static const String loginName = 'login';
+
+  static const String registerPath = '/registro';
+  static const String registerName = 'register';
+
+  static const String forgotPasswordPath = '/recuperar-senha';
+  static const String forgotPasswordName = 'forgot-password';
+
+  static const String roleSetupPath = '/perfil-inicial';
+  static const String roleSetupName = 'role-setup';
+
+  // Shell principal
+  static const String homePath = '/inicio';
+  static const String homeName = 'home';
+
+  static const String libraryPath = '/biblioteca';
+  static const String libraryName = 'library';
+
+  static const String aiPath = '/ia';
+  static const String aiName = 'ai';
+
+  static const String toolsPath = '/ferramentas';
+  static const String toolsName = 'tools';
+
+  static const String profilePath = '/perfil';
+  static const String profileName = 'profile';
+
+  // Criancas
+  static const String childrenPath = '/criancas';
+  static const String childrenName = 'children';
+  static const String childFormPath = 'nova';
+  static const String childFormName = 'child-form';
+  static const String childDetailPath = ':childId';
+  static const String childDetailName = 'child-detail';
+
+  static String childDetail(String childId) => '$childrenPath/$childId';
+
+  // Crescimento e vacinas
+  static const String growthPath = 'crescimento';
+  static const String growthName = 'growth';
+  static const String vaccinesPath = 'vacinas';
+  static const String vaccinesName = 'vaccines';
+
+  static String growth(String childId) => '${childDetail(childId)}/$growthPath';
+  static String vaccines(String childId) =>
+      '${childDetail(childId)}/$vaccinesPath';
+
+  // Biblioteca medica
+  static const String articleDetailPath = 'artigo/:articleId';
+  static const String articleDetailName = 'article-detail';
+  static const String protocolDetailPath = 'protocolo/:protocolId';
+  static const String protocolDetailName = 'protocol-detail';
+
+  static String article(String id) => '$libraryPath/artigo/$id';
+  static String protocol(String id) => '$libraryPath/protocolo/$id';
+
+  // Calculadoras
+  static const String calculatorsPath = 'calculadoras';
+  static const String calculatorsName = 'calculators';
+  static const String calculatorDetailPath = 'calculadoras/:calculatorId';
+  static const String calculatorDetailName = 'calculator-detail';
+
+  static String calculator(String id) => '$toolsPath/calculadoras/$id';
+
+  // Primeiros socorros
+  static const String firstAidPath = 'primeiros-socorros';
+  static const String firstAidName = 'first-aid';
+
+  // IA
+  static const String aiChatPath = 'conversa/:conversationId';
+  static const String aiChatName = 'ai-chat';
+
+  static String aiChat(String conversationId) => '$aiPath/conversa/$conversationId';
+
+  // Cursos e streaming
+  static const String coursesPath = '/cursos';
+  static const String coursesName = 'courses';
+  static const String courseDetailPath = ':courseId';
+  static const String courseDetailName = 'course-detail';
+  static const String lessonPath = ':courseId/aula/:lessonId';
+  static const String lessonName = 'lesson';
+
+  static String course(String id) => '$coursesPath/$id';
+  static String lesson(String courseId, String lessonId) =>
+      '$coursesPath/$courseId/aula/$lessonId';
+
+  // Marketplace
+  static const String shopPath = '/loja';
+  static const String shopName = 'shop';
+  static const String productDetailPath = ':productId';
+  static const String productDetailName = 'product-detail';
+  static const String cartPath = '/carrinho';
+  static const String cartName = 'cart';
+  static const String checkoutPath = '/checkout';
+  static const String checkoutName = 'checkout';
+  static const String ordersPath = '/pedidos';
+  static const String ordersName = 'orders';
+
+  static String product(String id) => '$shopPath/$id';
+
+  // Telemedicina
+  static const String telemedicinePath = '/telemedicina';
+  static const String telemedicineName = 'telemedicine';
+  static const String agendaPath = '/agenda';
+  static const String agendaName = 'agenda';
+  static const String appointmentDetailPath = ':appointmentId';
+  static const String appointmentDetailName = 'appointment-detail';
+  static const String consultationRoomPath = ':appointmentId/consulta';
+  static const String consultationRoomName = 'consultation-room';
+
+  static String appointment(String id) => '$telemedicinePath/$id';
+  static String consultationRoom(String id) => '$telemedicinePath/$id/consulta';
+
+  // Gamificacao
+  static const String gamificationPath = '/conquistas';
+  static const String gamificationName = 'gamification';
+  static const String leaderboardPath = '/ranking';
+  static const String leaderboardName = 'leaderboard';
+
+  // Conta
+  static const String settingsPath = '/ajustes';
+  static const String settingsName = 'settings';
+  static const String subscriptionPath = '/assinatura';
+  static const String subscriptionName = 'subscription';
+  static const String notificationsPath = '/avisos';
+  static const String notificationsName = 'notifications';
+
+  // Administracao
+  static const String adminPath = '/admin';
+  static const String adminName = 'admin';
+  static const String adminContentPath = 'conteudo';
+  static const String adminContentName = 'admin-content';
+
+  // Erro
+  static const String notFoundPath = '/404';
+  static const String notFoundName = 'not-found';
+  static const String maintenancePath = '/manutencao';
+  static const String maintenanceName = 'maintenance';
+}

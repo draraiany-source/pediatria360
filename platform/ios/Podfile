@@ -1,0 +1,25 @@
+# Trecho a MESCLAR em ios/Podfile.
+#
+# O Firebase exige iOS 13+; o padrão do Flutter ainda é 12 em alguns canais e
+# o `pod install` falha com um erro de resolução de dependências difícil de ler.
+
+platform :ios, '13.0'
+
+post_install do |installer|
+  installer.pods_project.targets.each do |target|
+    flutter_additional_ios_build_settings(target)
+    target.build_configurations.each do |config|
+      config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '13.0'
+
+      # permission_handler declara as permissões por macro. Sem isso, o app
+      # pede TODAS as permissões possíveis e a Apple rejeita a submissão.
+      config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] ||= [
+        '$(inherited)',
+        'PERMISSION_CAMERA=1',
+        'PERMISSION_PHOTOS=1',
+        'PERMISSION_MICROPHONE=1',
+        'PERMISSION_NOTIFICATIONS=1',
+      ]
+    end
+  end
+end

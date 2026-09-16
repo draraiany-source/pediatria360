@@ -1,0 +1,486 @@
+rules_version = '2';
+
+// Regras de segurança do Pediatria 360.
+//
+// Princípio: o cliente é hostil. Todo filtro que existe no app existe também
+// aqui — o do app é conveniência, este é a garantia. Se as duas discordarem,
+// esta vence.
+//
+// Teste antes de publicar:
+//   firebase emulators:exec --only firestore "npm test"
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ------------------------------------------------------------ Auxiliares
+
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(uid) {
+      return signedIn() && request.auth.uid == uid;
+    }
+
+    // `Encounter.patientId` é o id da CRIANÇA, não do responsável — o
+    // repositório sempre grava `patientId: child.id`. Comparar
+    // `patientId == request.auth.uid` (como a regra de encounters fazia
+    // antes desta correção) nunca bate: são dois tipos de id diferentes,
+    // documento de criança contra uid de usuário. Só existe um jeito de
+    // confirmar "este usuário é responsável por esta criança": checar se
+    // ela existe na subcoleção de crianças dele.
+    function ownsChild(childId) {
+      return signedIn() &&
+             exists(/databases/$(database)/documents/users/$(request.auth.uid)/children/$(childId));
+    }
+
+    function userDoc() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+
+    function role() {
+      return signedIn() ? userDoc().get('role', 'parent') : 'none';
+    }
+
+    function isAdmin() {
+      // O papel de admin também é checado por custom claim, que não depende de
+      // uma leitura extra e não pode ser alterado pelo cliente de forma alguma.
+      return signedIn() &&
+             (request.auth.token.get('admin', false) == true || role() == 'admin');
+    }
+
+    // Profissional só conta como tal depois da conferência do registro.
+    function isVerifiedProfessional() {
+      return signedIn() &&
+             (role() == 'professional' || role() == 'admin') &&
+             userDoc().get('professionalVerified', false) == true;
+    }
+
+    function planActive() {
+      return signedIn() && userDoc().get('plan', 'free') != 'free';
+    }
+
+    // Campos que só o servidor escreve. Deixar o cliente tocar em `plan` seria
+    // dar assinatura grátis a quem souber usar o SDK; em `xp`, ranking forjado.
+    function serverOnlyFields() {
+      // fcmTokens entrou aqui quando o registro de dispositivo foi
+      // centralizado nas Functions registerDevice/unregisterDevice — antes
+      // disso o cliente escrevia o array direto, e as duas formas
+      // coexistiam sem que nada impedisse divergência entre elas.
+      return ['plan', 'planExpiresAt', 'xp', 'streakDays',
+              'professionalVerified', 'role', 'fcmTokens'];
+    }
+
+    function notTouchingServerFields() {
+      return !request.resource.data.diff(resource.data)
+                     .affectedKeys()
+                     .hasAny(serverOnlyFields());
+    }
+
+    function isValidString(field, maxLength) {
+      return request.resource.data[field] is string &&
+             request.resource.data[field].size() <= maxLength;
+    }
+
+    // ---------------------------------------------------------------- Users
+
+    match /users/{uid} {
+      allow read: if isOwner(uid) || isAdmin();
+
+      // Criação: o próprio usuário, com plano gratuito e sem privilégios.
+      allow create: if isOwner(uid)
+                    && request.resource.data.get('plan', 'free') == 'free'
+                    && request.resource.data.get('professionalVerified', false) == false
+                    && request.resource.data.get('xp', 0) == 0
+                    && request.resource.data.get('role', 'parent') in ['parent', 'professional'];
+
+      // Atualização: o dono pode editar o perfil, mas nunca os campos de
+      // servidor. O admin pode tudo (é como o CRM é verificado).
+      allow update: if isAdmin()
+                    || (isOwner(uid) && notTouchingServerFields());
+
+      // Exclusão de conta passa pela Function `onUserDeleted`, que apaga em
+      // cascata. Apagar só o documento deixaria as subcollections órfãs.
+      allow delete: if false;
+
+      // Crianças e todo o dado clínico: exclusivamente do dono.
+      // Nem admin lê — prontuário de criança não é dado operacional.
+      //
+      // Exceção estreita: profissional verificado com uma concessão própria
+      // (subcoleção abaixo) lê o cadastro — nome, idade, alergia — mas
+      // nunca escreve. A concessão existe porque `_PatientSummaryCard`
+      // (resumo de segurança na linha do tempo do profissional) precisa
+      // deste dado, e sem ela ficava silenciosamente sem renderizar para
+      // todo profissional — o alerta de alergia que motivou o card existir
+      // nunca chegava a quem mais precisava vê-lo.
+      match /children/{childId} {
+        allow read: if isOwner(uid) ||
+                       (isVerifiedProfessional() &&
+                        exists(/databases/$(database)/documents/users/$(uid)/children/$(childId)/authorized_professionals/$(request.auth.uid)));
+        allow write: if isOwner(uid);
+
+        // Um profissional verificado só escreve a própria concessão — não
+        // pode conceder acesso "em nome" de outro profissional, e não pode
+        // ler a lista de quem mais tem acesso (não é dado dele).
+        match /authorized_professionals/{profId} {
+          allow read: if isOwner(uid) ||
+                         (isVerifiedProfessional() && request.auth.uid == profId);
+          allow write: if isVerifiedProfessional() && request.auth.uid == profId;
+        }
+
+        match /growth_records/{recordId} {
+          allow read, write: if isOwner(uid);
+        }
+
+        match /vaccine_doses/{doseId} {
+          allow read, write: if isOwner(uid);
+        }
+      }
+
+      match /progress/{progressId} {
+        allow read, write: if isOwner(uid);
+      }
+
+      match /notifications/{notificationId} {
+        allow read: if isOwner(uid);
+        allow update: if isOwner(uid)
+                      && request.resource.data.diff(resource.data)
+                                 .affectedKeys().hasOnly(['read', 'readAt']);
+        allow create, delete: if false; // servidor
+      }
+
+      // Medalhas conquistadas. O dono lê; só a Function concede — se o
+      // cliente pudesse escrever, bastaria criar o documento para "ganhar"
+      // qualquer medalha.
+      match /earned_badges/{badgeId} {
+        allow read: if isOwner(uid);
+        allow write: if false;
+      }
+
+      // Histórico de consentimento. Legível pelo titular — é o registro do
+      // que ele autorizou e quando. Escrita só pela Function, senão o
+      // histórico deixaria de provar qualquer coisa.
+      match /consents/{consentId} {
+        allow read: if isOwner(uid);
+        allow write: if false;
+      }
+
+      // Cota da IA: leitura para mostrar "restam N hoje"; escrita só no
+      // servidor, senão qualquer um zeraria o contador.
+      match /ai_usage/{day} {
+        allow read: if isOwner(uid);
+        allow write: if false;
+      }
+
+      // Cota do assistente clínico (dentro do prontuário) — mesmo motivo da
+      // acima. Coleção separada porque é uma cota diferente, com teto
+      // próprio, não a mesma do chat dos responsáveis.
+      match /clinical_assist_usage/{day} {
+        allow read: if isOwner(uid);
+        allow write: if false;
+      }
+    }
+
+    // ------------------------------------------------------------ Biblioteca
+
+    match /articles/{articleId} {
+      allow read: if isAdmin()
+                  || (resource.data.get('published', false) == true
+                      && (resource.data.get('audience', 'everyone') != 'professionals'
+                          || isVerifiedProfessional()));
+
+      allow write: if isAdmin();
+
+      // Histórico de versões do conteúdo. Só admin lê — o histórico editorial
+      // não interessa ao leitor e pode conter rascunhos não publicados.
+      // Escrita só pela Function, que grava o instantâneo na mesma transação
+      // da publicação.
+      match /versions/{versionId} {
+        allow read: if isAdmin();
+        allow write: if false;
+      }
+    }
+
+    // --------------------------------------------------------------- Cursos
+
+    match /courses/{courseId} {
+      allow read: if isAdmin()
+                  || (resource.data.get('published', false) == true
+                      && (resource.data.get('professionalOnly', false) == false
+                          || isVerifiedProfessional()));
+
+      allow write: if isAdmin();
+
+      // A aula é legível se o curso for; o bloqueio de conteúdo pago acontece
+      // na URL assinada de reprodução, não na leitura dos metadados — o aluno
+      // precisa ver a lista de aulas para decidir assinar.
+      match /lessons/{lessonId} {
+        allow read: if signedIn();
+        allow write: if isAdmin();
+      }
+    }
+
+    // ------------------------------------------------------------------ IA
+
+    match /ai_conversations/{conversationId} {
+      allow read: if signedIn() && resource.data.ownerId == request.auth.uid;
+
+      // Só a Function escreve. Se o cliente pudesse criar mensagens de
+      // assistente, seria trivial forjar "a IA disse que pode dar o remédio".
+      allow write: if false;
+
+      match /messages/{messageId} {
+        allow read: if signedIn()
+                    && get(/databases/$(database)/documents/ai_conversations/$(conversationId))
+                         .data.ownerId == request.auth.uid;
+        allow write: if false;
+      }
+    }
+
+    // ------------------------------------------------------- Marketplace
+
+    match /products/{productId} {
+      allow read: if resource.data.get('published', false) == true || isAdmin();
+      allow write: if isAdmin();
+    }
+
+    match /coupons/{couponId} {
+      // Cupom não é legível: descobrir os códigos ativos é o mesmo que
+      // conhecer todos os descontos. A validação roda em Function.
+      allow read: if isAdmin();
+      allow write: if isAdmin();
+    }
+
+    match /orders/{orderId} {
+      allow read: if isAdmin()
+                  || (signedIn() && resource.data.ownerId == request.auth.uid);
+      // Preço e status vêm do servidor — o cliente não define quanto paga.
+      allow write: if false;
+    }
+
+    match /subscriptions/{subscriptionId} {
+      allow read: if isAdmin()
+                  || (signedIn() && resource.data.ownerId == request.auth.uid);
+      allow write: if false;
+    }
+
+    // ------------------------------------------------------- Telemedicina
+
+    match /appointments/{appointmentId} {
+      allow read: if isAdmin()
+                  || (signedIn() &&
+                      (resource.data.patientId == request.auth.uid ||
+                       resource.data.professionalId == request.auth.uid));
+
+      allow create: if signedIn()
+                    && request.resource.data.patientId == request.auth.uid
+                    && request.resource.data.get('status', '') == 'requested';
+
+      // Cancelar é do paciente; confirmar e concluir é do profissional.
+      allow update: if isAdmin()
+                    || (signedIn()
+                        && resource.data.patientId == request.auth.uid
+                        && request.resource.data.status == 'cancelled')
+                    || (isVerifiedProfessional()
+                        && resource.data.professionalId == request.auth.uid);
+
+      allow delete: if false;
+    }
+
+    // O responsável preenche antes da consulta; profissional lê o que foi
+    // enviado, nunca escreve — o formulário é informação da família, não
+    // um campo que o profissional edita por cima.
+    match /pre_visit_questionnaires/{appointmentId} {
+      allow read: if signedIn()
+                  && (resource.data.patientId == request.auth.uid ||
+                      resource.data.professionalId == request.auth.uid);
+
+      // Só escreve enquanto o agendamento ainda não começou de verdade —
+      // depois de `inProgress`/`completed`, o questionário vira histórico
+      // do que a família disse ANTES, não deveria mudar depois do fato.
+      // `get()` no agendamento correspondente, não duplicando o status
+      // aqui no documento do questionário.
+      //
+      // Duas checagens contra o agendamento real, não só contra o próprio
+      // uid de quem escreve: sem a primeira (patientId), qualquer um
+      // conseguiria injetar um questionário fingindo ser paciente de uma
+      // consulta que não é dele, contanto que acertasse o professionalId.
+      allow create, update: if signedIn()
+                    && request.resource.data.patientId == request.auth.uid
+                    && request.resource.data.patientId ==
+                       get(/databases/$(database)/documents/appointments/$(appointmentId)).data.patientId
+                    && request.resource.data.professionalId ==
+                       get(/databases/$(database)/documents/appointments/$(appointmentId)).data.professionalId
+                    && get(/databases/$(database)/documents/appointments/$(appointmentId)).data.status
+                       in ['requested', 'confirmed'];
+
+      allow delete: if false;
+    }
+
+    match /prescriptions/{prescriptionId} {
+      // Coleção sem escritor nem leitor em todo o projeto — receita de
+      // verdade é `clinical_documents` com `type: prescription`. Provável
+      // resíduo de um modelo de dado anterior. Não "corrigida" com o mesmo
+      // cuidado das outras acima porque não há dado real exposto aqui: a
+      // regra abaixo tem o mesmo bug de comparação (patientId de criança
+      // contra uid), mas nada grava nem lê por este caminho para explorar.
+      allow read: if signedIn()
+                  && (resource.data.patientId == request.auth.uid ||
+                      resource.data.professionalId == request.auth.uid);
+      // Emissão passa por Function, que assina digitalmente.
+      allow write: if false;
+    }
+
+    // ------------------------------------------ Prontuário eletrônico
+
+    match /encounters/{encounterId} {
+      // O responsável lê o prontuário da própria família; o profissional lê o
+      // que ele mesmo conduziu. Admin não entra — prontuário não é dado
+      // operacional da equipe.
+      //
+      // `patientId` é id de criança, não de usuário — comparar direto com
+      // `request.auth.uid` nunca bateria (bug real, corrigido: nenhuma tela
+      // de responsável usava este caminho ainda, por isso nunca foi pego).
+      allow read: if signedIn()
+                  && (ownsChild(resource.data.patientId) ||
+                      resource.data.professionalId == request.auth.uid);
+
+      // Só profissional verificado abre atendimento, e só em nome próprio.
+      allow create: if isVerifiedProfessional()
+                    && request.resource.data.professionalId == request.auth.uid
+                    && request.resource.data.get('status', '') == 'draft'
+                    && request.resource.data.get('signedAt', null) == null
+                    && request.resource.data.get('signatureHash', null) == null;
+
+      // Edição só enquanto rascunho, e nunca nos campos de assinatura —
+      // assinar é ato da Function, que calcula o hash sobre o servidor.
+      allow update: if isVerifiedProfessional()
+                    && resource.data.professionalId == request.auth.uid
+                    && resource.data.status == 'draft'
+                    && !request.resource.data.diff(resource.data)
+                            .affectedKeys()
+                            .hasAny(['status', 'signedAt', 'signedBy',
+                                     'signatureHash', 'signatureProvider',
+                                     'externalSignatureId', 'patientId',
+                                     'professionalId', 'amendsEncounterId']);
+
+      // Prontuário não se apaga. Retenção é exigência legal, e apagar
+      // atendimento é justamente o que não pode acontecer.
+      allow delete: if false;
+    }
+
+    match /clinical_documents/{documentId} {
+      // Mesmo bug do encounters: patientId é id de criança, corrigido para
+      // usar ownsChild() em vez de comparar direto com o uid do usuário.
+      allow read: if signedIn()
+                  && (ownsChild(resource.data.patientId) ||
+                      resource.data.professionalId == request.auth.uid);
+      // Emissão e cancelamento passam por Function: código de verificação e
+      // hash precisam ser gerados no servidor para valerem como conferência.
+      allow write: if false;
+    }
+
+    // Resumo pós-consulta: `patientId` aqui é id de criança, herdado da
+    // mesma convenção de `Encounter` (o resumo vive por `encounterId`) —
+    // por isso já nasce usando `ownsChild()`, não a comparação direta que
+    // precisou ser corrigida em encounters/clinical_documents/lab_results.
+    match /visit_summaries/{encounterId} {
+      // Família só vê depois de liberado — rascunho é só do profissional
+      // enquanto está revisando. É a regra que garante isso, não a tela.
+      allow read: if signedIn()
+                  && ((ownsChild(resource.data.patientId) &&
+                       resource.data.status == 'released') ||
+                      resource.data.professionalId == request.auth.uid);
+
+      allow create: if isVerifiedProfessional()
+                    && request.resource.data.professionalId == request.auth.uid
+                    && request.resource.data.status == 'draft';
+
+      // Só o próprio autor edita, e não pode reatribuir o resumo para
+      // outro paciente ou profissional no meio do caminho. Uma vez
+      // `released`, nenhuma atualização é permitida — imutável de
+      // verdade, não só por convenção da tela. Correção depois de
+      // liberado passa pelo `create` acima, como um documento novo
+      // (retificação), nunca por aqui.
+      //
+      // A sequência de transição também é imposta aqui, não só no
+      // repositório — sem isso, uma escrita direta ao Firestore (sem
+      // passar pelo app) poderia pular de `draft` para `released` sem
+      // nunca passar por `finalized`.
+      allow update: if isVerifiedProfessional()
+                    && resource.data.professionalId == request.auth.uid
+                    && resource.data.status != 'released'
+                    && request.resource.data.professionalId == resource.data.professionalId
+                    && request.resource.data.patientId == resource.data.patientId
+                    && (
+                         (resource.data.status == 'draft' &&
+                          request.resource.data.status in ['draft', 'finalized']) ||
+                         (resource.data.status == 'finalized' &&
+                          request.resource.data.status in ['finalized', 'released'])
+                       );
+
+      allow delete: if false;
+    }
+
+    match /lab_results/{resultId} {
+      // Duas correções na mesma regra:
+      // 1. `patientId == request.auth.uid` nunca batia para o responsável
+      //    (mesmo bug de encounters/clinical_documents — patientId é id de
+      //    criança). Trocado por ownsChild().
+      // 2. `&&` liga mais forte que `||` — a regra antiga, sem parênteses,
+      //    equivalia a `(signedIn() && dono) || qualquerProfissional`, ou
+      //    seja, QUALQUER profissional verificado lia exame de QUALQUER
+      //    criança, não só das que atende. saveLabResults agora grava
+      //    `professionalId`, e é isso que a regra passa a exigir.
+      allow read: if signedIn()
+                  && (ownsChild(resource.data.patientId) ||
+                      resource.data.professionalId == request.auth.uid);
+      allow create, update: if isVerifiedProfessional()
+                             && request.resource.data.professionalId == request.auth.uid;
+      allow delete: if false;
+    }
+
+    // Registro de uso da IA em prontuário. Ninguém lê pelo cliente — existe
+    // para auditoria interna.
+    match /ai_clinical_log/{logId} {
+      allow read, write: if false;
+    }
+
+    // ------------------------------------------------------- Gamificação
+
+    match /badges/{badgeId} {
+      allow read: if signedIn();
+      allow write: if isAdmin();
+    }
+
+    match /challenges/{challengeId} {
+      allow read: if signedIn();
+      allow write: if isAdmin();
+    }
+
+    match /leaderboard/{entryId} {
+      allow read: if signedIn();
+      allow write: if false; // calculado por Function agendada
+    }
+
+    // Pedidos de exclusão de conta. O titular vê o próprio; a execução é da
+    // Function agendada.
+    match /deletion_requests/{uid} {
+      allow read: if isOwner(uid) || isAdmin();
+      allow write: if false;
+    }
+
+    // ------------------------------------------------------------ Config
+
+    match /config/{document} {
+      allow read: if signedIn();
+      allow write: if isAdmin();
+    }
+
+    // Nada além do declarado acima. Uma collection nova nasce fechada, em vez
+    // de nascer pública por esquecimento.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

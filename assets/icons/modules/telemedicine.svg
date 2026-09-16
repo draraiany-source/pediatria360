@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96"
+     width="96" height="96" role="img" aria-label="telemedicine">
+  <defs>
+    <linearGradient id="body-telemedicine" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#3FA3BF"/>
+      <stop offset="100%" stop-color="#155E75"/>
+    </linearGradient>
+    <linearGradient id="gloss-telemedicine" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.32"/>
+      <stop offset="100%" stop-color="#FFFFFF" stop-opacity="0"/>
+    </linearGradient>
+    <filter id="drop-telemedicine" x="-30%" y="-20%" width="160%" height="160%">
+      <feDropShadow dx="0" dy="4" stdDeviation="5"
+                    flood-color="#155E75" flood-opacity="0.35"/>
+    </filter>
+  </defs>
+  <rect x="10" y="8" width="76" height="76" rx="22"
+        fill="url(#body-telemedicine)" filter="url(#drop-telemedicine)"/>
+  <rect x="10" y="8" width="76" height="38" rx="22"
+        fill="url(#gloss-telemedicine)"/>
+  <rect x="26" y="34" width="34" height="26" rx="6" fill="#0B3A42"
+        fill-opacity="0.3" transform="translate(0,3)"/>
+  <rect x="26" y="34" width="34" height="26" rx="6" fill="#FFFFFF"/>
+  <path d="M62 42 L74 34 L74 60 L62 52 Z" fill="#FFFFFF"
+        fill-opacity="0.8"/>
+</svg>

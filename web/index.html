@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<!--
+  Trecho a MESCLAR em web/index.html.
+
+  O Flutter Web precisa dos SDKs do Firebase carregados antes do bootstrap;
+  sem eles, `Firebase.initializeApp` falha silenciosamente e o app fica no
+  splash para sempre.
+-->
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+  <meta name="description" content="Acompanhamento pediátrico para famílias e profissionais de saúde.">
+  <meta name="theme-color" content="#07111F">
+
+  <title>Pediatria 360</title>
+  <link rel="manifest" href="manifest.json">
+  <base href="$FLUTTER_BASE_HREF">
+
+  <!-- Fontes do Google carregam sob demanda; o preconnect corta ~200ms. -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+  <style>
+    #loading {
+      position: fixed; inset: 0;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      background: linear-gradient(180deg, #0A1628 0%, #07111F 100%);
+      font-family: system-ui, -apple-system, sans-serif;
+      transition: opacity .3s ease;
+    }
+    #loading.hidden { opacity: 0; pointer-events: none; }
+    .ring {
+      width: 44px; height: 44px;
+      border: 3px solid rgba(124,58,237,.25);
+      border-top-color: #9D6CFF;
+      border-radius: 50%;
+      animation: spin .9s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .label { margin-top: 18px; color: #9D6CFF; font-size: 14px; font-weight: 600; }
+  </style>
+</head>
+<body>
+  <div id="loading">
+    <div class="ring"></div>
+    <div class="label">Pediatria 360</div>
+  </div>
+
+  <!-- SDKs do Firebase. Mantenha a versão alinhada com a do firebase_core. -->
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-storage-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-functions-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-analytics-compat.js"></script>
+
+  <script>
+    window.addEventListener('flutter-first-frame', function () {
+      document.getElementById('loading').classList.add('hidden');
+    });
+  </script>
+
+  <script src="flutter_bootstrap.js" async></script>
+</body>
+</html>

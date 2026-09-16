@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Trechos a MESCLAR em ios/Runner/Info.plist.
+
+  As descrições de permissão da Apple não são burocracia: a App Store rejeita
+  o app se elas forem genéricas ("este app precisa da câmera"). Elas precisam
+  dizer PARA QUE, e é o que o usuário lê no diálogo do sistema.
+-->
+<plist version="1.0">
+<dict>
+    <key>CFBundleDisplayName</key>
+    <string>Pediatria 360</string>
+
+    <key>CFBundleLocalizations</key>
+    <array>
+        <string>pt-BR</string>
+    </array>
+    <key>CFBundleDevelopmentRegion</key>
+    <string>pt-BR</string>
+
+    <!--
+      NSCameraUsageDescription, NSPhotoLibraryUsageDescription,
+      NSMicrophoneUsageDescription e NSFaceIDUsageDescription foram
+      removidas nesta versão. Nenhuma funcionalidade ativa as usa:
+      `image_picker` foi removido do projeto, teleconsulta está desativada
+      por flag, e `local_auth` nem está no pubspec.yaml. Reintroduzir junto
+      com a funcionalidade que precisar delas, não antes.
+    -->
+
+    <!-- Notificação em segundo plano e processamento do FCM. -->
+    <key>UIBackgroundModes</key>
+    <array>
+        <string>fetch</string>
+        <string>remote-notification</string>
+    </array>
+
+    <key>FirebaseAppDelegateProxyEnabled</key>
+    <true/>
+
+    <!-- Tablet: o app é responsivo, então todas as orientações valem. -->
+    <key>UISupportedInterfaceOrientations~ipad</key>
+    <array>
+        <string>UIInterfaceOrientationPortrait</string>
+        <string>UIInterfaceOrientationPortraitUpsideDown</string>
+        <string>UIInterfaceOrientationLandscapeLeft</string>
+        <string>UIInterfaceOrientationLandscapeRight</string>
+    </array>
+
+    <!-- Necessário para url_launcher abrir a sala de vídeo e links externos. -->
+    <key>LSApplicationQueriesSchemes</key>
+    <array>
+        <string>https</string>
+        <string>mailto</string>
+        <string>tel</string>
+    </array>
+</dict>
+</plist>

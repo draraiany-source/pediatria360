@@ -1,0 +1,76 @@
+# Flutter / Dart
+.dart_tool/
+.packages
+build/
+.flutter-plugins
+.flutter-plugins-dependencies
+.pub-cache/
+.pub/
+coverage/
+**/doc/api/
+
+# IDE
+.idea/
+.vscode/
+*.iml
+*.ipr
+*.iws
+
+# Logs e dumps locais de analise (nao versionar)
+*.log
+analyze*.txt
+flutter_analyze.txt
+build_*.txt
+build_*.log
+run_win.txt
+smoke_*.log
+smoke_*.txt
+test_out.txt
+
+# Android
+android/.gradle/
+android/local.properties
+android/key.properties
+android/app/debug/
+android/app/profile/
+android/app/release/
+**/android/**/gradle-wrapper.jar
+*.jks
+*.keystore
+*.apk
+*.aab
+
+# iOS
+ios/Pods/
+ios/.symlinks/
+ios/Flutter/Flutter.framework
+ios/Flutter/Flutter.podspec
+ios/Flutter/ephemeral/
+ios/Flutter/.last_build_id
+*.ipa
+
+# Windows / generated plugin caches
+windows/flutter/ephemeral/
+
+# Firebase (segredos - NAO versionar)
+android/app/google-services.json
+ios/Runner/GoogleService-Info.plist
+.env
+.env.*
+functions/node_modules/
+functions/lib/
+.firebase/
+
+# Node
+node_modules/
+npm-debug.log*
+
+# Symbolication / obfuscation
+app.*.symbols
+app.*.map.json
+
+# macOS / Windows
+.DS_Store
+Thumbs.db
+ehthumbs.db
+Desktop.ini

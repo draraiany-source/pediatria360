@@ -1,0 +1,208 @@
+name: CI
+
+# Roda em todo push e pull request. O objetivo é simples: nada entra na branch
+# principal sem passar pelo analisador e pelos testes.
+#
+# O job `analyze` e o `test` rodam em paralelo — esperar o teste para saber que
+# há erro de sintaxe desperdiça minutos a cada push.
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+env:
+  FLUTTER_VERSION: "3.32.0"
+
+jobs:
+  # ---------------------------------------------------------------- Flutter
+  analyze:
+    name: Análise estática
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+
+      - name: Dependências
+        run: flutter pub get
+
+      - name: Formatação
+        # `--set-exit-if-changed` transforma divergência de formatação em erro.
+        # Sem isso, o comando só reformata e passa, e o repositório vai
+        # divergindo devagar.
+        run: dart format --output=none --set-exit-if-changed lib test
+
+      - name: Balanceamento de delimitadores
+        # Roda antes do analisador: erro de chave produz uma cascata de
+        # mensagens confusas no `flutter analyze`, e aqui sai a linha exata.
+        run: python3 tool/check_syntax.py
+
+      - name: Referências cruzadas
+        # Verificador próprio: encontra símbolo inexistente antes de o
+        # analisador rodar, com mensagem mais direta.
+        run: python3 tool/check_references.py
+
+      - name: Caminhos de import
+        # Diferente do check_references: confere se cada `import '../x.dart'`
+        # aponta pro arquivo certo, não só se o símbolo existe em algum lugar
+        # do projeto. Pega "Target of URI doesn't exist" antes do analyzer.
+        run: python3 tool/check_imports.py
+
+      - name: flutter analyze
+        run: flutter analyze --no-fatal-infos
+
+      - name: Dependências
+        # Falha se um pacote é importado sem estar no pubspec — isso compila
+        # enquanto for dependência transitiva e quebra sem aviso depois.
+        run: python3 tool/unused_deps.py
+
+      - name: Código morto
+        # Informativo: nem todo achado é remoção obrigatória. Não derruba o
+        # build, mas mantém a lista visível a cada push.
+        run: python3 tool/dead_code.py || true
+
+      - name: Auditoria de segurança
+        # Achado CRÍTICA ou ALTA derruba o build. Collection sem regra é
+        # exatamente como dado de saúde vaza.
+        run: python3 tool/security_audit.py
+
+  test:
+    name: Testes
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+
+      - run: flutter pub get
+
+      - name: flutter test
+        run: flutter test --coverage --reporter expanded
+
+      - name: Cobertura
+        uses: codecov/codecov-action@v4
+        with:
+          files: coverage/lcov.info
+          fail_ci_if_error: false
+
+  # ------------------------------------------------------------- Segurança
+  rules:
+    name: Regras do Firestore
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Ferramentas
+        run: npm install -g firebase-tools
+
+      - name: Dependências dos testes
+        working-directory: test/rules
+        run: npm ci || npm install
+
+      - name: Emulador + testes
+        working-directory: test/rules
+        # Os 47 casos provam que prontuário de criança é inacessível a
+        # terceiros. Falha aqui bloqueia o merge.
+        run: npm test
+
+  functions:
+    name: Cloud Functions
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: functions/package-lock.json
+
+      - working-directory: functions
+        run: npm ci || npm install
+
+      - name: Lint
+        working-directory: functions
+        run: npm run lint
+
+      - name: Compilação TypeScript
+        working-directory: functions
+        run: npx tsc --noEmit
+
+      - name: Testes de unidade
+        working-directory: functions
+        run: npm test
+
+  # ------------------------------------------------------------ Compilação
+  build:
+    name: Build ${{ matrix.platform }}
+    runs-on: ${{ matrix.os }}
+    # Só compila se análise e testes passarem — build leva minutos e não vale
+    # gastá-los sobre código que já se sabe quebrado.
+    needs: [analyze, test]
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: android
+            os: ubuntu-latest
+          - platform: web
+            os: ubuntu-latest
+          - platform: ios
+            os: macos-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        if: matrix.platform == 'android'
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+
+      - run: flutter pub get
+
+      # As pastas de plataforma não são versionadas — dependem da versão do
+      # Flutter. Ver SETUP.md, passo 1.
+      - name: Gerar plataformas
+        run: |
+          flutter create --platforms=android,ios,web \
+            --org app.pediatria360 --project-name pediatria360 .
+
+      - name: Aplicar ajustes de plataforma
+        # cp -r sobrescreveria Info.plist e Podfile inteiros, apagando o que
+        # o `flutter create` gravou (CFBundleIdentifier, post_install
+        # próprio da versão) — foi exatamente esse bug que o script corrige.
+        run: python3 tool/migrate_platforms.py --clean
+
+      - name: Build Android
+        if: matrix.platform == 'android'
+        run: flutter build apk --debug
+
+      - name: Build Web
+        if: matrix.platform == 'web'
+        run: flutter build web --release
+
+      - name: Build iOS
+        if: matrix.platform == 'ios'
+        # Sem assinatura: valida que compila, não gera artefato distribuível.
+        run: flutter build ios --debug --no-codesign
