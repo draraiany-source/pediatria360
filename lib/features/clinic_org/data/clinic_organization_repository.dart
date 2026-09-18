@@ -43,6 +43,7 @@ class ClinicOrganizationRepository {
         clinicId: id,
         userId: ownerUserId,
         role: ownerRole,
+        clinicName: saved.tradeName.isNotEmpty ? saved.tradeName : saved.name,
         createdAt: DateTime.now(),
       );
       await _db

@@ -19,6 +19,7 @@ import '../../features/clinic/presentation/screens/voice_final_review_screen.dar
 import '../../features/clinic/presentation/screens/voice_home_screen.dart';
 import '../../features/clinic/presentation/screens/voice_live_screen.dart';
 import '../../features/clinic/presentation/screens/voice_review_screen.dart';
+import '../../features/clinic_org/presentation/screens/clinic_org_screens.dart';
 import '../../features/supplementation/presentation/screens/calculator_prescription_screens.dart';
 import '../../features/supplementation/presentation/screens/lab_screens.dart';
 import '../../features/supplementation/presentation/screens/micronutrient_screens.dart';
@@ -294,6 +295,20 @@ final Provider<GoRouter> routerProvider = Provider<GoRouter>((Ref ref) {
             const TelemedicineScreen(),
       ),
 
+
+
+      GoRoute(
+        path: Routes.clinicOrgPath,
+        name: Routes.clinicOrgName,
+        builder: (BuildContext context, GoRouterState state) =>
+            const ClinicOrgHubScreen(),
+      ),
+      GoRoute(
+        path: Routes.clinicOrgCreatePath,
+        name: Routes.clinicOrgCreateName,
+        builder: (BuildContext context, GoRouterState state) =>
+            const CreateClinicScreen(),
+      ),
 
       // Suplementacao Pediatrica (profissional - fora do shell).
       GoRoute(

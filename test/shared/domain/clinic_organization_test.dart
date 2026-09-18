@@ -48,13 +48,28 @@ void main() {
         clinicId: 'c1',
         userId: 'u1',
         role: ClinicRole.nursing,
+        clinicName: 'Unidade Centro',
         createdAt: DateTime.utc(2026, 1, 2),
         unitIds: const <String>['u-centro'],
       );
       final ClinicMembership again =
           ClinicMembership.fromMap(m.toMap(), id: 'm1');
       expect(again.role, ClinicRole.nursing);
+      expect(again.clinicName, 'Unidade Centro');
       expect(again.unitIds, <String>['u-centro']);
+    });
+
+    test('empty clinicName falls back to clinicId for display', () {
+      final ClinicMembership m = ClinicMembership(
+        id: 'm2',
+        clinicId: 'clinic-xyz',
+        userId: 'u2',
+        role: ClinicRole.physician,
+        createdAt: DateTime.utc(2026, 1, 3),
+      );
+      final String label =
+          m.clinicName.isNotEmpty ? m.clinicName : m.clinicId;
+      expect(label, 'clinic-xyz');
     });
   });
 }

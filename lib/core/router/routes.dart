@@ -236,6 +236,13 @@ class Routes {
   static const String leaderboardPath = '/ranking';
   static const String leaderboardName = 'leaderboard';
 
+
+  // Organizacao / clinica (multitenant FASE 1b)
+  static const String clinicOrgPath = '/clinica';
+  static const String clinicOrgName = 'clinic-org';
+  static const String clinicOrgCreatePath = '/clinica/nova';
+  static const String clinicOrgCreateName = 'clinic-org-create';
+
   // Conta
   static const String settingsPath = '/ajustes';
   static const String settingsName = 'settings';

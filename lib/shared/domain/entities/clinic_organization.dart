@@ -163,6 +163,7 @@ class ClinicMembership extends Equatable {
     required this.userId,
     required this.role,
     required this.createdAt,
+    this.clinicName = '',
     this.unitIds = const <String>[],
     this.active = true,
     this.crm = '',
@@ -175,6 +176,7 @@ class ClinicMembership extends Equatable {
       clinicId: (map['clinicId'] as String?) ?? '',
       userId: (map['userId'] as String?) ?? '',
       role: ClinicRole.fromName(map['role'] as String?),
+      clinicName: (map['clinicName'] as String?) ?? '',
       unitIds: List<String>.from(
         (map['unitIds'] as List<dynamic>?) ?? const <dynamic>[],
       ),
@@ -190,6 +192,7 @@ class ClinicMembership extends Equatable {
   final String clinicId;
   final String userId;
   final ClinicRole role;
+  final String clinicName;
   final List<String> unitIds;
   final bool active;
   final String crm;
@@ -201,6 +204,7 @@ class ClinicMembership extends Equatable {
         'clinicId': clinicId,
         'userId': userId,
         'role': role.name,
+        'clinicName': clinicName,
         'unitIds': unitIds,
         'active': active,
         'crm': crm,

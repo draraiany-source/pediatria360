@@ -141,6 +141,13 @@ const List<_Destination> _professionalSidebar = <_Destination>[
     professionalOnly: true,
   ),
   _Destination(
+    route: Routes.clinicOrgPath,
+    label: 'Minha clinica',
+    icon: Icons.apartment_outlined,
+    selectedIcon: Icons.apartment_rounded,
+    professionalOnly: true,
+  ),
+  _Destination(
     route: Routes.profilePath,
     label: 'Perfil',
     icon: Icons.person_outline_rounded,

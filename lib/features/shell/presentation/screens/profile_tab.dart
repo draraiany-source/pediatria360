@@ -221,6 +221,17 @@ class ProfileTab extends ConsumerWidget {
                     padding: EdgeInsets.zero,
                     child: Column(
                       children: <Widget>[
+                        if (user.role.isProfessional) ...<Widget>[
+                          _SettingsTile(
+                            icon: Icons.apartment_rounded,
+                            iconBg: AppColors.softBlue,
+                            iconColor: AppColors.brand,
+                            title: 'Minha clinica',
+                            subtitle: 'Organizacao, unidades e contexto ativo',
+                            onTap: () => context.push(Routes.clinicOrgPath),
+                          ),
+                          const Divider(height: 1),
+                        ],
                         _SettingsTile(
                           icon: Icons.person_outline_rounded,
                           iconBg: AppColors.softTeal,
