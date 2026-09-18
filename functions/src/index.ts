@@ -64,6 +64,16 @@ export {
   grantChildSummaryAccess,
 } from "./emr";
 
+// Consultório 360 — consulta por voz / Prontuário IA.
+export {
+  startVoiceConsultation,
+  updateVoiceSession,
+  finalizeVoiceRecording,
+  structureVoiceDraft,
+  applyVoiceDraftToEncounter,
+  discardVoiceSession,
+} from "./voice";
+
 // Conformidade com a LGPD: consentimento, portabilidade e eliminação.
 export {
   recordConsent,

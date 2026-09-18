@@ -119,13 +119,14 @@ service cloud.firestore {
                         exists(/databases/$(database)/documents/users/$(uid)/children/$(childId)/authorized_professionals/$(request.auth.uid)));
         allow write: if isOwner(uid);
 
-        // Um profissional verificado só escreve a própria concessão — não
-        // pode conceder acesso "em nome" de outro profissional, e não pode
-        // ler a lista de quem mais tem acesso (não é dado dele).
+        // Concessao de leitura do cadastro da crianca: so o responsavel
+        // (dono) grava. O profissional NAO se auto-concede — isso passa
+        // pela Function grantChildSummaryAccess (Admin SDK), apos vinculo
+        // com agendamento ativo.
         match /authorized_professionals/{profId} {
           allow read: if isOwner(uid) ||
                          (isVerifiedProfessional() && request.auth.uid == profId);
-          allow write: if isVerifiedProfessional() && request.auth.uid == profId;
+          allow write: if isOwner(uid);
         }
 
         match /growth_records/{recordId} {
@@ -443,6 +444,48 @@ service cloud.firestore {
     // Registro de uso da IA em prontuário. Ninguém lê pelo cliente — existe
     // para auditoria interna.
     match /ai_clinical_log/{logId} {
+      allow read, write: if false;
+    }
+
+    // ------------------------------------------ Consultorio 360 / voz
+
+    // Sessoes de consulta por voz: leitura pelo profissional dono ou admin;
+    // escrita apenas pelo servidor (Cloud Functions).
+    match /voice_sessions/{id} {
+      allow read: if signedIn() &&
+                     (resource.data.professionalId == request.auth.uid ||
+                      isAdmin());
+      allow write: if false;
+    }
+
+    // Triagem: profissional verificado dono do registro; responsavel le se
+    // ownsChild(childId) quando o campo estiver presente.
+    match /triage_records/{id} {
+      allow read: if (isVerifiedProfessional() &&
+                      resource.data.professionalId == request.auth.uid) ||
+                     (signedIn() &&
+                      resource.data.keys().hasAny(['childId']) &&
+                      ownsChild(resource.data.childId));
+      allow create, update: if isVerifiedProfessional() &&
+                             request.resource.data.professionalId ==
+                               request.auth.uid;
+      allow delete: if false;
+    }
+
+    // Marcos do desenvolvimento — mesma politica da triagem.
+    match /development_records/{id} {
+      allow read: if (isVerifiedProfessional() &&
+                      resource.data.professionalId == request.auth.uid) ||
+                     (signedIn() &&
+                      resource.data.keys().hasAny(['childId']) &&
+                      ownsChild(resource.data.childId));
+      allow create, update: if isVerifiedProfessional() &&
+                             request.resource.data.professionalId ==
+                               request.auth.uid;
+      allow delete: if false;
+    }
+
+    match /clinic_audit_logs/{id} {
       allow read, write: if false;
     }
 

@@ -502,16 +502,20 @@ export const verifyDocument = onCall({ region: REGION }, async (request) => {
  * localiza a criança por busca de collection group, direto pelo id do
  * documento — não precisa de índice composto, é igualdade simples.
  *
+ * ## Vinculo obrigatorio com agendamento ativo
+ *
+ * Exige um documento em `appointments` ligando este profissional a esta
+ * crianca (`patientId` OU `childId` igual ao childId solicitado) com
+ * status em `confirmed` | `inProgress` | `requested`. Sem esse vinculo,
+ * retorna permission-denied — evita auto-concessao ampla so por ser
+ * profissional verificado. A escrita da concessao continua so via Admin
+ * SDK (o cliente nao escreve mais authorized_professionals).
+ *
  * ## O que isto NÃO concede
  *
  * Só a leitura do documento da criança em si (nome, idade, sexo, alergia,
  * condição, foto). Não dá acesso a `growth_records`, `vaccine_doses`, nem a
- * mais nada da família — essas subcoleções continuam exclusivas do dono. E
- * não precisa de nenhum atendimento existir antes: um profissional
- * verificado pode chamar isso para qualquer `childId` real — o mesmo
- * princípio já aceito para `bookAppointment`/`getAvailability`, onde ser
- * profissional verificado já é a barreira, não um vínculo prévio
- * comprovado documento a documento.
+ * mais nada da família — essas subcoleções continuam exclusivas do dono.
  */
 export const grantChildSummaryAccess = onCall(
   { region: REGION },
@@ -521,6 +525,35 @@ export const grantChildSummaryAccess = onCall(
 
     if (!childId) {
       throw new HttpsError("invalid-argument", "childId não informado.");
+    }
+
+    // Agendamento ativo ligando profissional ↔ criança (patientId ou childId).
+    const allowedStatuses = ["confirmed", "inProgress", "requested"];
+    const byChild = await db()
+      .collection("appointments")
+      .where("professionalId", "==", actor.uid)
+      .where("childId", "==", childId)
+      .where("status", "in", allowedStatuses)
+      .limit(1)
+      .get();
+
+    let linked = !byChild.empty;
+    if (!linked) {
+      const byPatient = await db()
+        .collection("appointments")
+        .where("professionalId", "==", actor.uid)
+        .where("patientId", "==", childId)
+        .where("status", "in", allowedStatuses)
+        .limit(1)
+        .get();
+      linked = !byPatient.empty;
+    }
+
+    if (!linked) {
+      throw new HttpsError(
+        "permission-denied",
+        "É necessário um agendamento ativo (confirmado, em andamento ou solicitado) com esta criança."
+      );
     }
 
     const found = await db()

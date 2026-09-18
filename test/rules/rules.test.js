@@ -1014,8 +1014,10 @@ describe("children — concessão de acesso do profissional", () => {
     );
   });
 
-  test("profissional escreve a própria concessão", async () => {
-    await assertSucceeds(
+  test("profissional NÃO escreve a própria concessão (só o responsável ou Function)", async () => {
+    // Auto-concessão pelo cliente foi removida — risco LGPD. O vínculo
+    // passa por grantChildSummaryAccess (Admin SDK) ou pelo dono.
+    await assertFails(
       setDoc(
         doc(
           as(DRA),
@@ -1027,9 +1029,20 @@ describe("children — concessão de acesso do profissional", () => {
     );
   });
 
+  test("responsável concede acesso a um profissional", async () => {
+    await assertSucceeds(
+      setDoc(
+        doc(
+          as(ANA),
+          "users", ANA, "children", "filha",
+          "authorized_professionals", DRA
+        ),
+        { grantedAt: serverTimestamp() }
+      )
+    );
+  });
+
   test("profissional NÃO escreve concessão em nome de outro profissional", async () => {
-    // Dra tentando conceder acesso para si mesma escrevendo no documento
-    // de outro profissional (dr_novo) — só o próprio uid pode se conceder.
     await assertFails(
       setDoc(
         doc(

@@ -281,8 +281,26 @@ class _ProfessionalHome extends ConsumerWidget {
                   BrandSectionHeader(
                     title: 'Acesso rápido',
                     actionLabel: 'Ver todos →',
-                    onAction: () => context.go(Routes.patientsPath),
+                    onAction: () => context.push(Routes.clinicPath),
                   ),
+                  QuickAccessCard(
+                    label: 'Consultório 360',
+                    subtitle: 'Painel do dia, recepção e KPIs',
+                    icon: Icons.local_hospital_rounded,
+                    color: AppColors.brand,
+                    wide: true,
+                    onTap: () => context.push(Routes.clinicPath),
+                  ),
+                  const SizedBox(height: AppSpacing.sm),
+                  QuickAccessCard(
+                    label: 'Iniciar consulta com IA',
+                    subtitle: 'Gravação, rascunho e revisão médica',
+                    icon: Icons.mic_rounded,
+                    color: AppColors.raspberry,
+                    wide: true,
+                    onTap: () => context.push(Routes.clinicVoicePath),
+                  ),
+                  const SizedBox(height: AppSpacing.sm),
                   QuickAccessCard(
                     label: 'Pacientes',
                     subtitle: 'Carteira e acompanhamento clínico',

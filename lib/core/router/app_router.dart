@@ -10,6 +10,15 @@ import '../../features/auth/presentation/screens/register_screen.dart';
 import '../../features/auth/presentation/screens/role_setup_screen.dart';
 import '../../features/admin/presentation/admin_screen.dart';
 import '../../features/auth/presentation/screens/splash_screen.dart';
+import '../../features/clinic/presentation/screens/clinic_dashboard_screen.dart';
+import '../../features/clinic/presentation/screens/clinic_reception_screen.dart';
+import '../../features/clinic/presentation/screens/clinic_triage_screen.dart';
+import '../../features/clinic/presentation/screens/patient_360_screen.dart';
+import '../../features/clinic/presentation/screens/voice_consent_screen.dart';
+import '../../features/clinic/presentation/screens/voice_final_review_screen.dart';
+import '../../features/clinic/presentation/screens/voice_home_screen.dart';
+import '../../features/clinic/presentation/screens/voice_live_screen.dart';
+import '../../features/clinic/presentation/screens/voice_review_screen.dart';
 import '../../features/emr/presentation/screens/professional_patients_screen.dart';
 import '../../features/gamification/presentation/gamification_screen.dart';
 import '../../features/children/presentation/screens/child_detail_screen.dart';
@@ -280,6 +289,70 @@ final Provider<GoRouter> routerProvider = Provider<GoRouter>((Ref ref) {
             const TelemedicineScreen(),
       ),
 
+      // Consultorio 360 — fluxos de foco (tela cheia, fora do shell).
+      // O dashboard vive DENTRO do ShellRoute; estes caminhos empilham
+      // sobre ele, como /biblioteca/artigo/:id sobre a aba Biblioteca.
+      GoRoute(
+        path: Routes.clinicReceptionPath,
+        name: Routes.clinicReceptionName,
+        builder: (BuildContext context, GoRouterState state) =>
+            const ClinicReceptionScreen(),
+      ),
+      GoRoute(
+        path: Routes.clinicTriagePath,
+        name: Routes.clinicTriageName,
+        builder: (BuildContext context, GoRouterState state) =>
+            ClinicTriageScreen(
+          appointmentId: state.pathParameters['appointmentId']!,
+        ),
+      ),
+      GoRoute(
+        path: Routes.clinicPatient360Path,
+        name: Routes.clinicPatient360Name,
+        builder: (BuildContext context, GoRouterState state) =>
+            Patient360Screen(
+          childId: state.pathParameters['childId']!,
+        ),
+      ),
+      GoRoute(
+        path: Routes.clinicVoicePath,
+        name: Routes.clinicVoiceName,
+        builder: (BuildContext context, GoRouterState state) =>
+            const VoiceHomeScreen(),
+        routes: <RouteBase>[
+          GoRoute(
+            path: 'consentimento',
+            name: Routes.clinicVoiceConsentName,
+            builder: (BuildContext context, GoRouterState state) =>
+                const VoiceConsentScreen(),
+          ),
+          GoRoute(
+            path: 'sessao/:sessionId',
+            name: Routes.clinicVoiceLiveName,
+            builder: (BuildContext context, GoRouterState state) =>
+                VoiceLiveScreen(
+              sessionId: state.pathParameters['sessionId']!,
+            ),
+          ),
+          GoRoute(
+            path: 'revisao/:sessionId',
+            name: Routes.clinicVoiceReviewName,
+            builder: (BuildContext context, GoRouterState state) =>
+                VoiceReviewScreen(
+              sessionId: state.pathParameters['sessionId']!,
+            ),
+          ),
+          GoRoute(
+            path: 'final/:sessionId',
+            name: Routes.clinicVoiceFinalName,
+            builder: (BuildContext context, GoRouterState state) =>
+                VoiceFinalReviewScreen(
+              sessionId: state.pathParameters['sessionId']!,
+            ),
+          ),
+        ],
+      ),
+
       // Leitura de conteúdo e conversa da IA: tela cheia, sobre o shell.
       GoRoute(
         path: '/biblioteca/artigo/:articleId',
@@ -308,6 +381,14 @@ final Provider<GoRouter> routerProvider = Provider<GoRouter>((Ref ref) {
             name: Routes.homeName,
             pageBuilder: (BuildContext context, GoRouterState state) =>
                 const NoTransitionPage<void>(child: HomeScreen()),
+          ),
+          GoRoute(
+            path: Routes.clinicPath,
+            name: Routes.clinicName,
+            pageBuilder: (BuildContext context, GoRouterState state) =>
+                const NoTransitionPage<void>(
+              child: ClinicDashboardScreen(),
+            ),
           ),
           GoRoute(
             path: Routes.agendaPath,

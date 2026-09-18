@@ -25,6 +25,18 @@ class FirestorePaths {
   static const String notifications = 'notifications';
   static const String config = 'config';
 
+  /// Sessoes de consulta por voz / Prontuario IA (escrita so no servidor).
+  static const String voiceSessions = 'voice_sessions';
+
+  /// Registros de triagem (sinais vitais pre-consulta).
+  static const String triageRecords = 'triage_records';
+
+  /// Marcos do desenvolvimento neuropsicomotor.
+  static const String developmentRecords = 'development_records';
+
+  /// Trilha de auditoria do consultorio (somente servidor).
+  static const String clinicAuditLogs = 'clinic_audit_logs';
+
   // Subcollections
   static const String messages = 'messages';
   static const String progress = 'progress';
@@ -43,4 +55,9 @@ class FirestorePaths {
   static String courseLessons(String courseId) => '$courses/$courseId/$lessons';
   static String userProgress(String uid) => '$users/$uid/$progress';
   static String userNotifications(String uid) => '$users/$uid/$notifications';
+
+  static String voiceSessionDoc(String id) => '$voiceSessions/$id';
+  static String triageRecordDoc(String id) => '$triageRecords/$id';
+  static String developmentRecordDoc(String id) => '$developmentRecords/$id';
+  static String clinicAuditLogDoc(String id) => '$clinicAuditLogs/$id';
 }

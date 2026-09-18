@@ -31,7 +31,7 @@ class _Destination {
   final bool professionalOnly;
 }
 
-/// Profissional: Início → Pacientes → Agenda → Notificações → Perfil
+/// Profissional: Início → Consultório → Agenda → Mensagens → Perfil
 const List<_Destination> _professionalDestinations = <_Destination>[
   _Destination(
     route: Routes.homePath,
@@ -40,10 +40,10 @@ const List<_Destination> _professionalDestinations = <_Destination>[
     selectedIcon: Icons.home_rounded,
   ),
   _Destination(
-    route: Routes.patientsPath,
-    label: 'Pacientes',
-    icon: Icons.groups_outlined,
-    selectedIcon: Icons.groups_rounded,
+    route: Routes.clinicPath,
+    label: 'Consultório',
+    icon: Icons.local_hospital_outlined,
+    selectedIcon: Icons.local_hospital_rounded,
     professionalOnly: true,
   ),
   _Destination(

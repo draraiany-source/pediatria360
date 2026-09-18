@@ -67,6 +67,13 @@ void main() {
       );
     });
 
+    test('NÃO acessa /consultorio', () {
+      expect(
+        redirectFor(location: Routes.clinicPath, asUser: parent),
+        Routes.homePath,
+      );
+    });
+
     test('acessa /inicio normalmente', () {
       expect(redirectFor(location: Routes.homePath, asUser: parent), isNull);
     });
@@ -85,6 +92,23 @@ void main() {
     test('acessa /agenda', () {
       expect(
         redirectFor(location: Routes.agendaPath, asUser: professional),
+        isNull,
+      );
+    });
+
+    test('acessa /consultorio', () {
+      expect(
+        redirectFor(location: Routes.clinicPath, asUser: professional),
+        isNull,
+      );
+    });
+
+    test('acessa sub-rota de voz do consultorio', () {
+      expect(
+        redirectFor(
+          location: Routes.clinicVoicePath,
+          asUser: professional,
+        ),
         isNull,
       );
     });
@@ -127,6 +151,13 @@ void main() {
     test('NÃO ganha acesso automático a /agenda só por ser admin', () {
       expect(
         redirectFor(location: Routes.agendaPath, asUser: admin),
+        Routes.homePath,
+      );
+    });
+
+    test('NÃO ganha acesso automático a /consultorio só por ser admin', () {
+      expect(
+        redirectFor(location: Routes.clinicPath, asUser: admin),
         Routes.homePath,
       );
     });

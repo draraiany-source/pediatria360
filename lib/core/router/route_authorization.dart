@@ -76,14 +76,15 @@ String? resolveRouteRedirect({
     return Routes.homePath;
   }
 
-  // 7. Prontuario e agenda exigem papel de profissional. Bloqueia tambem
-  // o admin — administracao da plataforma nao e a mesma coisa que
+  // 7. Prontuario, agenda e consultorio exigem papel de profissional. Bloqueia
+  // tambem o admin — administracao da plataforma nao e a mesma coisa que
   // autorizacao clinica, e nao deveria dar acesso automatico a prontuario
   // so por ser admin. Essa mesma regra ja existe, separadamente, nas
   // regras do Firestore (`encounters/{id}`) — aqui e a segunda camada,
-  // não a única.
+  // nao a unica.
   final bool isProfessionalArea = location.startsWith(Routes.patientsPath) ||
-      location.startsWith(Routes.agendaPath);
+      location.startsWith(Routes.agendaPath) ||
+      location.startsWith(Routes.clinicPath);
   if (isProfessionalArea && user.role != UserRole.professional) {
     return Routes.homePath;
   }

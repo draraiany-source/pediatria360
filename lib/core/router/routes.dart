@@ -132,6 +132,39 @@ class Routes {
   static String appointment(String id) => '$telemedicinePath/$id';
   static String consultationRoom(String id) => '$telemedicinePath/$id/consulta';
 
+  // Consultorio 360 + Prontuario IA
+  static const String clinicPath = '/consultorio';
+  static const String clinicName = 'clinic';
+  static const String clinicReceptionPath = '/consultorio/recepcao';
+  static const String clinicReceptionName = 'clinic-reception';
+  static const String clinicTriagePath = '/consultorio/triagem/:appointmentId';
+  static const String clinicTriageName = 'clinic-triage';
+  static const String clinicPatient360Path =
+      '/consultorio/paciente/:childId/360';
+  static const String clinicPatient360Name = 'clinic-patient-360';
+  static const String clinicVoicePath = '/consultorio/ia';
+  static const String clinicVoiceName = 'clinic-voice';
+  static const String clinicVoiceConsentPath = '/consultorio/ia/consentimento';
+  static const String clinicVoiceConsentName = 'clinic-voice-consent';
+  static const String clinicVoiceLivePath = '/consultorio/ia/sessao/:sessionId';
+  static const String clinicVoiceLiveName = 'clinic-voice-live';
+  static const String clinicVoiceReviewPath =
+      '/consultorio/ia/revisao/:sessionId';
+  static const String clinicVoiceReviewName = 'clinic-voice-review';
+  static const String clinicVoiceFinalPath = '/consultorio/ia/final/:sessionId';
+  static const String clinicVoiceFinalName = 'clinic-voice-final';
+
+  static String clinicTriage(String appointmentId) =>
+      '/consultorio/triagem/$appointmentId';
+  static String clinicPatient360(String childId) =>
+      '/consultorio/paciente/$childId/360';
+  static String clinicVoiceLive(String sessionId) =>
+      '/consultorio/ia/sessao/$sessionId';
+  static String clinicVoiceReview(String sessionId) =>
+      '/consultorio/ia/revisao/$sessionId';
+  static String clinicVoiceFinal(String sessionId) =>
+      '/consultorio/ia/final/$sessionId';
+
   // Gamificacao
   static const String gamificationPath = '/conquistas';
   static const String gamificationName = 'gamification';
