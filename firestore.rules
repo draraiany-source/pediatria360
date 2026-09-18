@@ -179,6 +179,16 @@ service cloud.firestore {
       match /clinical_assist_usage/{day} {
         allow read: if isOwner(uid);
         allow write: if false;
+
+      // Memberships multitenant (indice invertido). Escrita via cliente
+      // apenas na criacao da propria clinica (clinicAdmin) ? reforcado nas
+      // rules da clinica; aqui o dono le e o proprio user escreve seu vinculo.
+      match /clinic_memberships/{clinicId} {
+        allow read: if isOwner(uid);
+        allow create, update: if isOwner(uid) &&
+                               request.resource.data.userId == uid;
+        allow delete: if false;
+      }
       }
 
       match /supplementation/{docId} {
@@ -578,6 +588,54 @@ service cloud.firestore {
     match /supplementation/{doc=**} {
       allow read: if signedIn();
       allow write: if isAdmin();
+    }
+
+
+    // ------------------------------------------ Multitenant (FASE 1)
+
+    function clinicMemberDoc(clinicId) {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)/clinic_memberships/$(clinicId));
+    }
+
+    function isClinicMember(clinicId) {
+      return signedIn() &&
+             exists(/databases/$(database)/documents/users/$(request.auth.uid)/clinic_memberships/$(clinicId)) &&
+             clinicMemberDoc(clinicId).data.active == true;
+    }
+
+    function clinicRole(clinicId) {
+      return clinicMemberDoc(clinicId).data.role;
+    }
+
+    function isClinicAdmin(clinicId) {
+      return isClinicMember(clinicId) && clinicRole(clinicId) == 'clinicAdmin';
+    }
+
+    match /clinics/{clinicId} {
+      allow read: if isClinicMember(clinicId) || isAdmin();
+      // Criacao: profissional autenticado (onboarding). Admin plataforma tambem.
+      allow create: if signedIn() &&
+                       (isVerifiedProfessional() || isAdmin()) &&
+                       isValidString('name', 200);
+      allow update: if isClinicAdmin(clinicId) || isAdmin();
+      allow delete: if false;
+
+      match /units/{unitId} {
+        allow read: if isClinicMember(clinicId) || isAdmin();
+        allow write: if isClinicAdmin(clinicId) || isAdmin();
+      }
+
+      match /memberships/{membershipId} {
+        allow read: if isClinicMember(clinicId) || isAdmin() ||
+                       (signedIn() && resource.data.userId == request.auth.uid);
+        allow create, update: if isClinicAdmin(clinicId) || isAdmin();
+        allow delete: if false;
+      }
+
+      match /audit_logs/{logId} {
+        allow read: if isClinicAdmin(clinicId) || isAdmin();
+        allow write: if false;
+      }
     }
 
     // ------------------------------------------------------------ Config
