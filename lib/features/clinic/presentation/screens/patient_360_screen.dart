@@ -107,7 +107,18 @@ class Patient360Screen extends ConsumerWidget {
               '${Routes.clinicVoicePath}?childId=$childId',
             ),
           ),
-        ],
+          const SizedBox(height: AppSpacing.sm),
+          QuickAccessCard(
+            label: 'Suplementacao',
+            subtitle: 'Exames, calculadora e acompanhamento',
+            icon: Icons.science_outlined,
+            color: AppColors.tealDeep,
+            wide: true,
+            onTap: () => context.push(
+              Routes.supplementWithChild(Routes.supplementPath, childId),
+            ),
+          ),
+          ],
       ),
     );
   }

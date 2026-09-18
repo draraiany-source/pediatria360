@@ -84,7 +84,8 @@ String? resolveRouteRedirect({
   // nao a unica.
   final bool isProfessionalArea = location.startsWith(Routes.patientsPath) ||
       location.startsWith(Routes.agendaPath) ||
-      location.startsWith(Routes.clinicPath);
+      location.startsWith(Routes.clinicPath) ||
+      location.startsWith(Routes.supplementPath);
   if (isProfessionalArea && user.role != UserRole.professional) {
     return Routes.homePath;
   }

@@ -302,6 +302,15 @@ class _ProfessionalHome extends ConsumerWidget {
                   ),
                   const SizedBox(height: AppSpacing.sm),
                   QuickAccessCard(
+                    label: 'Suplementacao Pediatrica',
+                    subtitle: 'Micronutrientes, exames, calculadoras e Rx',
+                    icon: Icons.science_outlined,
+                    color: AppColors.tealDeep,
+                    wide: true,
+                    onTap: () => context.push(Routes.supplementPath),
+                  ),
+                  const SizedBox(height: AppSpacing.sm),
+                  QuickAccessCard(
                     label: 'Pacientes',
                     subtitle: 'Carteira e acompanhamento clínico',
                     icon: Icons.groups_rounded,

@@ -19,6 +19,11 @@ import '../../features/clinic/presentation/screens/voice_final_review_screen.dar
 import '../../features/clinic/presentation/screens/voice_home_screen.dart';
 import '../../features/clinic/presentation/screens/voice_live_screen.dart';
 import '../../features/clinic/presentation/screens/voice_review_screen.dart';
+import '../../features/supplementation/presentation/screens/calculator_prescription_screens.dart';
+import '../../features/supplementation/presentation/screens/lab_screens.dart';
+import '../../features/supplementation/presentation/screens/micronutrient_screens.dart';
+import '../../features/supplementation/presentation/screens/supplement_dashboard_screen.dart';
+import '../../features/supplementation/presentation/screens/supplement_more_screens.dart';
 import '../../features/emr/presentation/screens/professional_patients_screen.dart';
 import '../../features/gamification/presentation/gamification_screen.dart';
 import '../../features/children/presentation/screens/child_detail_screen.dart';
@@ -287,6 +292,140 @@ final Provider<GoRouter> routerProvider = Provider<GoRouter>((Ref ref) {
         name: Routes.telemedicineName,
         builder: (BuildContext context, GoRouterState state) =>
             const TelemedicineScreen(),
+      ),
+
+
+      // Suplementacao Pediatrica (profissional - fora do shell).
+      GoRoute(
+        path: Routes.supplementPath,
+        name: Routes.supplementName,
+        builder: (BuildContext context, GoRouterState state) =>
+            SupplementDashboardScreen(
+          childId: state.uri.queryParameters['childId'],
+        ),
+      ),
+      GoRoute(
+        path: Routes.supplementMicronutrientsPath,
+        name: Routes.supplementMicronutrientsName,
+        builder: (BuildContext context, GoRouterState state) =>
+            const MicronutrientListScreen(),
+      ),
+      GoRoute(
+        path: Routes.supplementMicronutrientPath,
+        name: Routes.supplementMicronutrientName,
+        builder: (BuildContext context, GoRouterState state) =>
+            MicronutrientDetailScreen(
+          micronutrientId: state.pathParameters['id']!,
+        ),
+      ),
+      GoRoute(
+        path: Routes.supplementLabRegisterPath,
+        name: Routes.supplementLabRegisterName,
+        builder: (BuildContext context, GoRouterState state) =>
+            LabResultFormScreen(
+          childId: state.uri.queryParameters['childId'],
+          examId: state.uri.queryParameters['examId'],
+        ),
+      ),
+      GoRoute(
+        path: Routes.supplementLabAiPath,
+        name: Routes.supplementLabAiName,
+        builder: (BuildContext context, GoRouterState state) =>
+            LabAiInterpretScreen(
+          childId: state.uri.queryParameters['childId'],
+        ),
+      ),
+      GoRoute(
+        path: Routes.supplementLabDetailPath,
+        name: Routes.supplementLabDetailName,
+        builder: (BuildContext context, GoRouterState state) =>
+            LabExamDetailScreen(
+          examId: state.pathParameters['examId']!,
+          childId: state.uri.queryParameters['childId'],
+        ),
+      ),
+      GoRoute(
+        path: Routes.supplementLabsPath,
+        name: Routes.supplementLabsName,
+        builder: (BuildContext context, GoRouterState state) => LabExamsScreen(
+          childId: state.uri.queryParameters['childId'],
+        ),
+      ),
+      GoRoute(
+        path: Routes.supplementCalculatorPath,
+        name: Routes.supplementCalculatorName,
+        builder: (BuildContext context, GoRouterState state) =>
+            SupplementCalculatorScreen(
+          micronutrientId: state.uri.queryParameters['micronutrientId'],
+          childId: state.uri.queryParameters['childId'],
+        ),
+      ),
+      GoRoute(
+        path: Routes.supplementPrescriptionViewPath,
+        name: Routes.supplementPrescriptionViewName,
+        builder: (BuildContext context, GoRouterState state) =>
+            SupplementPrescriptionViewScreen(
+          prescriptionId: state.pathParameters['rxId']!,
+        ),
+      ),
+      GoRoute(
+        path: Routes.supplementPrescriptionPath,
+        name: Routes.supplementPrescriptionName,
+        builder: (BuildContext context, GoRouterState state) =>
+            SupplementPrescriptionScreen(
+          micronutrientId: state.uri.queryParameters['micronutrientId'],
+          childId: state.uri.queryParameters['childId'],
+        ),
+      ),
+      GoRoute(
+        path: Routes.supplementProtocolsPath,
+        name: Routes.supplementProtocolsName,
+        builder: (BuildContext context, GoRouterState state) =>
+            const SupplementProtocolsScreen(),
+      ),
+      GoRoute(
+        path: Routes.supplementFoodsPath,
+        name: Routes.supplementFoodsName,
+        builder: (BuildContext context, GoRouterState state) =>
+            const FoodLibraryScreen(),
+      ),
+      GoRoute(
+        path: Routes.supplementParentPath,
+        name: Routes.supplementParentName,
+        builder: (BuildContext context, GoRouterState state) =>
+            ParentGuidanceScreen(
+          micronutrientId: state.uri.queryParameters['micronutrientId'],
+        ),
+      ),
+      GoRoute(
+        path: Routes.supplementAiPath,
+        name: Routes.supplementAiName,
+        builder: (BuildContext context, GoRouterState state) =>
+            SupplementAiScreen(
+          childId: state.uri.queryParameters['childId'],
+        ),
+      ),
+      GoRoute(
+        path: Routes.supplementHistoryPath,
+        name: Routes.supplementHistoryName,
+        builder: (BuildContext context, GoRouterState state) =>
+            SupplementHistoryScreen(
+          childId: state.uri.queryParameters['childId'],
+        ),
+      ),
+      GoRoute(
+        path: Routes.supplementChartsPath,
+        name: Routes.supplementChartsName,
+        builder: (BuildContext context, GoRouterState state) =>
+            SupplementChartsScreen(
+          childId: state.uri.queryParameters['childId'],
+        ),
+      ),
+      GoRoute(
+        path: Routes.supplementFavoritesPath,
+        name: Routes.supplementFavoritesName,
+        builder: (BuildContext context, GoRouterState state) =>
+            const SupplementFavoritesScreen(),
       ),
 
       // Consultorio 360 — fluxos de foco (tela cheia, fora do shell).

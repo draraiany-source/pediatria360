@@ -180,6 +180,10 @@ service cloud.firestore {
         allow read: if isOwner(uid);
         allow write: if false;
       }
+
+      match /supplementation/{docId} {
+        allow read, write: if isOwner(uid);
+      }
     }
 
     // ------------------------------------------------------------ Biblioteca
@@ -511,6 +515,69 @@ service cloud.firestore {
     match /deletion_requests/{uid} {
       allow read: if isOwner(uid) || isAdmin();
       allow write: if false;
+    }
+
+
+    // ------------------------------------------ Suplementacao Pediatrica
+
+    match /supplement_lab_results/{id} {
+      allow read: if (isVerifiedProfessional() &&
+                      resource.data.recordedBy == request.auth.uid) ||
+                     (signedIn() &&
+                      resource.data.keys().hasAny(['childId']) &&
+                      ownsChild(resource.data.childId));
+      allow create, update: if isVerifiedProfessional() &&
+                             request.resource.data.recordedBy == request.auth.uid;
+      allow delete: if false;
+    }
+
+    match /supplement_prescriptions/{id} {
+      allow read: if (isVerifiedProfessional() &&
+                      resource.data.professionalId == request.auth.uid) ||
+                     (signedIn() &&
+                      resource.data.keys().hasAny(['childId']) &&
+                      ownsChild(resource.data.childId) &&
+                      resource.data.status == 'confirmed');
+      allow create, update: if isVerifiedProfessional() &&
+                             request.resource.data.professionalId ==
+                               request.auth.uid;
+      allow delete: if false;
+    }
+
+    match /supplement_timeline/{id} {
+      allow read: if (isVerifiedProfessional() &&
+                      resource.data.createdBy == request.auth.uid) ||
+                     (signedIn() &&
+                      resource.data.keys().hasAny(['childId']) &&
+                      ownsChild(resource.data.childId));
+      allow create: if isVerifiedProfessional() &&
+                     request.resource.data.createdBy == request.auth.uid;
+      allow update, delete: if false;
+    }
+
+    match /supplement_clinical_notes/{id} {
+      allow read, create, update: if isVerifiedProfessional() &&
+                                   (resource == null ||
+                                    resource.data.professionalId == request.auth.uid) &&
+                                   request.resource.data.professionalId ==
+                                     request.auth.uid;
+      allow delete: if false;
+    }
+
+    match /supplement_ai_drafts/{id} {
+      allow read, create: if isVerifiedProfessional() &&
+                           request.resource.data.professionalId ==
+                             request.auth.uid;
+      allow update, delete: if false;
+    }
+
+    match /supplement_audit_logs/{id} {
+      allow read, write: if false;
+    }
+
+    match /supplementation/{doc=**} {
+      allow read: if signedIn();
+      allow write: if isAdmin();
     }
 
     // ------------------------------------------------------------ Config

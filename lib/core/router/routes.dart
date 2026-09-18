@@ -165,6 +165,71 @@ class Routes {
   static String clinicVoiceFinal(String sessionId) =>
       '/consultorio/ia/final/$sessionId';
 
+  // Suplementacao Pediatrica (profissional)
+  static const String supplementPath = '/suplementacao';
+  static const String supplementName = 'supplement';
+  static const String supplementMicronutrientsPath =
+      '/suplementacao/micronutrientes';
+  static const String supplementMicronutrientsName = 'supplement-micronutrients';
+  static const String supplementMicronutrientPath =
+      '/suplementacao/micronutrientes/:id';
+  static const String supplementMicronutrientName = 'supplement-micronutrient';
+  static const String supplementLabsPath = '/suplementacao/exames';
+  static const String supplementLabsName = 'supplement-labs';
+  static const String supplementLabDetailPath = '/suplementacao/exames/:examId';
+  static const String supplementLabDetailName = 'supplement-lab-detail';
+  static const String supplementLabRegisterPath =
+      '/suplementacao/exames/registrar';
+  static const String supplementLabRegisterName = 'supplement-lab-register';
+  static const String supplementLabAiPath = '/suplementacao/exames/ia';
+  static const String supplementLabAiName = 'supplement-lab-ai';
+  static const String supplementCalculatorPath = '/suplementacao/calculadora';
+  static const String supplementCalculatorName = 'supplement-calculator';
+  static const String supplementPrescriptionPath = '/suplementacao/prescricao';
+  static const String supplementPrescriptionName = 'supplement-prescription';
+  static const String supplementPrescriptionViewPath =
+      '/suplementacao/prescricao/:rxId';
+  static const String supplementPrescriptionViewName =
+      'supplement-prescription-view';
+  static const String supplementProtocolsPath = '/suplementacao/protocolos';
+  static const String supplementProtocolsName = 'supplement-protocols';
+  static const String supplementFoodsPath = '/suplementacao/alimentos';
+  static const String supplementFoodsName = 'supplement-foods';
+  static const String supplementParentPath = '/suplementacao/orientacao-pais';
+  static const String supplementParentName = 'supplement-parent';
+  static const String supplementAiPath = '/suplementacao/ia';
+  static const String supplementAiName = 'supplement-ai';
+  static const String supplementHistoryPath = '/suplementacao/historico';
+  static const String supplementHistoryName = 'supplement-history';
+  static const String supplementChartsPath = '/suplementacao/graficos';
+  static const String supplementChartsName = 'supplement-charts';
+  static const String supplementFavoritesPath = '/suplementacao/favoritos';
+  static const String supplementFavoritesName = 'supplement-favorites';
+
+  static String supplementMicronutrient(String id) =>
+      '$supplementMicronutrientsPath/$id';
+  static String supplementLabDetail(String examId, {String? childId}) {
+    final String base = '$supplementLabsPath/$examId';
+    if (childId == null || childId.isEmpty) return base;
+    return '$base?childId=$childId';
+  }
+
+  static String supplementLabRegister({String? childId, String? examId}) {
+    final List<String> q = <String>[];
+    if (childId != null && childId.isNotEmpty) q.add('childId=$childId');
+    if (examId != null && examId.isNotEmpty) q.add('examId=$examId');
+    if (q.isEmpty) return supplementLabRegisterPath;
+    return '$supplementLabRegisterPath?${q.join('&')}';
+  }
+
+  static String supplementPrescriptionView(String rxId) =>
+      '$supplementPrescriptionPath/$rxId';
+
+  static String supplementWithChild(String path, String childId) {
+    final String sep = path.contains('?') ? '&' : '?';
+    return '$path${sep}childId=$childId';
+  }
+
   // Gamificacao
   static const String gamificationPath = '/conquistas';
   static const String gamificationName = 'gamification';
