@@ -24,7 +24,7 @@ class AppSpacing {
   static const double fieldSuffix = 14;
 
   static const EdgeInsets screen = EdgeInsets.symmetric(horizontal: lg);
-  static const EdgeInsets card = EdgeInsets.all(lg);
+  static const EdgeInsets card = EdgeInsets.all(20); // premium 20?24px
   static const EdgeInsets listItem = EdgeInsets.symmetric(
     horizontal: lg,
     vertical: md,

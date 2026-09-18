@@ -13,6 +13,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_tokens.dart';
 import '../../../../core/utils/validators.dart';
 import '../../../../core/widgets/brand_ui.dart';
+import '../../../../core/widgets/premium_chrome.dart';
 import '../../../../shared/domain/entities/app_user.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../emr/presentation/screens/patient_timeline_screen.dart';
@@ -63,6 +64,33 @@ class _ProfessionalHome extends ConsumerWidget {
   final AppUser? user;
   final String greeting;
 
+  String _weekdayDate(DateTime now) {
+    const List<String> days = <String>[
+      'Segunda-feira',
+      'Terca-feira',
+      'Quarta-feira',
+      'Quinta-feira',
+      'Sexta-feira',
+      'Sabado',
+      'Domingo',
+    ];
+    const List<String> months = <String>[
+      'janeiro',
+      'fevereiro',
+      'marco',
+      'abril',
+      'maio',
+      'junho',
+      'julho',
+      'agosto',
+      'setembro',
+      'outubro',
+      'novembro',
+      'dezembro',
+    ];
+    return '${days[now.weekday - 1]}, ${now.day} de ${months[now.month - 1]} de ${now.year}';
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final ThemeData theme = Theme.of(context);
@@ -98,12 +126,18 @@ class _ProfessionalHome extends ConsumerWidget {
         .where((Appointment a) => a.startsAt.isAfter(monthStart))
         .length;
 
+    final int pendingDrafts =
+        patients.where((PatientSummary p) => p.hasOpenDraft).length;
+
     final AppUser? current = user;
     final String displayName = current?.firstName.isNotEmpty == true
         ? (current!.role.isProfessional
             ? 'Dra. ${current.firstName}'
             : current.firstName)
         : 'Doutor(a)';
+
+    final bool isWide = MediaQuery.sizeOf(context).width >= 1100;
+    final bool hideMobileHeader = MediaQuery.sizeOf(context).width >= 900;
 
     return CustomScrollView(
       physics: const AlwaysScrollableScrollPhysics(),
@@ -120,10 +154,12 @@ class _ProfessionalHome extends ConsumerWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
-                  AppHeader(notificationCount: unread),
-                  const SizedBox(height: AppSpacing.md),
+                  if (!hideMobileHeader)
+                    AppHeader(notificationCount: unread),
+                  const SizedBox(height: AppSpacing.sm),
+                  // ---- Hero saudacao ----
                   AppCard(
-                    color: Colors.white,
+                    padding: const EdgeInsets.all(20),
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: <Widget>[
@@ -132,23 +168,31 @@ class _ProfessionalHome extends ConsumerWidget {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: <Widget>[
                               Text(
+                                _weekdayDate(now),
+                                style: theme.textTheme.labelMedium?.copyWith(
+                                  color: AppColors.inkMuted,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                              const SizedBox(height: AppSpacing.sm),
+                              Text(
                                 '$greeting, $displayName!',
-                                style: theme.textTheme.headlineSmall?.copyWith(
+                                style: theme.textTheme.headlineMedium?.copyWith(
                                   color: AppColors.navy,
                                   fontWeight: FontWeight.w800,
                                 ),
                               ),
                               const SizedBox(height: AppSpacing.sm),
                               Text(
-                                'Que bom ter você aqui. Vamos juntos cuidar '
-                                'de cada infância hoje.',
+                                'Que bom ter voce aqui. Vamos juntos cuidar '
+                                'de cada infancia hoje.',
                                 style: theme.textTheme.bodyMedium?.copyWith(
                                   color: AppColors.inkMuted,
                                 ),
                               ),
                               const SizedBox(height: AppSpacing.lg),
                               PrimaryButton(
-                                label: 'Novo atendimento',
+                                label: '+ Novo atendimento',
                                 icon: Icons.add_rounded,
                                 expanded: false,
                                 onPressed: () => context.go(Routes.agendaPath),
@@ -156,77 +200,82 @@ class _ProfessionalHome extends ConsumerWidget {
                             ],
                           ),
                         ),
-                        const SizedBox(width: AppSpacing.md),
-                        ClipRRect(
-                          borderRadius: AppRadius.lgAll,
-                          child: Image.asset(
-                            AppAssets.illustHeroChild,
-                            width: 96,
-                            height: 108,
-                            fit: BoxFit.cover,
-                            errorBuilder: (_, __, ___) => Container(
-                              width: 96,
-                              height: 108,
-                              decoration: BoxDecoration(
-                                gradient: LinearGradient(
-                                  begin: Alignment.topLeft,
-                                  end: Alignment.bottomRight,
-                                  colors: <Color>[
-                                    AppColors.softBlue,
-                                    AppColors.softTeal,
-                                  ],
+                        if (MediaQuery.sizeOf(context).width > 640) ...<Widget>[
+                          const SizedBox(width: AppSpacing.md),
+                          ClipRRect(
+                            borderRadius: AppRadius.lgAll,
+                            child: Image.asset(
+                              AppAssets.illustHeroChild,
+                              width: 120,
+                              height: 120,
+                              fit: BoxFit.cover,
+                              errorBuilder: (_, __, ___) => Container(
+                                width: 120,
+                                height: 120,
+                                decoration: BoxDecoration(
+                                  gradient: LinearGradient(
+                                    colors: <Color>[
+                                      AppColors.softBlue,
+                                      AppColors.softTeal,
+                                    ],
+                                  ),
+                                  borderRadius: AppRadius.lgAll,
                                 ),
-                                borderRadius: AppRadius.lgAll,
-                              ),
-                              child: Icon(
-                                Icons.child_care_rounded,
-                                size: 48,
-                                color: AppColors.brand.withValues(alpha: 0.55),
+                                child: Icon(
+                                  Icons.child_care_rounded,
+                                  size: 48,
+                                  color: AppColors.brand.withValues(alpha: 0.55),
+                                ),
                               ),
                             ),
                           ),
-                        ),
+                        ],
                       ],
                     ),
                   ).animate().fadeIn(duration: AppMotion.fast),
                   const SizedBox(height: AppSpacing.xl),
-                  const BrandSectionHeader(title: 'Visão geral'),
+                  // ---- KPIs ----
                   LayoutBuilder(
                     builder: (BuildContext context, BoxConstraints c) {
-                      final int pendingDrafts = patients
-                          .where((PatientSummary p) => p.hasOpenDraft)
-                          .length;
                       final List<Widget> kpis = <Widget>[
-                        _KpiCard(
+                        PremiumKpiCard(
                           value: '${patients.length}',
                           label: 'Pacientes ativos',
                           icon: Icons.groups_rounded,
                           color: AppColors.teal,
+                          helper: 'Carteira vinculada',
                           onTap: () => context.go(Routes.patientsPath),
                         ),
-                        _KpiCard(
+                        PremiumKpiCard(
                           value: '${today.length}',
                           label: 'Consultas hoje',
                           icon: Icons.today_rounded,
                           color: AppColors.brand,
+                          helper: today.isEmpty
+                              ? 'Nenhuma no momento'
+                              : 'Agenda do dia',
                           onTap: () => context.go(Routes.agendaPath),
                         ),
-                        _KpiCard(
+                        PremiumKpiCard(
                           value: '$monthConsults',
-                          label: 'Consultas no mês',
+                          label: 'Consultas no mes',
                           icon: Icons.event_available_rounded,
                           color: AppColors.moduleLibrary,
+                          helper: 'Desde ${now.day}/${now.month}',
                           onTap: () => context.go(Routes.agendaPath),
                         ),
-                        _KpiCard(
-                          value: pendingDrafts > 0 ? '$pendingDrafts' : '—',
-                          label: 'Vacinas / pendências',
+                        PremiumKpiCard(
+                          value: pendingDrafts > 0 ? '$pendingDrafts' : '0',
+                          label: 'Vacinas / pendencias',
                           icon: Icons.vaccines_outlined,
                           color: AppColors.raspberry,
+                          trendLabel: pendingDrafts > 0 ? 'Atencao' : null,
+                          trendPositive: false,
+                          helper: 'Rascunhos e follow-ups',
                           onTap: () => context.push(Routes.childrenPath),
                         ),
                       ];
-                      if (c.maxWidth > 640) {
+                      if (c.maxWidth > 900) {
                         return Row(
                           children: kpis
                               .map(
@@ -242,7 +291,7 @@ class _ProfessionalHome extends ConsumerWidget {
                               .toList(),
                         );
                       }
-                      if (c.maxWidth > 420) {
+                      if (c.maxWidth > 520) {
                         return Column(
                           children: <Widget>[
                             Row(
@@ -278,182 +327,197 @@ class _ProfessionalHome extends ConsumerWidget {
                     },
                   ),
                   const SizedBox(height: AppSpacing.xl),
+                  // ---- Acesso rapido (5 cards das refs) ----
                   BrandSectionHeader(
-                    title: 'Acesso rápido',
-                    actionLabel: 'Ver todos →',
+                    title: 'Acesso rapido',
+                    actionLabel: 'Consultorio ?',
                     onAction: () => context.push(Routes.clinicPath),
                   ),
-                  QuickAccessCard(
-                    label: 'Consultório 360',
-                    subtitle: 'Painel do dia, recepção e KPIs',
-                    icon: Icons.local_hospital_rounded,
-                    color: AppColors.brand,
-                    wide: true,
-                    onTap: () => context.push(Routes.clinicPath),
-                  ),
                   const SizedBox(height: AppSpacing.sm),
-                  QuickAccessCard(
-                    label: 'Iniciar consulta com IA',
-                    subtitle: 'Gravação, rascunho e revisão médica',
-                    icon: Icons.mic_rounded,
-                    color: AppColors.raspberry,
-                    wide: true,
-                    onTap: () => context.push(Routes.clinicVoicePath),
-                  ),
-                  const SizedBox(height: AppSpacing.sm),
-                  QuickAccessCard(
-                    label: 'Suplementacao Pediatrica',
-                    subtitle: 'Micronutrientes, exames, calculadoras e Rx',
-                    icon: Icons.science_outlined,
-                    color: AppColors.tealDeep,
-                    wide: true,
-                    onTap: () => context.push(Routes.supplementPath),
-                  ),
-                  const SizedBox(height: AppSpacing.sm),
-                  QuickAccessCard(
-                    label: 'Pacientes',
-                    subtitle: 'Carteira e acompanhamento clínico',
-                    icon: Icons.groups_rounded,
-                    color: AppColors.teal,
-                    wide: true,
-                    onTap: () => context.go(Routes.patientsPath),
-                  ),
-                  const SizedBox(height: AppSpacing.sm),
-                  QuickAccessCard(
-                    label: 'Prontuário',
-                    subtitle: 'Histórico, evoluções e documentos',
-                    icon: Icons.folder_shared_outlined,
-                    color: AppColors.moduleLibrary,
-                    wide: true,
-                    onTap: () => context.go(Routes.patientsPath),
-                  ),
-                  const SizedBox(height: AppSpacing.sm),
-                  QuickAccessCard(
-                    label: 'Vacinas',
-                    subtitle: 'Calendário e doses pendentes',
-                    icon: Icons.vaccines_outlined,
-                    color: AppColors.raspberry,
-                    wide: true,
-                    onTap: () => context.push(Routes.childrenPath),
-                  ),
-                  const SizedBox(height: AppSpacing.sm),
-                  QuickAccessCard(
-                    label: 'Agenda',
-                    subtitle: 'Consultas e retornos do dia',
-                    icon: Icons.calendar_month_rounded,
-                    color: AppColors.moduleAgenda,
-                    wide: true,
-                    onTap: () => context.go(Routes.agendaPath),
-                  ),
-                  const SizedBox(height: AppSpacing.sm),
-                  QuickAccessCard(
-                    label: 'Telemedicina',
-                    subtitle: 'Atendimento remoto seguro',
-                    icon: Icons.videocam_outlined,
-                    color: AppColors.moduleTelemedicine,
-                    wide: true,
-                    onTap: () => context.push(Routes.telemedicinePath),
+                  LayoutBuilder(
+                    builder: (BuildContext context, BoxConstraints c) {
+                      final List<_QuickItem> items = <_QuickItem>[
+                        _QuickItem(
+                          'Pacientes',
+                          'Carteira clinica',
+                          Icons.groups_rounded,
+                          AppColors.brand,
+                          () => context.go(Routes.patientsPath),
+                        ),
+                        _QuickItem(
+                          'Prontuario',
+                          'Evolucoes e docs',
+                          Icons.folder_shared_outlined,
+                          AppColors.moduleLibrary,
+                          () => context.go(Routes.patientsPath),
+                        ),
+                        _QuickItem(
+                          'Vacinas',
+                          'Caderneta digital',
+                          Icons.vaccines_outlined,
+                          AppColors.teal,
+                          () => context.push(Routes.childrenPath),
+                        ),
+                        _QuickItem(
+                          'Agenda',
+                          'Consultas do dia',
+                          Icons.calendar_month_rounded,
+                          AppColors.moduleAgenda,
+                          () => context.go(Routes.agendaPath),
+                        ),
+                        _QuickItem(
+                          'Telemedicina',
+                          'Atendimento remoto',
+                          Icons.videocam_outlined,
+                          AppColors.moduleTelemedicine,
+                          () => context.push(Routes.telemedicinePath),
+                        ),
+                      ];
+                      final int cols = c.maxWidth > 900
+                          ? 5
+                          : (c.maxWidth > 600 ? 3 : 2);
+                      return GridView.builder(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        itemCount: items.length,
+                        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: cols,
+                          mainAxisSpacing: AppSpacing.sm,
+                          crossAxisSpacing: AppSpacing.sm,
+                          childAspectRatio: cols >= 5 ? 1.15 : 1.25,
+                        ),
+                        itemBuilder: (BuildContext context, int i) {
+                          final _QuickItem item = items[i];
+                          return PremiumQuickTile(
+                            label: item.label,
+                            subtitle: item.subtitle,
+                            icon: item.icon,
+                            color: item.color,
+                            onTap: item.onTap,
+                          );
+                        },
+                      );
+                    },
                   ),
                   const SizedBox(height: AppSpacing.xl),
+                  // ---- Agenda + Atencao ----
+                  if (isWide)
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: <Widget>[
+                        Expanded(
+                          flex: 3,
+                          child: _TodayAgendaBlock(today: today),
+                        ),
+                        const SizedBox(width: AppSpacing.md),
+                        Expanded(
+                          flex: 2,
+                          child: _AttentionBlock(
+                            unread: unread,
+                            pendingDrafts: pendingDrafts,
+                            patients: patients,
+                          ),
+                        ),
+                      ],
+                    )
+                  else ...<Widget>[
+                    _TodayAgendaBlock(today: today),
+                    const SizedBox(height: AppSpacing.xl),
+                    _AttentionBlock(
+                      unread: unread,
+                      pendingDrafts: pendingDrafts,
+                      patients: patients,
+                    ),
+                  ],
+                  const SizedBox(height: AppSpacing.xl),
+                  // ---- Pacientes recentes + dica ----
                   BrandSectionHeader(
-                    title: 'Agenda de hoje',
-                    actionLabel: 'Ver agenda →',
-                    onAction: () => context.go(Routes.agendaPath),
+                    title: 'Pacientes recentes',
+                    actionLabel: 'Ver todos ?',
+                    onAction: () => context.go(Routes.patientsPath),
                   ),
-                  if (today.isEmpty)
-                    AppCard(
-                      child: Row(
-                        children: <Widget>[
-                          Container(
-                            width: 44,
-                            height: 44,
-                            decoration: BoxDecoration(
-                              color: AppColors.softTeal,
-                              borderRadius: AppRadius.mdAll,
-                            ),
-                            child: const Icon(
-                              Icons.event_available_outlined,
-                              color: AppColors.tealDeep,
-                            ),
-                          ),
-                          const SizedBox(width: AppSpacing.md),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: <Widget>[
-                                Text(
-                                  'Agenda livre para hoje',
-                                  style: theme.textTheme.titleSmall?.copyWith(
-                                    color: AppColors.navy,
-                                    fontWeight: FontWeight.w800,
-                                  ),
-                                ),
-                                Text(
-                                  'Quando houver consultas, elas aparecem aqui.',
-                                  style: theme.textTheme.bodySmall?.copyWith(
-                                    color: AppColors.inkMuted,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
+                  const SizedBox(height: AppSpacing.sm),
+                  if (patients.isEmpty)
+                    const AppCard(
+                      child: Text(
+                        'Nenhum paciente na carteira ainda. '
+                        'Cadastre ou vincule um paciente para comecar.',
                       ),
                     )
                   else
-                    ...today.take(5).map(
-                          (Appointment a) => Padding(
+                    ...patients.take(5).map(
+                          (PatientSummary p) => Padding(
                             padding: const EdgeInsets.only(
                               bottom: AppSpacing.sm,
                             ),
-                            child: _AgendaRow(appointment: a),
+                            child: AppCard(
+                              onTap: () {
+                                Navigator.of(context).push(
+                                  MaterialPageRoute<void>(
+                                    builder: (_) => PatientTimelineScreen(
+                                      patientId: p.patientId,
+                                      patientName: p.name,
+                                    ),
+                                  ),
+                                );
+                              },
+                              padding: const EdgeInsets.all(AppSpacing.md),
+                              child: Row(
+                                children: <Widget>[
+                                  CircleAvatar(
+                                    backgroundColor: AppColors.softBlue,
+                                    child: Text(
+                                      p.name.isNotEmpty
+                                          ? p.name[0].toUpperCase()
+                                          : 'P',
+                                      style: const TextStyle(
+                                        color: AppColors.brand,
+                                        fontWeight: FontWeight.w800,
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: AppSpacing.md),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: <Widget>[
+                                        Text(
+                                          p.name,
+                                          style: theme.textTheme.titleSmall
+                                              ?.copyWith(
+                                            color: AppColors.navy,
+                                            fontWeight: FontWeight.w800,
+                                          ),
+                                        ),
+                                        Text(
+                                          p.hasOpenDraft
+                                              ? 'Rascunho em aberto'
+                                              : 'Acompanhamento',
+                                          style: theme.textTheme.bodySmall
+                                              ?.copyWith(
+                                            color: AppColors.inkMuted,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  const Icon(
+                                    Icons.chevron_right_rounded,
+                                    color: AppColors.inkMuted,
+                                  ),
+                                ],
+                              ),
+                            ),
                           ),
                         ),
-                  if (today.isNotEmpty)
-                    Align(
-                      alignment: Alignment.centerLeft,
-                      child: TextButton(
-                        onPressed: () => context.go(Routes.agendaPath),
-                        child: const Text('Ver todos os atendimentos'),
-                      ),
-                    ),
-                  const SizedBox(height: AppSpacing.xl),
-                  const BrandSectionHeader(title: 'Atenção necessária'),
-                  _AttentionCard(
-                    icon: Icons.edit_note_rounded,
-                    color: AppColors.warning,
-                    title: 'Atendimentos pendentes',
-                    message: patients.any((PatientSummary p) => p.hasOpenDraft)
-                        ? '${patients.where((PatientSummary p) => p.hasOpenDraft).length} rascunho(s) aguardando conclusão'
-                        : 'Nenhum rascunho aberto no momento',
-                    onTap: () => context.go(Routes.patientsPath),
-                  ),
-                  const SizedBox(height: AppSpacing.sm),
-                  _AttentionCard(
-                    icon: Icons.chat_bubble_outline_rounded,
-                    color: AppColors.brand,
-                    title: 'Mensagens',
-                    message: unread > 0
-                        ? '$unread mensagem(ns) não lida(s)'
-                        : 'Caixa em dia — sem mensagens novas',
-                    onTap: () => context.go(Routes.notificationsPath),
-                  ),
-                  const SizedBox(height: AppSpacing.sm),
-                  _AttentionCard(
-                    icon: Icons.vaccines_outlined,
-                    color: AppColors.raspberry,
-                    title: 'Vacinas e retornos',
-                    message:
-                        'Revise o calendário vacinal e retornos programados',
-                    onTap: () => context.push(Routes.childrenPath),
-                  ),
                   const SizedBox(height: AppSpacing.lg),
                   TipBanner(
                     title: 'Dica do dia',
                     body:
-                        'Revise o calendário vacinal nas consultas de rotina — '
-                        'prevenção é o melhor acompanhamento.',
-                    icon: Icons.shield_outlined,
+                        'Na puericultura, revise vacinas e marcos do '
+                        'desenvolvimento em toda consulta de rotina.',
+                    icon: Icons.lightbulb_outline_rounded,
                     trailing: Image.asset(
                       AppAssets.illustTeddyTip,
                       width: 56,
@@ -476,140 +540,204 @@ class _ProfessionalHome extends ConsumerWidget {
   }
 }
 
-class _KpiCard extends StatelessWidget {
-  const _KpiCard({
-    required this.value,
-    required this.label,
-    required this.icon,
-    required this.color,
+class _QuickItem {
+  const _QuickItem(
+    this.label,
+    this.subtitle,
+    this.icon,
+    this.color,
     this.onTap,
-  });
-
-  final String value;
+  );
   final String label;
+  final String subtitle;
   final IconData icon;
   final Color color;
-  final VoidCallback? onTap;
+  final VoidCallback onTap;
+}
+
+class _TodayAgendaBlock extends StatelessWidget {
+  const _TodayAgendaBlock({required this.today});
+
+  final List<Appointment> today;
 
   @override
   Widget build(BuildContext context) {
     final ThemeData theme = Theme.of(context);
-    return AppCard(
-      onTap: onTap,
-      padding: const EdgeInsets.all(AppSpacing.md),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: <Widget>[
-          Container(
-            width: 36,
-            height: 36,
-            decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.12),
-              borderRadius: AppRadius.smAll,
-            ),
-            child: Icon(icon, color: color, size: 20),
-          ),
-          const SizedBox(height: AppSpacing.md),
-          Text(
-            value,
-            style: theme.textTheme.headlineSmall?.copyWith(
-              color: AppColors.navy,
-              fontWeight: FontWeight.w800,
-              height: 1,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            label,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-            style: theme.textTheme.bodySmall?.copyWith(
-              color: AppColors.inkMuted,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-        ],
-      ),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        BrandSectionHeader(
+          title: 'Agenda de hoje',
+          actionLabel: 'Ver agenda ?',
+          onAction: () => context.go(Routes.agendaPath),
+        ),
+        const SizedBox(height: AppSpacing.sm),
+        AppCard(
+          padding: const EdgeInsets.all(20),
+          child: today.isEmpty
+              ? Row(
+                  children: <Widget>[
+                    Container(
+                      width: 44,
+                      height: 44,
+                      decoration: BoxDecoration(
+                        color: AppColors.softTeal,
+                        borderRadius: AppRadius.mdAll,
+                      ),
+                      child: const Icon(
+                        Icons.event_available_outlined,
+                        color: AppColors.tealDeep,
+                      ),
+                    ),
+                    const SizedBox(width: AppSpacing.md),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: <Widget>[
+                          Text(
+                            'Agenda livre para hoje',
+                            style: theme.textTheme.titleSmall?.copyWith(
+                              color: AppColors.navy,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                          Text(
+                            'Quando houver consultas, elas aparecem aqui.',
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: AppColors.inkMuted,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                )
+              : Column(
+                  children: <Widget>[
+                    for (int i = 0; i < today.take(6).length; i++) ...<Widget>[
+                      if (i > 0) const SizedBox(height: AppSpacing.sm),
+                      _AgendaTimelineRow(
+                        appointment: today[i],
+                        isLast: i == today.take(6).length - 1,
+                      ),
+                    ],
+                  ],
+                ),
+        ),
+      ],
     );
   }
 }
 
-class _AttentionCard extends StatelessWidget {
-  const _AttentionCard({
-    required this.icon,
-    required this.color,
-    required this.title,
-    required this.message,
-    required this.onTap,
+class _AttentionBlock extends StatelessWidget {
+  const _AttentionBlock({
+    required this.unread,
+    required this.pendingDrafts,
+    required this.patients,
   });
 
-  final IconData icon;
-  final Color color;
-  final String title;
-  final String message;
-  final VoidCallback onTap;
+  final int unread;
+  final int pendingDrafts;
+  final List<PatientSummary> patients;
 
   @override
   Widget build(BuildContext context) {
-    final ThemeData theme = Theme.of(context);
-    return AppCard(
-      onTap: onTap,
-      padding: const EdgeInsets.all(AppSpacing.md),
-      child: Row(
-        children: <Widget>[
-          Container(
-            width: 44,
-            height: 44,
-            decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.12),
-              borderRadius: AppRadius.mdAll,
-            ),
-            child: Icon(icon, color: color, size: 22),
-          ),
-          const SizedBox(width: AppSpacing.md),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: <Widget>[
-                Text(
-                  title,
-                  style: theme.textTheme.titleSmall?.copyWith(
-                    color: AppColors.navy,
-                    fontWeight: FontWeight.w800,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        const BrandSectionHeader(title: 'Atencao necessaria'),
+        const SizedBox(height: AppSpacing.sm),
+        AppCard(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            children: <Widget>[
+              PremiumAttentionRow(
+                icon: Icons.vaccines_outlined,
+                color: AppColors.danger,
+                title: 'Vacinas e caderneta',
+                subtitle: 'Revise doses pendentes e atrasos',
+                count: null,
+                actionLabel: 'Revisar',
+                onTap: () => context.push(Routes.childrenPath),
+              ),
+              const SizedBox(height: AppSpacing.sm),
+              PremiumAttentionRow(
+                icon: Icons.chat_bubble_outline_rounded,
+                color: AppColors.brand,
+                title: 'Mensagens nao respondidas',
+                subtitle: unread > 0
+                    ? 'Ha comunicacoes aguardando leitura'
+                    : 'Caixa em dia',
+                count: unread > 0 ? unread : null,
+                actionLabel: 'Responder',
+                onTap: () => context.go(Routes.notificationsPath),
+              ),
+              const SizedBox(height: AppSpacing.sm),
+              PremiumAttentionRow(
+                icon: Icons.edit_note_rounded,
+                color: AppColors.warning,
+                title: 'Retornos / rascunhos',
+                subtitle: pendingDrafts > 0
+                    ? '$pendingDrafts atendimento(s) pendente(s)'
+                    : 'Nenhum rascunho aberto',
+                count: pendingDrafts > 0 ? pendingDrafts : null,
+                actionLabel: 'Ver lista',
+                onTap: () => context.go(Routes.patientsPath),
+              ),
+              const SizedBox(height: AppSpacing.sm),
+              PremiumAttentionRow(
+                icon: Icons.biotech_outlined,
+                color: AppColors.moduleLibrary,
+                title: 'Exames e suplementacao',
+                subtitle: 'Central clinica de exames e micronutrientes',
+                actionLabel: 'Abrir',
+                onTap: () => context.push(Routes.supplementPath),
+              ),
+              if (unread == 0 && pendingDrafts == 0) ...<Widget>[
+                const SizedBox(height: AppSpacing.md),
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(AppSpacing.md),
+                  decoration: BoxDecoration(
+                    color: AppColors.softTeal,
+                    borderRadius: AppRadius.lgAll,
                   ),
-                ),
-                Text(
-                  message,
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: AppColors.inkMuted,
+                  child: Row(
+                    children: <Widget>[
+                      const Icon(
+                        Icons.check_circle_rounded,
+                        color: AppColors.tealDeep,
+                      ),
+                      const SizedBox(width: AppSpacing.sm),
+                      Expanded(
+                        child: Text(
+                          'Tudo em dia por aqui!',
+                          style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                                color: AppColors.tealDeep,
+                                fontWeight: FontWeight.w800,
+                              ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ],
-            ),
+            ],
           ),
-          Icon(
-            Icons.chevron_right_rounded,
-            color: AppColors.inkMuted.withValues(alpha: 0.8),
-          ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }
 
-class _AgendaRow extends StatelessWidget {
-  const _AgendaRow({required this.appointment});
+class _AgendaTimelineRow extends StatelessWidget {
+  const _AgendaTimelineRow({
+    required this.appointment,
+    required this.isLast,
+  });
 
   final Appointment appointment;
-
-  Color _timeColor(int index) {
-    const List<Color> palette = <Color>[
-      AppColors.teal,
-      AppColors.moduleLibrary,
-      AppColors.raspberry,
-    ];
-    return palette[appointment.startsAt.hour % palette.length];
-  }
+  final bool isLast;
 
   @override
   Widget build(BuildContext context) {
@@ -617,14 +745,10 @@ class _AgendaRow extends StatelessWidget {
     final String name = appointment.childName?.trim().isNotEmpty == true
         ? appointment.childName!
         : 'Paciente';
-    final Color accent = _timeColor(0);
     final String status = appointment.status.label;
 
-    return AppCard(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.md,
-        vertical: AppSpacing.md,
-      ),
+    return InkWell(
+      borderRadius: AppRadius.mdAll,
       onTap: () {
         Navigator.of(context).push(
           MaterialPageRoute<void>(
@@ -636,46 +760,84 @@ class _AgendaRow extends StatelessWidget {
         );
       },
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-            decoration: BoxDecoration(
-              color: accent.withValues(alpha: 0.12),
-              borderRadius: AppRadius.mdAll,
-            ),
+          SizedBox(
+            width: 52,
             child: Text(
               Formatters.time(appointment.startsAt),
               style: theme.textTheme.labelLarge?.copyWith(
-                color: accent,
+                color: AppColors.brand,
                 fontWeight: FontWeight.w800,
               ),
             ),
           ),
+          Column(
+            children: <Widget>[
+              Container(
+                width: 10,
+                height: 10,
+                decoration: const BoxDecoration(
+                  color: AppColors.brand,
+                  shape: BoxShape.circle,
+                ),
+              ),
+              if (!isLast)
+                Container(
+                  width: 2,
+                  height: 48,
+                  color: AppColors.line,
+                ),
+            ],
+          ),
           const SizedBox(width: AppSpacing.md),
           Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: <Widget>[
-                Text(
-                  name,
-                  style: theme.textTheme.titleSmall?.copyWith(
-                    color: AppColors.navy,
-                    fontWeight: FontWeight.w800,
+            child: Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: Row(
+                children: <Widget>[
+                  CircleAvatar(
+                    radius: 18,
+                    backgroundColor: AppColors.softBlue,
+                    child: Text(
+                      name.isNotEmpty ? name[0].toUpperCase() : 'P',
+                      style: const TextStyle(
+                        color: AppColors.brand,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
                   ),
-                ),
-                Text(
-                  '${appointment.type.label}'
-                  '${(appointment.reason ?? '').isEmpty ? '' : ' • ${appointment.reason}'}',
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: AppColors.inkMuted,
+                  const SizedBox(width: AppSpacing.sm),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: <Widget>[
+                        Text(
+                          name,
+                          style: theme.textTheme.titleSmall?.copyWith(
+                            color: AppColors.navy,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                        Text(
+                          appointment.type.label +
+                              ((appointment.reason ?? '').isEmpty
+                                  ? ''
+                                  : ' ? ${appointment.reason}'),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: AppColors.inkMuted,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-              ],
+                  StatusChip.fromStatusLabel(status),
+                ],
+              ),
             ),
           ),
-          StatusChip.fromStatusLabel(status),
         ],
       ),
     );

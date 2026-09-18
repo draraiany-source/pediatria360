@@ -10,11 +10,13 @@ import '../../../../core/responsive/responsive.dart';
 import '../../../../core/router/routes.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_tokens.dart';
+import '../../../../core/widgets/premium_chrome.dart';
 import '../../../../core/widgets/state_views.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
+import '../../../notifications/presentation/notification_center_screen.dart';
 import '../../../../shared/domain/entities/app_user.dart';
 
-/// Destino da navegação principal.
+/// Destino da navegacao principal.
 class _Destination {
   const _Destination({
     required this.route,
@@ -22,6 +24,7 @@ class _Destination {
     required this.icon,
     required this.selectedIcon,
     this.professionalOnly = false,
+    this.showUnreadBadge = false,
   });
 
   final String route;
@@ -29,21 +32,22 @@ class _Destination {
   final IconData icon;
   final IconData selectedIcon;
   final bool professionalOnly;
+  final bool showUnreadBadge;
 }
 
-/// Profissional: Início → Consultório → Agenda → Mensagens → Perfil
-const List<_Destination> _professionalDestinations = <_Destination>[
+/// Bottom / rail ? itens essenciais (mobile + tablet).
+const List<_Destination> _professionalPrimary = <_Destination>[
   _Destination(
     route: Routes.homePath,
-    label: 'Início',
+    label: 'Inicio',
     icon: Icons.home_outlined,
     selectedIcon: Icons.home_rounded,
   ),
   _Destination(
-    route: Routes.clinicPath,
-    label: 'Consultório',
-    icon: Icons.local_hospital_outlined,
-    selectedIcon: Icons.local_hospital_rounded,
+    route: Routes.patientsPath,
+    label: 'Pacientes',
+    icon: Icons.groups_outlined,
+    selectedIcon: Icons.groups_rounded,
     professionalOnly: true,
   ),
   _Destination(
@@ -58,6 +62,83 @@ const List<_Destination> _professionalDestinations = <_Destination>[
     label: 'Mensagens',
     icon: Icons.chat_bubble_outline_rounded,
     selectedIcon: Icons.chat_bubble_rounded,
+    showUnreadBadge: true,
+  ),
+  _Destination(
+    route: Routes.profilePath,
+    label: 'Perfil',
+    icon: Icons.person_outline_rounded,
+    selectedIcon: Icons.person_rounded,
+  ),
+];
+
+/// Sidebar desktop ? menu completo das referencias.
+const List<_Destination> _professionalSidebar = <_Destination>[
+  _Destination(
+    route: Routes.homePath,
+    label: 'Inicio',
+    icon: Icons.home_outlined,
+    selectedIcon: Icons.home_rounded,
+  ),
+  _Destination(
+    route: Routes.patientsPath,
+    label: 'Pacientes',
+    icon: Icons.groups_outlined,
+    selectedIcon: Icons.groups_rounded,
+    professionalOnly: true,
+  ),
+  _Destination(
+    route: Routes.agendaPath,
+    label: 'Agenda',
+    icon: Icons.calendar_month_outlined,
+    selectedIcon: Icons.calendar_month_rounded,
+    professionalOnly: true,
+  ),
+  _Destination(
+    route: Routes.notificationsPath,
+    label: 'Mensagens',
+    icon: Icons.chat_bubble_outline_rounded,
+    selectedIcon: Icons.chat_bubble_rounded,
+    showUnreadBadge: true,
+  ),
+  _Destination(
+    route: Routes.patientsPath,
+    label: 'Prontuario',
+    icon: Icons.folder_shared_outlined,
+    selectedIcon: Icons.folder_shared_rounded,
+    professionalOnly: true,
+  ),
+  _Destination(
+    route: Routes.childrenPath,
+    label: 'Vacinas',
+    icon: Icons.vaccines_outlined,
+    selectedIcon: Icons.vaccines_rounded,
+  ),
+  _Destination(
+    route: Routes.telemedicinePath,
+    label: 'Telemedicina',
+    icon: Icons.videocam_outlined,
+    selectedIcon: Icons.videocam_rounded,
+  ),
+  _Destination(
+    route: Routes.libraryPath,
+    label: 'Biblioteca',
+    icon: Icons.menu_book_outlined,
+    selectedIcon: Icons.menu_book_rounded,
+  ),
+  _Destination(
+    route: Routes.clinicPath,
+    label: 'Consultorio',
+    icon: Icons.local_hospital_outlined,
+    selectedIcon: Icons.local_hospital_rounded,
+    professionalOnly: true,
+  ),
+  _Destination(
+    route: Routes.supplementPath,
+    label: 'Suplementacao',
+    icon: Icons.science_outlined,
+    selectedIcon: Icons.science_rounded,
+    professionalOnly: true,
   ),
   _Destination(
     route: Routes.profilePath,
@@ -70,13 +151,13 @@ const List<_Destination> _professionalDestinations = <_Destination>[
 const List<_Destination> _familyDestinations = <_Destination>[
   _Destination(
     route: Routes.homePath,
-    label: 'Início',
+    label: 'Inicio',
     icon: Icons.home_outlined,
     selectedIcon: Icons.home_rounded,
   ),
   _Destination(
     route: Routes.libraryPath,
-    label: 'Conteúdos',
+    label: 'Conteudos',
     icon: Icons.menu_book_outlined,
     selectedIcon: Icons.menu_book_rounded,
   ),
@@ -91,6 +172,7 @@ const List<_Destination> _familyDestinations = <_Destination>[
     label: 'Mensagens',
     icon: Icons.chat_bubble_outline_rounded,
     selectedIcon: Icons.chat_bubble_rounded,
+    showUnreadBadge: true,
   ),
   _Destination(
     route: Routes.profilePath,
@@ -100,30 +182,37 @@ const List<_Destination> _familyDestinations = <_Destination>[
   ),
 ];
 
-/// Casca do app autenticado — navegação por papel.
+/// Casca do app autenticado ? navegacao por papel.
 class AppShell extends ConsumerWidget {
   const AppShell({required this.child, required this.location, super.key});
 
   final Widget child;
   final String location;
 
-  List<_Destination> _visibleFor(AppUser? user) {
+  List<_Destination> _primaryFor(AppUser? user) {
     final bool isPro = user?.role.isProfessional ?? false;
-    final List<_Destination> base = isPro
-        ? _professionalDestinations
-        : _familyDestinations;
+    final List<_Destination> base =
+        isPro ? _professionalPrimary : _familyDestinations;
     return base
         .where((_Destination d) => !d.professionalOnly || isPro)
         .toList(growable: false);
   }
 
+  List<_Destination> _sidebarFor(AppUser? user) {
+    final bool isPro = user?.role.isProfessional ?? false;
+    if (!isPro) return _primaryFor(user);
+    return _professionalSidebar
+        .where((_Destination d) => !d.professionalOnly || isPro)
+        .toList(growable: false);
+  }
+
   int _indexFor(List<_Destination> destinations) {
-    // Match mais específico primeiro (evita /inicio engolir tudo).
     int best = 0;
     int bestLen = -1;
     for (int i = 0; i < destinations.length; i++) {
       final String route = destinations[i].route;
       if (location == route || location.startsWith('$route/')) {
+        // Prefer exact / longer matches; avoid Inicio swallowing everything.
         if (route.length > bestLen) {
           best = i;
           bestLen = route.length;
@@ -144,8 +233,11 @@ class AppShell extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final AppUser? user = ref.watch(currentUserProvider);
-    final List<_Destination> destinations = _visibleFor(user);
-    final int index = _indexFor(destinations);
+    final List<_Destination> primary = _primaryFor(user);
+    final List<_Destination> sidebar = _sidebarFor(user);
+    final int primaryIndex = _indexFor(primary);
+    final int sidebarIndex = _indexFor(sidebar);
+    final int unread = ref.watch(unreadCountProvider);
 
     final bool isOnline = ref.watch(isOnlineProvider);
     final int pending = ref.watch(pendingSyncCountProvider);
@@ -162,101 +254,152 @@ class AppShell extends ConsumerWidget {
 
     return switch (context.screenSize) {
       ScreenSize.compact => Scaffold(
-        body: content,
-        bottomNavigationBar: NavigationBar(
-          selectedIndex: index.clamp(0, destinations.length - 1),
-          onDestinationSelected: (int i) => _go(context, destinations[i]),
-          backgroundColor: Colors.white,
-          indicatorColor: AppColors.softBlue,
-          destinations: destinations
-              .map(
-                (_Destination d) => NavigationDestination(
-                  icon: Icon(d.icon, color: AppColors.inkMuted),
-                  selectedIcon: Icon(d.selectedIcon, color: AppColors.brand),
-                  label: d.label,
-                ),
-              )
-              .toList(),
-        ),
-      ),
-      ScreenSize.medium || ScreenSize.expanded => Scaffold(
-        body: Row(
-          children: <Widget>[
-            NavigationRail(
-              selectedIndex: index.clamp(0, destinations.length - 1),
-              onDestinationSelected: (int i) => _go(context, destinations[i]),
-              labelType: NavigationRailLabelType.all,
-              backgroundColor: Colors.white,
-              indicatorColor: AppColors.softBlue,
-              selectedIconTheme: const IconThemeData(
-                color: AppColors.brand,
-                size: 24,
-              ),
-              unselectedIconTheme: const IconThemeData(
-                color: AppColors.inkMuted,
-                size: 22,
-              ),
-              selectedLabelTextStyle: const TextStyle(
-                color: AppColors.brand,
-                fontWeight: FontWeight.w800,
-                fontSize: 12,
-              ),
-              unselectedLabelTextStyle: const TextStyle(
-                color: AppColors.inkMuted,
-                fontWeight: FontWeight.w600,
-                fontSize: 12,
-              ),
-              destinations: destinations
-                  .map(
-                    (_Destination d) => NavigationRailDestination(
-                      icon: Icon(d.icon),
-                      selectedIcon: Icon(d.selectedIcon),
-                      label: Text(d.label),
+          body: content,
+          bottomNavigationBar: NavigationBar(
+            selectedIndex: primaryIndex.clamp(0, primary.length - 1),
+            onDestinationSelected: (int i) => _go(context, primary[i]),
+            backgroundColor: Colors.white,
+            indicatorColor: AppColors.softBlue,
+            destinations: primary
+                .map(
+                  (_Destination d) => NavigationDestination(
+                    icon: _NavIcon(
+                      icon: d.icon,
+                      selected: false,
+                      badge: d.showUnreadBadge ? unread : 0,
                     ),
-                  )
-                  .toList(),
-            ),
-            const VerticalDivider(width: 1, color: AppColors.line),
-            Expanded(child: content),
-          ],
+                    selectedIcon: _NavIcon(
+                      icon: d.selectedIcon,
+                      selected: true,
+                      badge: d.showUnreadBadge ? unread : 0,
+                    ),
+                    label: d.label,
+                  ),
+                )
+                .toList(),
+          ),
         ),
-      ),
+      ScreenSize.medium || ScreenSize.expanded => Scaffold(
+          body: Column(
+            children: <Widget>[
+              PremiumTopBar(notificationCount: unread),
+              Expanded(
+                child: Row(
+                  children: <Widget>[
+                    NavigationRail(
+                      selectedIndex: primaryIndex.clamp(0, primary.length - 1),
+                      onDestinationSelected: (int i) =>
+                          _go(context, primary[i]),
+                      labelType: NavigationRailLabelType.all,
+                      backgroundColor: Colors.white,
+                      indicatorColor: AppColors.softBlue,
+                      selectedIconTheme: const IconThemeData(
+                        color: AppColors.brand,
+                        size: 24,
+                      ),
+                      unselectedIconTheme: const IconThemeData(
+                        color: AppColors.inkMuted,
+                        size: 22,
+                      ),
+                      selectedLabelTextStyle: const TextStyle(
+                        color: AppColors.brand,
+                        fontWeight: FontWeight.w800,
+                        fontSize: 12,
+                      ),
+                      unselectedLabelTextStyle: const TextStyle(
+                        color: AppColors.inkMuted,
+                        fontWeight: FontWeight.w600,
+                        fontSize: 12,
+                      ),
+                      destinations: primary
+                          .map(
+                            (_Destination d) => NavigationRailDestination(
+                              icon: Icon(d.icon),
+                              selectedIcon: Icon(d.selectedIcon),
+                              label: Text(d.label),
+                            ),
+                          )
+                          .toList(),
+                    ),
+                    const VerticalDivider(width: 1, color: AppColors.line),
+                    Expanded(child: content),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
       ScreenSize.large => Scaffold(
-        body: Row(
-          children: <Widget>[
-            _Sidebar(
-              destinations: destinations,
-              selectedIndex: index.clamp(0, destinations.length - 1),
-              onSelected: (int i) => _go(context, destinations[i]),
-              user: user,
-            ),
-            Expanded(child: content),
-          ],
+          body: Row(
+            children: <Widget>[
+              _PremiumSidebar(
+                destinations: sidebar,
+                selectedIndex: sidebarIndex.clamp(0, sidebar.length - 1),
+                onSelected: (int i) => _go(context, sidebar[i]),
+                user: user,
+                unread: unread,
+              ),
+              Expanded(
+                child: Column(
+                  children: <Widget>[
+                    PremiumTopBar(notificationCount: unread),
+                    Expanded(child: content),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
-      ),
     };
   }
 }
 
-class _Sidebar extends StatelessWidget {
-  const _Sidebar({
+class _NavIcon extends StatelessWidget {
+  const _NavIcon({
+    required this.icon,
+    required this.selected,
+    required this.badge,
+  });
+
+  final IconData icon;
+  final bool selected;
+  final int badge;
+
+  @override
+  Widget build(BuildContext context) {
+    final Widget child = Icon(
+      icon,
+      color: selected ? AppColors.brand : AppColors.inkMuted,
+    );
+    if (badge <= 0) return child;
+    return Badge(
+      label: Text(badge > 9 ? '9+' : '$badge'),
+      child: child,
+    );
+  }
+}
+
+class _PremiumSidebar extends ConsumerWidget {
+  const _PremiumSidebar({
     required this.destinations,
     required this.selectedIndex,
     required this.onSelected,
     required this.user,
+    required this.unread,
   });
 
   final List<_Destination> destinations;
   final int selectedIndex;
   final ValueChanged<int> onSelected;
   final AppUser? user;
+  final int unread;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final ThemeData theme = Theme.of(context);
 
     return SizedBox(
-      width: 268,
+      width: 272,
       child: Material(
         color: Colors.white,
         child: DecoratedBox(
@@ -272,8 +415,8 @@ class _Sidebar extends StatelessWidget {
                   child: Row(
                     children: <Widget>[
                       Container(
-                        width: 40,
-                        height: 40,
+                        width: 42,
+                        height: 42,
                         decoration: const BoxDecoration(
                           color: AppColors.softBlue,
                           borderRadius: AppRadius.mdAll,
@@ -298,7 +441,7 @@ class _Sidebar extends StatelessWidget {
                               overflow: TextOverflow.ellipsis,
                             ),
                             Text(
-                              'Cuidado integral',
+                              'Cuidando de cada infancia',
                               style: theme.textTheme.labelSmall?.copyWith(
                                 color: AppColors.inkMuted,
                                 fontWeight: FontWeight.w500,
@@ -322,6 +465,8 @@ class _Sidebar extends StatelessWidget {
                     itemBuilder: (BuildContext context, int i) {
                       final _Destination d = destinations[i];
                       final bool selected = i == selectedIndex;
+                      final int badge =
+                          d.showUnreadBadge && unread > 0 ? unread : 0;
                       return Padding(
                         padding: const EdgeInsets.only(bottom: 6),
                         child: Material(
@@ -329,9 +474,6 @@ class _Sidebar extends StatelessWidget {
                           child: InkWell(
                             onTap: () => onSelected(i),
                             borderRadius: AppRadius.lgAll,
-                            hoverColor: AppColors.softBlue.withValues(
-                              alpha: 0.65,
-                            ),
                             child: AnimatedContainer(
                               duration: AppMotion.fast,
                               padding: const EdgeInsets.symmetric(
@@ -340,16 +482,9 @@ class _Sidebar extends StatelessWidget {
                               ),
                               decoration: BoxDecoration(
                                 color: selected
-                                    ? AppColors.softBlue
+                                    ? AppColors.brand
                                     : Colors.transparent,
                                 borderRadius: AppRadius.lgAll,
-                                border: selected
-                                    ? Border.all(
-                                        color: AppColors.brand.withValues(
-                                          alpha: 0.18,
-                                        ),
-                                      )
-                                    : null,
                               ),
                               child: Row(
                                 children: <Widget>[
@@ -357,7 +492,7 @@ class _Sidebar extends StatelessWidget {
                                     selected ? d.selectedIcon : d.icon,
                                     size: 22,
                                     color: selected
-                                        ? AppColors.brand
+                                        ? Colors.white
                                         : AppColors.inkMuted,
                                   ),
                                   const SizedBox(width: 12),
@@ -367,7 +502,7 @@ class _Sidebar extends StatelessWidget {
                                       style: theme.textTheme.titleSmall
                                           ?.copyWith(
                                         color: selected
-                                            ? AppColors.brand
+                                            ? Colors.white
                                             : AppColors.navy,
                                         fontWeight: selected
                                             ? FontWeight.w800
@@ -375,13 +510,27 @@ class _Sidebar extends StatelessWidget {
                                       ),
                                     ),
                                   ),
-                                  if (selected)
+                                  if (badge > 0)
                                     Container(
-                                      width: 6,
-                                      height: 6,
-                                      decoration: const BoxDecoration(
-                                        color: AppColors.brand,
-                                        shape: BoxShape.circle,
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 7,
+                                        vertical: 2,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: selected
+                                            ? Colors.white
+                                            : AppColors.danger,
+                                        borderRadius: AppRadius.pillAll,
+                                      ),
+                                      child: Text(
+                                        badge > 9 ? '9+' : '$badge',
+                                        style: TextStyle(
+                                          color: selected
+                                              ? AppColors.brand
+                                              : Colors.white,
+                                          fontSize: 11,
+                                          fontWeight: FontWeight.w800,
+                                        ),
                                       ),
                                     ),
                                 ],
@@ -395,7 +544,7 @@ class _Sidebar extends StatelessWidget {
                 ),
                 if (user != null)
                   Padding(
-                    padding: const EdgeInsets.fromLTRB(12, 8, 12, 16),
+                    padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
                     child: Container(
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
@@ -430,11 +579,7 @@ class _Sidebar extends StatelessWidget {
                                   overflow: TextOverflow.ellipsis,
                                 ),
                                 Text(
-                                  (user!.specialty ?? '').isNotEmpty
-                                      ? user!.specialty!
-                                      : (user!.role.isProfessional
-                                          ? 'Área profissional'
-                                          : 'Área da família'),
+                                  _subtitleFor(user!),
                                   style: theme.textTheme.bodySmall?.copyWith(
                                     color: AppColors.inkMuted,
                                   ),
@@ -447,11 +592,69 @@ class _Sidebar extends StatelessWidget {
                       ),
                     ),
                   ),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(12, 0, 12, 16),
+                  child: Column(
+                    children: <Widget>[
+                      ListTile(
+                        dense: true,
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                        ),
+                        leading: const Icon(
+                          Icons.settings_outlined,
+                          color: AppColors.inkMuted,
+                        ),
+                        title: Text(
+                          'Configuracoes',
+                          style: theme.textTheme.titleSmall?.copyWith(
+                            color: AppColors.navy,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        onTap: () => context.go(Routes.profilePath),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: AppRadius.lgAll,
+                        ),
+                      ),
+                      ListTile(
+                        dense: true,
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                        ),
+                        leading: const Icon(
+                          Icons.logout_rounded,
+                          color: AppColors.danger,
+                        ),
+                        title: Text(
+                          'Sair',
+                          style: theme.textTheme.titleSmall?.copyWith(
+                            color: AppColors.danger,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        onTap: () =>
+                            ref.read(authControllerProvider.notifier).signOut(),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: AppRadius.lgAll,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ],
             ),
           ),
         ),
       ),
     );
+  }
+
+  String _subtitleFor(AppUser user) {
+    final List<String> parts = <String>[];
+    if ((user.specialty ?? '').isNotEmpty) parts.add(user.specialty!);
+    if ((user.crm ?? '').isNotEmpty) parts.add('CRM ${user.crm}');
+    if (parts.isNotEmpty) return parts.join(' ? ');
+    return user.role.isProfessional ? 'Area profissional' : 'Area da familia';
   }
 }
