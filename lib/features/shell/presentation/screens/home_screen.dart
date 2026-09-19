@@ -10,6 +10,8 @@ import '../../../../core/responsive/responsive.dart';
 import '../../../../core/router/routes.dart';
 import '../../../../core/services/remote_config_service.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_icons.dart';
+import '../../../../core/widgets/app_icon.dart';
 import '../../../../core/theme/app_tokens.dart';
 import '../../../../core/utils/validators.dart';
 import '../../../../core/widgets/brand_ui.dart';
@@ -221,10 +223,10 @@ class _ProfessionalHome extends ConsumerWidget {
                                   ),
                                   borderRadius: AppRadius.lgAll,
                                 ),
-                                child: Icon(
-                                  Icons.child_care_rounded,
-                                  size: 48,
-                                  color: AppColors.brand.withValues(alpha: 0.55),
+                                child: const AppIcon(
+                                  asset: AppIcons.child,
+                                  size: AppIcon.dashboard,
+                                  fallback: Icons.child_care_rounded,
                                 ),
                               ),
                             ),
@@ -242,6 +244,7 @@ class _ProfessionalHome extends ConsumerWidget {
                           value: '${patients.length}',
                           label: 'Pacientes ativos',
                           icon: Icons.groups_rounded,
+                          asset: AppIcons.patients,
                           color: AppColors.teal,
                           helper: 'Carteira vinculada',
                           onTap: () => context.go(Routes.patientsPath),
@@ -250,6 +253,7 @@ class _ProfessionalHome extends ConsumerWidget {
                           value: '${today.length}',
                           label: 'Consultas hoje',
                           icon: Icons.today_rounded,
+                          asset: AppIcons.schedule,
                           color: AppColors.brand,
                           helper: today.isEmpty
                               ? 'Nenhuma no momento'
@@ -260,6 +264,7 @@ class _ProfessionalHome extends ConsumerWidget {
                           value: '$monthConsults',
                           label: 'Consultas no mes',
                           icon: Icons.event_available_rounded,
+                          asset: AppIcons.appointmentConfirmed,
                           color: AppColors.moduleLibrary,
                           helper: 'Desde ${now.day}/${now.month}',
                           onTap: () => context.go(Routes.agendaPath),
@@ -268,6 +273,7 @@ class _ProfessionalHome extends ConsumerWidget {
                           value: pendingDrafts > 0 ? '$pendingDrafts' : '0',
                           label: 'Vacinas / pendencias',
                           icon: Icons.vaccines_outlined,
+                          asset: AppIcons.vaccines,
                           color: AppColors.raspberry,
                           trendLabel: pendingDrafts > 0 ? 'Atencao' : null,
                           trendPositive: false,
@@ -343,6 +349,7 @@ class _ProfessionalHome extends ConsumerWidget {
                           Icons.groups_rounded,
                           AppColors.brand,
                           () => context.go(Routes.patientsPath),
+                          asset: AppIcons.patients,
                         ),
                         _QuickItem(
                           'Prontuario',
@@ -350,6 +357,7 @@ class _ProfessionalHome extends ConsumerWidget {
                           Icons.folder_shared_outlined,
                           AppColors.moduleLibrary,
                           () => context.go(Routes.patientsPath),
+                          asset: AppIcons.medicalRecord,
                         ),
                         _QuickItem(
                           'Vacinas',
@@ -357,6 +365,7 @@ class _ProfessionalHome extends ConsumerWidget {
                           Icons.vaccines_outlined,
                           AppColors.teal,
                           () => context.push(Routes.childrenPath),
+                          asset: AppIcons.vaccines,
                         ),
                         _QuickItem(
                           'Agenda',
@@ -364,6 +373,7 @@ class _ProfessionalHome extends ConsumerWidget {
                           Icons.calendar_month_rounded,
                           AppColors.moduleAgenda,
                           () => context.go(Routes.agendaPath),
+                          asset: AppIcons.schedule,
                         ),
                         _QuickItem(
                           'Telemedicina',
@@ -371,6 +381,7 @@ class _ProfessionalHome extends ConsumerWidget {
                           Icons.videocam_outlined,
                           AppColors.moduleTelemedicine,
                           () => context.push(Routes.telemedicinePath),
+                          asset: AppIcons.telemedicine,
                         ),
                       ];
                       final int cols = c.maxWidth > 900
@@ -392,6 +403,7 @@ class _ProfessionalHome extends ConsumerWidget {
                             label: item.label,
                             subtitle: item.subtitle,
                             icon: item.icon,
+                            asset: item.asset,
                             color: item.color,
                             onTap: item.onTap,
                           );
@@ -546,13 +558,15 @@ class _QuickItem {
     this.subtitle,
     this.icon,
     this.color,
-    this.onTap,
-  );
+    this.onTap, {
+    this.asset,
+  });
   final String label;
   final String subtitle;
   final IconData icon;
   final Color color;
   final VoidCallback onTap;
+  final String? asset;
 }
 
 class _TodayAgendaBlock extends StatelessWidget {

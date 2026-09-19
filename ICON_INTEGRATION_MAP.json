@@ -1,0 +1,788 @@
+{
+  "received": 148,
+  "canonical_used": 90,
+  "alternatives": 58,
+  "missing_keys": [
+    "vaccine_next",
+    "unread_message",
+    "behavior",
+    "clinical_attention",
+    "id_card"
+  ],
+  "mapping": [
+    {
+      "key": "home",
+      "source": "ícone_casa_analytics_3d_glossy.png",
+      "dest": "assets/icons/navigation/icon_home.png",
+      "category": "navigation"
+    },
+    {
+      "key": "patients",
+      "source": "ícone_de_grupo_em_azul_cristalino.png",
+      "dest": "assets/icons/navigation/icon_patients.png",
+      "category": "navigation"
+    },
+    {
+      "key": "medical_record",
+      "source": "prontuário_médico_em_azul_vívido.png",
+      "dest": "assets/icons/navigation/icon_medical_record.png",
+      "category": "navigation"
+    },
+    {
+      "key": "schedule",
+      "source": "ícone_de_calendário_azul_ciano_3d.png",
+      "dest": "assets/icons/navigation/icon_schedule.png",
+      "category": "navigation"
+    },
+    {
+      "key": "messages",
+      "source": "mensagens_com_notificação_1.png",
+      "dest": "assets/icons/navigation/icon_messages.png",
+      "category": "navigation"
+    },
+    {
+      "key": "documents",
+      "source": "documentos_em_azul_suave.png",
+      "dest": "assets/icons/navigation/icon_documents.png",
+      "category": "navigation"
+    },
+    {
+      "key": "vaccines",
+      "source": "ícone_de_vacina_em_azul_e_turquesa.png",
+      "dest": "assets/icons/navigation/icon_vaccines.png",
+      "category": "navigation"
+    },
+    {
+      "key": "telemedicine",
+      "source": "ícone_de_telemedicina_moderna.png",
+      "dest": "assets/icons/navigation/icon_telemedicine.png",
+      "category": "navigation"
+    },
+    {
+      "key": "library",
+      "source": "biblioteca_digital_interativa.png",
+      "dest": "assets/icons/navigation/icon_library.png",
+      "category": "navigation"
+    },
+    {
+      "key": "finance",
+      "source": "ícone_financeiro_em_azul_e_turquesa.png",
+      "dest": "assets/icons/navigation/icon_finance.png",
+      "category": "navigation"
+    },
+    {
+      "key": "reports",
+      "source": "ícone_de_relatórios_em_3d.png",
+      "dest": "assets/icons/navigation/icon_reports.png",
+      "category": "navigation"
+    },
+    {
+      "key": "profile",
+      "source": "ícone_de_perfil_azul_turquesa_glossy.png",
+      "dest": "assets/icons/navigation/icon_profile.png",
+      "category": "navigation"
+    },
+    {
+      "key": "settings",
+      "source": "ícone_de_configurações_em_azul_e_turquesa.png",
+      "dest": "assets/icons/navigation/icon_settings.png",
+      "category": "navigation"
+    },
+    {
+      "key": "security",
+      "source": "segurança_em_saúde.png",
+      "dest": "assets/icons/navigation/icon_security.png",
+      "category": "navigation"
+    },
+    {
+      "key": "clinic",
+      "source": "ícone_de_saúde_pediátrica_em_azul_e_ciano.png",
+      "dest": "assets/icons/navigation/icon_clinic.png",
+      "category": "navigation"
+    },
+    {
+      "key": "back",
+      "source": "ícone_de_seta_curva_azul_brilhante.png",
+      "dest": "assets/icons/actions/icon_back.png",
+      "category": "actions"
+    },
+    {
+      "key": "new_patient",
+      "source": "ícone_glossy_de_novo_usuário.png",
+      "dest": "assets/icons/patients/icon_new_patient.png",
+      "category": "patients"
+    },
+    {
+      "key": "patient_profile",
+      "source": "ícone_3d_de_cartão_de_identidade送彩金.png",
+      "dest": "assets/icons/patients/icon_patient_profile.png",
+      "category": "patients"
+    },
+    {
+      "key": "family",
+      "source": "ícone_família_protetora_em_azul_glossy.png",
+      "dest": "assets/icons/family/icon_family.png",
+      "category": "family"
+    },
+    {
+      "key": "family_portal",
+      "source": "ícone_de_família_no_celular.png",
+      "dest": "assets/icons/family/icon_family_portal.png",
+      "category": "family"
+    },
+    {
+      "key": "child",
+      "source": "bebê_feliz_com_estetoscópio_e_crescimento.png",
+      "dest": "assets/icons/family/icon_child.png",
+      "category": "family"
+    },
+    {
+      "key": "consultation",
+      "source": "ícone_de_consulta_pediátrica.png",
+      "dest": "assets/icons/medical-record/icon_consultation.png",
+      "category": "medical-record"
+    },
+    {
+      "key": "new_encounter",
+      "source": "ícone_médico_com_checklist_3d.png",
+      "dest": "assets/icons/medical-record/icon_new_encounter.png",
+      "category": "medical-record"
+    },
+    {
+      "key": "evolution",
+      "source": "ícone_3d_de_prontuário_médico_infantil.png",
+      "dest": "assets/icons/medical-record/icon_evolution.png",
+      "category": "medical-record"
+    },
+    {
+      "key": "prescription",
+      "source": "ícone_3d_de_prescrição_médica.png",
+      "dest": "assets/icons/medical-record/icon_prescription.png",
+      "category": "medical-record"
+    },
+    {
+      "key": "exams",
+      "source": "ícone_de_exames_com_prancheta_e_frasco.png",
+      "dest": "assets/icons/medical-record/icon_exams.png",
+      "category": "medical-record"
+    },
+    {
+      "key": "clinical_docs",
+      "source": "ícone_3d_azul_de_documento_e_lápis.png",
+      "dest": "assets/icons/documents/icon_clinical_docs.png",
+      "category": "documents"
+    },
+    {
+      "key": "digital_signature",
+      "source": "assinatura_digital_em_3d.png",
+      "dest": "assets/icons/documents/icon_digital_signature.png",
+      "category": "documents"
+    },
+    {
+      "key": "qr_code",
+      "source": "ícone_qr_code_em_azul_e_turquesa.png",
+      "dest": "assets/icons/documents/icon_qr_code.png",
+      "category": "documents"
+    },
+    {
+      "key": "smart_search",
+      "source": "busca_inteligente_de_registros.png",
+      "dest": "assets/icons/actions/icon_smart_search.png",
+      "category": "actions"
+    },
+    {
+      "key": "appointment_confirmed",
+      "source": "ícone_de_calendário_com_confirmação.png",
+      "dest": "assets/icons/schedule/icon_appointment_confirmed.png",
+      "category": "schedule"
+    },
+    {
+      "key": "reschedule",
+      "source": "ícone_de_calendário_com_atualização.png",
+      "dest": "assets/icons/schedule/icon_reschedule.png",
+      "category": "schedule"
+    },
+    {
+      "key": "follow_up",
+      "source": "ícone_de_retorno_médico_agendado.png",
+      "dest": "assets/icons/schedule/icon_follow_up.png",
+      "category": "schedule"
+    },
+    {
+      "key": "follow_up_pending",
+      "source": "ícone_de_retorno_azul_ciano_glossy.png",
+      "dest": "assets/icons/schedule/icon_follow_up_pending.png",
+      "category": "schedule"
+    },
+    {
+      "key": "appointment_cancelled",
+      "source": "ícone_de_consulta_cancelada.png",
+      "dest": "assets/icons/schedule/icon_appointment_cancelled.png",
+      "category": "schedule"
+    },
+    {
+      "key": "appointment_missed",
+      "source": "ícone_de_consulta_perdida_kontaktannonser.png",
+      "dest": "assets/icons/schedule/icon_appointment_missed.png",
+      "category": "schedule"
+    },
+    {
+      "key": "waiting_queue",
+      "source": "ícone_3d_de_fila_e_relógio.png",
+      "dest": "assets/icons/schedule/icon_waiting_queue.png",
+      "category": "schedule"
+    },
+    {
+      "key": "vaccine_applied",
+      "source": "ícone_de_vacina_em_vidro_azul_glossy.png",
+      "dest": "assets/icons/vaccines/icon_vaccine_applied.png",
+      "category": "vaccines"
+    },
+    {
+      "key": "vaccine_pending",
+      "source": "ícone_3d_de_vacina_azul_ciano.png",
+      "dest": "assets/icons/vaccines/icon_vaccine_pending.png",
+      "category": "vaccines"
+    },
+    {
+      "key": "vaccine_overdue",
+      "source": "ícone_de_vacina_com_alerta_3d.png",
+      "dest": "assets/icons/vaccines/icon_vaccine_overdue.png",
+      "category": "vaccines"
+    },
+    {
+      "key": "vaccine_card",
+      "source": "carteira_médica_brilhante_em_azul_3d.png",
+      "dest": "assets/icons/vaccines/icon_vaccine_card.png",
+      "category": "vaccines"
+    },
+    {
+      "key": "vaccine_alert",
+      "source": "alerta_médica_em_azul.png",
+      "dest": "assets/icons/vaccines/icon_vaccine_alert.png",
+      "category": "vaccines"
+    },
+    {
+      "key": "video_call",
+      "source": "ícone_de_telemedicina_com_médica_infantil.png",
+      "dest": "assets/icons/telemedicine/icon_video_call.png",
+      "category": "telemedicine"
+    },
+    {
+      "key": "camera",
+      "source": "ícone_3d_de_câmera_em_azul_cristalino.png",
+      "dest": "assets/icons/telemedicine/icon_camera.png",
+      "category": "telemedicine"
+    },
+    {
+      "key": "microphone",
+      "source": "ícone_infantil_de_comunicação_acqua_em_3d.png",
+      "dest": "assets/icons/telemedicine/icon_microphone.png",
+      "category": "telemedicine"
+    },
+    {
+      "key": "chat",
+      "source": "ícone_de_chat_azul_e_turquesa_glossy.png",
+      "dest": "assets/icons/messages/icon_chat.png",
+      "category": "messages"
+    },
+    {
+      "key": "notification",
+      "source": "sino_de_notificações_azul_brilhante.png",
+      "dest": "assets/icons/alerts/icon_notification.png",
+      "category": "alerts"
+    },
+    {
+      "key": "ai_clinical",
+      "source": "ícone_de_ia_clínica_em_azul_e_teal.png",
+      "dest": "assets/icons/ai/icon_ai_clinical.png",
+      "category": "ai"
+    },
+    {
+      "key": "ai_assistant",
+      "source": "ícone_de_cérebro_azul_com_ia.png",
+      "dest": "assets/icons/ai/icon_ai_assistant.png",
+      "category": "ai"
+    },
+    {
+      "key": "ai_brain",
+      "source": "ícone_azul_de_cérebro_infantil.png",
+      "dest": "assets/icons/ai/icon_ai_brain.png",
+      "category": "ai"
+    },
+    {
+      "key": "neurology",
+      "source": "ícone_de_neuropediatria_moderna.png",
+      "dest": "assets/icons/neurology/icon_neurology.png",
+      "category": "neurology"
+    },
+    {
+      "key": "development",
+      "source": "ícone_de_bebê_rumo_ao_marco.png",
+      "dest": "assets/icons/neurology/icon_development.png",
+      "category": "neurology"
+    },
+    {
+      "key": "growth",
+      "source": "ícone_de_crescimento_infantil_3d.png",
+      "dest": "assets/icons/neurology/icon_growth.png",
+      "category": "neurology"
+    },
+    {
+      "key": "scales",
+      "source": "ícone_médico_de_escalas.png",
+      "dest": "assets/icons/neurology/icon_scales.png",
+      "category": "neurology"
+    },
+    {
+      "key": "child_booklet",
+      "source": "caderneta_digital_de_saúde_infantil.png",
+      "dest": "assets/icons/family/icon_child_booklet.png",
+      "category": "family"
+    },
+    {
+      "key": "guidance",
+      "source": "ícone_de_livro_aberto_em_azul_turquesa.png",
+      "dest": "assets/icons/family/icon_guidance.png",
+      "category": "family"
+    },
+    {
+      "key": "sleep",
+      "source": "ícone_de_bebê_dormindo_e_lua_crescentes.png",
+      "dest": "assets/icons/family/icon_sleep.png",
+      "category": "family"
+    },
+    {
+      "key": "feeding",
+      "source": "ícone_de_mamadeira_e_utensílios_3d.png",
+      "dest": "assets/icons/family/icon_feeding.png",
+      "category": "family"
+    },
+    {
+      "key": "team",
+      "source": "ícone_de_equipe_de_saúde_3d_brilhante.png",
+      "dest": "assets/icons/reports/icon_team.png",
+      "category": "reports"
+    },
+    {
+      "key": "dashboard",
+      "source": "ícone_de_analytics_azul_turquesa.png",
+      "dest": "assets/icons/navigation/icon_dashboard.png",
+      "category": "navigation"
+    },
+    {
+      "key": "search",
+      "source": "ícone_de_busca_azul_em_vidro_3d.png",
+      "dest": "assets/icons/actions/icon_search.png",
+      "category": "actions"
+    },
+    {
+      "key": "filter",
+      "source": "ícone_de_filtro_azul_glossy.png",
+      "dest": "assets/icons/actions/icon_filter.png",
+      "category": "actions"
+    },
+    {
+      "key": "edit",
+      "source": "ícone_de_lápis_azul_brilhante.png",
+      "dest": "assets/icons/actions/icon_edit.png",
+      "category": "actions"
+    },
+    {
+      "key": "save",
+      "source": "ícone_de_salvar_em_azul_brilhante.png",
+      "dest": "assets/icons/actions/icon_save.png",
+      "category": "actions"
+    },
+    {
+      "key": "delete",
+      "source": "ícone_de_lixeira_azul_3d_glossy.png",
+      "dest": "assets/icons/actions/icon_delete.png",
+      "category": "actions"
+    },
+    {
+      "key": "refresh",
+      "source": "ícone_azul_de_atualização_glossy.png",
+      "dest": "assets/icons/actions/icon_refresh.png",
+      "category": "actions"
+    },
+    {
+      "key": "confirm",
+      "source": "ícone_azul_brilhante_com_check_branco.png",
+      "dest": "assets/icons/actions/icon_confirm.png",
+      "category": "actions"
+    },
+    {
+      "key": "more",
+      "source": "ícone_azul_com_três_pontos.png",
+      "dest": "assets/icons/actions/icon_more.png",
+      "category": "actions"
+    },
+    {
+      "key": "add",
+      "source": "ícone_azul_com_símbolo_de_adicionar_branco.png",
+      "dest": "assets/icons/actions/icon_add.png",
+      "category": "actions"
+    },
+    {
+      "key": "close",
+      "source": "ícone_x_azul_ciano_glossy.png",
+      "dest": "assets/icons/actions/icon_close.png",
+      "category": "actions"
+    },
+    {
+      "key": "upload",
+      "source": "ícone_azul_3d_de_upload_brilhante.png",
+      "dest": "assets/icons/actions/icon_upload.png",
+      "category": "actions"
+    },
+    {
+      "key": "download",
+      "source": "ícone_de_download_azul_ciano_brilhante.png",
+      "dest": "assets/icons/actions/icon_download.png",
+      "category": "actions"
+    },
+    {
+      "key": "share",
+      "source": "ícone_de_compartilhamento_azul_glossy.png",
+      "dest": "assets/icons/actions/icon_share.png",
+      "category": "actions"
+    },
+    {
+      "key": "print",
+      "source": "ícone_3d_de_impressora_azul_ciano.png",
+      "dest": "assets/icons/actions/icon_print.png",
+      "category": "actions"
+    },
+    {
+      "key": "attach",
+      "source": "ícone_de_clipe_branco_em_vidro_azul.png",
+      "dest": "assets/icons/actions/icon_attach.png",
+      "category": "actions"
+    },
+    {
+      "key": "view",
+      "source": "ícone_de_olho_azul_em_vidro_glossy.png",
+      "dest": "assets/icons/actions/icon_view.png",
+      "category": "actions"
+    },
+    {
+      "key": "logout",
+      "source": "ícone_de_saída_azul_em_vidro_glossy.png",
+      "dest": "assets/icons/actions/icon_logout.png",
+      "category": "actions"
+    },
+    {
+      "key": "help",
+      "source": "ícone_azul_brilhante_com_interrogação_branca.png",
+      "dest": "assets/icons/actions/icon_help.png",
+      "category": "actions"
+    },
+    {
+      "key": "support",
+      "source": "ícone_3d_de_suporte_brilhante.png",
+      "dest": "assets/icons/actions/icon_support.png",
+      "category": "actions"
+    },
+    {
+      "key": "alert",
+      "source": "ícone_médico_de_alerta_em_vidro_glossy.png",
+      "dest": "assets/icons/alerts/icon_alert.png",
+      "category": "alerts"
+    },
+    {
+      "key": "offline",
+      "source": "ícone_de_nuvem_offline_em_vidro_azul.png",
+      "dest": "assets/icons/alerts/icon_offline.png",
+      "category": "alerts"
+    },
+    {
+      "key": "video_content",
+      "source": "ícone_de_livro_com_play_em_vidro.png",
+      "dest": "assets/icons/library/icon_video_content.png",
+      "category": "library"
+    },
+    {
+      "key": "protocol",
+      "source": "ícone_glossy_de_checklist_em_vidro_azulado.png",
+      "dest": "assets/icons/library/icon_protocol.png",
+      "category": "library"
+    },
+    {
+      "key": "stethoscope",
+      "source": "estetoscópio_com_cruz_e_batimento_cardíaco.png",
+      "dest": "assets/icons/medical-record/icon_stethoscope.png",
+      "category": "medical-record"
+    },
+    {
+      "key": "heart",
+      "source": "ícone_azul_brilhante_com_coração_branco.png",
+      "dest": "assets/icons/medical-record/icon_heart.png",
+      "category": "medical-record"
+    },
+    {
+      "key": "lungs",
+      "source": "ícone_3d_de_pulmões_em_azul_turquesa.png",
+      "dest": "assets/icons/medical-record/icon_lungs.png",
+      "category": "medical-record"
+    },
+    {
+      "key": "thermometer",
+      "source": "ícone_de_termômetro_em_vidro_azulագույն.png",
+      "dest": "assets/icons/medical-record/icon_thermometer.png",
+      "category": "medical-record"
+    },
+    {
+      "key": "blood_pressure",
+      "source": "ícone_médico_de_pressão_arterial.png",
+      "dest": "assets/icons/medical-record/icon_blood_pressure.png",
+      "category": "medical-record"
+    },
+    {
+      "key": "allergy",
+      "source": "ícone_de_proteção_infantil_e_alergias.png",
+      "dest": "assets/icons/medical-record/icon_allergy.png",
+      "category": "medical-record"
+    },
+    {
+      "key": "supplement",
+      "source": "ícone_de_pílula_em_vidro_azul_glossy.png",
+      "dest": "assets/icons/medical-record/icon_supplement.png",
+      "category": "medical-record"
+    }
+  ],
+  "alternatives_list": [
+    {
+      "source": "caderneta_infantil_digital.png",
+      "dest": "assets/icons/alternatives/caderneta_infantil_digital.png"
+    },
+    {
+      "source": "equipe_de_saúde_infantil.png",
+      "dest": "assets/icons/alternatives/equipe_de_sa_de_infantil.png"
+    },
+    {
+      "source": "prancheta_médica_com_estetoscópio.png",
+      "dest": "assets/icons/alternatives/prancheta_m_dica_com_estetosc_pio.png"
+    },
+    {
+      "source": "ícone_3d_azul_de_crescimento_financeiro.png",
+      "dest": "assets/icons/alternatives/_cone_3d_azul_de_crescimento_financeiro.png"
+    },
+    {
+      "source": "ícone_3d_de_crescimento_financeiro.png",
+      "dest": "assets/icons/alternatives/_cone_3d_de_crescimento_financeiro.png"
+    },
+    {
+      "source": "ícone_3d_de_documento_em_azul_ciano.png",
+      "dest": "assets/icons/alternatives/_cone_3d_de_documento_em_azul_ciano.png"
+    },
+    {
+      "source": "ícone_3d_de_grupo_em_azul_еиԥш.png",
+      "dest": "assets/icons/alternatives/_cone_3d_de_grupo_em_azul_.png"
+    },
+    {
+      "source": "ícone_3d_de_gráfico_em_azul_ciano_brilhante.png",
+      "dest": "assets/icons/alternatives/_cone_3d_de_gr_fico_em_azul_ciano_brilhante.png"
+    },
+    {
+      "source": "ícone_3d_de_mensagem_azul_brilhante.png",
+      "dest": "assets/icons/alternatives/_cone_3d_de_mensagem_azul_brilhante.png"
+    },
+    {
+      "source": "ícone_3d_de_prontuário_médico.png",
+      "dest": "assets/icons/alternatives/_cone_3d_de_prontu_rio_m_dico.png"
+    },
+    {
+      "source": "ícone_3d_de_receita_médica.png",
+      "dest": "assets/icons/alternatives/_cone_3d_de_receita_m_dica.png"
+    },
+    {
+      "source": "ícone_3d_de_seta_azul_brilhante.png",
+      "dest": "assets/icons/alternatives/_cone_3d_de_seta_azul_brilhante.png"
+    },
+    {
+      "source": "ícone_azul_brilhante_de_menu.png",
+      "dest": "assets/icons/alternatives/_cone_azul_brilhante_de_menu.png"
+    },
+    {
+      "source": "ícone_azul_com_livro_branco_em_3d.png",
+      "dest": "assets/icons/alternatives/_cone_azul_com_livro_branco_em_3d.png"
+    },
+    {
+      "source": "ícone_azul_com_lupa_brilhante.png",
+      "dest": "assets/icons/alternatives/_cone_azul_com_lupa_brilhante.png"
+    },
+    {
+      "source": "ícone_de_balança_azul_brilhante.png",
+      "dest": "assets/icons/alternatives/_cone_de_balan_a_azul_brilhante.png"
+    },
+    {
+      "source": "ícone_de_cadeado_azul_brilhante.png",
+      "dest": "assets/icons/alternatives/_cone_de_cadeado_azul_brilhante.png"
+    },
+    {
+      "source": "ícone_de_calendário_azul_brilhante.png",
+      "dest": "assets/icons/alternatives/_cone_de_calend_rio_azul_brilhante.png"
+    },
+    {
+      "source": "ícone_de_casa_azul_em_vidro_glossy.png",
+      "dest": "assets/icons/alternatives/_cone_de_casa_azul_em_vidro_glossy.png"
+    },
+    {
+      "source": "ícone_de_casa_azul_turquesa_glossy.png",
+      "dest": "assets/icons/alternatives/_cone_de_casa_azul_turquesa_glossy.png"
+    },
+    {
+      "source": "ícone_de_chat_azul_com_brilho_3d.png",
+      "dest": "assets/icons/alternatives/_cone_de_chat_azul_com_brilho_3d.png"
+    },
+    {
+      "source": "ícone_de_câmera_em_azul_ciano_glossy.png",
+      "dest": "assets/icons/alternatives/_cone_de_c_mera_em_azul_ciano_glossy.png"
+    },
+    {
+      "source": "ícone_de_documento_azul_glossy.png",
+      "dest": "assets/icons/alternatives/_cone_de_documento_azul_glossy.png"
+    },
+    {
+      "source": "ícone_de_documento_em_azul_brilhante.png",
+      "dest": "assets/icons/alternatives/_cone_de_documento_em_azul_brilhante.png"
+    },
+    {
+      "source": "ícone_de_documento_em_azul_cíano_glossy.png",
+      "dest": "assets/icons/alternatives/_cone_de_documento_em_azul_c_ano_glossy.png"
+    },
+    {
+      "source": "ícone_de_encaminhamento_médico_3d.png",
+      "dest": "assets/icons/alternatives/_cone_de_encaminhamento_m_dico_3d.png"
+    },
+    {
+      "source": "ícone_de_engrenagem_azul_turquesa_brilhante.png",
+      "dest": "assets/icons/alternatives/_cone_de_engrenagem_azul_turquesa_brilhante.png"
+    },
+    {
+      "source": "ícone_de_família_em_smartphone早餐加盟.png",
+      "dest": "assets/icons/alternatives/_cone_de_fam_lia_em_smartphone_.png"
+    },
+    {
+      "source": "ícone_de_filtro_azul_glacê.png",
+      "dest": "assets/icons/alternatives/_cone_de_filtro_azul_glac_.png"
+    },
+    {
+      "source": "ícone_de_fralda_azul_brilhante.png",
+      "dest": "assets/icons/alternatives/_cone_de_fralda_azul_brilhante.png"
+    },
+    {
+      "source": "ícone_de_frasco_de_laboratório_em_vidro.png",
+      "dest": "assets/icons/alternatives/_cone_de_frasco_de_laborat_rio_em_vidro.png"
+    },
+    {
+      "source": "ícone_de_genética_familiar.png",
+      "dest": "assets/icons/alternatives/_cone_de_gen_tica_familiar.png"
+    },
+    {
+      "source": "ícone_de_gota_azul_o2_em_vidro_3d.png",
+      "dest": "assets/icons/alternatives/_cone_de_gota_azul_o2_em_vidro_3d.png"
+    },
+    {
+      "source": "ícone_de_grupo_azul_ciano_brilhante.png",
+      "dest": "assets/icons/alternatives/_cone_de_grupo_azul_ciano_brilhante.png"
+    },
+    {
+      "source": "ícone_de_livro_em_azul_brilhante.png",
+      "dest": "assets/icons/alternatives/_cone_de_livro_em_azul_brilhante.png"
+    },
+    {
+      "source": "ícone_de_lixeira_azul_brilhante.png",
+      "dest": "assets/icons/alternatives/_cone_de_lixeira_azul_brilhante.png"
+    },
+    {
+      "source": "ícone_de_maternidade_azul_brilhante.png",
+      "dest": "assets/icons/alternatives/_cone_de_maternidade_azul_brilhante.png"
+    },
+    {
+      "source": "ícone_de_maternidade_em_vidro_azul.png",
+      "dest": "assets/icons/alternatives/_cone_de_maternidade_em_vidro_azul.png"
+    },
+    {
+      "source": "ícone_de_medição_infantil_em_vidro.png",
+      "dest": "assets/icons/alternatives/_cone_de_medi_o_infantil_em_vidro.png"
+    },
+    {
+      "source": "ícone_de_medição_infantil_glossy.png",
+      "dest": "assets/icons/alternatives/_cone_de_medi_o_infantil_glossy.png"
+    },
+    {
+      "source": "ícone_de_perfil_azul_glacê.png",
+      "dest": "assets/icons/alternatives/_cone_de_perfil_azul_glac_.png"
+    },
+    {
+      "source": "ícone_de_prancheta_médica_brilhante.png",
+      "dest": "assets/icons/alternatives/_cone_de_prancheta_m_dica_brilhante.png"
+    },
+    {
+      "source": "ícone_de_prontuário_médico_azul_glossy.png",
+      "dest": "assets/icons/alternatives/_cone_de_prontu_rio_m_dico_azul_glossy.png"
+    },
+    {
+      "source": "ícone_de_rede_médica_glossy_3d.png",
+      "dest": "assets/icons/alternatives/_cone_de_rede_m_dica_glossy_3d.png"
+    },
+    {
+      "source": "ícone_de_relógio_azul_em_vidro.png",
+      "dest": "assets/icons/alternatives/_cone_de_rel_gio_azul_em_vidro.png"
+    },
+    {
+      "source": "ícone_de_retorno_agendado.png",
+      "dest": "assets/icons/alternatives/_cone_de_retorno_agendado.png"
+    },
+    {
+      "source": "ícone_de_salvar_azul_glacial.png",
+      "dest": "assets/icons/alternatives/_cone_de_salvar_azul_glacial.png"
+    },
+    {
+      "source": "ícone_de_saúde_em_vidro_azul.png",
+      "dest": "assets/icons/alternatives/_cone_de_sa_de_em_vidro_azul.png"
+    },
+    {
+      "source": "ícone_de_telemedicina_azul_brilhante.png",
+      "dest": "assets/icons/alternatives/_cone_de_telemedicina_azul_brilhante.png"
+    },
+    {
+      "source": "ícone_de_telemedicina_em_azul_glossy.png",
+      "dest": "assets/icons/alternatives/_cone_de_telemedicina_em_azul_glossy.png"
+    },
+    {
+      "source": "ícone_fitness_azul_com_medidor_de_saúde.png",
+      "dest": "assets/icons/alternatives/_cone_fitness_azul_com_medidor_de_sa_de.png"
+    },
+    {
+      "source": "ícone_infantil_azul_com_high_five.png",
+      "dest": "assets/icons/alternatives/_cone_infantil_azul_com_high_five.png"
+    },
+    {
+      "source": "ícone_infantil_de_cérebro_em_vidro_azul.png",
+      "dest": "assets/icons/alternatives/_cone_infantil_de_c_rebro_em_vidro_azul.png"
+    },
+    {
+      "source": "ícone_infantil_de_medição_glacê_azul.png",
+      "dest": "assets/icons/alternatives/_cone_infantil_de_medi_o_glac_azul.png"
+    },
+    {
+      "source": "ícone_médico_3d_de_pessoas_em_azul.png",
+      "dest": "assets/icons/alternatives/_cone_m_dico_3d_de_pessoas_em_azul.png"
+    },
+    {
+      "source": "ícone_médico_com_lupa_e_prontuário.png",
+      "dest": "assets/icons/alternatives/_cone_m_dico_com_lupa_e_prontu_rio.png"
+    },
+    {
+      "source": "ícone_médico_de_prontuário_azul_glossy.png",
+      "dest": "assets/icons/alternatives/_cone_m_dico_de_prontu_rio_azul_glossy.png"
+    },
+    {
+      "source": "ícone_médico_de_prontuário_em_3d.png",
+      "dest": "assets/icons/alternatives/_cone_m_dico_de_prontu_rio_em_3d.png"
+    }
+  ]
+}

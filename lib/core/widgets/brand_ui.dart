@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../config/app_assets.dart';
 import '../router/routes.dart';
 import '../theme/app_colors.dart';
+import 'app_icon.dart';
 import '../theme/app_shadows.dart';
 import '../theme/app_tokens.dart';
 
@@ -430,6 +431,7 @@ class QuickAccessCard extends StatelessWidget {
     required this.icon,
     required this.color,
     required this.onTap,
+    this.asset,
     this.subtitle,
     this.wide = false,
     super.key,
@@ -438,6 +440,7 @@ class QuickAccessCard extends StatelessWidget {
   final String label;
   final String? subtitle;
   final IconData icon;
+  final String? asset;
   final Color color;
   final VoidCallback onTap;
   final bool wide;
@@ -458,7 +461,7 @@ class QuickAccessCard extends StatelessWidget {
                 color: color.withValues(alpha: 0.12),
                 borderRadius: AppRadius.mdAll,
               ),
-              child: Icon(icon, color: color, size: 22),
+              child: asset != null ? AppIcon(asset: asset!, size: 28, fallback: icon, color: color) : Icon(icon, color: color, size: 22),
             ),
             const SizedBox(width: AppSpacing.md),
             Expanded(
@@ -517,7 +520,14 @@ class QuickAccessCard extends StatelessWidget {
               color: color.withValues(alpha: 0.12),
               borderRadius: AppRadius.mdAll,
             ),
-            child: Icon(icon, color: color, size: 20),
+            child: asset != null
+                ? AppIcon(
+                    asset: asset!,
+                    size: 28,
+                    fallback: icon,
+                    color: color,
+                  )
+                : Icon(icon, color: color, size: 20),
           ),
           const SizedBox(height: AppSpacing.xs),
           Text(

@@ -10,6 +10,8 @@ import '../../../../core/responsive/responsive.dart';
 import '../../../../core/router/routes.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_tokens.dart';
+import '../../../../core/theme/app_icons.dart';
+import '../../../../core/widgets/app_icon.dart';
 import '../../../../core/widgets/premium_chrome.dart';
 import '../../../../core/widgets/state_views.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
@@ -23,6 +25,7 @@ class _Destination {
     required this.label,
     required this.icon,
     required this.selectedIcon,
+    this.asset,
     this.professionalOnly = false,
     this.showUnreadBadge = false,
   });
@@ -31,6 +34,8 @@ class _Destination {
   final String label;
   final IconData icon;
   final IconData selectedIcon;
+  /// Icone premium (PNG). Se nulo, usa [icon]/selectedIcon].
+  final String? asset;
   final bool professionalOnly;
   final bool showUnreadBadge;
 }
@@ -40,12 +45,14 @@ const List<_Destination> _professionalPrimary = <_Destination>[
   _Destination(
     route: Routes.homePath,
     label: 'Inicio',
+    asset: AppIcons.home,
     icon: Icons.home_outlined,
     selectedIcon: Icons.home_rounded,
   ),
   _Destination(
     route: Routes.patientsPath,
     label: 'Pacientes',
+    asset: AppIcons.patients,
     icon: Icons.groups_outlined,
     selectedIcon: Icons.groups_rounded,
     professionalOnly: true,
@@ -53,6 +60,7 @@ const List<_Destination> _professionalPrimary = <_Destination>[
   _Destination(
     route: Routes.agendaPath,
     label: 'Agenda',
+    asset: AppIcons.schedule,
     icon: Icons.calendar_month_outlined,
     selectedIcon: Icons.calendar_month_rounded,
     professionalOnly: true,
@@ -60,6 +68,7 @@ const List<_Destination> _professionalPrimary = <_Destination>[
   _Destination(
     route: Routes.notificationsPath,
     label: 'Mensagens',
+    asset: AppIcons.messages,
     icon: Icons.chat_bubble_outline_rounded,
     selectedIcon: Icons.chat_bubble_rounded,
     showUnreadBadge: true,
@@ -67,6 +76,7 @@ const List<_Destination> _professionalPrimary = <_Destination>[
   _Destination(
     route: Routes.profilePath,
     label: 'Perfil',
+    asset: AppIcons.profile,
     icon: Icons.person_outline_rounded,
     selectedIcon: Icons.person_rounded,
   ),
@@ -77,12 +87,14 @@ const List<_Destination> _professionalSidebar = <_Destination>[
   _Destination(
     route: Routes.homePath,
     label: 'Inicio',
+    asset: AppIcons.home,
     icon: Icons.home_outlined,
     selectedIcon: Icons.home_rounded,
   ),
   _Destination(
     route: Routes.patientsPath,
     label: 'Pacientes',
+    asset: AppIcons.patients,
     icon: Icons.groups_outlined,
     selectedIcon: Icons.groups_rounded,
     professionalOnly: true,
@@ -90,6 +102,7 @@ const List<_Destination> _professionalSidebar = <_Destination>[
   _Destination(
     route: Routes.agendaPath,
     label: 'Agenda',
+    asset: AppIcons.schedule,
     icon: Icons.calendar_month_outlined,
     selectedIcon: Icons.calendar_month_rounded,
     professionalOnly: true,
@@ -97,6 +110,7 @@ const List<_Destination> _professionalSidebar = <_Destination>[
   _Destination(
     route: Routes.notificationsPath,
     label: 'Mensagens',
+    asset: AppIcons.messages,
     icon: Icons.chat_bubble_outline_rounded,
     selectedIcon: Icons.chat_bubble_rounded,
     showUnreadBadge: true,
@@ -104,6 +118,7 @@ const List<_Destination> _professionalSidebar = <_Destination>[
   _Destination(
     route: Routes.patientsPath,
     label: 'Prontuario',
+    asset: AppIcons.medicalRecord,
     icon: Icons.folder_shared_outlined,
     selectedIcon: Icons.folder_shared_rounded,
     professionalOnly: true,
@@ -111,24 +126,28 @@ const List<_Destination> _professionalSidebar = <_Destination>[
   _Destination(
     route: Routes.childrenPath,
     label: 'Vacinas',
+    asset: AppIcons.vaccines,
     icon: Icons.vaccines_outlined,
     selectedIcon: Icons.vaccines_rounded,
   ),
   _Destination(
     route: Routes.telemedicinePath,
     label: 'Telemedicina',
+    asset: AppIcons.telemedicine,
     icon: Icons.videocam_outlined,
     selectedIcon: Icons.videocam_rounded,
   ),
   _Destination(
     route: Routes.libraryPath,
     label: 'Biblioteca',
+    asset: AppIcons.library,
     icon: Icons.menu_book_outlined,
     selectedIcon: Icons.menu_book_rounded,
   ),
   _Destination(
     route: Routes.clinicPath,
     label: 'Consultorio',
+    asset: AppIcons.clinic,
     icon: Icons.local_hospital_outlined,
     selectedIcon: Icons.local_hospital_rounded,
     professionalOnly: true,
@@ -136,6 +155,7 @@ const List<_Destination> _professionalSidebar = <_Destination>[
   _Destination(
     route: Routes.supplementPath,
     label: 'Suplementacao',
+    asset: AppIcons.supplement,
     icon: Icons.science_outlined,
     selectedIcon: Icons.science_rounded,
     professionalOnly: true,
@@ -143,6 +163,7 @@ const List<_Destination> _professionalSidebar = <_Destination>[
   _Destination(
     route: Routes.clinicOrgPath,
     label: 'Minha clinica',
+    asset: AppIcons.clinic,
     icon: Icons.apartment_outlined,
     selectedIcon: Icons.apartment_rounded,
     professionalOnly: true,
@@ -150,6 +171,7 @@ const List<_Destination> _professionalSidebar = <_Destination>[
   _Destination(
     route: Routes.profilePath,
     label: 'Perfil',
+    asset: AppIcons.profile,
     icon: Icons.person_outline_rounded,
     selectedIcon: Icons.person_rounded,
   ),
@@ -159,24 +181,28 @@ const List<_Destination> _familyDestinations = <_Destination>[
   _Destination(
     route: Routes.homePath,
     label: 'Inicio',
+    asset: AppIcons.home,
     icon: Icons.home_outlined,
     selectedIcon: Icons.home_rounded,
   ),
   _Destination(
     route: Routes.libraryPath,
     label: 'Conteudos',
+    asset: AppIcons.library,
     icon: Icons.menu_book_outlined,
     selectedIcon: Icons.menu_book_rounded,
   ),
   _Destination(
     route: Routes.toolsPath,
     label: 'Cuidados',
+    asset: AppIcons.stethoscope,
     icon: Icons.medical_services_outlined,
     selectedIcon: Icons.medical_services_rounded,
   ),
   _Destination(
     route: Routes.notificationsPath,
     label: 'Mensagens',
+    asset: AppIcons.messages,
     icon: Icons.chat_bubble_outline_rounded,
     selectedIcon: Icons.chat_bubble_rounded,
     showUnreadBadge: true,
@@ -184,6 +210,7 @@ const List<_Destination> _familyDestinations = <_Destination>[
   _Destination(
     route: Routes.profilePath,
     label: 'Perfil',
+    asset: AppIcons.profile,
     icon: Icons.person_outline_rounded,
     selectedIcon: Icons.person_rounded,
   ),
@@ -272,11 +299,13 @@ class AppShell extends ConsumerWidget {
                   (_Destination d) => NavigationDestination(
                     icon: _NavIcon(
                       icon: d.icon,
+                      asset: d.asset,
                       selected: false,
                       badge: d.showUnreadBadge ? unread : 0,
                     ),
                     selectedIcon: _NavIcon(
                       icon: d.selectedIcon,
+                      asset: d.asset,
                       selected: true,
                       badge: d.showUnreadBadge ? unread : 0,
                     ),
@@ -321,8 +350,20 @@ class AppShell extends ConsumerWidget {
                       destinations: primary
                           .map(
                             (_Destination d) => NavigationRailDestination(
-                              icon: Icon(d.icon),
-                              selectedIcon: Icon(d.selectedIcon),
+                              icon: d.asset != null
+                                  ? AppIcon(
+                                      asset: d.asset!,
+                                      size: AppIcon.nav,
+                                      fallback: d.icon,
+                                    )
+                                  : Icon(d.icon),
+                              selectedIcon: d.asset != null
+                                  ? AppIcon(
+                                      asset: d.asset!,
+                                      size: AppIcon.nav,
+                                      fallback: d.selectedIcon,
+                                    )
+                                  : Icon(d.selectedIcon),
                               label: Text(d.label),
                             ),
                           )
@@ -366,18 +407,26 @@ class _NavIcon extends StatelessWidget {
     required this.icon,
     required this.selected,
     required this.badge,
+    this.asset,
   });
 
   final IconData icon;
+  final String? asset;
   final bool selected;
   final int badge;
 
   @override
   Widget build(BuildContext context) {
-    final Widget child = Icon(
-      icon,
-      color: selected ? AppColors.brand : AppColors.inkMuted,
-    );
+    final Widget child = asset != null
+        ? AppIcon(
+            asset: asset!,
+            size: AppIcon.nav,
+            fallback: icon,
+          )
+        : Icon(
+            icon,
+            color: selected ? AppColors.brand : AppColors.inkMuted,
+          );
     if (badge <= 0) return child;
     return Badge(
       label: Text(badge > 9 ? '9+' : '$badge'),
@@ -428,10 +477,10 @@ class _PremiumSidebar extends ConsumerWidget {
                           color: AppColors.softBlue,
                           borderRadius: AppRadius.mdAll,
                         ),
-                        child: const Icon(
-                          Icons.favorite_rounded,
-                          color: AppColors.brand,
-                          size: 22,
+                        child: const AppIcon(
+                          asset: AppIcons.home,
+                          size: 28,
+                          fallback: Icons.favorite_rounded,
                         ),
                       ),
                       const SizedBox(width: AppSpacing.md),
@@ -495,13 +544,23 @@ class _PremiumSidebar extends ConsumerWidget {
                               ),
                               child: Row(
                                 children: <Widget>[
-                                  Icon(
-                                    selected ? d.selectedIcon : d.icon,
-                                    size: 22,
-                                    color: selected
-                                        ? Colors.white
-                                        : AppColors.inkMuted,
-                                  ),
+                                  d.asset != null
+                                      ? AppIcon(
+                                          asset: d.asset!,
+                                          size: AppIcon.nav,
+                                          fallback: selected
+                                              ? d.selectedIcon
+                                              : d.icon,
+                                        )
+                                      : Icon(
+                                          selected
+                                              ? d.selectedIcon
+                                              : d.icon,
+                                          size: 22,
+                                          color: selected
+                                              ? Colors.white
+                                              : AppColors.inkMuted,
+                                        ),
                                   const SizedBox(width: 12),
                                   Expanded(
                                     child: Text(

@@ -80,6 +80,25 @@ flutter:
     - assets/images/
     - assets/icons/
     - assets/icons/modules/
+    - assets/icons/navigation/
+    - assets/icons/patients/
+    - assets/icons/medical-record/
+    - assets/icons/schedule/
+    - assets/icons/vaccines/
+    - assets/icons/telemedicine/
+    - assets/icons/messages/
+    - assets/icons/ai/
+    - assets/icons/neurology/
+    - assets/icons/family/
+    - assets/icons/finance/
+    - assets/icons/reports/
+    - assets/icons/documents/
+    - assets/icons/actions/
+    - assets/icons/alerts/
+    - assets/icons/library/
+    - assets/icons/alternatives/
+    - assets/icons/Pediatria360_Icones_Premium/
+    - assets/icons/Pediatria360_Icones_Premium/icones/
     - assets/illustrations/
     - assets/lottie/
     - assets/data/

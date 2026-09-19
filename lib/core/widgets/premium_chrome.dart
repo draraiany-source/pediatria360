@@ -7,6 +7,8 @@ import '../theme/app_colors.dart';
 import '../theme/app_tokens.dart';
 import '../../features/auth/presentation/providers/auth_providers.dart';
 import '../../shared/domain/entities/app_user.dart';
+import '../theme/app_icons.dart';
+import 'app_icon.dart';
 import 'brand_ui.dart';
 
 /// Barra superior premium (desktop/tablet) ? busca + notificacoes + perfil.
@@ -84,8 +86,10 @@ class PremiumTopBar extends ConsumerWidget {
                 label: Text(
                   notificationCount > 9 ? '9+' : '$notificationCount',
                 ),
-                child: const Icon(
-                  Icons.notifications_none_rounded,
+                child: const AppIcon(
+                  asset: AppIcons.notification,
+                  size: 22,
+                  fallback: Icons.notifications_none_rounded,
                   color: AppColors.navy,
                 ),
               ),
@@ -154,6 +158,7 @@ class PremiumKpiCard extends StatelessWidget {
     required this.label,
     required this.icon,
     required this.color,
+    this.asset,
     this.trendLabel,
     this.trendPositive = true,
     this.helper,
@@ -164,6 +169,7 @@ class PremiumKpiCard extends StatelessWidget {
   final String value;
   final String label;
   final IconData icon;
+  final String? asset;
   final Color color;
   final String? trendLabel;
   final bool trendPositive;
@@ -188,7 +194,9 @@ class PremiumKpiCard extends StatelessWidget {
                   color: color.withValues(alpha: 0.12),
                   borderRadius: AppRadius.mdAll,
                 ),
-                child: Icon(icon, color: color, size: 22),
+                child: asset != null
+                    ? AppIcon(asset: asset!, size: 28, fallback: icon, color: color)
+                    : Icon(icon, color: color, size: 22),
               ),
               const Spacer(),
               if (trendLabel != null)
@@ -259,12 +267,14 @@ class PremiumQuickTile extends StatelessWidget {
     required this.icon,
     required this.color,
     required this.onTap,
+    this.asset,
     super.key,
   });
 
   final String label;
   final String subtitle;
   final IconData icon;
+  final String? asset;
   final Color color;
   final VoidCallback onTap;
 
@@ -284,7 +294,9 @@ class PremiumQuickTile extends StatelessWidget {
               color: color.withValues(alpha: 0.14),
               borderRadius: AppRadius.mdAll,
             ),
-            child: Icon(icon, color: color, size: 22),
+            child: asset != null
+                ? AppIcon(asset: asset!, size: AppIcon.card, fallback: icon, color: color)
+                : Icon(icon, color: color, size: 22),
           ),
           const Spacer(),
           Text(
