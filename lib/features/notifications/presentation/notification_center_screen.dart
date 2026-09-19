@@ -9,6 +9,8 @@ import '../../../core/error/failures.dart';
 import '../../../core/providers/core_providers.dart';
 import '../../../core/responsive/responsive.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_icons.dart';
+import '../../../core/widgets/app_icon.dart';
 import '../../../core/theme/app_shadows.dart';
 import '../../../core/theme/app_tokens.dart';
 import '../../../core/utils/result.dart';
@@ -62,6 +64,17 @@ class AppNotification {
         'openDraft' => Icons.edit_note_rounded,
         'content' => Icons.menu_book_outlined,
         _ => Icons.notifications_outlined,
+      };
+
+  /// Asset premium por tipo (fallback via [icon]).
+  String? get asset => switch (type) {
+        'vaccineDue' => AppIcons.vaccines,
+        'appointmentReminder' => AppIcons.schedule,
+        'growthReminder' => AppIcons.growth,
+        'labResult' => AppIcons.exams,
+        'openDraft' => AppIcons.evolution,
+        'content' => AppIcons.library,
+        _ => AppIcons.notification,
       };
 
   Color get color => switch (type) {
@@ -165,6 +178,7 @@ class NotificationCenterScreen extends ConsumerWidget {
         loading: () => const SkeletonList(itemCount: 5, itemHeight: 72),
         error: (Object e, StackTrace s) => EmptyState(
           icon: Icons.chat_bubble_outline_rounded,
+          asset: AppIcons.messages,
           title: 'Não conseguimos carregar essas informações',
           message: 'Tente novamente em alguns instantes.',
           actionLabel: 'Recarregar',
@@ -174,6 +188,7 @@ class NotificationCenterScreen extends ConsumerWidget {
           if (list.isEmpty) {
             return const EmptyState(
               icon: Icons.forum_outlined,
+              asset: AppIcons.notification,
               title: 'Nenhuma mensagem por enquanto',
               message:
                   'Avisos de vacina, consultas, resultados e contatos com '
@@ -258,11 +273,18 @@ class _NotificationTile extends ConsumerWidget {
                         color: notification.color.withValues(alpha: 0.14),
                         borderRadius: AppRadius.mdAll,
                       ),
-                      child: Icon(
-                        notification.icon,
-                        size: 20,
-                        color: notification.color,
-                      ),
+                      child: notification.asset != null
+                          ? AppIcon(
+                              asset: notification.asset!,
+                              size: 20,
+                              fallback: notification.icon,
+                              color: notification.color,
+                            )
+                          : Icon(
+                              notification.icon,
+                              size: 20,
+                              color: notification.color,
+                            ),
                     ),
                     if (!notification.read)
                       Positioned(

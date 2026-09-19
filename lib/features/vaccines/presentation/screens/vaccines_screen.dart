@@ -4,6 +4,8 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/responsive/responsive.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/widgets/app_icon.dart';
+import '../../../../core/theme/app_icons.dart';
 import '../../../../core/theme/app_tokens.dart';
 import '../../../../core/utils/validators.dart';
 import '../../../../core/widgets/app_widgets.dart';
@@ -68,14 +70,20 @@ class _VaccinesScreenState extends ConsumerState<VaccinesScreen> {
         ),
         leading: IconButton(
           onPressed: () => context.pop(),
-          icon: const Icon(Icons.arrow_back_rounded, color: AppColors.brand),
+          icon: const AppIcon(
+            asset: AppIcons.back,
+            size: 22,
+            fallback: Icons.arrow_back_rounded,
+          ),
           tooltip: 'Voltar',
         ),
         actions: <Widget>[
           IconButton(
             onPressed: () => setState(() => _showApplied = !_showApplied),
-            icon: Icon(
-              _showApplied
+            icon: AppIcon(
+              asset: AppIcons.filter,
+              size: 22,
+              fallback: _showApplied
                   ? Icons.filter_list_rounded
                   : Icons.filter_list_off_rounded,
               color: AppColors.brand,
@@ -167,6 +175,7 @@ class _VaccinesScreenState extends ConsumerState<VaccinesScreen> {
         loading: () => const SkeletonList(itemCount: 6, itemHeight: 64),
         error: (Object e, StackTrace s) => EmptyState(
           icon: Icons.error_outline_rounded,
+          asset: AppIcons.alert,
           title: 'Não conseguimos carregar essas informações',
           message: 'Tente novamente em alguns instantes.',
           actionLabel: 'Recarregar',
@@ -176,6 +185,7 @@ class _VaccinesScreenState extends ConsumerState<VaccinesScreen> {
           if (list.isEmpty) {
             return EmptyState(
               icon: Icons.vaccines_outlined,
+              asset: AppIcons.vaccineCard,
               title: 'Calendário não gerado',
               message: 'Vamos montar o calendário do PNI a partir da data '
                   'de nascimento de ${child.firstName}.',
@@ -370,12 +380,14 @@ class _SummaryCard extends StatelessWidget {
                     label: '${summary.overdue} em atraso',
                     color: AppColors.danger,
                     icon: Icons.priority_high_rounded,
+                    asset: AppIcons.vaccineOverdue,
                   ),
                 if (summary.upcoming > 0)
                   AppTag(
                     label: '${summary.upcoming} nos próximos 30 dias',
                     color: AppColors.warning,
                     icon: Icons.schedule_rounded,
+                    asset: AppIcons.vaccineNext,
                   ),
               ],
             ),
@@ -481,11 +493,20 @@ class _DoseTile extends StatelessWidget {
                     const SizedBox(height: AppSpacing.sm),
                     Row(
                       children: <Widget>[
-                        Icon(
-                          dose.isApplied
+                        AppIcon(
+                          asset: dose.isApplied
+                              ? AppIcons.vaccineApplied
+                              : dose.isOverdue()
+                                  ? AppIcons.vaccineOverdue
+                                  : dose.isUpcoming()
+                                      ? AppIcons.vaccineNext
+                                      : AppIcons.vaccinePending,
+                          size: 16,
+                          fallback: dose.isApplied
                               ? Icons.check_circle_outline_rounded
-                              : Icons.event_outlined,
-                          size: 13,
+                              : dose.isUpcoming()
+                                  ? Icons.schedule_rounded
+                                  : Icons.event_outlined,
                           color: color,
                         ),
                         const SizedBox(width: AppSpacing.xs),
@@ -504,9 +525,10 @@ class _DoseTile extends StatelessWidget {
                         ),
                         if (dose.pendingSync) ...<Widget>[
                           const SizedBox(width: AppSpacing.sm),
-                          Icon(
-                            Icons.cloud_upload_outlined,
+                          AppIcon(
+                            asset: AppIcons.upload,
                             size: 12,
+                            fallback: Icons.cloud_upload_outlined,
                             color: theme.colorScheme.onSurfaceVariant,
                           ),
                         ],
@@ -599,7 +621,14 @@ class _ApplyDoseSheetState extends ConsumerState<_ApplyDoseSheet> {
               child: InputDecorator(
                 decoration: const InputDecoration(
                   labelText: 'Data da aplicação',
-                  prefixIcon: Icon(Icons.event_available_outlined, size: 20),
+                  prefixIcon: Padding(
+                    padding: EdgeInsets.all(12),
+                    child: AppIcon(
+                      asset: AppIcons.vaccineApplied,
+                      size: 20,
+                      fallback: Icons.event_available_outlined,
+                    ),
+                  ),
                 ),
                 child: Text(
                   Formatters.date(_appliedAt),

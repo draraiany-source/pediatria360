@@ -7,6 +7,8 @@ import '../../../../core/providers/theme_provider.dart';
 import '../../../../core/responsive/responsive.dart';
 import '../../../../core/router/routes.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/widgets/app_icon.dart';
+import '../../../../core/theme/app_icons.dart';
 import '../../../../core/theme/app_tokens.dart';
 import '../../../../core/widgets/brand_ui.dart';
 import '../../../../core/widgets/clinical_ui.dart';
@@ -111,7 +113,8 @@ class ProfileTab extends ConsumerWidget {
                                   child: const Padding(
                                     padding: EdgeInsets.all(6),
                                     child: Icon(
-                                      Icons.edit_rounded,
+                                      Icons.edit_rounded, // material fallback kept for small overlay
+
                                       size: 14,
                                       color: Colors.white,
                                     ),
@@ -178,6 +181,7 @@ class ProfileTab extends ConsumerWidget {
                         Expanded(
                           child: _SummaryCell(
                             icon: Icons.badge_outlined,
+                            asset: AppIcons.idCard,
                             iconColor: AppColors.teal,
                             label: 'CRM',
                             value: (user.crm ?? '').isEmpty
@@ -189,6 +193,7 @@ class ProfileTab extends ConsumerWidget {
                         Expanded(
                           child: _SummaryCell(
                             icon: Icons.apartment_rounded,
+                            asset: AppIcons.clinic,
                             iconColor: AppColors.moduleLibrary,
                             label: 'Clínica',
                             value: (user.specialty ?? '').isNotEmpty
@@ -200,6 +205,7 @@ class ProfileTab extends ConsumerWidget {
                         Expanded(
                           child: _SummaryCell(
                             icon: Icons.calendar_month_outlined,
+                            asset: AppIcons.schedule,
                             iconColor: AppColors.raspberry,
                             label: 'Desde',
                             value: since,
@@ -226,6 +232,7 @@ class ProfileTab extends ConsumerWidget {
                             icon: Icons.apartment_rounded,
                             iconBg: AppColors.softBlue,
                             iconColor: AppColors.brand,
+                            asset: AppIcons.clinic,
                             title: 'Minha clinica',
                             subtitle: 'Organizacao, unidades e contexto ativo',
                             onTap: () => context.push(Routes.clinicOrgPath),
@@ -236,6 +243,7 @@ class ProfileTab extends ConsumerWidget {
                           icon: Icons.person_outline_rounded,
                           iconBg: AppColors.softTeal,
                           iconColor: AppColors.teal,
+                          asset: AppIcons.profile,
                           title: 'Dados pessoais',
                           subtitle: 'Atualize suas informações pessoais',
                           onTap: () => Navigator.of(context).push(
@@ -249,6 +257,7 @@ class ProfileTab extends ConsumerWidget {
                           icon: Icons.notifications_none_rounded,
                           iconBg: AppColors.softLilac,
                           iconColor: AppColors.moduleLibrary,
+                          asset: AppIcons.notification,
                           title: 'Notificações',
                           subtitle: 'Gerencie seus avisos e lembretes',
                           onTap: () => Navigator.of(context).push(
@@ -261,6 +270,7 @@ class ProfileTab extends ConsumerWidget {
                         const Divider(height: 1),
                         _SettingsTile(
                           icon: Icons.shield_outlined,
+                          asset: AppIcons.security,
                           iconBg: AppColors.softBlue,
                           iconColor: AppColors.brand,
                           title: 'Segurança',
@@ -276,6 +286,7 @@ class ProfileTab extends ConsumerWidget {
                           icon: Icons.help_outline_rounded,
                           iconBg: AppColors.softOrange,
                           iconColor: AppColors.moduleAgenda,
+                          asset: AppIcons.help,
                           title: 'Ajuda',
                           subtitle: 'Dúvidas frequentes e suporte',
                           onTap: () => ScaffoldMessenger.of(context)
@@ -292,6 +303,7 @@ class ProfileTab extends ConsumerWidget {
                           icon: Icons.logout_rounded,
                           iconBg: const Color(0xFFFFE8EA),
                           iconColor: AppColors.danger,
+                          asset: AppIcons.logout,
                           title: 'Sair',
                           subtitle: 'Encerrar sessão na sua conta',
                           onTap: action.isLoading
@@ -364,6 +376,7 @@ class ProfileTab extends ConsumerWidget {
                     title: 'Sua conta está protegida',
                     body: lastAccess,
                     icon: Icons.verified_user_outlined,
+                    asset: AppIcons.security,
                     trailing: Icon(
                       Icons.toys_outlined,
                       size: 40,
@@ -374,12 +387,27 @@ class ProfileTab extends ConsumerWidget {
                     const SizedBox(height: AppSpacing.lg),
                     AppCard(
                       onTap: () => context.push(Routes.childrenPath),
-                      child: const ListTile(
+                      child: ListTile(
                         contentPadding: EdgeInsets.zero,
-                        leading: Icon(Icons.child_care_rounded),
-                        title: Text('Crianças'),
-                        subtitle: Text('Gerencie os perfis acompanhados'),
-                        trailing: Icon(Icons.chevron_right_rounded),
+                        leading: Container(
+                          width: 40,
+                          height: 40,
+                          decoration: const BoxDecoration(
+                            color: AppColors.softTeal,
+                            shape: BoxShape.circle,
+                          ),
+                          child: const AppIcon(
+                            asset: AppIcons.family,
+                            size: 22,
+                            fallback: Icons.child_care_rounded,
+                            color: AppColors.teal,
+                          ),
+                        ),
+                        title: const Text('Crianças'),
+                        subtitle: const Text(
+                          'Gerencie os perfis acompanhados',
+                        ),
+                        trailing: const Icon(Icons.chevron_right_rounded),
                       ),
                     ),
                   ],
@@ -399,9 +427,11 @@ class _SummaryCell extends StatelessWidget {
     required this.iconColor,
     required this.label,
     required this.value,
+    this.asset,
   });
 
   final IconData icon;
+  final String? asset;
   final Color iconColor;
   final String label;
   final String value;
@@ -410,7 +440,14 @@ class _SummaryCell extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: <Widget>[
-        Icon(icon, color: iconColor, size: 20),
+        asset != null
+            ? AppIcon(
+                asset: asset!,
+                size: 20,
+                fallback: icon,
+                color: iconColor,
+              )
+            : Icon(icon, color: iconColor, size: 20),
         const SizedBox(height: 4),
         Text(
           label,
@@ -440,10 +477,12 @@ class _SettingsTile extends StatelessWidget {
     required this.iconColor,
     required this.title,
     required this.subtitle,
+    this.asset,
     this.onTap,
   });
 
   final IconData icon;
+  final String? asset;
   final Color iconBg;
   final Color iconColor;
   final String title;
@@ -458,7 +497,9 @@ class _SettingsTile extends StatelessWidget {
         width: 40,
         height: 40,
         decoration: BoxDecoration(color: iconBg, shape: BoxShape.circle),
-        child: Icon(icon, color: iconColor, size: 20),
+        child: asset != null
+            ? AppIcon(asset: asset!, size: 22, fallback: icon, color: iconColor)
+            : Icon(icon, color: iconColor, size: 20),
       ),
       title: Text(
         title,

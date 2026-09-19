@@ -6,6 +6,7 @@ import '../theme/app_colors.dart';
 import '../theme/app_shadows.dart';
 import '../theme/app_tokens.dart';
 import '../theme/app_typography.dart';
+import 'app_icon.dart';
 
 /// Botao primario com estado de carregamento embutido.
 ///
@@ -16,6 +17,7 @@ class AppButton extends StatelessWidget {
     required this.label,
     required this.onPressed,
     this.icon,
+    this.asset,
     this.isLoading = false,
     this.expanded = true,
     this.variant = AppButtonVariant.primary,
@@ -25,6 +27,7 @@ class AppButton extends StatelessWidget {
   final String label;
   final VoidCallback? onPressed;
   final IconData? icon;
+  final String? asset;
   final bool isLoading;
   final bool expanded;
   final AppButtonVariant variant;
@@ -48,7 +51,10 @@ class AppButton extends StatelessWidget {
         : Row(
             mainAxisSize: MainAxisSize.min,
             children: <Widget>[
-              if (icon != null) ...<Widget>[
+              if (asset != null) ...<Widget>[
+                AppIcon(asset: asset!, size: 22, fallback: icon),
+                const SizedBox(width: AppSpacing.sm),
+              ] else if (icon != null) ...<Widget>[
                 Icon(icon, size: 20),
                 const SizedBox(width: AppSpacing.sm),
               ],
@@ -244,12 +250,14 @@ class AppTag extends StatelessWidget {
     required this.label,
     this.color,
     this.icon,
+    this.asset,
     super.key,
   });
 
   final String label;
   final Color? color;
   final IconData? icon;
+  final String? asset;
 
   @override
   Widget build(BuildContext context) {
@@ -268,7 +276,15 @@ class AppTag extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: <Widget>[
-          if (icon != null) ...<Widget>[
+          if (asset != null) ...<Widget>[
+            AppIcon(
+              asset: asset!,
+              size: 16,
+              fallback: icon,
+              color: effective,
+            ),
+            const SizedBox(width: AppSpacing.xs),
+          ] else if (icon != null) ...<Widget>[
             Icon(icon, size: 13, color: effective),
             const SizedBox(width: AppSpacing.xs),
           ],
@@ -481,10 +497,12 @@ class InfoBanner extends StatelessWidget {
     required this.icon,
     required this.color,
     required this.text,
+    this.asset,
     super.key,
   });
 
   final IconData icon;
+  final String? asset;
   final Color color;
   final String text;
 
@@ -500,7 +518,10 @@ class InfoBanner extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          Icon(icon, size: 18, color: color),
+          if (asset != null)
+            AppIcon(asset: asset!, size: 20, fallback: icon, color: color)
+          else
+            Icon(icon, size: 18, color: color),
           const SizedBox(width: AppSpacing.sm),
           Expanded(
             child: Text(

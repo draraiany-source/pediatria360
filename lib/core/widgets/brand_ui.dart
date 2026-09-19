@@ -223,6 +223,7 @@ class PrimaryButton extends StatelessWidget {
     required this.onPressed,
     super.key,
     this.icon,
+    this.asset,
     this.isLoading = false,
     this.expanded = true,
   });
@@ -230,6 +231,7 @@ class PrimaryButton extends StatelessWidget {
   final String label;
   final VoidCallback? onPressed;
   final IconData? icon;
+  final String? asset;
   final bool isLoading;
   final bool expanded;
 
@@ -248,7 +250,10 @@ class PrimaryButton extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             mainAxisAlignment: MainAxisAlignment.center,
             children: <Widget>[
-              if (icon != null) ...<Widget>[
+              if (asset != null) ...<Widget>[
+                AppIcon(asset: asset!, size: 22, fallback: icon),
+                const SizedBox(width: AppSpacing.sm),
+              ] else if (icon != null) ...<Widget>[
                 Icon(icon, size: 20),
                 const SizedBox(width: AppSpacing.sm),
               ],
@@ -554,6 +559,7 @@ class FilterChipPill extends StatelessWidget {
     required this.onTap,
     super.key,
     this.icon,
+    this.asset,
     this.selectedColor,
     this.unselectedBg,
     this.unselectedFg,
@@ -563,6 +569,7 @@ class FilterChipPill extends StatelessWidget {
   final bool selected;
   final VoidCallback onTap;
   final IconData? icon;
+  final String? asset;
   final Color? selectedColor;
   final Color? unselectedBg;
   final Color? unselectedFg;
@@ -591,7 +598,10 @@ class FilterChipPill extends StatelessWidget {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: <Widget>[
-              if (icon != null) ...<Widget>[
+              if (asset != null) ...<Widget>[
+                AppIcon(asset: asset!, size: 18, fallback: icon, color: fg),
+                const SizedBox(width: 6),
+              ] else if (icon != null) ...<Widget>[
                 Icon(icon, size: 16, color: fg),
                 const SizedBox(width: 6),
               ],
@@ -617,6 +627,7 @@ class TipBanner extends StatelessWidget {
     required this.body,
     super.key,
     this.icon = Icons.verified_user_outlined,
+    this.asset,
     this.trailing,
     this.backgroundColor,
   });
@@ -624,6 +635,7 @@ class TipBanner extends StatelessWidget {
   final String title;
   final String body;
   final IconData icon;
+  final String? asset;
   final Widget? trailing;
   final Color? backgroundColor;
 
@@ -643,7 +655,14 @@ class TipBanner extends StatelessWidget {
               color: AppColors.brand.withValues(alpha: 0.12),
               shape: BoxShape.circle,
             ),
-            child: Icon(icon, color: AppColors.brand),
+            child: asset != null
+                ? AppIcon(
+                    asset: asset!,
+                    size: 24,
+                    fallback: icon,
+                    color: AppColors.brand,
+                  )
+                : Icon(icon, color: AppColors.brand),
           ),
           const SizedBox(width: AppSpacing.md),
           Expanded(

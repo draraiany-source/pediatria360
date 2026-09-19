@@ -8,6 +8,8 @@ import '../../../../core/providers/core_providers.dart';
 import '../../../../core/responsive/responsive.dart';
 import '../../../../core/router/routes.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_icons.dart';
+import '../../../../core/widgets/app_icon.dart';
 import '../../../../core/theme/app_tokens.dart';
 import '../../../../core/utils/result.dart';
 import '../../../../core/utils/validators.dart';
@@ -182,7 +184,12 @@ class PatientTimelineScreen extends ConsumerWidget {
           ),
           leading: IconButton(
             onPressed: () => context.pop(),
-            icon: const Icon(Icons.arrow_back_rounded, color: AppColors.brand),
+            icon: const AppIcon(
+              asset: AppIcons.back,
+              size: 22,
+              fallback: Icons.arrow_back_rounded,
+              color: AppColors.brand,
+            ),
             tooltip: 'Voltar',
           ),
           bottom: TabBar(
@@ -293,6 +300,7 @@ class PatientTimelineScreen extends ConsumerWidget {
                                 '${vaccineSummary.overdue} em atraso · '
                                 '${vaccineSummary.upcoming} próximas.',
                         icon: Icons.vaccines_outlined,
+                        asset: AppIcons.vaccines,
                         color: AppColors.moduleVaccines,
                         actionLabel: 'Abrir vacinas',
                         onAction: () => context.push(Routes.vaccines(patientId)),
@@ -303,6 +311,7 @@ class PatientTimelineScreen extends ConsumerWidget {
                             'Acompanhe peso, altura, IMC e perímetro cefálico '
                             'com referências da OMS.',
                         icon: Icons.show_chart_rounded,
+                        asset: AppIcons.growth,
                         color: AppColors.moduleGrowth,
                         actionLabel: 'Abrir crescimento',
                         onAction: () => context.push(Routes.growth(patientId)),
@@ -314,6 +323,7 @@ class PatientTimelineScreen extends ConsumerWidget {
                             'estarão disponíveis na próxima etapa do produto. '
                             'Por enquanto, registre na anamnese da consulta.',
                         icon: Icons.child_care_outlined,
+                        asset: AppIcons.development,
                         color: AppColors.teal,
                       ),
                       _ChartFilteredList(
@@ -335,6 +345,7 @@ class PatientTimelineScreen extends ConsumerWidget {
                             'Agende ou acompanhe teleconsultas vinculadas '
                             'a este paciente.',
                         icon: Icons.videocam_outlined,
+                        asset: AppIcons.telemedicine,
                         color: AppColors.moduleTelemedicine,
                         actionLabel: 'Abrir telemedicina',
                         onAction: () => context.push(Routes.telemedicinePath),
@@ -531,6 +542,14 @@ class _TimelineTile extends StatelessWidget {
         _EventKind.vaccine => Icons.vaccines_outlined,
       };
 
+  String get _asset => switch (event.kind) {
+        _EventKind.encounter => AppIcons.consultation,
+        _EventKind.document => AppIcons.documents,
+        _EventKind.labs => AppIcons.exams,
+        _EventKind.growth => AppIcons.growth,
+        _EventKind.vaccine => AppIcons.vaccines,
+      };
+
   Color _color(ThemeData theme) {
     if (event.flagged) return AppColors.warning;
     return switch (event.kind) {
@@ -562,7 +581,12 @@ class _TimelineTile extends StatelessWidget {
                   color: color.withValues(alpha: 0.14),
                   shape: BoxShape.circle,
                 ),
-                child: Icon(_icon, size: 16, color: color),
+                child: AppIcon(
+                  asset: _asset,
+                  size: 16,
+                  fallback: _icon,
+                  color: color,
+                ),
               ),
               if (!isLast)
                 Expanded(
@@ -914,23 +938,27 @@ class _ChartSummaryTab extends StatelessWidget {
                         label: 'Consultas',
                         value: '${encounters.length}',
                         icon: Icons.medical_information_outlined,
+                        asset: AppIcons.consultation,
                       ),
                       StatTile(
                         label: 'Documentos',
                         value: '${documents.length}',
                         icon: Icons.description_outlined,
+                        asset: AppIcons.documents,
                         color: AppColors.raspberry,
                       ),
                       StatTile(
                         label: 'Exames',
                         value: '${labs.length}',
                         icon: Icons.science_outlined,
+                        asset: AppIcons.exams,
                         color: AppColors.vital,
                       ),
                       StatTile(
                         label: 'Vacinas OK',
                         value: '${vaccineSummary.applied}',
                         icon: Icons.vaccines_outlined,
+                        asset: AppIcons.vaccineApplied,
                         color: AppColors.success,
                       ),
                     ],
@@ -1330,14 +1358,29 @@ class _TimelineFilterBar extends ConsumerWidget {
 
   final _EventKind? current;
 
-  static const List<(String, _EventKind?, IconData)> _options =
-      <(String, _EventKind?, IconData)>[
-    ('Todos', null, Icons.all_inclusive_rounded),
-    ('Consultas', _EventKind.encounter, Icons.medical_information_outlined),
-    ('Crescimento', _EventKind.growth, Icons.show_chart_rounded),
-    ('Vacinas', _EventKind.vaccine, Icons.vaccines_outlined),
-    ('Exames', _EventKind.labs, Icons.science_outlined),
-    ('Documentos', _EventKind.document, Icons.description_outlined),
+  static const List<(String, _EventKind?, IconData, String?)> _options =
+      <(String, _EventKind?, IconData, String?)>[
+    ('Todos', null, Icons.all_inclusive_rounded, null),
+    (
+      'Consultas',
+      _EventKind.encounter,
+      Icons.medical_information_outlined,
+      AppIcons.consultation,
+    ),
+    (
+      'Crescimento',
+      _EventKind.growth,
+      Icons.show_chart_rounded,
+      AppIcons.growth,
+    ),
+    ('Vacinas', _EventKind.vaccine, Icons.vaccines_outlined, AppIcons.vaccines),
+    ('Exames', _EventKind.labs, Icons.science_outlined, AppIcons.exams),
+    (
+      'Documentos',
+      _EventKind.document,
+      Icons.description_outlined,
+      AppIcons.documents,
+    ),
   ];
 
   @override
@@ -1354,13 +1397,20 @@ class _TimelineFilterBar extends ConsumerWidget {
         itemCount: _options.length,
         separatorBuilder: (_, __) => const SizedBox(width: AppSpacing.sm),
         itemBuilder: (BuildContext context, int i) {
-          final (String label, _EventKind? kind, IconData icon) =
+          final (String label, _EventKind? kind, IconData icon, String? asset) =
               _options[i];
           final bool selected = current == kind;
 
           return FilterChip(
             selected: selected,
-            avatar: Icon(icon, size: 16),
+            avatar: asset != null
+                ? AppIcon(
+                    asset: asset,
+                    size: 16,
+                    fallback: icon,
+                    color: selected ? AppColors.brand : null,
+                  )
+                : Icon(icon, size: 16),
             label: Text(label),
             onSelected: (_) =>
                 ref.read(timelineFilterProvider.notifier).state = kind,
@@ -1489,6 +1539,7 @@ class _PatientSummaryCard extends StatelessWidget {
                     Expanded(
                       child: _SummaryStat(
                         icon: Icons.show_chart_rounded,
+                        asset: AppIcons.growth,
                         color: AppColors.moduleGrowth,
                         label: 'Crescimento',
                         value: formatGrowthSummary(latestGrowth),
@@ -1498,6 +1549,9 @@ class _PatientSummaryCard extends StatelessWidget {
                     Expanded(
                       child: _SummaryStat(
                         icon: Icons.vaccines_outlined,
+                        asset: vaccineSummary.overdue > 0
+                            ? AppIcons.vaccineOverdue
+                            : AppIcons.vaccines,
                         color: vaccineSummary.overdue > 0
                             ? AppColors.danger
                             : AppColors.moduleVaccines,
@@ -1515,6 +1569,7 @@ class _PatientSummaryCard extends StatelessWidget {
                 const SizedBox(height: AppSpacing.md),
                 _SummaryStat(
                   icon: Icons.medical_information_outlined,
+                  asset: AppIcons.consultation,
                   color: AppColors.petrol,
                   label: 'Consultas',
                   value: formatConsultationsSummary(encounters),
@@ -1525,6 +1580,7 @@ class _PatientSummaryCard extends StatelessWidget {
                     Expanded(
                       child: _SummaryStat(
                         icon: Icons.science_outlined,
+                        asset: AppIcons.exams,
                         color: AppColors.moduleExams,
                         label: 'Exames',
                         value: formatLabsSummary(labs),
@@ -1533,6 +1589,7 @@ class _PatientSummaryCard extends StatelessWidget {
                     Expanded(
                       child: _SummaryStat(
                         icon: Icons.description_outlined,
+                        asset: AppIcons.documents,
                         color: AppColors.raspberry,
                         label: 'Documentos',
                         value: formatDocumentsSummary(documents),
@@ -1555,10 +1612,12 @@ class _SummaryStat extends StatelessWidget {
     required this.color,
     required this.label,
     required this.value,
+    this.asset,
     this.onTap,
   });
 
   final IconData icon;
+  final String? asset;
   final Color color;
   final String label;
   final String value;
@@ -1570,7 +1629,14 @@ class _SummaryStat extends StatelessWidget {
     final Widget content = Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
-        Icon(icon, size: 18, color: color),
+        asset != null
+            ? AppIcon(
+                asset: asset!,
+                size: 18,
+                fallback: icon,
+                color: color,
+              )
+            : Icon(icon, size: 18, color: color),
         const SizedBox(width: AppSpacing.xs),
         Expanded(
           child: Column(

@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/error/failures.dart';
 import '../../../../core/router/routes.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_icons.dart';
 import '../../../../core/theme/app_tokens.dart';
 import '../../../../core/widgets/brand_ui.dart';
 import '../../../../core/widgets/state_views.dart';
@@ -64,6 +65,7 @@ class ClinicDashboardScreen extends ConsumerWidget {
                         label: 'Iniciar consulta com IA',
                         subtitle: 'Gravacao, rascunho e revisao medica',
                         icon: Icons.mic_rounded,
+                        asset: AppIcons.microphone,
                         color: AppColors.raspberry,
                         wide: true,
                         onTap: () => context.push(Routes.clinicVoicePath),
@@ -73,6 +75,7 @@ class ClinicDashboardScreen extends ConsumerWidget {
                         label: 'Recepcao',
                         subtitle: 'Fila e check-in do dia',
                         icon: Icons.how_to_reg_rounded,
+                        asset: AppIcons.waitingQueue,
                         color: AppColors.teal,
                         wide: true,
                         onTap: () => context.push(Routes.clinicReceptionPath),
@@ -82,6 +85,7 @@ class ClinicDashboardScreen extends ConsumerWidget {
                         label: 'Agenda',
                         subtitle: 'Consultas e retornos',
                         icon: Icons.calendar_month_rounded,
+                        asset: AppIcons.schedule,
                         color: AppColors.brand,
                         wide: true,
                         onTap: () => context.go(Routes.agendaPath),
@@ -91,6 +95,7 @@ class ClinicDashboardScreen extends ConsumerWidget {
                         label: 'Pacientes',
                         subtitle: 'Carteira e prontuario',
                         icon: Icons.groups_rounded,
+                        asset: AppIcons.patients,
                         color: AppColors.navy,
                         wide: true,
                         onTap: () => context.go(Routes.patientsPath),
@@ -100,6 +105,7 @@ class ClinicDashboardScreen extends ConsumerWidget {
                         label: 'Crescimento',
                         subtitle: 'Curvas e antropometria',
                         icon: Icons.show_chart_rounded,
+                        asset: AppIcons.growth,
                         color: AppColors.tealDeep,
                         wide: true,
                         onTap: () => context.push(Routes.childrenPath),
@@ -109,6 +115,7 @@ class ClinicDashboardScreen extends ConsumerWidget {
                         label: 'Vacinas',
                         subtitle: 'Calendario e doses',
                         icon: Icons.vaccines_outlined,
+                        asset: AppIcons.vaccines,
                         color: AppColors.warning,
                         wide: true,
                         onTap: () => context.push(Routes.childrenPath),

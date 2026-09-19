@@ -7,6 +7,8 @@ import '../../../../core/responsive/responsive.dart';
 import '../../../../core/router/routes.dart';
 import '../../../../core/services/remote_config_service.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_icons.dart';
+import '../../../../core/widgets/app_icon.dart';
 import '../../../../core/theme/app_tokens.dart';
 import '../../../../core/widgets/app_widgets.dart';
 import '../../../../core/widgets/state_views.dart';
@@ -94,6 +96,7 @@ class _AiChatScreenState extends ConsumerState<AiChatScreen> {
         appBar: AppBar(title: const Text('IA pediátrica')),
         body: const EmptyState(
           icon: Icons.auto_awesome_outlined,
+          asset: AppIcons.aiClinical,
           title: 'IA indisponível',
           message: 'O recurso está desativado no momento. Tente mais tarde.',
         ),
@@ -243,9 +246,10 @@ class _Welcome extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: <Widget>[
               const SizedBox(height: AppSpacing.xl),
-              Icon(
-                Icons.auto_awesome_rounded,
-                size: 36,
+              AppIcon(
+                asset: AppIcons.aiBrain,
+                size: 48,
+                fallback: Icons.auto_awesome_rounded,
                 color: theme.colorScheme.primary,
               ),
               const SizedBox(height: AppSpacing.lg),

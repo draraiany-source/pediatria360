@@ -4,6 +4,7 @@ import '../theme/app_colors.dart';
 import '../theme/app_shadows.dart';
 import '../theme/app_tokens.dart';
 import '../theme/app_typography.dart';
+import 'app_icon.dart';
 
 /// Card premium — sombra suave light / borda sutil no dark.
 class PremiumCard extends StatelessWidget {
@@ -89,6 +90,7 @@ class MetricCard extends StatelessWidget {
     required this.value,
     super.key,
     this.icon,
+    this.asset,
     this.color,
     this.onTap,
     this.subtitle,
@@ -98,6 +100,7 @@ class MetricCard extends StatelessWidget {
   final String value;
   final String? subtitle;
   final IconData? icon;
+  final String? asset;
   final Color? color;
   final VoidCallback? onTap;
 
@@ -114,7 +117,7 @@ class MetricCard extends StatelessWidget {
         children: <Widget>[
           Row(
             children: <Widget>[
-              if (icon != null) ...<Widget>[
+              if (asset != null || icon != null) ...<Widget>[
                 Container(
                   width: 32,
                   height: 32,
@@ -122,7 +125,15 @@ class MetricCard extends StatelessWidget {
                     color: accent.withValues(alpha: 0.18),
                     borderRadius: AppRadius.smAll,
                   ),
-                  child: Icon(icon, size: AppIconSize.sm, color: accent),
+                  alignment: Alignment.center,
+                  child: asset != null
+                      ? AppIcon(
+                          asset: asset!,
+                          size: 22,
+                          fallback: icon,
+                          color: accent,
+                        )
+                      : Icon(icon, size: AppIconSize.sm, color: accent),
                 ),
                 const SizedBox(width: AppSpacing.sm),
               ],
@@ -158,6 +169,7 @@ class StatTile extends StatelessWidget {
     required this.value,
     super.key,
     this.icon,
+    this.asset,
     this.color,
     this.onTap,
   });
@@ -165,6 +177,7 @@ class StatTile extends StatelessWidget {
   final String label;
   final String value;
   final IconData? icon;
+  final String? asset;
   final Color? color;
   final VoidCallback? onTap;
 
@@ -173,6 +186,7 @@ class StatTile extends StatelessWidget {
     label: label,
     value: value,
     icon: icon,
+    asset: asset,
     color: color,
     onTap: onTap,
   );
@@ -235,11 +249,13 @@ class ClinicalAlertChip extends StatelessWidget {
     super.key,
     this.tone = ClinicalAlertTone.warning,
     this.icon,
+    this.asset,
   });
 
   final String label;
   final ClinicalAlertTone tone;
   final IconData? icon;
+  final String? asset;
 
   @override
   Widget build(BuildContext context) {
@@ -263,7 +279,15 @@ class ClinicalAlertChip extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: <Widget>[
-          Icon(icon ?? Icons.priority_high_rounded, size: 14, color: color),
+          if (asset != null)
+            AppIcon(
+              asset: asset!,
+              size: 16,
+              fallback: icon ?? Icons.priority_high_rounded,
+              color: color,
+            )
+          else
+            Icon(icon ?? Icons.priority_high_rounded, size: 14, color: color),
           const SizedBox(width: 4),
           Text(
             label,

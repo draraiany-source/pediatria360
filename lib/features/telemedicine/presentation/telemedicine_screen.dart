@@ -9,6 +9,8 @@ import '../../../core/providers/core_providers.dart';
 import '../../../core/responsive/responsive.dart';
 import '../../../core/router/routes.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_icons.dart';
+import '../../../core/widgets/app_icon.dart';
 import '../../../core/theme/app_tokens.dart';
 import '../../../core/utils/result.dart';
 import '../../../core/utils/validators.dart';
@@ -97,7 +99,11 @@ class TelemedicineScreen extends ConsumerWidget {
           onPressed: () => context.canPop()
               ? context.pop()
               : context.go(Routes.homePath),
-          icon: const Icon(Icons.arrow_back_rounded),
+          icon: const AppIcon(
+            asset: AppIcons.back,
+            size: 22,
+            fallback: Icons.arrow_back_rounded,
+          ),
           tooltip: 'Voltar',
         ),
       ),
@@ -127,10 +133,11 @@ class TelemedicineScreen extends ConsumerWidget {
                               color: AppColors.brand.withValues(alpha: 0.14),
                               borderRadius: AppRadius.smAll,
                             ),
-                            child: const Icon(
-                              Icons.videocam_outlined,
-                              color: AppColors.brand,
+                            child: const AppIcon(
+                              asset: AppIcons.telemedicine,
                               size: 20,
+                              fallback: Icons.videocam_outlined,
+                              color: AppColors.brand,
                             ),
                           ),
                           const SizedBox(width: AppSpacing.md),
@@ -190,12 +197,14 @@ class TelemedicineScreen extends ConsumerWidget {
                               children: <Widget>[
                                 _CallControl(
                                   icon: Icons.mic_outlined,
+                                  asset: AppIcons.microphone,
                                   label: 'Microfone',
                                   enabled: AppConfig.videoConsultationEnabled,
                                 ),
                                 const SizedBox(width: AppSpacing.md),
                                 _CallControl(
                                   icon: Icons.videocam_outlined,
+                                  asset: AppIcons.videoCall,
                                   label: 'Câmera',
                                   enabled: AppConfig.videoConsultationEnabled,
                                 ),
@@ -409,14 +418,16 @@ class _AppointmentCard extends ConsumerWidget {
               AppButton(
                 label: 'Entrar na consulta',
                 icon: Icons.videocam_rounded,
+                asset: AppIcons.telemedicine,
                 onPressed: () => _join(context, ref),
               )
             else
               Row(
                 children: <Widget>[
-                  Icon(
-                    Icons.schedule_rounded,
+                  AppIcon(
+                    asset: AppIcons.schedule,
                     size: 14,
+                    fallback: Icons.schedule_rounded,
                     color: theme.colorScheme.onSurfaceVariant,
                   ),
                   const SizedBox(width: AppSpacing.xs),
@@ -563,10 +574,12 @@ class _CallControl extends StatelessWidget {
     required this.icon,
     required this.label,
     required this.enabled,
+    this.asset,
     this.danger = false,
   });
 
   final IconData icon;
+  final String? asset;
   final String label;
   final bool enabled;
   final bool danger;
@@ -597,7 +610,14 @@ class _CallControl extends StatelessWidget {
             disabledBackgroundColor: Colors.white12,
             disabledForegroundColor: Colors.white38,
           ),
-          icon: Icon(icon),
+          icon: asset != null
+              ? AppIcon(
+                  asset: asset!,
+                  size: 22,
+                  fallback: icon,
+                  color: Colors.white,
+                )
+              : Icon(icon),
           tooltip: label,
         ),
         Text(

@@ -8,6 +8,8 @@ import '../../../../core/error/failures.dart';
 import '../../../../core/responsive/responsive.dart';
 import '../../../../core/router/routes.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_icons.dart';
+import '../../../../core/widgets/app_icon.dart';
 import '../../../../core/theme/app_tokens.dart';
 import '../../../../core/utils/result.dart';
 import '../../../../core/utils/validators.dart';
@@ -252,7 +254,11 @@ class _ProfessionalPatientsScreenState
             onPressed: () => context.canPop()
                 ? context.pop()
                 : context.go(Routes.homePath),
-            icon: const Icon(Icons.arrow_back_rounded),
+            icon: const AppIcon(
+              asset: AppIcons.back,
+              size: 22,
+              fallback: Icons.arrow_back_rounded,
+            ),
             tooltip: 'Voltar',
           ),
         ),
@@ -274,6 +280,7 @@ class _ProfessionalPatientsScreenState
         child: PrimaryButton(
           label: '+ Novo paciente',
           icon: Icons.add_rounded,
+          asset: AppIcons.newPatient,
           onPressed: () => _newPatientSheet(context),
         ),
       ),
@@ -297,7 +304,12 @@ class _ProfessionalPatientsScreenState
                     subtitle: 'Gerencie e acompanhe seus pacientes.',
                     trailing: TextButton.icon(
                       onPressed: () {},
-                      icon: const Icon(Icons.tune_rounded, size: 18),
+                      icon: const AppIcon(
+                        asset: AppIcons.filter,
+                        size: 18,
+                        fallback: Icons.tune_rounded,
+                        color: AppColors.brand,
+                      ),
                       label: const Text('Filtros'),
                       style: TextButton.styleFrom(
                         foregroundColor: AppColors.brand,
@@ -314,7 +326,11 @@ class _ProfessionalPatientsScreenState
                     hintText: 'Buscar por nome ou responsável...',
                     leading: const Padding(
                       padding: EdgeInsets.only(left: AppSpacing.md),
-                      child: Icon(Icons.search_rounded, size: 20),
+                      child: AppIcon(
+                        asset: AppIcons.search,
+                        size: 20,
+                        fallback: Icons.search_rounded,
+                      ),
                     ),
                     trailing: <Widget>[
                       if (_search.text.isNotEmpty)
@@ -348,6 +364,7 @@ class _ProfessionalPatientsScreenState
                         FilterChipPill(
                           label: PatientFilter.all.label,
                           icon: Icons.groups_rounded,
+                          asset: AppIcons.patients,
                           selected: _filter == PatientFilter.all,
                           onTap: () =>
                               setState(() => _filter = PatientFilter.all),
@@ -356,6 +373,7 @@ class _ProfessionalPatientsScreenState
                         FilterChipPill(
                           label: PatientFilter.recent.label,
                           icon: Icons.child_care_rounded,
+                          asset: AppIcons.child,
                           selected: _filter == PatientFilter.recent,
                           unselectedBg: AppColors.softLilac,
                           unselectedFg: const Color(0xFF7C6CF0),
@@ -367,6 +385,7 @@ class _ProfessionalPatientsScreenState
                         FilterChipPill(
                           label: PatientFilter.openDrafts.label,
                           icon: Icons.edit_calendar_outlined,
+                          asset: AppIcons.schedule,
                           selected: _filter == PatientFilter.openDrafts,
                           unselectedBg: AppColors.softTeal,
                           unselectedFg: AppColors.tealDeep,
@@ -399,6 +418,7 @@ class _ProfessionalPatientsScreenState
                   if (all.isEmpty) {
                     return EmptyState(
                       icon: Icons.people_outline_rounded,
+                      asset: AppIcons.patients,
                       title: 'Nenhum paciente ainda',
                       message:
                           'Os pacientes aparecem aqui depois do primeiro '

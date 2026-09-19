@@ -4,6 +4,8 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/error/failures.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_icons.dart';
+import '../../../core/widgets/app_icon.dart';
 import '../../../core/theme/app_tokens.dart';
 import '../../../core/utils/result.dart';
 import '../../../core/utils/validators.dart';
@@ -206,7 +208,11 @@ class _ProfessionalAgendaScreenState
         leading: context.canPop()
             ? IconButton(
                 onPressed: () => context.pop(),
-                icon: const Icon(Icons.arrow_back_rounded, color: AppColors.brand),
+                icon: const AppIcon(
+            asset: AppIcons.back,
+            size: 22,
+            fallback: Icons.arrow_back_rounded,
+          ),
                 tooltip: 'Voltar',
               )
             : null,
@@ -223,7 +229,11 @@ class _ProfessionalAgendaScreenState
                   borderRadius: AppRadius.pillAll,
                 ),
               ),
-              icon: const Icon(Icons.add_rounded, size: 18),
+              icon: const AppIcon(
+                asset: AppIcons.add,
+                size: 18,
+                fallback: Icons.add_rounded,
+              ),
               label: const Text('+ Novo atendimento'),
             ),
           ),
@@ -289,6 +299,7 @@ class _ProfessionalAgendaScreenState
           if (list.isEmpty) {
             return EmptyState(
               icon: Icons.event_available_outlined,
+              asset: AppIcons.schedule,
               title: _range == _AgendaRange.today
                   ? 'Nenhuma consulta hoje'
                   : 'Nenhuma consulta nos próximos 7 dias',
@@ -355,6 +366,24 @@ class _AppointmentCard extends StatelessWidget {
         AppointmentStatus.noShow => AppColors.danger,
       };
 
+  IconData _statusIcon(AppointmentStatus status) => switch (status) {
+        AppointmentStatus.requested => Icons.schedule_rounded,
+        AppointmentStatus.confirmed => Icons.check_circle_outline_rounded,
+        AppointmentStatus.inProgress => Icons.play_circle_outline_rounded,
+        AppointmentStatus.completed => Icons.event_available_outlined,
+        AppointmentStatus.cancelled => Icons.event_busy_outlined,
+        AppointmentStatus.noShow => Icons.person_off_outlined,
+      };
+
+  String _statusAsset(AppointmentStatus status) => switch (status) {
+        AppointmentStatus.requested => AppIcons.followUpPending,
+        AppointmentStatus.confirmed => AppIcons.appointmentConfirmed,
+        AppointmentStatus.inProgress => AppIcons.schedule,
+        AppointmentStatus.completed => AppIcons.followUp,
+        AppointmentStatus.cancelled => AppIcons.appointmentCancelled,
+        AppointmentStatus.noShow => AppIcons.appointmentMissed,
+      };
+
   @override
   Widget build(BuildContext context) {
     final ThemeData theme = Theme.of(context);
@@ -383,6 +412,8 @@ class _AppointmentCard extends StatelessWidget {
               AppTag(
                 label: appointment.status.label,
                 color: _statusColor(theme.colorScheme),
+                icon: _statusIcon(appointment.status),
+                asset: _statusAsset(appointment.status),
               ),
             ],
           ),
@@ -429,7 +460,11 @@ class _AppointmentCard extends StatelessWidget {
                   const SizedBox(width: AppSpacing.sm),
                 IconButton(
                   onPressed: busy ? null : onCancel,
-                  icon: const Icon(Icons.close_rounded),
+                  icon: const AppIcon(
+                    asset: AppIcons.close,
+                    size: 22,
+                    fallback: Icons.close_rounded,
+                  ),
                   tooltip: 'Cancelar consulta',
                 ),
               ],
@@ -470,7 +505,12 @@ class _PreVisitIndicator extends ConsumerWidget {
         padding: const EdgeInsets.symmetric(vertical: AppSpacing.xxs),
         child: Row(
           children: <Widget>[
-            const Icon(Icons.assignment_outlined, size: 16, color: AppColors.brand),
+            const AppIcon(
+              asset: AppIcons.clinicalDocs,
+              size: 16,
+              fallback: Icons.assignment_outlined,
+              color: AppColors.brand,
+            ),
             const SizedBox(width: AppSpacing.xs),
             Expanded(
               child: Text(

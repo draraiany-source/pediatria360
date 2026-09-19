@@ -4,6 +4,7 @@ import 'package:lottie/lottie.dart';
 import '../error/failures.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_tokens.dart';
+import 'app_icon.dart';
 
 /// Tela vazia. Um vazio e um convite para agir, nunca um beco sem saida:
 /// sempre traz um proximo passo concreto.
@@ -12,6 +13,7 @@ class EmptyState extends StatelessWidget {
     required this.title,
     required this.message,
     this.icon = Icons.inbox_outlined,
+    this.asset,
     this.actionLabel,
     this.onAction,
     this.animation,
@@ -31,6 +33,7 @@ class EmptyState extends StatelessWidget {
   final String title;
   final String message;
   final IconData icon;
+  final String? asset;
   final String? actionLabel;
   final VoidCallback? onAction;
 
@@ -64,7 +67,15 @@ class EmptyState extends StatelessWidget {
                     shape: BoxShape.circle,
                     border: Border.all(color: AppColors.line),
                   ),
-                  child: Icon(icon, size: 32, color: AppColors.brand),
+                  alignment: Alignment.center,
+                  child: asset != null
+                      ? AppIcon(
+                          asset: asset!,
+                          size: AppIcon.empty * 0.5,
+                          fallback: icon,
+                          color: AppColors.brand,
+                        )
+                      : Icon(icon, size: 32, color: AppColors.brand),
                 ),
               const SizedBox(height: AppSpacing.lg),
               Text(

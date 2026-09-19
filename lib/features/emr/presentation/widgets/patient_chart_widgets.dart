@@ -3,6 +3,8 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/router/routes.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_icons.dart';
+import '../../../../core/widgets/app_icon.dart';
 import '../../../../core/theme/app_tokens.dart';
 import '../../../../core/utils/validators.dart';
 import '../../../../core/widgets/app_widgets.dart';
@@ -123,7 +125,12 @@ class PatientChartHeader extends StatelessWidget {
                 IconButton(
                   onPressed: onEditProfile,
                   tooltip: 'Editar cadastro',
-                  icon: const Icon(Icons.edit_outlined, color: AppColors.brand),
+                  icon: const AppIcon(
+                    asset: AppIcons.edit,
+                    size: 22,
+                    fallback: Icons.edit_outlined,
+                    color: AppColors.brand,
+                  ),
                 ),
             ],
           ),
@@ -140,18 +147,21 @@ class PatientChartHeader extends StatelessWidget {
                     label: 'Alergias: ${allergyList.join(', ')}',
                     tone: ClinicalAlertTone.danger,
                     icon: Icons.warning_amber_rounded,
+                    asset: AppIcons.allergy,
                   ),
                 if (conditionList.isNotEmpty)
                   ClinicalAlertChip(
                     label: 'Comorbidades: ${conditionList.join(', ')}',
                     tone: ClinicalAlertTone.warning,
                     icon: Icons.medical_information_outlined,
+                    asset: AppIcons.medicalRecord,
                   ),
                 if (overdueVaccines > 0)
                   ClinicalAlertChip(
                     label: '$overdueVaccines vacina(s) atrasada(s)',
                     tone: ClinicalAlertTone.warning,
                     icon: Icons.vaccines_outlined,
+                    asset: AppIcons.vaccineOverdue,
                   ),
               ],
             ),
@@ -231,12 +241,14 @@ class ClinicalSummaryGrid extends StatelessWidget {
         label: 'Última consulta',
         value: last == null ? '—' : Formatters.date(last.startedAt),
         icon: Icons.event_available_outlined,
+        asset: AppIcons.consultation,
         color: AppColors.navy,
       ),
       _Kpi(
         label: 'Próximo retorno',
         value: nextReturnLabel ?? 'A agendar',
         icon: Icons.event_repeat_rounded,
+        asset: AppIcons.followUp,
         color: AppColors.tealDeep,
       ),
       _Kpi(
@@ -245,6 +257,9 @@ class ClinicalSummaryGrid extends StatelessWidget {
             ? '—'
             : '${vaccineSummary.overdue + vaccineSummary.upcoming}',
         icon: Icons.vaccines_outlined,
+        asset: vaccineSummary.overdue > 0
+            ? AppIcons.vaccineOverdue
+            : AppIcons.vaccinePending,
         color: vaccineSummary.overdue > 0
             ? AppColors.danger
             : AppColors.moduleVaccines,
@@ -256,6 +271,7 @@ class ClinicalSummaryGrid extends StatelessWidget {
         label: 'Exames fora da faixa',
         value: '$pendingLabs',
         icon: Icons.science_outlined,
+        asset: AppIcons.exams,
         color: pendingLabs > 0 ? AppColors.warning : AppColors.moduleExams,
       ),
     ];
@@ -288,7 +304,14 @@ class ClinicalSummaryGrid extends StatelessWidget {
                           color: k.color.withValues(alpha: 0.12),
                           borderRadius: AppRadius.mdAll,
                         ),
-                        child: Icon(k.icon, color: k.color, size: 20),
+                        child: k.asset != null
+                            ? AppIcon(
+                                asset: k.asset!,
+                                size: 20,
+                                fallback: k.icon,
+                                color: k.color,
+                              )
+                            : Icon(k.icon, color: k.color, size: 20),
                       ),
                       const SizedBox(width: AppSpacing.md),
                       Expanded(
@@ -337,12 +360,14 @@ class _Kpi {
     required this.value,
     required this.icon,
     required this.color,
+    this.asset,
     this.onTap,
   });
 
   final String label;
   final String value;
   final IconData icon;
+  final String? asset;
   final Color color;
   final VoidCallback? onTap;
 }
@@ -354,6 +379,7 @@ class ChartModuleLinkCard extends StatelessWidget {
     required this.message,
     required this.icon,
     required this.color,
+    this.asset,
     this.actionLabel,
     this.onAction,
     super.key,
@@ -362,6 +388,7 @@ class ChartModuleLinkCard extends StatelessWidget {
   final String title;
   final String message;
   final IconData icon;
+  final String? asset;
   final Color color;
   final String? actionLabel;
   final VoidCallback? onAction;
@@ -385,7 +412,14 @@ class ChartModuleLinkCard extends StatelessWidget {
                     color: color.withValues(alpha: 0.12),
                     shape: BoxShape.circle,
                   ),
-                  child: Icon(icon, color: color, size: 28),
+                  child: asset != null
+                      ? AppIcon(
+                          asset: asset!,
+                          size: 28,
+                          fallback: icon,
+                          color: color,
+                        )
+                      : Icon(icon, color: color, size: 28),
                 ),
                 const SizedBox(height: AppSpacing.lg),
                 Text(
