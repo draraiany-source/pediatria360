@@ -23,6 +23,7 @@ import '../../../../shared/domain/entities/encounter.dart';
 import '../../../../shared/domain/entities/growth_record.dart';
 import '../../../../shared/domain/entities/vaccine.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
+import '../../../clinic_org/presentation/providers/clinic_org_providers.dart';
 import '../../../children/presentation/providers/children_providers.dart';
 import '../../../vaccines/domain/pni_calendar.dart';
 import '../../data/encounter_repository.dart';
@@ -386,6 +387,7 @@ class PatientTimelineScreen extends ConsumerWidget {
               professionalCrm: ref.read(currentUserProvider)?.crm,
               patientName: patientName,
               type: EncounterType.routine,
+              clinicId: ref.read(activeClinicIdProvider).valueOrNull,
             );
 
     if (!context.mounted) return;

@@ -17,6 +17,7 @@ import '../../../shared/domain/entities/clinical_record.dart';
 import '../../../shared/domain/entities/encounter.dart';
 import '../../../shared/domain/entities/pre_visit_questionnaire.dart';
 import '../../auth/presentation/providers/auth_providers.dart';
+import '../../clinic_org/presentation/providers/clinic_org_providers.dart';
 import '../../emr/presentation/screens/encounter_editor_screen.dart';
 import '../../emr/presentation/screens/patient_timeline_screen.dart'
     show encounterRepositoryProvider;
@@ -171,6 +172,7 @@ class _ProfessionalAgendaScreenState
               professionalCrm: ref.read(currentUserProvider)?.crm,
               patientName: a.childName,
               type: EncounterType.routine,
+              clinicId: ref.read(activeClinicIdProvider).valueOrNull,
               appointmentId: a.id,
             );
 

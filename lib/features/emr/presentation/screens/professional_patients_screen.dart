@@ -21,6 +21,7 @@ import '../../../../core/widgets/state_views.dart';
 import '../../../../shared/domain/entities/clinical_record.dart';
 import '../../../../shared/domain/entities/encounter.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
+import '../../../clinic_org/presentation/providers/clinic_org_providers.dart';
 import '../../../notifications/presentation/notification_center_screen.dart';
 import 'patient_timeline_screen.dart';
 
@@ -653,6 +654,7 @@ class _NewPatientSheetState extends ConsumerState<_NewPatientSheet> {
               patientName: _name.text.trim(),
               patientBirthDate: _birthDate,
               type: EncounterType.routine,
+              clinicId: ref.read(activeClinicIdProvider).valueOrNull,
             );
 
     if (!mounted) return;

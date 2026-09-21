@@ -150,6 +150,9 @@ class _KpiGrid extends StatelessWidget {
         '${(stats.noShowRate * 100).toStringAsFixed(0)}%',
         AppColors.danger,
       ),
+      _Kpi('Rascunhos', '${stats.clinicalAlerts}', AppColors.moduleAgenda),
+      _Kpi('Msgs', '${stats.pendingMessages}', AppColors.moduleLibrary),
+      _Kpi('Novos/mes', '${stats.newPatients}', AppColors.tealDeep),
     ];
 
     return LayoutBuilder(

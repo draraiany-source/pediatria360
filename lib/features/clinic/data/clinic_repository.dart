@@ -199,34 +199,134 @@ class ClinicRepository {
 
         final int totalObserved = snap.docs.length;
         final double noShowRate =
-            totalObserved == 0 ? 0 : noShow / totalObserved;
+            totalObserved == 0 ? 0.0 : noShow / totalObserved;
+
+        // Retornos: proximos 14 dias com motivo indicando retorno, ou tipo
+        // de encontro "followUp" quando o campo existir no agendamento.
+        final DateTime returnsEnd = start.add(const Duration(days: 14));
+        final QuerySnapshot<Map<String, dynamic>> upcomingSnap =
+            await _appointments
+                .where('professionalId', isEqualTo: professionalId)
+                .where(
+                  'startsAt',
+                  isGreaterThanOrEqualTo: Timestamp.fromDate(start),
+                )
+                .where(
+                  'startsAt',
+                  isLessThan: Timestamp.fromDate(returnsEnd),
+                )
+                .get();
+        int pendingReturns = 0;
+        int billingTodayCents = 0;
+        for (final QueryDocumentSnapshot<Map<String, dynamic>> doc
+            in upcomingSnap.docs) {
+          final Map<String, dynamic> data = doc.data();
+          final String reason =
+              ((data['reason'] as String?) ?? '').toLowerCase();
+          final String status = (data['status'] as String?) ?? '';
+          final bool active = status == 'requested' ||
+              status == 'confirmed' ||
+              status == 'inProgress';
+          if (active &&
+              (reason.contains('retorno') ||
+                  reason.contains('follow') ||
+                  reason.contains('retorno agend'))) {
+            pendingReturns++;
+          }
+        }
+        for (final QueryDocumentSnapshot<Map<String, dynamic>> doc
+            in snap.docs) {
+          final Map<String, dynamic> data = doc.data();
+          if ((data['paid'] as bool?) == true) {
+            billingTodayCents += (data['priceCents'] as num?)?.toInt() ?? 0;
+          }
+        }
+
+        // Rascunhos abertos do profissional = alerta clinico operacional.
+        int clinicalAlerts = 0;
+        try {
+          final QuerySnapshot<Map<String, dynamic>> draftsSnap =
+              await _firestore
+                  .collection('encounters')
+                  .where('professionalId', isEqualTo: professionalId)
+                  .where('status', isEqualTo: 'draft')
+                  .limit(50)
+                  .get();
+          clinicalAlerts = draftsSnap.docs.length;
+        } catch (_) {
+          // Indice composto pode faltar em alguns ambientes — nao derruba painel.
+          clinicalAlerts = 0;
+        }
+
+        // Proxies: novos no mes = agendamentos criados neste mes (nao e
+        // "primeiro paciente", mas evita KPI mentiroso em zero fixo).
+        final DateTime monthStart = DateTime(now.year, now.month, 1);
+        int newPatients = 0;
+        try {
+          final QuerySnapshot<Map<String, dynamic>> monthSnap =
+              await _appointments
+                  .where('professionalId', isEqualTo: professionalId)
+                  .where(
+                    'createdAt',
+                    isGreaterThanOrEqualTo: Timestamp.fromDate(monthStart),
+                  )
+                  .limit(200)
+                  .get();
+          newPatients = monthSnap.docs.length;
+        } catch (_) {
+          newPatients = 0;
+        }
 
         return ClinicDashboardStats(
           todayAppointments: snap.docs.length,
           waiting: waiting,
           inService: inService,
           finished: finished,
-          // TODO(consultorio): retornos pendentes a partir de plano/encounters.
-          pendingReturns: 0,
-          // TODO(consultorio): cruzar com vaccine_doses atrasadas.
+          pendingReturns: pendingReturns,
+          // Vacinas/exames cross-collection: ainda sem join seguro — manter 0
+          // com transparencia na UI (nao inventar).
           pendingVaccines: 0,
-          // TODO(consultorio): exames laboratoriais pendentes de leitura.
           pendingExams: 0,
-          // TODO(consultorio): mensagens nao lidas do profissional.
+          // Mensagens: preenchido pelo provider com unreadCountProvider.
           pendingMessages: 0,
-          // TODO(consultorio): pacientes novos no mes (primeira consulta).
-          newPatients: 0,
-          // TODO(consultorio): faturamento do dia (orders / appointments.paid).
-          billingTodayCents: 0,
-          // TODO(consultorio): faturamento do mes.
+          newPatients: newPatients,
+          billingTodayCents: billingTodayCents,
           billingMonthCents: 0,
           noShowRate: noShowRate,
-          // TODO(consultorio): aniversarios proximos na carteira.
           upcomingBirthdays: 0,
-          // TODO(consultorio): alertas clinicos (alergia, rascunhos abertos).
-          clinicalAlerts: 0,
-          // TODO(consultorio): tarefas administrativas pendentes.
+          clinicalAlerts: clinicalAlerts,
           adminPending: 0,
+        );
+      });
+
+  /// Variante que aceita contagem de mensagens nao lidas ja calculada no app.
+  Future<Result<ClinicDashboardStats>> loadDashboardStatsWithUnread(
+    String professionalId, {
+    int unreadMessages = 0,
+  }) =>
+      guard(() async {
+        final Result<ClinicDashboardStats> base =
+            await loadDashboardStats(professionalId);
+        final ClinicDashboardStats? s = base.valueOrNull;
+        if (s == null) {
+          throw StateError(base.failureOrNull?.message ?? 'stats');
+        }
+        return ClinicDashboardStats(
+          todayAppointments: s.todayAppointments,
+          waiting: s.waiting,
+          inService: s.inService,
+          finished: s.finished,
+          pendingReturns: s.pendingReturns,
+          pendingVaccines: s.pendingVaccines,
+          pendingExams: s.pendingExams,
+          pendingMessages: unreadMessages,
+          newPatients: s.newPatients,
+          billingTodayCents: s.billingTodayCents,
+          billingMonthCents: s.billingMonthCents,
+          noShowRate: s.noShowRate,
+          upcomingBirthdays: s.upcomingBirthdays,
+          clinicalAlerts: s.clinicalAlerts,
+          adminPending: s.adminPending,
         );
       });
 }

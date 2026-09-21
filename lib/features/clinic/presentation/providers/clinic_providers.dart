@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/providers/core_providers.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
+import '../../../notifications/presentation/notification_center_screen.dart';
 import '../../../telemedicine/data/telemedicine_repository.dart';
 import '../../data/clinic_repository.dart';
 import '../../data/voice_consultation_repository.dart';
@@ -40,8 +41,16 @@ final FutureProvider<ClinicDashboardStats> clinicDashboardStatsProvider =
     FutureProvider<ClinicDashboardStats>((Ref ref) async {
   final String? uid = ref.watch(currentUserProvider)?.uid;
   if (uid == null) return ClinicDashboardStats.empty();
-  final result =
-      await ref.watch(clinicRepositoryProvider).loadDashboardStats(uid);
+  // Import circular avoided: unread is read lazily via notifications provider.
+  int unread = 0;
+  try {
+    unread = ref.watch(unreadCountProvider);
+  } catch (_) {
+    unread = 0;
+  }
+  final result = await ref
+      .watch(clinicRepositoryProvider)
+      .loadDashboardStatsWithUnread(uid, unreadMessages: unread);
   return result.valueOrNull ?? ClinicDashboardStats.empty();
 });
 

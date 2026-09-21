@@ -161,7 +161,7 @@ class TelemedicineScreen extends ConsumerWidget {
                         ),
                       ),
                       const SizedBox(height: AppSpacing.lg),
-                      // Sala de vídeo preparada — integração futura.
+                      // Sala de vídeo: só exibe controles se AppConfig.videoConsultationEnabled.
                       Container(
                         width: double.infinity,
                         padding: const EdgeInsets.all(AppSpacing.xl),
@@ -186,37 +186,49 @@ class TelemedicineScreen extends ConsumerWidget {
                             Text(
                               AppConfig.videoConsultationEnabled
                                   ? 'Pronto para conectar'
-                                  : 'Integração de vídeo ainda não ativa',
+                                  : 'Vídeo indisponível nesta versão — sem sala ativa',
                               style: theme.textTheme.bodySmall?.copyWith(
                                 color: Colors.white70,
                               ),
                             ),
                             const SizedBox(height: AppSpacing.lg),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: <Widget>[
-                                _CallControl(
-                                  icon: Icons.mic_outlined,
-                                  asset: AppIcons.microphone,
-                                  label: 'Microfone',
-                                  enabled: AppConfig.videoConsultationEnabled,
+                            if (AppConfig.videoConsultationEnabled)
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: <Widget>[
+                                  _CallControl(
+                                    icon: Icons.mic_outlined,
+                                    asset: AppIcons.microphone,
+                                    label: 'Microfone',
+                                    enabled: true,
+                                  ),
+                                  const SizedBox(width: AppSpacing.md),
+                                  _CallControl(
+                                    icon: Icons.videocam_outlined,
+                                    asset: AppIcons.videoCall,
+                                    label: 'Câmera',
+                                    enabled: true,
+                                  ),
+                                  const SizedBox(width: AppSpacing.md),
+                                  _CallControl(
+                                    icon: Icons.call_end_rounded,
+                                    label: 'Encerrar',
+                                    enabled: true,
+                                    danger: true,
+                                  ),
+                                ],
+                              )
+                            else
+                              Text(
+                                'A sala de vídeo ainda não está disponível. '
+                                'Você pode acompanhar o agendamento; a '
+                                'chamada será liberada quando o provedor '
+                                'estiver conectado.',
+                                textAlign: TextAlign.center,
+                                style: theme.textTheme.bodySmall?.copyWith(
+                                  color: Colors.white70,
                                 ),
-                                const SizedBox(width: AppSpacing.md),
-                                _CallControl(
-                                  icon: Icons.videocam_outlined,
-                                  asset: AppIcons.videoCall,
-                                  label: 'Câmera',
-                                  enabled: AppConfig.videoConsultationEnabled,
-                                ),
-                                const SizedBox(width: AppSpacing.md),
-                                _CallControl(
-                                  icon: Icons.call_end_rounded,
-                                  label: 'Encerrar',
-                                  enabled: AppConfig.videoConsultationEnabled,
-                                  danger: true,
-                                ),
-                              ],
-                            ),
+                              ),
                           ],
                         ),
                       ),

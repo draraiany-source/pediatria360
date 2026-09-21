@@ -112,6 +112,7 @@ class EncounterRepository {
     String? patientName,
     DateTime? patientBirthDate,
     String? appointmentId,
+    String? clinicId,
   }) =>
       guard(() async {
         final String id = _uuid.v4();
@@ -130,6 +131,7 @@ class EncounterRepository {
           'status': EncounterStatus.draft.name,
           'startedAt': FieldValue.serverTimestamp(),
           'appointmentId': appointmentId,
+          if (clinicId != null && clinicId.isNotEmpty) 'clinicId': clinicId,
           'anamnesis': const Anamnesis().toMap(),
           'vitals': const VitalSigns().toMap(),
           'exam': const PhysicalExam().toMap(),
