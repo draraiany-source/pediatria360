@@ -1036,6 +1036,7 @@ class _EvolutionsTab extends ConsumerWidget {
               patientName: source.patientName,
               patientBirthDate: source.patientBirthDate,
               type: EncounterType.followUp,
+              clinicId: ref.read(activeClinicIdProvider).valueOrNull,
             );
 
     if (!context.mounted) return;
