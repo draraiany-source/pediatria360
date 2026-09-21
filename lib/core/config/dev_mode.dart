@@ -1,14 +1,16 @@
 import 'package:flutter/foundation.dart';
 
 import '../../shared/domain/entities/app_user.dart';
+import 'app_config.dart';
 
-/// Acesso direto temporário para desenvolvimento local.
+/// Acesso direto temporário para desenvolvimento / homologação de UI.
 ///
 /// ## Segurança
 ///
-/// - Ativo **somente** quando [kDebugMode] é `true` (builds debug).
-/// - Em profile/release ([kReleaseMode] / sem debug), [isEnabled] é sempre
-///   `false` — o login Firebase volta a ser obrigatório sem mudar código.
+/// - Em debug: ativo quando [_flag] é `true`.
+/// - Em release/profile: só com `--dart-define=SKIP_AUTH=true` **e**
+///   ambiente diferente de `prod` (homologação web). Em `ENV=prod` nunca
+///   liga, mesmo com SKIP_AUTH.
 /// - Não grava senha, token nem credencial real. O usuário é um objeto
 ///   local em memória; não autentica no Firebase Auth.
 /// - O fluxo de login e o Firebase Authentication permanecem intactos.
@@ -19,7 +21,16 @@ class DevMode {
   /// testar o login real ainda em debug.
   static const bool _flag = true;
 
-  static bool get isEnabled => kDebugMode && _flag;
+  /// Homologação web: `flutter build web --dart-define=SKIP_AUTH=true`.
+  static const bool _skipAuthDefine =
+      bool.fromEnvironment('SKIP_AUTH', defaultValue: false);
+
+  static bool get isEnabled {
+    if (!_flag) return false;
+    if (kDebugMode) return true;
+    // Release/homolog: só com define explícito e fora de produção.
+    return _skipAuthDefine && !AppConfig.isProduction;
+  }
 
   /// UID local — não é um uid do Firebase Auth.
   static const String userId = 'dev-local-user';
