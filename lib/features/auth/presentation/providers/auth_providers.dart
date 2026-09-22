@@ -86,14 +86,17 @@ final Provider<DeleteAccount> deleteAccountProvider = Provider<DeleteAccount>(
 /// É a fonte da verdade sobre "há sessão?" — o roteador redireciona a partir
 /// dela, e não de um booleano guardado em memória que pode ficar defasado.
 ///
-/// Em [DevMode] (somente debug), emite o usuário local sem tocar no Auth.
+/// Sessão Firebase; em [DevMode] sem login, cai no usuário local de UI.
+///
+/// Se houver Auth real (homologação após “Entrar com conta”), o perfil
+/// Firestore prevalece — não mascara a sessão com o convidado.
 final StreamProvider<AppUser?> authStateProvider =
     StreamProvider<AppUser?>(
   (Ref ref) {
-    if (DevMode.isEnabled) {
-      return Stream<AppUser?>.value(DevMode.user);
-    }
-    return ref.watch(authRepositoryProvider).watchCurrentUser();
+    final Stream<AppUser?> firebase =
+        ref.watch(authRepositoryProvider).watchCurrentUser();
+    if (!DevMode.isEnabled) return firebase;
+    return firebase.map((AppUser? user) => user ?? DevMode.user);
   },
 );
 

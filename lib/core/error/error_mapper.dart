@@ -91,7 +91,7 @@ class ErrorMapper {
     return switch (e.code) {
       'unauthenticated' => AuthFailure('Entre para continuar.', e.code, e),
       'permission-denied' => PermissionFailure(
-          'Voce nao tem acesso a este recurso.',
+          'Você não tem acesso a este recurso.',
           e.code,
           e,
         ),
@@ -122,7 +122,7 @@ class ErrorMapper {
   static Failure _firebase(FirebaseException e) {
     return switch (e.code) {
       'permission-denied' => PermissionFailure(
-          'Voce nao tem acesso a este conteudo.',
+          'Você não tem acesso a este conteúdo.',
           e.code,
           e,
         ),

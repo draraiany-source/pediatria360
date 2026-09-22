@@ -6,10 +6,10 @@ import 'package:pediatria360/core/router/routes.dart';
 import 'package:pediatria360/shared/domain/entities/app_user.dart';
 
 void main() {
-  test('DevMode user is admin-ready and fully onboarded', () {
+  test('DevMode user is professional-ready and fully onboarded', () {
     final AppUser u = DevMode.user;
     expect(u.uid, DevMode.userId);
-    expect(u.role, UserRole.admin);
+    expect(u.role, UserRole.professional);
     expect(u.onboardingDone, isTrue);
     expect(u.professionalVerified, isTrue);
     expect(u.canPrescribe, isTrue);
@@ -43,7 +43,7 @@ void main() {
     );
   });
 
-  test('com unlockAllRoles, admin acessa prontuário e admin', () {
+  test('com unlockAllRoles, profissional acessa prontuário e admin', () {
     expect(
       resolveRouteRedirect(
         maintenanceMode: false,
@@ -70,7 +70,7 @@ void main() {
     );
   });
 
-  test('sem unlockAllRoles, admin NÃO acessa prontuário', () {
+  test('sem unlockAllRoles, profissional acessa prontuário', () {
     expect(
       resolveRouteRedirect(
         maintenanceMode: false,
@@ -80,11 +80,25 @@ void main() {
         user: DevMode.user,
         seenOnboarding: true,
       ),
+      isNull,
+    );
+  });
+
+  test('sem unlockAllRoles, profissional NÃO acessa admin', () {
+    expect(
+      resolveRouteRedirect(
+        maintenanceMode: false,
+        location: Routes.adminPath,
+        authLoading: false,
+        onboardingLoading: false,
+        user: DevMode.user,
+        seenOnboarding: true,
+      ),
       Routes.homePath,
     );
   });
 
-  test('DevMode.isEnabled segue kDebugMode', () {
+  test('DevMode.isEnabled segue kDebugMode quando SKIP_AUTH off', () {
     expect(DevMode.isEnabled, kDebugMode);
   });
 }

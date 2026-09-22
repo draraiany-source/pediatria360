@@ -54,7 +54,7 @@ class AuthFailure extends Failure {
 /// Usuario autenticado, mas sem permissao para a operacao.
 class PermissionFailure extends Failure {
   const PermissionFailure([
-    String message = 'Voce nao tem acesso a este conteudo.',
+    String message = 'Você não tem acesso a este conteúdo.',
     String? code,
     Object? cause,
   ]) : super(message, code: code, cause: cause);

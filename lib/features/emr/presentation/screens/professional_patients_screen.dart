@@ -5,12 +5,15 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/error/failures.dart';
+import '../../../../core/config/dev_mode.dart';
+import '../../../../core/providers/core_providers.dart';
 import '../../../../core/responsive/responsive.dart';
 import '../../../../core/router/routes.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_icons.dart';
 import '../../../../core/widgets/app_icon.dart';
 import '../../../../core/theme/app_tokens.dart';
+import '../../../../core/utils/clinical_access.dart';
 import '../../../../core/utils/result.dart';
 import '../../../../core/utils/validators.dart';
 import '../../../../core/widgets/app_widgets.dart';
@@ -93,6 +96,15 @@ class PatientSummary {
 /// verdade do vínculo: quem eu atendi é quem tem atendimento meu.
 final StreamProvider<List<PatientSummary>> professionalPatientsProvider =
     StreamProvider<List<PatientSummary>>((Ref ref) {
+  if (DevMode.isEnabled &&
+      ref.watch(firebaseAuthProvider).currentUser == null) {
+    return Stream<List<PatientSummary>>.error(
+      const PermissionFailure(
+        'Modo demonstração: entre com conta profissional verificada '
+        'para ver pacientes reais.',
+      ),
+    );
+  }
   final String? uid = ref.watch(currentUserProvider)?.uid;
   if (uid == null) {
     return Stream<List<PatientSummary>>.value(const <PatientSummary>[]);
@@ -282,7 +294,14 @@ class _ProfessionalPatientsScreenState
           label: '+ Novo paciente',
           icon: Icons.add_rounded,
           asset: AppIcons.newPatient,
-          onPressed: () => _newPatientSheet(context),
+          onPressed: () async {
+            final bool ok = await ensureClinicalAccessBeforeForm(
+              context,
+              ref,
+              actionLabel: 'cadastrar paciente',
+            );
+            if (ok && context.mounted) await _newPatientSheet(context);
+          },
         ),
       ),
       body: SafeArea(
@@ -408,10 +427,22 @@ class _ProfessionalPatientsScreenState
                 error: (Object e, StackTrace s) => EmptyState(
                   icon: Icons.error_outline_rounded,
                   title: 'Não conseguimos carregar essas informações',
-                  message: 'Tente novamente em alguns instantes.',
-                  actionLabel: 'Recarregar',
-                  onAction: () =>
-                      ref.invalidate(professionalPatientsProvider),
+                  message: clinicalLoadErrorMessage(e),
+                  actionLabel: DevMode.isEnabled &&
+                          ref.read(firebaseAuthProvider).currentUser == null
+                      ? 'Entrar'
+                      : 'Recarregar',
+                  onAction: () async {
+                    if (DevMode.isEnabled &&
+                        ref.read(firebaseAuthProvider).currentUser == null) {
+                      DevMode.requireRealAuth = true;
+                      await ref.read(authRepositoryProvider).signOut();
+                      ref.invalidate(authStateProvider);
+                      if (context.mounted) context.go(Routes.loginPath);
+                      return;
+                    }
+                    ref.invalidate(professionalPatientsProvider);
+                  },
                 ),
                 data: (List<PatientSummary> all) {
                   final List<PatientSummary> patients = _apply(all);
@@ -425,7 +456,16 @@ class _ProfessionalPatientsScreenState
                           'Os pacientes aparecem aqui depois do primeiro '
                           'atendimento registrado.',
                       actionLabel: 'Cadastrar paciente',
-                      onAction: () => _newPatientSheet(context),
+                      onAction: () async {
+                        final bool ok = await ensureClinicalAccessBeforeForm(
+                          context,
+                          ref,
+                          actionLabel: 'cadastrar paciente',
+                        );
+                        if (ok && context.mounted) {
+                          await _newPatientSheet(context);
+                        }
+                      },
                     );
                   }
 

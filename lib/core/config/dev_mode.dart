@@ -9,11 +9,12 @@ import 'app_config.dart';
 ///
 /// - Em debug: ativo quando [_flag] é `true`.
 /// - Em release/profile: só com `--dart-define=SKIP_AUTH=true` **e**
-///   ambiente diferente de `prod` (homologação web). Em `ENV=prod` nunca
-///   liga, mesmo com SKIP_AUTH.
-/// - Não grava senha, token nem credencial real. O usuário é um objeto
-///   local em memória; não autentica no Firebase Auth.
-/// - O fluxo de login e o Firebase Authentication permanecem intactos.
+///   ambiente diferente de `prod`. Em `ENV=prod` nunca liga.
+/// - Se existir sessão Firebase Auth real, ela prevalece sobre o usuário
+///   local (homologação pode navegar como convidado e depois entrar de
+///   verdade sem rebuild).
+/// - O usuário local **não** autentica no Firebase; leituras/escritas
+///   clínicas exigem conta profissional verificada.
 class DevMode {
   const DevMode._();
 
@@ -25,22 +26,24 @@ class DevMode {
   static const bool _skipAuthDefine =
       bool.fromEnvironment('SKIP_AUTH', defaultValue: false);
 
+  /// Quando `true`, desliga o convidado nesta sessão e força login real.
+  static bool requireRealAuth = false;
+
   static bool get isEnabled {
-    if (!_flag) return false;
+    if (!_flag || requireRealAuth) return false;
     if (kDebugMode) return true;
-    // Release/homolog: só com define explícito e fora de produção.
     return _skipAuthDefine && !AppConfig.isProduction;
   }
 
   /// UID local — não é um uid do Firebase Auth.
   static const String userId = 'dev-local-user';
 
-  /// Perfil amplo para navegar telas clínicas e admin em testes de UI.
+  /// Perfil profissional para testar UI clínica (sem Auth Firebase).
   static AppUser get user => AppUser(
         uid: userId,
         email: 'dev@pediatria360.local',
         name: 'Carolina Souza',
-        role: UserRole.admin,
+        role: UserRole.professional,
         plan: UserPlan.pro,
         createdAt: DateTime.utc(2018, 1, 1),
         emailVerified: true,
@@ -49,4 +52,7 @@ class DevMode {
         specialty: 'Pediatra',
         crm: '12345-SP',
       );
+
+  /// Sessão convidada (sem Firebase Auth) — dados clínicos reais não carregam.
+  static bool get isGuestSession => isEnabled;
 }

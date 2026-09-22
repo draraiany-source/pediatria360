@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/config/app_config.dart';
+import '../../../core/config/dev_mode.dart';
 import '../../../core/error/failures.dart';
 import '../../../core/providers/core_providers.dart';
 import '../../../core/responsive/responsive.dart';
@@ -45,6 +46,15 @@ final StreamProvider<List<Appointment>> myAppointmentsProvider =
 /// `watchProfessionalAgenda` já existia no repositório; nada consumia.
 final StreamProvider<List<Appointment>> myAgendaProvider =
     StreamProvider<List<Appointment>>((Ref ref) {
+  if (DevMode.isEnabled &&
+      ref.watch(firebaseAuthProvider).currentUser == null) {
+    return Stream<List<Appointment>>.error(
+      const PermissionFailure(
+        'Modo demonstração: entre com conta profissional verificada '
+        'para carregar a agenda real.',
+      ),
+    );
+  }
   final String? uid = ref.watch(currentUserProvider)?.uid;
   if (uid == null) {
     return Stream<List<Appointment>>.value(const <Appointment>[]);

@@ -3,12 +3,16 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/error/failures.dart';
+import '../../../core/config/dev_mode.dart';
+import '../../../core/providers/core_providers.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_icons.dart';
 import '../../../core/widgets/app_icon.dart';
 import '../../../core/theme/app_tokens.dart';
+import '../../../core/utils/clinical_access.dart';
 import '../../../core/utils/result.dart';
 import '../../../core/utils/validators.dart';
+import '../../../core/router/routes.dart';
 import '../../../core/widgets/app_widgets.dart';
 import '../../../core/widgets/clinical_ui.dart';
 import '../../../core/widgets/skeleton.dart';
@@ -292,9 +296,22 @@ class _ProfessionalAgendaScreenState
         error: (Object e, StackTrace s) => EmptyState(
           icon: Icons.error_outline_rounded,
           title: 'Não conseguimos carregar essas informações',
-          message: 'Tente novamente em alguns instantes.',
-          actionLabel: 'Recarregar',
-          onAction: () => ref.invalidate(myAgendaProvider),
+          message: clinicalLoadErrorMessage(e),
+          actionLabel: DevMode.isEnabled &&
+                  ref.read(firebaseAuthProvider).currentUser == null
+              ? 'Entrar'
+              : 'Recarregar',
+          onAction: () async {
+            if (DevMode.isEnabled &&
+                ref.read(firebaseAuthProvider).currentUser == null) {
+              DevMode.requireRealAuth = true;
+              await ref.read(authRepositoryProvider).signOut();
+              ref.invalidate(authStateProvider);
+              if (context.mounted) context.go(Routes.loginPath);
+              return;
+            }
+            ref.invalidate(myAgendaProvider);
+          },
         ),
         data: (List<Appointment> all) {
           final List<Appointment> list = _filtered(all);
