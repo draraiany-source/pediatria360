@@ -62,6 +62,20 @@ final AsyncNotifierProvider<ActiveClinicController, String?>
   ActiveClinicController.new,
 );
 
+final Provider<ClinicMembership?> activeClinicMembershipProvider =
+    Provider<ClinicMembership?>((Ref ref) {
+  final String? uid = ref.watch(currentUserProvider)?.uid;
+  final String? clinicId = ref.watch(activeClinicIdProvider).valueOrNull;
+  final List<ClinicMembership> memberships =
+      ref.watch(myClinicMembershipsProvider).valueOrNull ??
+          const <ClinicMembership>[];
+  if (uid == null || clinicId == null) return null;
+  for (final ClinicMembership m in memberships) {
+    if (m.clinicId == clinicId && m.active) return m;
+  }
+  return null;
+});
+
 final FutureProvider<ClinicOrganization?> activeClinicProvider =
     FutureProvider<ClinicOrganization?>((Ref ref) async {
   final String? id = await ref.watch(activeClinicIdProvider.future);

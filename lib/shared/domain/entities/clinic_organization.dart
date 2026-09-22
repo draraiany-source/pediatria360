@@ -49,6 +49,19 @@ enum ClinicRole {
   bool get canAccessFinance =>
       this == ClinicRole.clinicAdmin || this == ClinicRole.finance;
 
+  /// Faturamento / convenios (mesmo papel financeiro + admin).
+  bool get canAccessBilling => canAccessFinance;
+
+  /// Estoque: operacoes, compras e custos (admin + financeiro).
+  bool get canManageInventory =>
+      this == ClinicRole.clinicAdmin || this == ClinicRole.finance;
+
+  /// Estoque: consumo clinico e movimentacao (enfermagem/tecnico + admin).
+  bool get canConsumeInventory =>
+      canManageInventory ||
+      this == ClinicRole.nursing ||
+      this == ClinicRole.technician;
+
   bool get canManageStaff => this == ClinicRole.clinicAdmin;
 }
 

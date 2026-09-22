@@ -11,7 +11,29 @@ import '../../features/auth/presentation/screens/role_setup_screen.dart';
 import '../../features/admin/presentation/admin_screen.dart';
 import '../../features/auth/presentation/screens/splash_screen.dart';
 import '../../features/clinic/presentation/screens/clinic_dashboard_screen.dart';
+import '../../features/finance/presentation/screens/cash_flow_screen.dart';
+import '../../features/finance/presentation/screens/delinquency_screen.dart';
+import '../../features/finance/presentation/screens/dre_screen.dart';
+import '../../features/finance/presentation/screens/finance_dashboard_screen.dart';
+import '../../features/finance/presentation/screens/finance_reports_screen.dart';
+import '../../features/finance/presentation/screens/payables_screen.dart';
+import '../../features/finance/presentation/screens/production_screen.dart';
+import '../../features/finance/presentation/screens/receivables_screen.dart';
+import '../../features/billing/presentation/screens/billing_dashboard_screen.dart';
+import '../../features/billing/presentation/screens/billing_list_screens.dart';
+import '../../features/inventory/presentation/screens/inventory_dashboard_screen.dart';
+import '../../features/inventory/presentation/screens/inventory_list_screens.dart';
+import '../../features/bi/presentation/screens/bi_admin_screen.dart';
+import '../../features/bi/presentation/screens/bi_clinical_screen.dart';
+import '../../features/bi/presentation/screens/bi_hub_screen.dart';
+import '../../features/bi/presentation/screens/bi_ops_screen.dart';
+import '../../features/bi/presentation/screens/bi_reception_screen.dart';
+import '../../features/security/presentation/screens/audit_logs_screen.dart';
+import '../../features/security/presentation/screens/permission_matrix_screen.dart';
 import '../../features/clinic/presentation/screens/clinic_reception_screen.dart';
+import '../../features/pending/domain/pending_item.dart';
+import '../../features/pending/presentation/screens/crm_screen.dart';
+import '../../features/pending/presentation/screens/pending_center_screen.dart';
 import '../../features/clinic/presentation/screens/clinic_triage_screen.dart';
 import '../../features/clinic/presentation/screens/patient_360_screen.dart';
 import '../../features/clinic/presentation/screens/voice_consent_screen.dart';
@@ -451,6 +473,230 @@ final Provider<GoRouter> routerProvider = Provider<GoRouter>((Ref ref) {
         name: Routes.clinicReceptionName,
         builder: (BuildContext context, GoRouterState state) =>
             const ClinicReceptionScreen(),
+      ),
+      GoRoute(
+        path: Routes.clinicPendingPath,
+        name: Routes.clinicPendingName,
+        builder: (BuildContext context, GoRouterState state) {
+          final String? focus = state.uri.queryParameters['focus'];
+          PendingCenterFilter? initial;
+          if (focus == 'vaccines' || focus == 'clinical') {
+            initial = PendingCenterFilter.clinical;
+          } else if (focus == 'messages') {
+            initial = PendingCenterFilter.administrative;
+          } else if (focus == 'returns') {
+            initial = PendingCenterFilter.clinical;
+          } else if (focus == 'exams') {
+            initial = PendingCenterFilter.clinical;
+          } else if (focus == 'financial') {
+            initial = PendingCenterFilter.financial;
+          }
+          return PendingCenterScreen(initialFilter: initial);
+        },
+      ),
+      GoRoute(
+        path: Routes.clinicCrmPath,
+        name: Routes.clinicCrmName,
+        builder: (BuildContext context, GoRouterState state) =>
+            const ClinicCrmScreen(),
+      ),
+      GoRoute(
+        path: Routes.financePath,
+        name: Routes.financeName,
+        builder: (BuildContext context, GoRouterState state) =>
+            FinanceDashboardScreen(initialTab: state.uri.queryParameters['tab']),
+        routes: <RouteBase>[
+          GoRoute(
+            path: 'receber',
+            name: Routes.financeReceivablesName,
+            builder: (BuildContext context, GoRouterState state) =>
+                ReceivablesScreen(
+              highlightId: state.uri.queryParameters['receivableId'],
+            ),
+          ),
+          GoRoute(
+            path: 'pagar',
+            name: Routes.financePayablesName,
+            builder: (BuildContext context, GoRouterState state) =>
+                const PayablesScreen(),
+          ),
+          GoRoute(
+            path: 'fluxo',
+            name: Routes.financeCashFlowName,
+            builder: (BuildContext context, GoRouterState state) =>
+                const CashFlowScreen(),
+          ),
+          GoRoute(
+            path: 'dre',
+            name: Routes.financeDreName,
+            builder: (BuildContext context, GoRouterState state) =>
+                const DreScreen(),
+          ),
+          GoRoute(
+            path: 'inadimplencia',
+            name: Routes.financeDelinquencyName,
+            builder: (BuildContext context, GoRouterState state) =>
+                const DelinquencyScreen(),
+          ),
+          GoRoute(
+            path: 'producao',
+            name: Routes.financeProductionName,
+            builder: (BuildContext context, GoRouterState state) =>
+                const ProductionScreen(),
+          ),
+          GoRoute(
+            path: 'relatorios',
+            name: Routes.financeReportsName,
+            builder: (BuildContext context, GoRouterState state) =>
+                const FinanceReportsScreen(),
+          ),
+        ],
+      ),
+      GoRoute(
+        path: Routes.billingPath,
+        name: Routes.billingName,
+        builder: (BuildContext context, GoRouterState state) =>
+            const BillingDashboardScreen(),
+        routes: <RouteBase>[
+          GoRoute(
+            path: 'planos',
+            name: Routes.billingPlansName,
+            builder: (BuildContext context, GoRouterState state) =>
+                const InsurancePlansScreen(),
+          ),
+          GoRoute(
+            path: 'autorizacoes',
+            name: Routes.billingAuthorizationsName,
+            builder: (BuildContext context, GoRouterState state) =>
+                const AuthorizationsScreen(),
+          ),
+          GoRoute(
+            path: 'guias',
+            name: Routes.billingGuidesName,
+            builder: (BuildContext context, GoRouterState state) =>
+                const GuidesScreen(),
+          ),
+          GoRoute(
+            path: 'lotes',
+            name: Routes.billingBatchesName,
+            builder: (BuildContext context, GoRouterState state) =>
+                const BatchesScreen(),
+          ),
+          GoRoute(
+            path: 'glosas',
+            name: Routes.billingGlosasName,
+            builder: (BuildContext context, GoRouterState state) =>
+                const GlosasScreen(),
+          ),
+          GoRoute(
+            path: 'relatorios',
+            name: Routes.billingReportsName,
+            builder: (BuildContext context, GoRouterState state) =>
+                const BillingReportsScreen(),
+          ),
+          GoRoute(
+            path: 'carteirinhas',
+            name: Routes.billingPatientInsuranceName,
+            builder: (BuildContext context, GoRouterState state) =>
+                PatientInsuranceScreen(
+              childId: state.uri.queryParameters['childId'],
+            ),
+          ),
+        ],
+      ),
+      GoRoute(
+        path: Routes.inventoryPath,
+        name: Routes.inventoryName,
+        builder: (BuildContext context, GoRouterState state) =>
+            const InventoryDashboardScreen(),
+        routes: <RouteBase>[
+          GoRoute(
+            path: 'itens',
+            name: Routes.inventoryItemsName,
+            builder: (BuildContext context, GoRouterState state) =>
+                const InventoryItemsScreen(),
+          ),
+          GoRoute(
+            path: 'lotes',
+            name: Routes.inventoryLotsName,
+            builder: (BuildContext context, GoRouterState state) =>
+                InventoryLotsScreen(itemId: state.uri.queryParameters['itemId']),
+          ),
+          GoRoute(
+            path: 'movimentos',
+            name: Routes.inventoryMovementsName,
+            builder: (BuildContext context, GoRouterState state) =>
+                const InventoryMovementsScreen(),
+          ),
+          GoRoute(
+            path: 'fornecedores',
+            name: Routes.inventorySuppliersName,
+            builder: (BuildContext context, GoRouterState state) =>
+                const InventorySuppliersScreen(),
+          ),
+          GoRoute(
+            path: 'compras',
+            name: Routes.inventoryPurchasesName,
+            builder: (BuildContext context, GoRouterState state) =>
+                const InventoryPurchaseOrdersScreen(),
+          ),
+          GoRoute(
+            path: 'inventario',
+            name: Routes.inventoryCountName,
+            builder: (BuildContext context, GoRouterState state) =>
+                const InventoryCountScreen(),
+          ),
+          GoRoute(
+            path: 'relatorios',
+            name: Routes.inventoryReportsName,
+            builder: (BuildContext context, GoRouterState state) =>
+                const InventoryReportsScreen(),
+          ),
+        ],
+      ),
+      GoRoute(
+        path: Routes.auditPath,
+        name: Routes.auditName,
+        builder: (BuildContext context, GoRouterState state) =>
+            const AuditLogsScreen(),
+      ),
+      GoRoute(
+        path: Routes.permissionsPath,
+        name: Routes.permissionsName,
+        builder: (BuildContext context, GoRouterState state) =>
+            const PermissionMatrixScreen(),
+      ),
+      GoRoute(
+        path: Routes.biPath,
+        name: Routes.biName,
+        builder: (BuildContext context, GoRouterState state) =>
+            const BiHubScreen(),
+        routes: <RouteBase>[
+          GoRoute(
+            path: 'admin',
+            name: Routes.biAdminName,
+            builder: (BuildContext context, GoRouterState state) =>
+                const BiAdminScreen(),
+          ),
+          GoRoute(
+            path: 'clinico',
+            name: Routes.biClinicalName,
+            builder: (BuildContext context, GoRouterState state) =>
+                const BiClinicalScreen(),
+          ),
+          GoRoute(
+            path: 'recepcao',
+            name: Routes.biReceptionName,
+            builder: (BuildContext context, GoRouterState state) =>
+                const BiReceptionScreen(),
+          ),
+          GoRoute(
+            path: 'operacional',
+            name: Routes.biOpsName,
+            builder: (BuildContext context, GoRouterState state) =>
+                const BiOpsScreen(),
+          ),
+        ],
       ),
       GoRoute(
         path: Routes.clinicTriagePath,

@@ -638,6 +638,169 @@ service cloud.firestore {
       }
     }
 
+    // Financeiro (FASE 4) — ledger por profissional (ownerId).
+    match /finance_receivables/{id} {
+      allow read, write: if isVerifiedProfessional() &&
+        ((resource == null && request.resource.data.ownerId == request.auth.uid) ||
+         (resource != null && resource.data.ownerId == request.auth.uid &&
+          request.resource.data.ownerId == request.auth.uid));
+      allow delete: if false;
+    }
+
+    match /finance_payables/{id} {
+      allow read, write: if isVerifiedProfessional() &&
+        ((resource == null && request.resource.data.ownerId == request.auth.uid) ||
+         (resource != null && resource.data.ownerId == request.auth.uid &&
+          request.resource.data.ownerId == request.auth.uid));
+      allow delete: if false;
+    }
+
+    match /finance_receipts/{id} {
+      allow read, write: if isVerifiedProfessional() &&
+        ((resource == null && request.resource.data.ownerId == request.auth.uid) ||
+         (resource != null && resource.data.ownerId == request.auth.uid &&
+          request.resource.data.ownerId == request.auth.uid));
+      allow delete: if false;
+    }
+
+    match /finance_audit_logs/{id} {
+      allow read: if isVerifiedProfessional() &&
+                    resource.data.ownerId == request.auth.uid;
+      allow create: if isVerifiedProfessional() &&
+                      request.resource.data.ownerId == request.auth.uid;
+      allow update, delete: if false;
+    }
+
+    // Faturamento / convenios (FASE 5).
+    match /insurance_plans/{id} {
+      allow read, write: if isVerifiedProfessional() &&
+        ((resource == null && request.resource.data.ownerId == request.auth.uid) ||
+         (resource != null && resource.data.ownerId == request.auth.uid &&
+          request.resource.data.ownerId == request.auth.uid));
+      allow delete: if false;
+    }
+    match /patient_insurances/{id} {
+      allow read, write: if isVerifiedProfessional() &&
+        ((resource == null && request.resource.data.ownerId == request.auth.uid) ||
+         (resource != null && resource.data.ownerId == request.auth.uid &&
+          request.resource.data.ownerId == request.auth.uid));
+      allow delete: if false;
+    }
+    match /insurance_authorizations/{id} {
+      allow read, write: if isVerifiedProfessional() &&
+        ((resource == null && request.resource.data.ownerId == request.auth.uid) ||
+         (resource != null && resource.data.ownerId == request.auth.uid &&
+          request.resource.data.ownerId == request.auth.uid));
+      allow delete: if false;
+    }
+    match /billing_guides/{id} {
+      allow read, write: if isVerifiedProfessional() &&
+        ((resource == null && request.resource.data.ownerId == request.auth.uid) ||
+         (resource != null && resource.data.ownerId == request.auth.uid &&
+          request.resource.data.ownerId == request.auth.uid));
+      allow delete: if false;
+    }
+    match /billing_batches/{id} {
+      allow read, write: if isVerifiedProfessional() &&
+        ((resource == null && request.resource.data.ownerId == request.auth.uid) ||
+         (resource != null && resource.data.ownerId == request.auth.uid &&
+          request.resource.data.ownerId == request.auth.uid));
+      allow delete: if false;
+    }
+    match /billing_glosas/{id} {
+      allow read, write: if isVerifiedProfessional() &&
+        ((resource == null && request.resource.data.ownerId == request.auth.uid) ||
+         (resource != null && resource.data.ownerId == request.auth.uid &&
+          request.resource.data.ownerId == request.auth.uid));
+      allow delete: if false;
+    }
+    match /billing_audit_logs/{id} {
+      allow read: if isVerifiedProfessional() &&
+                    resource.data.ownerId == request.auth.uid;
+      allow create: if isVerifiedProfessional() &&
+                      request.resource.data.ownerId == request.auth.uid;
+      allow update, delete: if false;
+    }
+
+    // Estoque (FASE 6) — ledger por profissional (ownerId).
+    match /inventory_items/{id} {
+      allow read, write: if isVerifiedProfessional() &&
+        ((resource == null && request.resource.data.ownerId == request.auth.uid) ||
+         (resource != null && resource.data.ownerId == request.auth.uid &&
+          request.resource.data.ownerId == request.auth.uid));
+      allow delete: if false;
+    }
+    match /inventory_lots/{id} {
+      allow read, write: if isVerifiedProfessional() &&
+        ((resource == null && request.resource.data.ownerId == request.auth.uid) ||
+         (resource != null && resource.data.ownerId == request.auth.uid &&
+          request.resource.data.ownerId == request.auth.uid));
+      allow delete: if false;
+    }
+    match /inventory_movements/{id} {
+      allow read, write: if isVerifiedProfessional() &&
+        ((resource == null && request.resource.data.ownerId == request.auth.uid) ||
+         (resource != null && resource.data.ownerId == request.auth.uid &&
+          request.resource.data.ownerId == request.auth.uid));
+      allow delete: if false;
+    }
+    match /inventory_suppliers/{id} {
+      allow read, write: if isVerifiedProfessional() &&
+        ((resource == null && request.resource.data.ownerId == request.auth.uid) ||
+         (resource != null && resource.data.ownerId == request.auth.uid &&
+          request.resource.data.ownerId == request.auth.uid));
+      allow delete: if false;
+    }
+    match /inventory_purchase_orders/{id} {
+      allow read, write: if isVerifiedProfessional() &&
+        ((resource == null && request.resource.data.ownerId == request.auth.uid) ||
+         (resource != null && resource.data.ownerId == request.auth.uid &&
+          request.resource.data.ownerId == request.auth.uid));
+      allow delete: if false;
+    }
+    match /inventory_counts/{id} {
+      allow read, write: if isVerifiedProfessional() &&
+        ((resource == null && request.resource.data.ownerId == request.auth.uid) ||
+         (resource != null && resource.data.ownerId == request.auth.uid &&
+          request.resource.data.ownerId == request.auth.uid));
+      allow delete: if false;
+    }
+    match /inventory_audit_logs/{id} {
+      allow read: if isVerifiedProfessional() &&
+                    resource.data.ownerId == request.auth.uid;
+      allow create: if isVerifiedProfessional() &&
+                      request.resource.data.ownerId == request.auth.uid;
+      allow update, delete: if false;
+    }
+
+    // Rastreamento de status de pendencias derivadas (FASE 3 CRM).
+    match /pending_tracking/{trackingId} {
+      allow read: if signedIn()
+                  && resource.data.professionalId == request.auth.uid;
+      allow create: if isVerifiedProfessional()
+                    && request.resource.data.professionalId == request.auth.uid
+                    && request.resource.data.sourceKey is string
+                    && request.resource.data.status is string;
+      allow update: if isVerifiedProfessional()
+                    && resource.data.professionalId == request.auth.uid
+                    && request.resource.data.professionalId == request.auth.uid;
+      allow delete: if false;
+    }
+
+    // Auditoria central (FASE 8) — append-only pelo cliente.
+    match /security_audit_logs/{id} {
+      allow read: if isAdmin()
+                  || (signedIn() && resource.data.actorUid == request.auth.uid)
+                  || (isVerifiedProfessional()
+                      && resource.data.clinicId != null
+                      && isClinicAdmin(resource.data.clinicId));
+      allow create: if signedIn()
+                    && request.resource.data.actorUid == request.auth.uid
+                    && request.resource.data.keys().hasAll(['actorUid', 'action', 'module', 'at'])
+                    && (isVerifiedProfessional() || isAdmin());
+      allow update, delete: if false;
+    }
+
     // ------------------------------------------------------------ Config
 
     match /config/{document} {

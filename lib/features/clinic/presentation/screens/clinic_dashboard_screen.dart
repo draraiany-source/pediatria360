@@ -9,7 +9,10 @@ import '../../../../core/theme/app_icons.dart';
 import '../../../../core/theme/app_tokens.dart';
 import '../../../../core/widgets/brand_ui.dart';
 import '../../../../core/widgets/state_views.dart';
+import '../../../auth/presentation/providers/auth_providers.dart';
+import '../../../clinic_org/presentation/providers/clinic_org_providers.dart';
 import '../../domain/clinic_dashboard_stats.dart';
+import '../../../security/domain/security_access.dart';
 import '../providers/clinic_providers.dart';
 import '../widgets/ai_medical_disclaimer_banner.dart';
 
@@ -22,6 +25,10 @@ class ClinicDashboardScreen extends ConsumerWidget {
     final AsyncValue<ClinicDashboardStats> statsAsync =
         ref.watch(clinicDashboardStatsProvider);
     final ThemeData theme = Theme.of(context);
+    final bool showAudit = SecurityAccess.canAdministerAudit(
+      user: ref.watch(currentUserProvider),
+      clinicMembership: ref.watch(activeClinicMembershipProvider),
+    );
 
     return Scaffold(
       backgroundColor: AppColors.lightBackground,
@@ -102,6 +109,62 @@ class ClinicDashboardScreen extends ConsumerWidget {
                       ),
                       const SizedBox(height: AppSpacing.sm),
                       QuickAccessCard(
+                        label: 'Central de Pendencias',
+                        subtitle: 'Retornos, vacinas, exames e financeiro',
+                        icon: Icons.inbox_outlined,
+                        asset: AppIcons.notification,
+                        color: AppColors.warning,
+                        wide: true,
+                        onTap: () => context.push(Routes.clinicPendingPath),
+                      ),
+                      const SizedBox(height: AppSpacing.sm),
+                      QuickAccessCard(
+                        label: 'CRM clinico',
+                        subtitle: 'Segmentos e automacoes',
+                        icon: Icons.insights_outlined,
+                        asset: AppIcons.patients,
+                        color: AppColors.brand,
+                        wide: true,
+                        onTap: () => context.push(Routes.clinicCrmPath),
+                      ),
+                      const SizedBox(height: AppSpacing.sm),
+                      QuickAccessCard(
+                        label: 'BI / Indicadores',
+                        subtitle: 'KPIs executivos e dashboards',
+                        icon: Icons.insights_outlined,
+                        color: AppColors.honey,
+                        wide: true,
+                        onTap: () => context.push(Routes.biPath),
+                      ),
+                      const SizedBox(height: AppSpacing.sm),
+                      QuickAccessCard(
+                        label: 'Financeiro',
+                        subtitle: 'Receitas, despesas e inadimplencia',
+                        icon: Icons.account_balance_wallet_outlined,
+                        color: AppColors.navy,
+                        wide: true,
+                        onTap: () => context.push(Routes.financePath),
+                      ),
+                      const SizedBox(height: AppSpacing.sm),
+                      QuickAccessCard(
+                        label: 'Faturamento',
+                        subtitle: 'Convenios, lotes e glosas',
+                        icon: Icons.receipt_long_outlined,
+                        color: AppColors.tealDeep,
+                        wide: true,
+                        onTap: () => context.push(Routes.billingPath),
+                      ),
+                      const SizedBox(height: AppSpacing.sm),
+                      QuickAccessCard(
+                        label: 'Estoque',
+                        subtitle: 'Lotes, validade e alertas',
+                        icon: Icons.inventory_2_outlined,
+                        color: AppColors.tealDeep,
+                        wide: true,
+                        onTap: () => context.push(Routes.inventoryPath),
+                      ),
+                      const SizedBox(height: AppSpacing.sm),
+                      QuickAccessCard(
                         label: 'Crescimento',
                         subtitle: 'Curvas e antropometria',
                         icon: Icons.show_chart_rounded,
@@ -120,6 +183,26 @@ class ClinicDashboardScreen extends ConsumerWidget {
                         wide: true,
                         onTap: () => context.push(Routes.childrenPath),
                       ),
+                      if (showAudit) ...<Widget>[
+                        const SizedBox(height: AppSpacing.sm),
+                        QuickAccessCard(
+                          label: 'Auditoria',
+                          subtitle: 'Trilha de seguranca e exportacoes',
+                          icon: Icons.shield_outlined,
+                          color: AppColors.navy,
+                          wide: true,
+                          onTap: () => context.push(Routes.auditPath),
+                        ),
+                        const SizedBox(height: AppSpacing.sm),
+                        QuickAccessCard(
+                          label: 'Permissoes',
+                          subtitle: 'Matriz read-only (admin)',
+                          icon: Icons.admin_panel_settings_outlined,
+                          color: AppColors.tealDeep,
+                          wide: true,
+                          onTap: () => context.push(Routes.permissionsPath),
+                        ),
+                      ],
                     ],
                   ),
                 );

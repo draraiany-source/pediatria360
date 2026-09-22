@@ -282,6 +282,67 @@ class EncounterRepository {
                 s.docs.map(_documentFrom).toList(growable: false),
           );
 
+  /// Documentos emitidos pelo profissional ainda sem assinatura.
+  Future<List<ClinicalDocument>> fetchUnsignedDocumentsForProfessional(
+    String professionalId,
+  ) async {
+    final QuerySnapshot<Map<String, dynamic>> snap = await _documents
+        .where('professionalId', isEqualTo: professionalId)
+        .limit(150)
+        .get();
+    return snap.docs
+        .map(_documentFrom)
+        .where(
+          (ClinicalDocument d) => !d.isSigned && !d.cancelled,
+        )
+        .toList(growable: false);
+  }
+
+  /// Exames que exigem revisão clínica (fora da faixa ou marcados).
+  Future<List<LabResult>> fetchPendingLabsForPatients(
+    List<String> patientIds,
+  ) async {
+    final List<LabResult> out = <LabResult>[];
+    final Iterable<String> ids = patientIds.take(25);
+    for (final String patientId in ids) {
+      final QuerySnapshot<Map<String, dynamic>> snap = await _firestore
+          .collection('lab_results')
+          .where('patientId', isEqualTo: patientId)
+          .orderBy('collectedAt', descending: true)
+          .limit(40)
+          .get();
+      for (final QueryDocumentSnapshot<Map<String, dynamic>> d in snap.docs) {
+        final Map<String, dynamic> m = d.data();
+        final LabResult lab = LabResult(
+          id: d.id,
+          patientId: (m['patientId'] as String?) ?? '',
+          analyte: (m['analyte'] as String?) ?? '',
+          collectedAt:
+              (m['collectedAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
+          value: (m['value'] as num?)?.toDouble(),
+          textValue: m['textValue'] as String?,
+          unit: m['unit'] as String?,
+          referenceLow: (m['referenceLow'] as num?)?.toDouble(),
+          referenceHigh: (m['referenceHigh'] as num?)?.toDouble(),
+          laboratory: m['laboratory'] as String?,
+          panel: m['panel'] as String?,
+          encounterId: m['encounterId'] as String?,
+          attachmentUrl: m['attachmentUrl'] as String?,
+          note: m['note'] as String?,
+        );
+        if (_labNeedsReview(lab)) out.add(lab);
+      }
+    }
+    return out;
+  }
+
+  static bool _labNeedsReview(LabResult lab) {
+    if (lab.isOutOfRange) return true;
+    final String? note = lab.note?.toLowerCase();
+    return note != null &&
+        (note.contains('pendente') || note.contains('revisar'));
+  }
+
   /// Emite receita, atestado, encaminhamento, relatório ou alta.
   ///
   /// Passa por Function: o código de verificação e o hash precisam ser

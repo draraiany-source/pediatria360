@@ -22,6 +22,8 @@ import '../../../emr/presentation/screens/patient_timeline_screen.dart';
 import '../../../emr/presentation/screens/professional_patients_screen.dart';
 import '../../../notifications/presentation/notification_center_screen.dart';
 import '../../../telemedicine/data/telemedicine_repository.dart';
+import '../../../pending/domain/pending_item.dart';
+import '../../../pending/presentation/providers/pending_providers.dart';
 import '../../../telemedicine/presentation/telemedicine_screen.dart'
     show myAgendaProvider;
 
@@ -101,6 +103,9 @@ class _ProfessionalHome extends ConsumerWidget {
     final AsyncValue<List<Appointment>> agendaAsync =
         ref.watch(myAgendaProvider);
     final int unread = ref.watch(unreadCountProvider);
+    final PendingAttentionCounts attention =
+        ref.watch(pendingAttentionCountsProvider);
+    ref.watch(pendingItemsRefreshCoordinatorProvider);
 
     final List<PatientSummary> patients =
         patientsAsync.valueOrNull ?? const <PatientSummary>[];
@@ -128,8 +133,7 @@ class _ProfessionalHome extends ConsumerWidget {
         .where((Appointment a) => a.startsAt.isAfter(monthStart))
         .length;
 
-    final int pendingDrafts =
-        patients.where((PatientSummary p) => p.hasOpenDraft).length;
+    final int pendingDrafts = attention.returnsAndDrafts;
 
     final AppUser? current = user;
     final String displayName = current?.firstName.isNotEmpty == true
@@ -383,6 +387,13 @@ class _ProfessionalHome extends ConsumerWidget {
                           () => context.push(Routes.telemedicinePath),
                           asset: AppIcons.telemedicine,
                         ),
+                        _QuickItem(
+                          'BI',
+                          'Indicadores',
+                          Icons.insights_outlined,
+                          AppColors.honey,
+                          () => context.push(Routes.biPath),
+                        ),
                       ];
                       final int cols = c.maxWidth > 900
                           ? 5
@@ -424,22 +435,14 @@ class _ProfessionalHome extends ConsumerWidget {
                         const SizedBox(width: AppSpacing.md),
                         Expanded(
                           flex: 2,
-                          child: _AttentionBlock(
-                            unread: unread,
-                            pendingDrafts: pendingDrafts,
-                            patients: patients,
-                          ),
+                          child: _AttentionBlock(counts: attention),
                         ),
                       ],
                     )
                   else ...<Widget>[
                     _TodayAgendaBlock(today: today),
                     const SizedBox(height: AppSpacing.xl),
-                    _AttentionBlock(
-                      unread: unread,
-                      pendingDrafts: pendingDrafts,
-                      patients: patients,
-                    ),
+                    _AttentionBlock(counts: attention),
                   ],
                   const SizedBox(height: AppSpacing.xl),
                   // ---- Pacientes recentes + dica ----
@@ -644,15 +647,9 @@ class _TodayAgendaBlock extends StatelessWidget {
 }
 
 class _AttentionBlock extends StatelessWidget {
-  const _AttentionBlock({
-    required this.unread,
-    required this.pendingDrafts,
-    required this.patients,
-  });
+  const _AttentionBlock({required this.counts});
 
-  final int unread;
-  final int pendingDrafts;
-  final List<PatientSummary> patients;
+  final PendingAttentionCounts counts;
 
   @override
   Widget build(BuildContext context) {
@@ -669,45 +666,60 @@ class _AttentionBlock extends StatelessWidget {
                 icon: Icons.vaccines_outlined,
                 color: AppColors.danger,
                 title: 'Vacinas e caderneta',
-                subtitle: 'Revise doses pendentes e atrasos',
-                count: null,
+                subtitle: counts.vaccineOverdue > 0
+                    ? '${counts.vaccineOverdue} dose(s) em atraso'
+                    : 'Calendario em dia',
+                count: counts.vaccineOverdue > 0 ? counts.vaccineOverdue : null,
                 actionLabel: 'Revisar',
-                onTap: () => context.push(Routes.childrenPath),
+                onTap: () => context.push(
+                  '${Routes.clinicPendingPath}?focus=vaccines',
+                ),
               ),
               const SizedBox(height: AppSpacing.sm),
               PremiumAttentionRow(
                 icon: Icons.chat_bubble_outline_rounded,
                 color: AppColors.brand,
                 title: 'Mensagens nao respondidas',
-                subtitle: unread > 0
+                subtitle: counts.unreadMessages > 0
                     ? 'Ha comunicacoes aguardando leitura'
                     : 'Caixa em dia',
-                count: unread > 0 ? unread : null,
+                count: counts.unreadMessages > 0 ? counts.unreadMessages : null,
                 actionLabel: 'Responder',
-                onTap: () => context.go(Routes.notificationsPath),
+                onTap: () => context.push(
+                  '${Routes.clinicPendingPath}?focus=messages',
+                ),
               ),
               const SizedBox(height: AppSpacing.sm),
               PremiumAttentionRow(
                 icon: Icons.edit_note_rounded,
                 color: AppColors.warning,
                 title: 'Retornos / rascunhos',
-                subtitle: pendingDrafts > 0
-                    ? '$pendingDrafts atendimento(s) pendente(s)'
+                subtitle: counts.returnsAndDrafts > 0
+                    ? '${counts.returnsAndDrafts} item(ns) na central'
                     : 'Nenhum rascunho aberto',
-                count: pendingDrafts > 0 ? pendingDrafts : null,
+                count: counts.returnsAndDrafts > 0
+                    ? counts.returnsAndDrafts
+                    : null,
                 actionLabel: 'Ver lista',
-                onTap: () => context.go(Routes.patientsPath),
+                onTap: () => context.push(
+                  '${Routes.clinicPendingPath}?focus=returns',
+                ),
               ),
               const SizedBox(height: AppSpacing.sm),
               PremiumAttentionRow(
                 icon: Icons.biotech_outlined,
                 color: AppColors.moduleLibrary,
                 title: 'Exames e suplementacao',
-                subtitle: 'Central clinica de exames e micronutrientes',
+                subtitle: counts.examsPending > 0
+                    ? '${counts.examsPending} exame(s) para revisar'
+                    : 'Nenhum exame pendente',
+                count: counts.examsPending > 0 ? counts.examsPending : null,
                 actionLabel: 'Abrir',
-                onTap: () => context.push(Routes.supplementPath),
+                onTap: () => context.push(
+                  '${Routes.clinicPendingPath}?focus=exams',
+                ),
               ),
-              if (unread == 0 && pendingDrafts == 0) ...<Widget>[
+              if (counts.allClear) ...<Widget>[
                 const SizedBox(height: AppSpacing.md),
                 Container(
                   width: double.infinity,

@@ -17,6 +17,7 @@ void main() {
 
     test('finance role is isolated', () {
       expect(ClinicRole.finance.canAccessFinance, isTrue);
+      expect(ClinicRole.finance.canAccessBilling, isTrue);
       expect(ClinicRole.finance.canAccessClinicalChart, isFalse);
       expect(ClinicRole.finance.canManageStaff, isFalse);
     });
@@ -25,6 +26,13 @@ void main() {
       expect(ClinicRole.clinicAdmin.canManageStaff, isTrue);
       expect(ClinicRole.clinicAdmin.canAccessFinance, isTrue);
       expect(ClinicRole.clinicAdmin.canAccessClinicalChart, isTrue);
+    });
+
+    test('inventory RBAC helpers', () {
+      expect(ClinicRole.nursing.canConsumeInventory, isTrue);
+      expect(ClinicRole.nursing.canManageInventory, isFalse);
+      expect(ClinicRole.finance.canManageInventory, isTrue);
+      expect(ClinicRole.clinicAdmin.canManageInventory, isTrue);
     });
   });
 

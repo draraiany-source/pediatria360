@@ -14,7 +14,10 @@ import '../../../../core/widgets/skeleton.dart';
 import '../../../../core/widgets/state_views.dart';
 import '../../../../shared/domain/entities/child.dart';
 import '../../../../shared/domain/entities/vaccine.dart';
+import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../children/presentation/providers/children_providers.dart';
+import '../../../inventory/domain/inventory_models.dart';
+import '../../../inventory/presentation/providers/inventory_providers.dart';
 import '../../domain/pni_calendar.dart';
 
 class VaccinesScreen extends ConsumerStatefulWidget {
@@ -559,6 +562,7 @@ class _ApplyDoseSheetState extends ConsumerState<_ApplyDoseSheet> {
   final TextEditingController _lot = TextEditingController();
   final TextEditingController _clinic = TextEditingController();
   DateTime _appliedAt = DateTime.now();
+  String? _selectedInventoryLotId;
 
   @override
   void dispose() {
@@ -580,15 +584,46 @@ class _ApplyDoseSheetState extends ConsumerState<_ApplyDoseSheet> {
   }
 
   Future<void> _submit() async {
+    final List<InventoryLot> allLots =
+        ref.read(inventoryLotsProvider).valueOrNull ?? const <InventoryLot>[];
+    InventoryLot? pickedLot;
+    if (_selectedInventoryLotId != null) {
+      for (final InventoryLot l in allLots) {
+        if (l.id == _selectedInventoryLotId) {
+          pickedLot = l;
+          break;
+        }
+      }
+    }
+    final String? lotLabel = pickedLot?.lotCode ??
+        (_lot.text.trim().isEmpty ? null : _lot.text.trim());
+
     final bool ok =
         await ref.read(childrenControllerProvider.notifier).toggleDose(
               dose: widget.dose,
               applied: true,
               appliedAt: _appliedAt,
-              lot: _lot.text.trim().isEmpty ? null : _lot.text.trim(),
+              lot: lotLabel,
               clinic:
                   _clinic.text.trim().isEmpty ? null : _clinic.text.trim(),
             );
+    if (ok && pickedLot != null) {
+      final String? uid = ref.read(currentUserProvider)?.uid;
+      if (uid != null) {
+        await ref.read(inventoryRepositoryProvider).confirmClinicalUse(
+              ownerId: uid,
+              lotId: pickedLot.id,
+              itemId: pickedLot.itemId,
+              qty: 1,
+              userId: uid,
+              childId: widget.dose.childId,
+              vaccineDoseId: widget.dose.id,
+              reason: 'Vacina aplicada',
+            );
+        ref.invalidate(inventoryLotsProvider);
+        ref.invalidate(inventoryMovementsProvider);
+      }
+    }
     if (ok && mounted) Navigator.of(context).pop();
   }
 
@@ -600,6 +635,21 @@ class _ApplyDoseSheetState extends ConsumerState<_ApplyDoseSheet> {
       widget.dose.vaccineId,
       widget.dose.doseIndex,
     );
+    final List<InventoryLot> allLots =
+        ref.watch(inventoryLotsProvider).valueOrNull ?? const <InventoryLot>[];
+    final List<InventoryItem> invItems =
+        ref.watch(inventoryItemsProvider).valueOrNull ?? const <InventoryItem>[];
+    final Set<String> vaccineItemIds = invItems
+        .where((InventoryItem i) => i.category == InventoryCategory.vaccines)
+        .map((InventoryItem i) => i.id)
+        .toSet();
+    final List<InventoryLot> vaccineLots = allLots
+        .where(
+          (InventoryLot l) =>
+              l.qty > 0 &&
+              (vaccineItemIds.isEmpty || vaccineItemIds.contains(l.itemId)),
+        )
+        .toList(growable: false);
 
     return SafeArea(
       child: Padding(
@@ -637,12 +687,42 @@ class _ApplyDoseSheetState extends ConsumerState<_ApplyDoseSheet> {
               ),
             ),
             const SizedBox(height: AppSpacing.lg),
+            if (vaccineLots.isNotEmpty)
+              DropdownButtonFormField<String>(
+                value: _selectedInventoryLotId,
+                decoration: const InputDecoration(
+                  labelText: 'Lote do estoque (opcional)',
+                  prefixIcon: Icon(Icons.vaccines_outlined),
+                ),
+                items: <DropdownMenuItem<String>>[
+                  const DropdownMenuItem<String>(
+                    value: null,
+                    child: Text('Texto livre abaixo'),
+                  ),
+                  ...vaccineLots.map(
+                    (InventoryLot l) => DropdownMenuItem<String>(
+                      value: l.id,
+                      child: Text('${l.lotCode} (${l.qty} un.)'),
+                    ),
+                  ),
+                ],
+                onChanged: (String? v) => setState(() {
+                  _selectedInventoryLotId = v;
+                  if (v != null) {
+                    for (final InventoryLot l in vaccineLots) {
+                      if (l.id == v) _lot.text = l.lotCode;
+                    }
+                  }
+                }),
+              ),
+            if (vaccineLots.isNotEmpty) const SizedBox(height: AppSpacing.lg),
             AppTextField(
               label: 'Lote',
               controller: _lot,
               hint: 'Está no carimbo da caderneta',
               prefixIcon: Icons.qr_code_2_rounded,
               textCapitalization: TextCapitalization.characters,
+              enabled: _selectedInventoryLotId == null,
             ),
             const SizedBox(height: AppSpacing.lg),
             AppTextField(

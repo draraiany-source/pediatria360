@@ -137,6 +137,10 @@ class Routes {
   static const String clinicName = 'clinic';
   static const String clinicReceptionPath = '/consultorio/recepcao';
   static const String clinicReceptionName = 'clinic-reception';
+  static const String clinicPendingPath = '/consultorio/pendencias';
+  static const String clinicPendingName = 'clinic-pending';
+  static const String clinicCrmPath = '/consultorio/crm';
+  static const String clinicCrmName = 'clinic-crm';
   static const String clinicTriagePath = '/consultorio/triagem/:appointmentId';
   static const String clinicTriageName = 'clinic-triage';
   static const String clinicPatient360Path =
@@ -164,6 +168,71 @@ class Routes {
       '/consultorio/ia/revisao/$sessionId';
   static String clinicVoiceFinal(String sessionId) =>
       '/consultorio/ia/final/$sessionId';
+
+  // Financeiro (FASE 4)
+  static const String financePath = '/financeiro';
+  static const String financeName = 'finance';
+  static const String financeReceivablesPath = '/financeiro/receber';
+  static const String financeReceivablesName = 'finance-receivables';
+  static const String financePayablesPath = '/financeiro/pagar';
+  static const String financePayablesName = 'finance-payables';
+  static const String financeCashFlowPath = '/financeiro/fluxo';
+  static const String financeCashFlowName = 'finance-cash-flow';
+  static const String financeDrePath = '/financeiro/dre';
+  static const String financeDreName = 'finance-dre';
+  static const String financeDelinquencyPath = '/financeiro/inadimplencia';
+  static const String financeDelinquencyName = 'finance-delinquency';
+  static const String financeProductionPath = '/financeiro/producao';
+  static const String financeProductionName = 'finance-production';
+  static const String financeReportsPath = '/financeiro/relatorios';
+  static const String financeReportsName = 'finance-reports';
+
+  // Faturamento / convenios (FASE 5)
+  static const String billingPath = '/faturamento';
+  static const String billingName = 'billing';
+  static const String billingPlansPath = '/faturamento/planos';
+  static const String billingPlansName = 'billing-plans';
+  static const String billingAuthorizationsPath = '/faturamento/autorizacoes';
+  static const String billingAuthorizationsName = 'billing-authorizations';
+  static const String billingGuidesPath = '/faturamento/guias';
+  static const String billingGuidesName = 'billing-guides';
+  static const String billingBatchesPath = '/faturamento/lotes';
+  static const String billingBatchesName = 'billing-batches';
+  static const String billingGlosasPath = '/faturamento/glosas';
+  static const String billingGlosasName = 'billing-glosas';
+  static const String billingReportsPath = '/faturamento/relatorios';
+  static const String billingReportsName = 'billing-reports';
+  static const String billingPatientInsurancePath = '/faturamento/carteirinhas';
+  static const String billingPatientInsuranceName = 'billing-patient-insurance';
+
+  // BI / Indicadores (FASE 7)
+  static const String biPath = '/bi';
+  static const String biName = 'bi';
+  static const String biAdminPath = '/bi/admin';
+  static const String biAdminName = 'bi-admin';
+  static const String biClinicalPath = '/bi/clinico';
+  static const String biClinicalName = 'bi-clinical';
+  static const String biReceptionPath = '/bi/recepcao';
+  static const String biReceptionName = 'bi-reception';
+  static const String biOpsPath = '/bi/operacional';
+  static const String biOpsName = 'bi-ops';
+
+  // Auditoria / permissoes (FASE 8)
+  static const String auditPath = '/auditoria';
+  static const String auditName = 'audit';
+  static const String permissionsPath = '/permissoes';
+  static const String permissionsName = 'permissions';
+
+  // Estoque (FASE 6)
+  static const String inventoryPath = '/estoque';
+  static const String inventoryName = 'inventory';
+  static const String inventoryItemsName = 'inventory-items';
+  static const String inventoryLotsName = 'inventory-lots';
+  static const String inventoryMovementsName = 'inventory-movements';
+  static const String inventorySuppliersName = 'inventory-suppliers';
+  static const String inventoryPurchasesName = 'inventory-purchases';
+  static const String inventoryCountName = 'inventory-count';
+  static const String inventoryReportsName = 'inventory-reports';
 
   // Suplementacao Pediatrica (profissional)
   static const String supplementPath = '/suplementacao';

@@ -21,6 +21,18 @@ import '../../../telemedicine/data/telemedicine_repository.dart';
 import '../../../telemedicine/presentation/telemedicine_screen.dart'
     show telemedicineRepositoryProvider;
 import '../../domain/patient_360_timeline.dart';
+import '../../../billing/domain/billing_access.dart';
+import '../../../billing/domain/billing_models.dart';
+import '../../../billing/presentation/providers/billing_providers.dart';
+import '../../../finance/domain/finance_access.dart';
+import '../../../finance/domain/finance_models.dart';
+import '../../../finance/presentation/providers/finance_providers.dart';
+import '../../../pending/domain/pending_item.dart';
+import '../../../pending/presentation/pending_actions.dart';
+import '../../../pending/presentation/providers/pending_providers.dart';
+import '../../../auth/presentation/providers/auth_providers.dart';
+import '../../../clinic_org/presentation/providers/clinic_org_providers.dart';
+import '../../../../shared/domain/entities/commerce.dart';
 
 final StreamProviderFamily<List<Appointment>, String>
     childAppointments360Provider =
@@ -167,6 +179,7 @@ class _Patient360ScreenState extends ConsumerState<Patient360Screen>
                   controller: _tabs,
                   children: <Widget>[
                     _SummaryTab(
+                      childId: id,
                       latest: latest,
                       nextAppt: nextAppt,
                       allergies: allergies,
@@ -325,8 +338,9 @@ class _Header extends StatelessWidget {
   }
 }
 
-class _SummaryTab extends StatelessWidget {
+class _SummaryTab extends ConsumerWidget {
   const _SummaryTab({
+    required this.childId,
     required this.latest,
     required this.nextAppt,
     required this.allergies,
@@ -337,6 +351,7 @@ class _SummaryTab extends StatelessWidget {
     required this.onOpenProntuario,
   });
 
+  final String childId;
   final Encounter? latest;
   final Appointment? nextAppt;
   final List<String> allergies;
@@ -347,9 +362,32 @@ class _SummaryTab extends StatelessWidget {
   final VoidCallback onOpenProntuario;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final DateFormat fmt = DateFormat('dd/MM/yyyy HH:mm');
     final ThemeData theme = Theme.of(context);
+    final List<PendingItem> pending =
+        ref.watch(patientPendingItemsProvider(childId)).valueOrNull ??
+            const <PendingItem>[];
+    final PendingItem? recommended =
+        ref.watch(patientRecommendedActionProvider(childId)).valueOrNull;
+    final List<PendingItem> clinical = pending
+        .where(
+          (PendingItem i) =>
+              i.category == PendingCategory.clinical && i.isActive,
+        )
+        .toList(growable: false);
+    final List<PendingItem> admin = pending
+        .where(
+          (PendingItem i) =>
+              i.category == PendingCategory.administrative && i.isActive,
+        )
+        .toList(growable: false);
+    final List<PendingItem> financial = pending
+        .where(
+          (PendingItem i) =>
+              i.category == PendingCategory.financial && i.isActive,
+        )
+        .toList(growable: false);
 
     return ListView(
       padding: const EdgeInsets.all(AppSpacing.lg),
@@ -446,6 +484,8 @@ class _SummaryTab extends StatelessWidget {
             ],
           ),
         ),
+        _PatientFinanceSummary(childId: childId),
+        _PatientBillingSummary(childId: childId),
         if (allergies.isNotEmpty || meds.isNotEmpty) ...<Widget>[
           const SizedBox(height: AppSpacing.sm),
           AppCard(
@@ -468,6 +508,61 @@ class _SummaryTab extends StatelessWidget {
             ),
           ),
         ],
+        const SizedBox(height: AppSpacing.lg),
+        AppCard(
+          color: Colors.white,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              Text(
+                'Pendências',
+                style: theme.textTheme.titleSmall?.copyWith(
+                  fontWeight: FontWeight.w800,
+                  color: AppColors.navy,
+                ),
+              ),
+              const SizedBox(height: AppSpacing.xs),
+              Text(
+                'Clínicas: ${clinical.length} · '
+                'Administrativas: ${admin.length} · '
+                'Financeiras: ${financial.length}',
+                style: theme.textTheme.bodySmall,
+              ),
+              if (recommended != null) ...<Widget>[
+                const SizedBox(height: AppSpacing.sm),
+                Text(
+                  'Próxima ação recomendada',
+                  style: theme.textTheme.labelLarge?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                Text(recommended.title),
+                Text(
+                  recommended.subtitle,
+                  style: theme.textTheme.bodySmall,
+                ),
+                const SizedBox(height: AppSpacing.sm),
+                FilledButton.tonal(
+                  onPressed: () => runPendingAction(
+                    context,
+                    ref,
+                    recommended,
+                    recommended.primaryAction,
+                  ),
+                  child: const Text('Executar ação'),
+                ),
+              ],
+              if (pending.isEmpty)
+                Padding(
+                  padding: const EdgeInsets.only(top: AppSpacing.sm),
+                  child: Text(
+                    'Nenhuma pendência ativa para este paciente.',
+                    style: theme.textTheme.bodySmall,
+                  ),
+                ),
+            ],
+          ),
+        ),
         const SizedBox(height: AppSpacing.lg),
         FilledButton.icon(
           onPressed: onOpenProntuario,
@@ -696,6 +791,207 @@ class _ModulesTab extends StatelessWidget {
           onTap: () => context.push(Routes.clinicReceptionPath),
         ),
       ],
+    );
+  }
+}
+
+class _PatientFinanceSummary extends ConsumerWidget {
+  const _PatientFinanceSummary({required this.childId});
+
+  final String childId;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final bool canSee = FinanceAccess.canViewPatientFinance(
+      user: ref.watch(currentUserProvider),
+      clinicMembership: ref.watch(activeClinicMembershipProvider),
+    );
+    if (!canSee) return const SizedBox.shrink();
+
+    final AsyncValue<List<FinanceReceivable>> recvAsync =
+        ref.watch(patientFinanceReceivablesProvider(childId));
+    final AsyncValue<List<FinanceReceipt>> receiptsAsync =
+        ref.watch(financeReceiptsProvider);
+
+    return recvAsync.when(
+      loading: () => const SizedBox.shrink(),
+      error: (_, __) => const SizedBox.shrink(),
+      data: (List<FinanceReceivable> recv) {
+        final DateTime now = DateTime.now();
+        int openBalance = 0;
+        for (final FinanceReceivable r in recv) {
+          if (r.effectiveStatus(now).isOpen) openBalance += r.openCents;
+        }
+        final List<FinanceReceivable> recent = recv.toList(growable: false)
+          ..sort(
+            (FinanceReceivable a, FinanceReceivable b) =>
+                b.createdAt.compareTo(a.createdAt),
+          );
+        final List<FinanceReceipt> receipts =
+            receiptsAsync.valueOrNull ?? const <FinanceReceipt>[];
+        final List<FinanceReceipt> patientReceipts = receipts
+            .where((FinanceReceipt r) => r.patientId == childId)
+            .take(3)
+            .toList(growable: false);
+
+        return Padding(
+          padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+          child: AppCard(
+            color: Colors.white,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: <Widget>[
+                    Text(
+                      'Financeiro',
+                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                            fontWeight: FontWeight.w800,
+                            color: AppColors.navy,
+                          ),
+                    ),
+                    TextButton(
+                      onPressed: () => context.push(Routes.financePath),
+                      child: const Text('Ver modulo'),
+                    ),
+                  ],
+                ),
+                Text('Saldo em aberto: ${formatCents(openBalance)}'),
+                if (recent.isNotEmpty) ...<Widget>[
+                  const SizedBox(height: AppSpacing.xs),
+                  Text(
+                    'Ultimas cobrancas',
+                    style: Theme.of(context).textTheme.labelLarge,
+                  ),
+                  ...recent.take(3).map(
+                        (FinanceReceivable r) => Text(
+                          '${r.description} · ${formatCents(r.totalCents)} · '
+                          '${r.effectiveStatus(now).label}',
+                          style: Theme.of(context).textTheme.bodySmall,
+                        ),
+                      ),
+                ],
+                if (patientReceipts.isNotEmpty) ...<Widget>[
+                  const SizedBox(height: AppSpacing.xs),
+                  Text(
+                    'Recibos recentes',
+                    style: Theme.of(context).textTheme.labelLarge,
+                  ),
+                  ...patientReceipts.map(
+                    (FinanceReceipt r) => Text(
+                      '${formatCents(r.amountCents)} · ${r.method.label}',
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _PatientBillingSummary extends ConsumerWidget {
+  const _PatientBillingSummary({required this.childId});
+
+  final String childId;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final bool canSee = BillingAccess.canViewPatientBilling(
+      user: ref.watch(currentUserProvider),
+      clinicMembership: ref.watch(activeClinicMembershipProvider),
+    );
+    if (!canSee) return const SizedBox.shrink();
+
+    final AsyncValue<List<PatientInsurance>> insAsync =
+        ref.watch(childBillingInsuranceProvider(childId));
+    final List<InsuranceAuthorization> auths =
+        ref.watch(billingAuthorizationsProvider).valueOrNull ??
+            const <InsuranceAuthorization>[];
+    final List<BillingGuide> guides =
+        ref.watch(billingGuidesProvider).valueOrNull ?? const <BillingGuide>[];
+    final List<BillingGlosa> glosas =
+        ref.watch(billingGlosasProvider).valueOrNull ?? const <BillingGlosa>[];
+
+    final List<InsuranceAuthorization> patientAuths = auths
+        .where((InsuranceAuthorization a) => a.childId == childId)
+        .take(3)
+        .toList(growable: false);
+    final List<BillingGuide> patientGuides = guides
+        .where((BillingGuide g) => g.childId == childId)
+        .take(3)
+        .toList(growable: false);
+    final List<BillingGlosa> patientGlosas = glosas
+        .where((BillingGlosa g) => g.childId == childId)
+        .take(2)
+        .toList(growable: false);
+
+    return insAsync.when(
+      loading: () => const SizedBox.shrink(),
+      error: (_, __) => const SizedBox.shrink(),
+      data: (List<PatientInsurance> ins) {
+        if (ins.isEmpty &&
+            patientAuths.isEmpty &&
+            patientGuides.isEmpty &&
+            patientGlosas.isEmpty) {
+          return const SizedBox.shrink();
+        }
+        return Padding(
+          padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+          child: AppCard(
+            color: Colors.white,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: <Widget>[
+                    Text(
+                      'Convenio / faturamento',
+                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                            fontWeight: FontWeight.w800,
+                            color: AppColors.navy,
+                          ),
+                    ),
+                    TextButton(
+                      onPressed: () => context.push(
+                        '${Routes.billingPatientInsurancePath}?childId=$childId',
+                      ),
+                      child: const Text('Ver modulo'),
+                    ),
+                  ],
+                ),
+                if (ins.isNotEmpty)
+                  Text(
+                    'Plano: ${ins.first.coverageType.label}'
+                    '${ins.first.cardNumber.isNotEmpty ? ' · ${ins.first.cardNumber}' : ''}'
+                    '${ins.first.validUntil != null ? ' · val. ${ins.first.validUntil!.toLocal().toString().split(' ').first}' : ''}',
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                if (patientAuths.isNotEmpty)
+                  Text(
+                    'Autorizacoes: ${patientAuths.length} recente(s)',
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                if (patientGuides.isNotEmpty)
+                  Text(
+                    'Guias: ${patientGuides.length} recente(s)',
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                if (patientGlosas.isNotEmpty)
+                  Text(
+                    'Glosas abertas: ${patientGlosas.length}',
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 }

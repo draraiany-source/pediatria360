@@ -85,6 +85,12 @@ String? resolveRouteRedirect({
   final bool isProfessionalArea = location.startsWith(Routes.patientsPath) ||
       location.startsWith(Routes.agendaPath) ||
       location.startsWith(Routes.clinicPath) ||
+      location.startsWith(Routes.financePath) ||
+      location.startsWith(Routes.billingPath) ||
+      location.startsWith(Routes.inventoryPath) ||
+      location.startsWith(Routes.biPath) ||
+      location.startsWith(Routes.auditPath) ||
+      location.startsWith(Routes.permissionsPath) ||
       location.startsWith(Routes.supplementPath) ||
       location.startsWith(Routes.clinicOrgPath);
   if (isProfessionalArea && user.role != UserRole.professional) {
