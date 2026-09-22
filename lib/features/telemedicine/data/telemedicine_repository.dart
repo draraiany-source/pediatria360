@@ -80,6 +80,10 @@ class Appointment extends Equatable {
     this.roomUrl,
     this.notes,
     this.specialty,
+    this.workflowStatus,
+    this.arrivedAt,
+    this.checkInNotes,
+    this.roomLabel,
   });
 
   factory Appointment.fromFirestore(
@@ -105,6 +109,10 @@ class Appointment extends Equatable {
       roomUrl: data['roomUrl'] as String?,
       notes: data['notes'] as String?,
       specialty: data['specialty'] as String?,
+      workflowStatus: data['workflowStatus'] as String?,
+      arrivedAt: (data['arrivedAt'] as Timestamp?)?.toDate(),
+      checkInNotes: data['checkInNotes'] as String?,
+      roomLabel: data['roomLabel'] as String?,
     );
   }
 
@@ -131,6 +139,12 @@ class Appointment extends Equatable {
   final String? notes;
   final String? specialty;
 
+  /// Fluxo operacional da recepção (mais granular que [status]).
+  final String? workflowStatus;
+  final DateTime? arrivedAt;
+  final String? checkInNotes;
+  final String? roomLabel;
+
   DateTime get endsAt => startsAt.add(Duration(minutes: durationMinutes));
 
   bool get isPast => endsAt.isBefore(DateTime.now());
@@ -152,7 +166,7 @@ class Appointment extends Equatable {
       startsAt.difference(DateTime.now()).inHours >= 24;
 
   @override
-  List<Object?> get props => <Object?>[id, status, startsAt, roomUrl, type];
+  List<Object?> get props => <Object?>[id, status, startsAt, roomUrl, type, workflowStatus, arrivedAt];
 }
 
 /// Um horário disponível na agenda.

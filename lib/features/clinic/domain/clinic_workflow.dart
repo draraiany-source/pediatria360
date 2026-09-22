@@ -8,6 +8,7 @@ enum ClinicWorkflowStatus {
   arrived,
   triage,
   waitingDoctor,
+  called,
   inService,
   finished,
   noShow,
@@ -19,10 +20,11 @@ enum ClinicWorkflowStatus {
         ClinicWorkflowStatus.confirmed => 'Confirmado',
         ClinicWorkflowStatus.arrived => 'Chegou',
         ClinicWorkflowStatus.triage => 'Em triagem',
-        ClinicWorkflowStatus.waitingDoctor => 'Aguardando medico',
+        ClinicWorkflowStatus.waitingDoctor => 'Aguardando médico',
+        ClinicWorkflowStatus.called => 'Chamado',
         ClinicWorkflowStatus.inService => 'Em atendimento',
         ClinicWorkflowStatus.finished => 'Finalizado',
-        ClinicWorkflowStatus.noShow => 'Nao compareceu',
+        ClinicWorkflowStatus.noShow => 'Não compareceu',
         ClinicWorkflowStatus.cancelled => 'Cancelado',
         ClinicWorkflowStatus.rescheduled => 'Remarcado',
       };
@@ -34,9 +36,20 @@ enum ClinicWorkflowStatus {
         ClinicWorkflowStatus.arrived ||
         ClinicWorkflowStatus.triage ||
         ClinicWorkflowStatus.waitingDoctor ||
+        ClinicWorkflowStatus.called ||
         ClinicWorkflowStatus.inService =>
           true,
         _ => false,
+      };
+
+  /// Ordem na fila operacional (menor = mais cedo no fluxo).
+  int get queueOrder => switch (this) {
+        ClinicWorkflowStatus.arrived => 0,
+        ClinicWorkflowStatus.triage => 1,
+        ClinicWorkflowStatus.waitingDoctor => 2,
+        ClinicWorkflowStatus.called => 3,
+        ClinicWorkflowStatus.inService => 4,
+        _ => 99,
       };
 
   static ClinicWorkflowStatus fromName(String? value) =>
@@ -44,6 +57,17 @@ enum ClinicWorkflowStatus {
         (ClinicWorkflowStatus s) => s.name == value,
         orElse: () => ClinicWorkflowStatus.scheduled,
       );
+
+  /// Preferência: workflowStatus do documento; senão status legado da agenda.
+  static ClinicWorkflowStatus resolve({
+    String? workflowStatus,
+    String? appointmentStatus,
+  }) {
+    if (workflowStatus != null && workflowStatus.isNotEmpty) {
+      return ClinicWorkflowStatus.fromName(workflowStatus);
+    }
+    return ClinicWorkflowStatus.fromAppointmentStatus(appointmentStatus);
+  }
 
   /// Mapeia o status legado da agenda (AppointmentStatus) para o fluxo
   /// de consultorio. Status intermediarios (chegada/triagem) so existem no
@@ -67,7 +91,8 @@ enum ClinicWorkflowStatus {
         ClinicWorkflowStatus.confirmed ||
         ClinicWorkflowStatus.arrived ||
         ClinicWorkflowStatus.triage ||
-        ClinicWorkflowStatus.waitingDoctor =>
+        ClinicWorkflowStatus.waitingDoctor ||
+        ClinicWorkflowStatus.called =>
           'confirmed',
         ClinicWorkflowStatus.inService => 'inProgress',
         ClinicWorkflowStatus.finished => 'completed',

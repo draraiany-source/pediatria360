@@ -173,15 +173,15 @@ class ClinicRepository {
         for (final QueryDocumentSnapshot<Map<String, dynamic>> doc
             in snap.docs) {
           final Map<String, dynamic> data = doc.data();
-          final ClinicWorkflowStatus wf =
-              ClinicWorkflowStatus.fromAppointmentStatus(
-            (data['workflowStatus'] as String?) ??
-                (data['status'] as String?),
+          final ClinicWorkflowStatus wf = ClinicWorkflowStatus.resolve(
+            workflowStatus: data['workflowStatus'] as String?,
+            appointmentStatus: data['status'] as String?,
           );
           switch (wf) {
             case ClinicWorkflowStatus.arrived:
             case ClinicWorkflowStatus.triage:
             case ClinicWorkflowStatus.waitingDoctor:
+            case ClinicWorkflowStatus.called:
             case ClinicWorkflowStatus.confirmed:
             case ClinicWorkflowStatus.scheduled:
               waiting++;
