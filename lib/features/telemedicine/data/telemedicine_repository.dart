@@ -468,6 +468,18 @@ class TelemedicineRepository {
                 s.docs.map(Appointment.fromFirestore).toList(growable: false),
           );
 
+  /// Agendamentos de uma crianca (visao 360 / timeline clinica).
+  Stream<List<Appointment>> watchChildAppointments(String childId) =>
+      _appointments
+          .where('childId', isEqualTo: childId)
+          .orderBy('startsAt', descending: true)
+          .limit(40)
+          .snapshots()
+          .map(
+            (QuerySnapshot<Map<String, dynamic>> s) =>
+                s.docs.map(Appointment.fromFirestore).toList(growable: false),
+          );
+
   Future<Result<void>> cancel(String appointmentId) => guard(() async {
         await _appointments.doc(appointmentId).update(<String, dynamic>{
           'status': AppointmentStatus.cancelled.name,
