@@ -65,6 +65,23 @@ class TenantScope {
     return membership.unitIds.contains(unitId);
   }
 
+  /// Valida origem/destino de transferencia entre unidades (estoque).
+  static void requireTransferUnits(
+    ClinicMembership? membership, {
+    String? fromUnitId,
+    required String toUnitId,
+  }) {
+    if (membership == null || !membership.active) {
+      throw TenantScopeException('not an active clinic member');
+    }
+    if (!canAccessUnit(membership, fromUnitId)) {
+      throw TenantScopeException('source unit access denied');
+    }
+    if (!canAccessUnit(membership, toUnitId)) {
+      throw TenantScopeException('destination unit access denied');
+    }
+  }
+
   /// Carimba `clinicId` / `unitId` no payload Firestore sem apagar valores existentes.
   static Map<String, dynamic> stampLedgerMap(
     Map<String, dynamic> data, {

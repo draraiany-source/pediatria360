@@ -3,8 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/providers/core_providers.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../clinic_org/presentation/providers/clinic_org_providers.dart';
+import '../../data/consent_history_repository.dart';
 import '../../data/security_audit_repository.dart';
 import '../../domain/audit_log_service.dart';
+import '../../domain/consent_history.dart';
 import '../../domain/security_audit_models.dart';
 
 final Provider<SecurityAuditRepository> securityAuditRepositoryProvider =
@@ -17,6 +19,24 @@ final Provider<AuditLogService> auditLogServiceProvider = Provider<AuditLogServi
     repository: ref.watch(securityAuditRepositoryProvider),
   ),
 );
+
+final Provider<ConsentHistoryRepository> consentHistoryRepositoryProvider =
+    Provider<ConsentHistoryRepository>(
+  (Ref ref) => ConsentHistoryRepository(
+    firestore: ref.watch(firestoreProvider),
+  ),
+);
+
+final StreamProvider<List<ConsentHistoryEntry>> consentHistoryProvider =
+    StreamProvider<List<ConsentHistoryEntry>>((Ref ref) {
+  final String? uid = ref.watch(currentUserProvider)?.uid;
+  if (uid == null) {
+    return Stream<List<ConsentHistoryEntry>>.value(
+      const <ConsentHistoryEntry>[],
+    );
+  }
+  return ref.watch(consentHistoryRepositoryProvider).watchForUser(uid);
+});
 
 class AuditLogFilterState {
   const AuditLogFilterState({

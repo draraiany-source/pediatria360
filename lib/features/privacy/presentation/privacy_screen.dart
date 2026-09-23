@@ -14,6 +14,10 @@ import '../../../core/utils/validators.dart';
 import '../../../core/widgets/app_widgets.dart';
 import '../../../core/widgets/state_views.dart';
 import '../../auth/presentation/providers/auth_providers.dart';
+import '../../clinic_org/presentation/providers/clinic_org_providers.dart';
+import '../../security/domain/permission_matrix.dart';
+import '../../security/presentation/providers/security_providers.dart';
+import '../../security/domain/consent_history.dart';
 
 /// Finalidade de tratamento consentida.
 class ConsentPurpose {
@@ -103,6 +107,14 @@ class _PrivacyScreenState extends ConsumerState<PrivacyScreen> {
         content: Text('Reunindo seus dados. Isso pode levar um minuto.'),
       ),
     );
+
+    await ref.read(auditLogServiceProvider).logExport(
+          user: ref.read(currentUserProvider),
+          membership: ref.read(activeClinicMembershipProvider),
+          module: PermissionModule.settings,
+          entityType: 'userData',
+          exportKind: 'json',
+        );
 
     final Map<dynamic, dynamic>? result =
         await _call<Map<dynamic, dynamic>>('exportUserData');
@@ -490,6 +502,12 @@ class _PrivacyScreenState extends ConsumerState<PrivacyScreen> {
                   ),
 
                   const SectionHeader(
+                    title: 'Historico de autorizacoes',
+                    eyebrow: 'Registro',
+                  ),
+                  const _ConsentHistorySection(),
+
+                  const SectionHeader(
                     title: 'Com quem compartilhamos',
                     eyebrow: 'Transparência',
                   ),
@@ -558,6 +576,77 @@ class _Intro extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _ConsentHistorySection extends ConsumerWidget {
+  const _ConsentHistorySection();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final ThemeData theme = Theme.of(context);
+    final AsyncValue<List<ConsentHistoryEntry>> history =
+        ref.watch(consentHistoryProvider);
+
+    return Card(
+      child: history.when(
+        loading: () => const Padding(
+          padding: EdgeInsets.all(AppSpacing.lg),
+          child: Center(child: CircularProgressIndicator()),
+        ),
+        error: (Object e, StackTrace s) => Padding(
+          padding: const EdgeInsets.all(AppSpacing.lg),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: <Widget>[
+              Text(
+                'Nao foi possivel carregar o historico.',
+                style: theme.textTheme.bodySmall,
+              ),
+              const SizedBox(height: AppSpacing.sm),
+              TextButton(
+                onPressed: () => ref.invalidate(consentHistoryProvider),
+                child: const Text('Tentar novamente'),
+              ),
+            ],
+          ),
+        ),
+        data: (List<ConsentHistoryEntry> entries) {
+          if (entries.isEmpty) {
+            return Padding(
+              padding: const EdgeInsets.all(AppSpacing.lg),
+              child: Text(
+                'Nenhum registro de consentimento ainda.',
+                style: theme.textTheme.bodySmall,
+              ),
+            );
+          }
+          return Column(
+            children: <Widget>[
+              for (final ConsentHistoryEntry e in entries)
+                ListTile(
+                  title: Text(
+                    e.purposeKey.isNotEmpty
+                        ? e.purposeKey
+                        : 'Atualizacao de consentimento',
+                    style: theme.textTheme.titleSmall,
+                  ),
+                  subtitle: Text(
+                    '${e.granted ? 'Autorizado' : 'Revogado'} · '
+                    '${Formatters.dateTime(e.recordedAt)}'
+                    '${e.version.isNotEmpty ? ' · v${e.version}' : ''}',
+                    style: theme.textTheme.bodySmall,
+                  ),
+                  trailing: AppTag(
+                    label: e.granted ? 'Ativo' : 'Revogado',
+                    color: e.granted ? AppColors.success : AppColors.warning,
+                  ),
+                ),
+            ],
+          );
+        },
       ),
     );
   }

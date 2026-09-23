@@ -167,6 +167,8 @@ class InventoryRepository {
 
   Future<Result<InventoryMovement>> recordMovement({
     required InventoryMovement movement,
+    ClinicMembership? membership,
+    String? ledgerUnitId,
   }) =>
       guard(() async {
         if (movement.lotId == null || movement.lotId!.isEmpty) {
@@ -194,7 +196,16 @@ class InventoryRepository {
           }
           final int nextQty = nextResult.valueOrNull!;
           tx.update(lotRef, <String, dynamic>{'qty': nextQty});
-          tx.set(movRef, movement.toMap());
+          tx.set(
+            movRef,
+            _ledgerPayload(
+              movement.toMap(),
+              membership: membership,
+              unitId: ledgerUnitId ??
+                  movement.toUnitId ??
+                  movement.fromUnitId,
+            ),
+          );
         });
 
         await _writeAudit(
@@ -452,13 +463,21 @@ class InventoryRepository {
     required String toUnitId,
     required int qty,
     required String byUserId,
+    ClinicMembership? membership,
   }) =>
       guard(() async {
         if (qty <= 0) {
           throw const ValidationFailure('Quantidade invalida.');
         }
+        TenantScope.requireTransferUnits(
+          membership,
+          fromUnitId: lot.unitId,
+          toUnitId: toUnitId,
+        );
         final String exitMovId = _movements.doc().id;
         await recordMovement(
+          membership: membership,
+          ledgerUnitId: lot.unitId,
           movement: InventoryMovement(
             id: exitMovId,
             itemId: lot.itemId,
@@ -492,10 +511,18 @@ class InventoryRepository {
           unitId: toUnitId,
           location: lot.location,
         );
-        await _lots.doc(newLotId).set(dest.toMap());
+        await _lots.doc(newLotId).set(
+              _ledgerPayload(
+                dest.toMap(),
+                membership: membership,
+                unitId: toUnitId,
+              ),
+            );
 
         final String entryMovId = _movements.doc().id;
         await recordMovement(
+          membership: membership,
+          ledgerUnitId: toUnitId,
           movement: InventoryMovement(
             id: entryMovId,
             itemId: lot.itemId,

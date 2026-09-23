@@ -5,8 +5,8 @@ import '../../../../core/providers/core_providers.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../clinic_org/presentation/providers/clinic_org_providers.dart';
 import '../../../telemedicine/data/telemedicine_repository.dart';
-import '../../../telemedicine/presentation/telemedicine_screen.dart'
-    show myAgendaProvider;
+import '../../../telemedicine/presentation/agenda_providers.dart'
+    show unitScopedMyAgendaProvider;
 import '../../data/finance_repository.dart';
 import '../../domain/finance_access.dart';
 import '../../domain/finance_aggregators.dart';
@@ -124,7 +124,8 @@ final FutureProvider<void> financeSyncFromAgendaProvider =
   final String? uid = ref.read(currentUserProvider)?.uid;
   if (uid == null) return;
   final List<Appointment> agenda =
-      ref.read(myAgendaProvider).valueOrNull ?? const <Appointment>[];
+      ref.read(unitScopedMyAgendaProvider).valueOrNull ??
+          const <Appointment>[];
   await ref.read(financeRepositoryProvider).syncFromAppointments(
         ownerId: uid,
         appointments: agenda,

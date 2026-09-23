@@ -19,6 +19,7 @@ SecurityAuditSeverity classifyAuditSeverity(String action) {
     'refund',
     'permissionChange',
     'blockedAccess',
+    'repeatedBlockedAccess',
     'massExport',
     'configChange',
     'finalizedChartEditAttempt',

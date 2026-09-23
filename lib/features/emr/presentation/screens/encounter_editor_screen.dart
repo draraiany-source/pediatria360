@@ -14,6 +14,10 @@ import '../../../../core/widgets/app_widgets.dart';
 import '../../../../core/widgets/state_views.dart';
 import '../../../../shared/domain/entities/clinical_record.dart';
 import '../../../../shared/domain/entities/encounter.dart';
+import '../../../auth/presentation/providers/auth_providers.dart';
+import '../../../clinic_org/presentation/providers/clinic_org_providers.dart';
+import '../../../security/domain/permission_matrix.dart';
+import '../../../security/presentation/providers/security_providers.dart';
 import '../widgets/clinical_assist_sheet.dart';
 import 'document_editor_screen.dart';
 import 'patient_timeline_screen.dart';
@@ -90,6 +94,7 @@ class _EncounterEditorScreenState
 
   Timer? _autosave;
   bool _hydrated = false;
+  bool _chartOpenLogged = false;
   bool _saving = false;
   DateTime? _savedAt;
 
@@ -193,9 +198,25 @@ class _EncounterEditorScreenState
     _autosave = Timer(_autosaveDelay, _save);
   }
 
+  void _maybeLogChartOpened(Encounter e) {
+    if (_chartOpenLogged || !e.isSigned) return;
+    _chartOpenLogged = true;
+    unawaited(
+      ref.read(auditLogServiceProvider).log(
+            user: ref.read(currentUserProvider),
+            membership: ref.read(activeClinicMembershipProvider),
+            action: 'chartOpened',
+            module: PermissionModule.chart,
+            entityType: 'encounter',
+            entityId: e.id,
+          ),
+    );
+  }
+
   void _hydrate(Encounter e) {
     if (_hydrated) return;
     _hydrated = true;
+    _maybeLogChartOpened(e);
 
     _complaint.text = e.anamnesis.chiefComplaint;
     _hpi.text = e.anamnesis.historyOfPresentIllness;

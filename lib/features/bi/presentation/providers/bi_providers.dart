@@ -15,8 +15,8 @@ import '../../../inventory/domain/inventory_models.dart';
 import '../../../inventory/presentation/providers/inventory_providers.dart';
 import '../../../pending/domain/pending_item.dart';
 import '../../../pending/presentation/providers/pending_providers.dart';
-import '../../../telemedicine/presentation/telemedicine_screen.dart'
-    show myAgendaProvider;
+import '../../../telemedicine/presentation/agenda_providers.dart'
+    show unitScopedMyAgendaProvider;
 import '../../domain/bi_access.dart';
 import '../../domain/bi_aggregators.dart';
 import '../../domain/bi_models.dart';
@@ -51,7 +51,8 @@ final Provider<BiExecutiveSnapshot> executiveSnapshotProvider =
 
   final FinancePeriod period = ref.watch(biPeriodProvider);
   final List<Appointment> agenda =
-      ref.watch(myAgendaProvider).valueOrNull ?? const <Appointment>[];
+      ref.watch(unitScopedMyAgendaProvider).valueOrNull ??
+          const <Appointment>[];
   final PendingAttentionCounts pending =
       ref.watch(pendingAttentionCountsProvider);
   final int openPendings = ref

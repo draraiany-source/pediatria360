@@ -1,6 +1,7 @@
 import '../../../shared/domain/entities/app_user.dart';
 import '../../../shared/domain/entities/clinic_organization.dart';
 import '../data/security_audit_repository.dart';
+import 'blocked_access_tracker.dart';
 import 'permission_matrix.dart';
 import 'security_audit_models.dart';
 
@@ -12,8 +13,11 @@ class AuditLogService {
 
   final SecurityAuditRepository _repository;
 
-  static final Map<String, DateTime> _blockedAccessThrottle = <String, DateTime>{};
+  static final Map<String, DateTime> _blockedAccessThrottle =
+      <String, DateTime>{};
   static const Duration _blockedThrottleWindow = Duration(seconds: 30);
+  static final BlockedAccessTracker _repeatedBlockedTracker =
+      BlockedAccessTracker();
 
   Future<void> log({
     required AppUser? user,
@@ -26,6 +30,8 @@ class AuditLogService {
     Map<String, dynamic>? afterJson,
     String? reason,
     SecurityAuditSeverity? severity,
+    String? ip,
+    String? sessionId,
   }) async {
     if (user == null) return;
     final SecurityAuditEvent event = SecurityAuditEvent(
@@ -43,6 +49,8 @@ class AuditLogService {
       beforeJson: beforeJson,
       afterJson: afterJson,
       reason: reason,
+      ip: ip != null && ip.isNotEmpty ? ip : null,
+      sessionId: sessionId != null && sessionId.isNotEmpty ? sessionId : null,
     );
     await _repository.append(event: event, actor: user);
   }
@@ -52,6 +60,8 @@ class AuditLogService {
     required ClinicMembership? membership,
     required PermissionModule module,
     String? reason,
+    String? ip,
+    String? sessionId,
   }) async {
     if (user == null) return;
     final String key = '${user.uid}:${module.name}';
@@ -61,6 +71,10 @@ class AuditLogService {
       return;
     }
     _blockedAccessThrottle[key] = now;
+
+    final bool repeated =
+        _repeatedBlockedTracker.record(user.uid, now);
+
     await log(
       user: user,
       membership: membership,
@@ -68,7 +82,22 @@ class AuditLogService {
       module: module,
       reason: reason ?? 'Acesso negado na UI',
       severity: SecurityAuditSeverity.critical,
+      ip: ip,
+      sessionId: sessionId,
     );
+
+    if (repeated) {
+      await log(
+        user: user,
+        membership: membership,
+        action: 'repeatedBlockedAccess',
+        module: module,
+        reason: 'Tres ou mais acessos bloqueados em cinco minutos',
+        severity: SecurityAuditSeverity.critical,
+        ip: ip,
+        sessionId: sessionId,
+      );
+    }
   }
 
   Future<void> logExport({
@@ -78,6 +107,8 @@ class AuditLogService {
     String entityType = 'report',
     String entityId = '',
     String exportKind = 'csv',
+    String? ip,
+    String? sessionId,
   }) async {
     await log(
       user: user,
@@ -87,6 +118,8 @@ class AuditLogService {
       entityType: entityType,
       entityId: entityId,
       afterJson: <String, dynamic>{'format': exportKind},
+      ip: ip,
+      sessionId: sessionId,
     );
   }
 
@@ -96,6 +129,8 @@ class AuditLogService {
     required String targetUserId,
     required String previousRole,
     required String newRole,
+    String? ip,
+    String? sessionId,
   }) async {
     await log(
       user: user,
@@ -107,6 +142,8 @@ class AuditLogService {
       beforeJson: <String, dynamic>{'role': previousRole},
       afterJson: <String, dynamic>{'role': newRole},
       severity: SecurityAuditSeverity.critical,
+      ip: ip,
+      sessionId: sessionId,
     );
   }
 }

@@ -212,6 +212,14 @@ class ClinicMembership extends Equatable {
   final String specialty;
   final DateTime createdAt;
 
+  /// Admin com escopo em todas as unidades da clinica ([unitIds] vazio).
+  bool get isGlobalClinicAdmin =>
+      role == ClinicRole.clinicAdmin && unitIds.isEmpty;
+
+  /// Admin restrito a uma ou mais unidades ([unitIds] nao vazio).
+  bool get isLocalUnitAdmin =>
+      role == ClinicRole.clinicAdmin && unitIds.isNotEmpty;
+
   Map<String, dynamic> toMap() => <String, dynamic>{
         'id': id,
         'clinicId': clinicId,

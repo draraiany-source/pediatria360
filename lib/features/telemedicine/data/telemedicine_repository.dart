@@ -84,6 +84,7 @@ class Appointment extends Equatable {
     this.arrivedAt,
     this.checkInNotes,
     this.roomLabel,
+    this.unitId,
   });
 
   factory Appointment.fromFirestore(
@@ -113,6 +114,7 @@ class Appointment extends Equatable {
       arrivedAt: (data['arrivedAt'] as Timestamp?)?.toDate(),
       checkInNotes: data['checkInNotes'] as String?,
       roomLabel: data['roomLabel'] as String?,
+      unitId: data['unitId'] as String?,
     );
   }
 
@@ -144,6 +146,9 @@ class Appointment extends Equatable {
   final DateTime? arrivedAt;
   final String? checkInNotes;
   final String? roomLabel;
+
+  /// Unidade fisica da consulta (multitenant). Null = legado, visivel a todos.
+  final String? unitId;
 
   DateTime get endsAt => startsAt.add(Duration(minutes: durationMinutes));
 

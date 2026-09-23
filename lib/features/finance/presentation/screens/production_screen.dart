@@ -4,8 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_tokens.dart';
 import '../../../../shared/domain/entities/commerce.dart';
 import '../../../telemedicine/data/telemedicine_repository.dart';
-import '../../../telemedicine/presentation/telemedicine_screen.dart'
-    show myAgendaProvider;
+import '../../../telemedicine/presentation/agenda_providers.dart'
+    show unitScopedMyAgendaProvider;
 import '../../domain/finance_aggregators.dart';
 import '../providers/finance_providers.dart';
 
@@ -15,7 +15,8 @@ class ProductionScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final List<Appointment> agenda =
-        ref.watch(myAgendaProvider).valueOrNull ?? const <Appointment>[];
+        ref.watch(unitScopedMyAgendaProvider).valueOrNull ??
+            const <Appointment>[];
     final FinancePeriod period = ref.watch(financePeriodProvider);
     final ProductionReport report = ProductionReport.fromAppointments(
       appointments: agenda,

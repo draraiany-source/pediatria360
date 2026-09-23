@@ -2,6 +2,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:pediatria360/shared/domain/entities/clinic_organization.dart';
 
 void main() {
+  final DateTime t = DateTime.utc(2026, 1, 1);
+
   group('ClinicRole RBAC', () {
     test('physician can access chart and agenda', () {
       expect(ClinicRole.physician.canAccessClinicalChart, isTrue);
@@ -33,6 +35,33 @@ void main() {
       expect(ClinicRole.nursing.canManageInventory, isFalse);
       expect(ClinicRole.finance.canManageInventory, isTrue);
       expect(ClinicRole.clinicAdmin.canManageInventory, isTrue);
+    });
+  });
+
+  group('ClinicMembership unit admin getters', () {
+    test('global clinic admin', () {
+      final ClinicMembership m = ClinicMembership(
+        id: 'm-admin',
+        clinicId: 'c1',
+        userId: 'u1',
+        role: ClinicRole.clinicAdmin,
+        createdAt: t,
+      );
+      expect(m.isGlobalClinicAdmin, isTrue);
+      expect(m.isLocalUnitAdmin, isFalse);
+    });
+
+    test('local unit admin', () {
+      final ClinicMembership m = ClinicMembership(
+        id: 'm-local',
+        clinicId: 'c1',
+        userId: 'u1',
+        role: ClinicRole.clinicAdmin,
+        createdAt: t,
+        unitIds: <String>['unit-a'],
+      );
+      expect(m.isGlobalClinicAdmin, isFalse);
+      expect(m.isLocalUnitAdmin, isTrue);
     });
   });
 

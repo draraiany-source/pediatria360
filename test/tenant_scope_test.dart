@@ -5,17 +5,14 @@ import 'package:pediatria360/shared/domain/entities/clinic_organization.dart';
 void main() {
   final DateTime t = DateTime(2026);
 
-  ClinicMembership adminGlobal({
-    String clinicId = 'clinic-a',
-    List<String> unitIds = const <String>[],
-  }) =>
+  ClinicMembership adminGlobal({String clinicId = 'clinic-a'}) =>
       ClinicMembership(
         id: 'm-admin',
         clinicId: clinicId,
         userId: 'u1',
         role: ClinicRole.clinicAdmin,
         createdAt: t,
-        unitIds: unitIds,
+        unitIds: const <String>[],
       );
 
   ClinicMembership financeUnit(String unitId) => ClinicMembership(
@@ -85,8 +82,45 @@ void main() {
     });
   });
 
+  group('requireTransferUnits', () {
+    test('allows transfer between accessible units', () {
+      final ClinicMembership m = financeUnit('unit-a');
+      expect(
+        () => TenantScope.requireTransferUnits(
+          m,
+          fromUnitId: 'unit-a',
+          toUnitId: 'unit-a',
+        ),
+        returnsNormally,
+      );
+    });
+
+    test('denies destination outside scope', () {
+      final ClinicMembership m = financeUnit('unit-a');
+      expect(
+        () => TenantScope.requireTransferUnits(
+          m,
+          fromUnitId: 'unit-a',
+          toUnitId: 'unit-b',
+        ),
+        throwsA(isA<TenantScopeException>()),
+      );
+    });
+
+    test('global admin can reach any unit', () {
+      expect(
+        () => TenantScope.requireTransferUnits(
+          adminGlobal(),
+          fromUnitId: 'unit-x',
+          toUnitId: 'unit-y',
+        ),
+        returnsNormally,
+      );
+    });
+  });
+
   group('stampLedgerMap', () {
-    test('adds clinicId without overwriting', () {
+    test('adds clinicId without overriding', () {
       final Map<String, dynamic> data = <String, dynamic>{
         'ownerId': 'phy',
         'clinicId': 'existing',

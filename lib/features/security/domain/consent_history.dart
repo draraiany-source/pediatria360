@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:equatable/equatable.dart';
 
 /// Entrada de historico de consentimento (LGPD).
@@ -19,13 +20,32 @@ class ConsentHistoryEntry extends Equatable {
   factory ConsentHistoryEntry.fromMap(Map<String, dynamic> map, {String? id}) {
     return ConsentHistoryEntry(
       id: id ?? (map['id'] as String?) ?? '',
-      purposeKey: (map['purposeKey'] as String?) ?? (map['purpose'] as String?) ?? '',
-      granted: (map['granted'] as bool?) ?? false,
-      recordedAt: DateTime.tryParse((map['recordedAt'] as String?) ?? '') ??
-          DateTime.fromMillisecondsSinceEpoch(0),
+      purposeKey: (map['purposeKey'] as String?) ??
+          (map['purpose'] as String?) ??
+          (map['revoked'] as String?) ??
+          '',
+      granted: (map['granted'] as bool?) ?? (map['revoked'] == null),
+      recordedAt: _readRecordedAt(map),
       version: (map['version'] as String?) ?? '',
       source: (map['source'] as String?) ?? '',
     );
+  }
+
+  factory ConsentHistoryEntry.fromFirestore(
+    DocumentSnapshot<Map<String, dynamic>> doc,
+  ) {
+    final Map<String, dynamic> map = doc.data() ?? const <String, dynamic>{};
+    return ConsentHistoryEntry.fromMap(map, id: doc.id);
+  }
+
+  static DateTime _readRecordedAt(Map<String, dynamic> map) {
+    final dynamic raw = map['recordedAt'] ?? map['grantedAt'];
+    if (raw is Timestamp) return raw.toDate();
+    if (raw is String) {
+      return DateTime.tryParse(raw) ??
+          DateTime.fromMillisecondsSinceEpoch(0);
+    }
+    return DateTime.fromMillisecondsSinceEpoch(0);
   }
 
   final String id;
