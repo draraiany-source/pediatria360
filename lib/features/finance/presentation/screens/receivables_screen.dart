@@ -10,6 +10,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_tokens.dart';
 import '../../../../shared/domain/entities/commerce.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
+import '../../../../shared/domain/entities/clinic_organization.dart';
 import '../../../clinic_org/presentation/providers/clinic_org_providers.dart'
     show activeClinicMembershipProvider;
 import '../../data/finance_repository.dart';
@@ -117,6 +118,8 @@ class ReceivablesScreen extends ConsumerWidget {
   ) async {
     final FinanceRepository repo = ref.read(financeRepositoryProvider);
     final String? uid = ref.read(currentUserProvider)?.uid;
+    final ClinicMembership? membership =
+        ref.read(activeClinicMembershipProvider);
     if (uid == null) return;
 
     switch (action) {
@@ -128,13 +131,21 @@ class ReceivablesScreen extends ConsumerWidget {
           amountCents: cents,
           method: PaymentMethodKind.pix,
           byUserId: uid,
+          membership: membership,
         );
       case 'edit':
         final int? total = await _amountDialog(context, r.totalCents, title: 'Novo total');
         if (total == null) return;
-        await repo.upsertReceivable(r.copyWith(totalCents: total, updatedAt: DateTime.now()));
+        await repo.upsertReceivable(
+          r.copyWith(totalCents: total, updatedAt: DateTime.now()),
+          membership: membership,
+        );
       case 'cancel':
-        await repo.cancelReceivable(receivable: r, byUserId: uid);
+        await repo.cancelReceivable(
+          receivable: r,
+          byUserId: uid,
+          membership: membership,
+        );
       case 'receipt':
         final FinanceReceipt receipt = FinanceReceipt(
           id: 'preview',

@@ -279,6 +279,8 @@ class FinanceReceivable extends Equatable {
     this.batchId,
     this.guideId,
     this.planId,
+    this.clinicId,
+    this.unitId,
   });
 
   factory FinanceReceivable.fromFirestore(
@@ -306,6 +308,8 @@ class FinanceReceivable extends Equatable {
       batchId: data['batchId'] as String?,
       guideId: data['guideId'] as String?,
       planId: data['planId'] as String?,
+      clinicId: data['clinicId'] as String?,
+      unitId: data['unitId'] as String?,
     );
   }
 
@@ -329,6 +333,8 @@ class FinanceReceivable extends Equatable {
   final String? batchId;
   final String? guideId;
   final String? planId;
+  final String? clinicId;
+  final String? unitId;
 
   int get openCents {
     if (status == ReceivableStatus.cancelled) return 0;
@@ -371,6 +377,8 @@ class FinanceReceivable extends Equatable {
         if (batchId != null) 'batchId': batchId,
         if (guideId != null) 'guideId': guideId,
         if (planId != null) 'planId': planId,
+        if (clinicId != null) 'clinicId': clinicId,
+        if (unitId != null) 'unitId': unitId,
       };
 
   FinanceReceivable copyWith({
@@ -383,6 +391,8 @@ class FinanceReceivable extends Equatable {
     String? batchId,
     String? guideId,
     String? planId,
+    String? clinicId,
+    String? unitId,
   }) =>
       FinanceReceivable(
         id: id,
@@ -405,6 +415,8 @@ class FinanceReceivable extends Equatable {
         batchId: batchId ?? this.batchId,
         guideId: guideId ?? this.guideId,
         planId: planId ?? this.planId,
+        clinicId: clinicId ?? this.clinicId,
+        unitId: unitId ?? this.unitId,
       );
 
   @override
@@ -425,6 +437,8 @@ class FinancePayable extends Equatable {
     required this.createdAt,
     this.negotiationNotes,
     this.updatedAt,
+    this.clinicId,
+    this.unitId,
   });
 
   factory FinancePayable.fromFirestore(
@@ -443,6 +457,8 @@ class FinancePayable extends Equatable {
       createdAt: _readDate(data['createdAt']),
       negotiationNotes: data['negotiationNotes'] as String?,
       updatedAt: _readDateOrNull(data['updatedAt']),
+      clinicId: data['clinicId'] as String?,
+      unitId: data['unitId'] as String?,
     );
   }
 
@@ -457,6 +473,8 @@ class FinancePayable extends Equatable {
   final DateTime createdAt;
   final String? negotiationNotes;
   final DateTime? updatedAt;
+  final String? clinicId;
+  final String? unitId;
 
   int get openCents {
     if (status == PayableStatus.cancelled) return 0;
@@ -475,6 +493,8 @@ class FinancePayable extends Equatable {
         'createdAt': Timestamp.fromDate(createdAt),
         if (negotiationNotes != null) 'negotiationNotes': negotiationNotes,
         if (updatedAt != null) 'updatedAt': Timestamp.fromDate(updatedAt!),
+        if (clinicId != null) 'clinicId': clinicId,
+        if (unitId != null) 'unitId': unitId,
       };
 
   @override
@@ -492,6 +512,8 @@ class FinanceReceipt extends Equatable {
     this.patientId,
     this.receiptNumber,
     this.notes,
+    this.clinicId,
+    this.unitId,
   });
 
   factory FinanceReceipt.fromFirestore(
@@ -508,6 +530,8 @@ class FinanceReceipt extends Equatable {
       patientId: data['patientId'] as String?,
       receiptNumber: data['receiptNumber'] as String?,
       notes: data['notes'] as String?,
+      clinicId: data['clinicId'] as String?,
+      unitId: data['unitId'] as String?,
     );
   }
 
@@ -520,6 +544,8 @@ class FinanceReceipt extends Equatable {
   final String? patientId;
   final String? receiptNumber;
   final String? notes;
+  final String? clinicId;
+  final String? unitId;
 
   Map<String, dynamic> toMap() => <String, dynamic>{
         'ownerId': ownerId,
@@ -530,6 +556,8 @@ class FinanceReceipt extends Equatable {
         if (patientId != null) 'patientId': patientId,
         if (receiptNumber != null) 'receiptNumber': receiptNumber,
         if (notes != null) 'notes': notes,
+        if (clinicId != null) 'clinicId': clinicId,
+        if (unitId != null) 'unitId': unitId,
       };
 
   @override
@@ -546,6 +574,8 @@ class FinanceAuditEntry extends Equatable {
     required this.at,
     required this.byUserId,
     this.metadata = const <String, dynamic>{},
+    this.clinicId,
+    this.unitId,
   });
 
   factory FinanceAuditEntry.fromFirestore(
@@ -566,6 +596,8 @@ class FinanceAuditEntry extends Equatable {
       metadata: Map<String, dynamic>.from(
         (data['metadata'] as Map<String, dynamic>?) ?? const <String, dynamic>{},
       ),
+      clinicId: data['clinicId'] as String?,
+      unitId: data['unitId'] as String?,
     );
   }
 
@@ -577,6 +609,8 @@ class FinanceAuditEntry extends Equatable {
   final DateTime at;
   final String byUserId;
   final Map<String, dynamic> metadata;
+  final String? clinicId;
+  final String? unitId;
 
   Map<String, dynamic> toMap() => <String, dynamic>{
         'ownerId': ownerId,
@@ -586,6 +620,8 @@ class FinanceAuditEntry extends Equatable {
         'at': Timestamp.fromDate(at),
         'byUserId': byUserId,
         'metadata': metadata,
+        if (clinicId != null) 'clinicId': clinicId,
+        if (unitId != null) 'unitId': unitId,
       };
 
   @override

@@ -1,6 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../../../core/utils/result.dart';
+import '../../../shared/domain/entities/clinic_organization.dart';
+import '../../security/domain/tenant_scope.dart';
 import '../../telemedicine/data/telemedicine_repository.dart';
 import '../domain/finance_models.dart';
 
@@ -9,6 +11,17 @@ class FinanceRepository {
       : _firestore = firestore;
 
   final FirebaseFirestore _firestore;
+
+  Map<String, dynamic> _ledgerPayload(
+    Map<String, dynamic> data, {
+    ClinicMembership? membership,
+    String? unitId,
+  }) =>
+      TenantScope.stampLedgerMap(
+        Map<String, dynamic>.from(data),
+        membership: membership,
+        unitId: unitId,
+      );
 
   CollectionReference<Map<String, dynamic>> get _receivables =>
       _firestore.collection('finance_receivables');
@@ -66,10 +79,18 @@ class FinanceRepository {
             .toList(growable: false),
       );
 
-  Future<Result<void>> upsertReceivable(FinanceReceivable receivable) =>
+  Future<Result<void>> upsertReceivable(
+    FinanceReceivable receivable, {
+    ClinicMembership? membership,
+    String? unitId,
+  }) =>
       guard(() async {
         await _receivables.doc(receivable.id).set(
-              receivable.toMap(),
+              _ledgerPayload(
+                receivable.toMap(),
+                membership: membership,
+                unitId: unitId,
+              ),
               SetOptions(merge: true),
             );
       });
@@ -80,6 +101,8 @@ class FinanceRepository {
     required PaymentMethodKind method,
     required String byUserId,
     bool issueReceipt = true,
+    ClinicMembership? membership,
+    String? unitId,
   }) =>
       guard(() async {
         final DateTime now = DateTime.now();
@@ -96,7 +119,14 @@ class FinanceRepository {
           status: newStatus,
           updatedAt: now,
         );
-        await _receivables.doc(updated.id).set(updated.toMap(), SetOptions(merge: true));
+        await _receivables.doc(updated.id).set(
+              _ledgerPayload(
+                updated.toMap(),
+                membership: membership,
+                unitId: unitId ?? receivable.unitId,
+              ),
+              SetOptions(merge: true),
+            );
 
         if (issueReceipt) {
           await issueReceiptRecord(
@@ -106,6 +136,8 @@ class FinanceRepository {
             amountCents: amountCents,
             method: method,
             byUserId: byUserId,
+            membership: membership,
+            unitId: unitId ?? receivable.unitId,
           );
         }
 
@@ -115,6 +147,8 @@ class FinanceRepository {
           entityType: 'receivable',
           entityId: receivable.id,
           byUserId: byUserId,
+          membership: membership,
+          unitId: unitId ?? receivable.unitId,
           metadata: <String, dynamic>{
             'amountCents': amountCents,
             'method': method.name,
@@ -136,6 +170,8 @@ class FinanceRepository {
   Future<Result<void>> cancelReceivable({
     required FinanceReceivable receivable,
     required String byUserId,
+    ClinicMembership? membership,
+    String? unitId,
   }) =>
       guard(() async {
         final FinanceReceivable updated = receivable.copyWith(
@@ -143,13 +179,22 @@ class FinanceRepository {
           cancelledAt: DateTime.now(),
           updatedAt: DateTime.now(),
         );
-        await _receivables.doc(updated.id).set(updated.toMap(), SetOptions(merge: true));
+        await _receivables.doc(updated.id).set(
+              _ledgerPayload(
+                updated.toMap(),
+                membership: membership,
+                unitId: unitId ?? receivable.unitId,
+              ),
+              SetOptions(merge: true),
+            );
         await writeAudit(
           ownerId: receivable.ownerId,
           action: FinanceAuditAction.receivableCancelled,
           entityType: 'receivable',
           entityId: receivable.id,
           byUserId: byUserId,
+          membership: membership,
+          unitId: unitId ?? receivable.unitId,
         );
       });
 
@@ -157,6 +202,8 @@ class FinanceRepository {
     required FinanceReceivable receivable,
     required int refundCents,
     required String byUserId,
+    ClinicMembership? membership,
+    String? unitId,
   }) =>
       guard(() async {
         final FinanceReceivable updated = receivable.copyWith(
@@ -164,25 +211,47 @@ class FinanceRepository {
           status: ReceivableStatus.refunded,
           updatedAt: DateTime.now(),
         );
-        await _receivables.doc(updated.id).set(updated.toMap(), SetOptions(merge: true));
+        await _receivables.doc(updated.id).set(
+              _ledgerPayload(
+                updated.toMap(),
+                membership: membership,
+                unitId: unitId ?? receivable.unitId,
+              ),
+              SetOptions(merge: true),
+            );
         await writeAudit(
           ownerId: receivable.ownerId,
           action: FinanceAuditAction.receivableRefunded,
           entityType: 'receivable',
           entityId: receivable.id,
           byUserId: byUserId,
+          membership: membership,
+          unitId: unitId ?? receivable.unitId,
           metadata: <String, dynamic>{'refundCents': refundCents},
         );
       });
 
-  Future<Result<void>> createPayable(FinancePayable payable) => guard(() async {
-        await _payables.doc(payable.id).set(payable.toMap());
+  Future<Result<void>> createPayable(
+    FinancePayable payable, {
+    ClinicMembership? membership,
+    String? unitId,
+  }) =>
+      guard(() async {
+        await _payables.doc(payable.id).set(
+              _ledgerPayload(
+                payable.toMap(),
+                membership: membership,
+                unitId: unitId ?? payable.unitId,
+              ),
+            );
         await writeAudit(
           ownerId: payable.ownerId,
           action: FinanceAuditAction.payableCreated,
           entityType: 'payable',
           entityId: payable.id,
           byUserId: payable.ownerId,
+          membership: membership,
+          unitId: unitId ?? payable.unitId,
         );
       });
 
@@ -242,6 +311,8 @@ class FinanceRepository {
     required PaymentMethodKind method,
     required String byUserId,
     String? patientId,
+    ClinicMembership? membership,
+    String? unitId,
   }) =>
       guard(() async {
         final String id = _receipts.doc().id;
@@ -254,14 +325,24 @@ class FinanceRepository {
           issuedAt: DateTime.now(),
           patientId: patientId,
           receiptNumber: 'R-${DateTime.now().millisecondsSinceEpoch}',
+          clinicId: membership?.clinicId,
+          unitId: unitId,
         );
-        await _receipts.doc(id).set(receipt.toMap());
+        await _receipts.doc(id).set(
+              _ledgerPayload(
+                receipt.toMap(),
+                membership: membership,
+                unitId: unitId,
+              ),
+            );
         await writeAudit(
           ownerId: ownerId,
           action: FinanceAuditAction.receiptIssued,
           entityType: 'receipt',
           entityId: id,
           byUserId: byUserId,
+          membership: membership,
+          unitId: unitId,
         );
         return receipt;
       });
@@ -273,6 +354,8 @@ class FinanceRepository {
     required String entityId,
     required String byUserId,
     Map<String, dynamic>? metadata,
+    ClinicMembership? membership,
+    String? unitId,
   }) =>
       guard(() async {
         final String id = _audit.doc().id;
@@ -285,13 +368,23 @@ class FinanceRepository {
           at: DateTime.now(),
           byUserId: byUserId,
           metadata: metadata ?? const <String, dynamic>{},
+          clinicId: membership?.clinicId,
+          unitId: unitId,
         );
-        await _audit.doc(id).set(entry.toMap());
+        await _audit.doc(id).set(
+              _ledgerPayload(
+                entry.toMap(),
+                membership: membership,
+                unitId: unitId,
+              ),
+            );
       });
 
   Future<Result<int>> syncFromAppointments({
     required String ownerId,
     required List<Appointment> appointments,
+    ClinicMembership? membership,
+    String? unitId,
   }) =>
       guard(() async {
         int upserted = 0;
@@ -323,7 +416,14 @@ class FinanceRepository {
             professionalName: a.professionalName,
             updatedAt: now,
           );
-          await _receivables.doc(docId).set(recv.toMap(), SetOptions(merge: true));
+          await _receivables.doc(docId).set(
+                _ledgerPayload(
+                  recv.toMap(),
+                  membership: membership,
+                  unitId: unitId,
+                ),
+                SetOptions(merge: true),
+              );
           upserted += 1;
         }
         if (upserted > 0) {
@@ -333,6 +433,8 @@ class FinanceRepository {
             entityType: 'sync',
             entityId: 'agenda',
             byUserId: ownerId,
+            membership: membership,
+            unitId: unitId,
             metadata: <String, dynamic>{'count': upserted},
           );
         }

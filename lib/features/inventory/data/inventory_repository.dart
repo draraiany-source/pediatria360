@@ -2,6 +2,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../../../core/error/failures.dart';
 import '../../../core/utils/result.dart';
+import '../../../shared/domain/entities/clinic_organization.dart';
+import '../../security/domain/tenant_scope.dart';
 import '../../finance/data/finance_repository.dart';
 import '../../finance/domain/finance_models.dart';
 import '../domain/inventory_finance_integration.dart';
@@ -16,6 +18,17 @@ class InventoryRepository {
 
   final FirebaseFirestore _firestore;
   final FinanceRepository? _financeRepository;
+
+  Map<String, dynamic> _ledgerPayload(
+    Map<String, dynamic> data, {
+    ClinicMembership? membership,
+    String? unitId,
+  }) =>
+      TenantScope.stampLedgerMap(
+        Map<String, dynamic>.from(data),
+        membership: membership,
+        unitId: unitId,
+      );
 
   CollectionReference<Map<String, dynamic>> get _items =>
       _firestore.collection('inventory_items');
@@ -98,7 +111,12 @@ class InventoryRepository {
             .toList(growable: false),
       );
 
-  Future<Result<void>> upsertItem(InventoryItem item) => guard(() async {
+  Future<Result<void>> upsertItem(
+    InventoryItem item, {
+    ClinicMembership? membership,
+    String? unitId,
+  }) =>
+      guard(() async {
         final DateTime now = DateTime.now();
         final Map<String, dynamic> data = item.toMap()
           ..putIfAbsent(
@@ -106,7 +124,10 @@ class InventoryRepository {
             () => Timestamp.fromDate(item.createdAt ?? now),
           )
           ..['updatedAt'] = Timestamp.fromDate(now);
-        await _items.doc(item.id).set(data, SetOptions(merge: true));
+        await _items.doc(item.id).set(
+              _ledgerPayload(data, membership: membership, unitId: unitId),
+              SetOptions(merge: true),
+            );
         await _writeAudit(
           ownerId: item.ownerId,
           action: InventoryAuditAction.itemUpdated,
@@ -116,8 +137,20 @@ class InventoryRepository {
         );
       });
 
-  Future<Result<void>> upsertLot(InventoryLot lot) => guard(() async {
-        await _lots.doc(lot.id).set(lot.toMap(), SetOptions(merge: true));
+  Future<Result<void>> upsertLot(
+    InventoryLot lot, {
+    ClinicMembership? membership,
+    String? unitId,
+  }) =>
+      guard(() async {
+        await _lots.doc(lot.id).set(
+              _ledgerPayload(
+                lot.toMap(),
+                membership: membership,
+                unitId: unitId ?? lot.unitId,
+              ),
+              SetOptions(merge: true),
+            );
         await _writeAudit(
           ownerId: lot.ownerId,
           action: InventoryAuditAction.lotUpdated,

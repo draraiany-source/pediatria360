@@ -1,6 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 import '../../../core/utils/result.dart';
+import '../../../shared/domain/entities/clinic_organization.dart';
+import '../../security/domain/tenant_scope.dart';
 import '../../finance/data/finance_repository.dart';
 import '../../finance/domain/finance_models.dart';
 import '../domain/billing_finance_integration.dart';
@@ -12,6 +14,33 @@ class BillingRepository {
       : _firestore = firestore;
 
   final FirebaseFirestore _firestore;
+
+  Map<String, dynamic> _ledgerPayload(
+    Map<String, dynamic> data, {
+    ClinicMembership? membership,
+    String? unitId,
+  }) =>
+      TenantScope.stampLedgerMap(
+        Map<String, dynamic>.from(data),
+        membership: membership,
+        unitId: unitId,
+      );
+
+  Future<void> _setLedger(
+    DocumentReference<Map<String, dynamic>> ref,
+    Map<String, dynamic> data, {
+    ClinicMembership? membership,
+    String? unitId,
+    bool merge = true,
+  }) async {
+    final Map<String, dynamic> payload =
+        _ledgerPayload(data, membership: membership, unitId: unitId);
+    if (merge) {
+      await ref.set(payload, SetOptions(merge: true));
+    } else {
+      await ref.set(payload);
+    }
+  }
 
   CollectionReference<Map<String, dynamic>> get _plans =>
       _firestore.collection('insurance_plans');
@@ -97,33 +126,74 @@ class BillingRepository {
             s.docs.map(BillingGlosa.fromFirestore).toList(growable: false),
       );
 
-  Future<Result<void>> upsertPlan(InsurancePlan plan) =>
+  Future<Result<void>> upsertPlan(
+    InsurancePlan plan, {
+    ClinicMembership? membership,
+    String? unitId,
+  }) =>
       guard(() async {
-        await _plans.doc(plan.id).set(plan.toMap(), SetOptions(merge: true));
+        await _setLedger(
+          _plans.doc(plan.id),
+          plan.toMap(),
+          membership: membership,
+          unitId: unitId,
+        );
       });
 
-  Future<Result<void>> upsertPatientInsurance(PatientInsurance row) =>
+  Future<Result<void>> upsertPatientInsurance(
+    PatientInsurance row, {
+    ClinicMembership? membership,
+    String? unitId,
+  }) =>
       guard(() async {
-        await _patientInsurances
-            .doc(row.id)
-            .set(row.toMap(), SetOptions(merge: true));
+        await _setLedger(
+          _patientInsurances.doc(row.id),
+          row.toMap(),
+          membership: membership,
+          unitId: unitId,
+        );
       });
 
-  Future<Result<void>> upsertAuthorization(InsuranceAuthorization auth) =>
+  Future<Result<void>> upsertAuthorization(
+    InsuranceAuthorization auth, {
+    ClinicMembership? membership,
+    String? unitId,
+  }) =>
       guard(() async {
-        await _authorizations
-            .doc(auth.id)
-            .set(auth.toMap(), SetOptions(merge: true));
+        await _setLedger(
+          _authorizations.doc(auth.id),
+          auth.toMap(),
+          membership: membership,
+          unitId: unitId,
+        );
       });
 
-  Future<Result<void>> upsertGuide(BillingGuide guide) =>
+  Future<Result<void>> upsertGuide(
+    BillingGuide guide, {
+    ClinicMembership? membership,
+    String? unitId,
+  }) =>
       guard(() async {
-        await _guides.doc(guide.id).set(guide.toMap(), SetOptions(merge: true));
+        await _setLedger(
+          _guides.doc(guide.id),
+          guide.toMap(),
+          membership: membership,
+          unitId: unitId,
+        );
       });
 
-  Future<Result<void>> upsertBatch(BillingBatch batch) =>
+  Future<Result<void>> upsertBatch(
+    BillingBatch batch, {
+    ClinicMembership? membership,
+    String? unitId,
+  }) =>
       guard(() async {
-        await _batches.doc(batch.id).set(batch.toMap(), SetOptions(merge: true));
+        await _setLedger(
+          _batches.doc(batch.id),
+          batch.toMap(),
+          membership: membership,
+          unitId: unitId,
+        );
       });
 
   Future<Result<BillingBatch>> closeBatch({

@@ -611,6 +611,125 @@ service cloud.firestore {
       return isClinicMember(clinicId) && clinicRole(clinicId) == 'clinicAdmin';
     }
 
+    // Ledgers financeiro / faturamento / estoque (FASE 9 tenant).
+    function ledgerDocClinicId() {
+      return resource.data.get('clinicId', null);
+    }
+
+    function ledgerReqClinicId() {
+      return request.resource.data.get('clinicId', null);
+    }
+
+    function ledgerClinicId() {
+      return resource == null ? ledgerReqClinicId() : ledgerDocClinicId();
+    }
+
+    function ledgerClinicIdUnchanged() {
+      return resource == null ||
+             request.resource.data.get('clinicId', null) ==
+               resource.data.get('clinicId', null);
+    }
+
+    function ledgerOwnerMatches() {
+      return request.resource.data.ownerId == request.auth.uid;
+    }
+
+    function isLegacyOwnerLedgerRead() {
+      return isVerifiedProfessional() &&
+             resource.data.ownerId == request.auth.uid &&
+             ledgerDocClinicId() == null;
+    }
+
+    function isLegacyOwnerLedgerWrite() {
+      return isVerifiedProfessional() &&
+             ledgerOwnerMatches() &&
+             (resource == null
+               ? ledgerReqClinicId() == null
+               : (resource.data.ownerId == request.auth.uid &&
+                  ledgerDocClinicId() == null));
+    }
+
+    function financeReadRole(clinicId) {
+      return isClinicMember(clinicId) &&
+             clinicRole(clinicId) in
+               ['clinicAdmin', 'finance', 'physician', 'healthProfessional',
+                'receptionist', 'technician'];
+    }
+
+    function financeWriteRole(clinicId) {
+      return isClinicMember(clinicId) &&
+             clinicRole(clinicId) in ['clinicAdmin', 'finance'];
+    }
+
+    function billingWriteRole(clinicId) {
+      return financeWriteRole(clinicId);
+    }
+
+    function inventoryReadRole(clinicId) {
+      return isClinicMember(clinicId) &&
+             clinicRole(clinicId) in
+               ['clinicAdmin', 'finance', 'nursing', 'technician'];
+    }
+
+    function inventoryWriteRole(clinicId) {
+      return isClinicMember(clinicId) &&
+             clinicRole(clinicId) in ['clinicAdmin', 'finance'];
+    }
+
+    function canReadLedger() {
+      return isVerifiedProfessional() && (
+        isLegacyOwnerLedgerRead() ||
+        (ledgerDocClinicId() != null && financeReadRole(ledgerDocClinicId()))
+      );
+    }
+
+    function canWriteFinanceLedger() {
+      return isVerifiedProfessional() &&
+             ledgerClinicIdUnchanged() &&
+             ledgerOwnerMatches() && (
+        isLegacyOwnerLedgerWrite() ||
+        (ledgerReqClinicId() != null &&
+         financeWriteRole(ledgerReqClinicId()))
+      );
+    }
+
+    function canWriteBillingLedger() {
+      return isVerifiedProfessional() &&
+             ledgerClinicIdUnchanged() &&
+             ledgerOwnerMatches() && (
+        isLegacyOwnerLedgerWrite() ||
+        (ledgerReqClinicId() != null &&
+         billingWriteRole(ledgerReqClinicId()))
+      );
+    }
+
+    function canWriteInventoryLedger() {
+      return isVerifiedProfessional() &&
+             ledgerClinicIdUnchanged() &&
+             ledgerOwnerMatches() && (
+        isLegacyOwnerLedgerWrite() ||
+        (ledgerReqClinicId() != null &&
+         inventoryWriteRole(ledgerReqClinicId()))
+      );
+    }
+
+    function canReadInventoryLedger() {
+      return isVerifiedProfessional() && (
+        isLegacyOwnerLedgerRead() ||
+        (ledgerDocClinicId() != null &&
+         inventoryReadRole(ledgerDocClinicId()))
+      );
+    }
+
+    function canCreateFinanceAudit() {
+      return isVerifiedProfessional() &&
+             request.resource.data.ownerId == request.auth.uid &&
+             ledgerClinicIdUnchanged() && (
+        request.resource.data.get('clinicId', null) == null ||
+        financeWriteRole(request.resource.data.clinicId)
+      );
+    }
+
     match /clinics/{clinicId} {
       allow read: if isClinicMember(clinicId) || isAdmin();
       // Criacao: profissional autenticado (onboarding). Admin plataforma tambem.
@@ -638,138 +757,102 @@ service cloud.firestore {
       }
     }
 
-    // Financeiro (FASE 4) — ledger por profissional (ownerId).
+    // Financeiro (FASE 4 + FASE 9 tenant) — legado ownerId ou clinica.
     match /finance_receivables/{id} {
-      allow read, write: if isVerifiedProfessional() &&
-        ((resource == null && request.resource.data.ownerId == request.auth.uid) ||
-         (resource != null && resource.data.ownerId == request.auth.uid &&
-          request.resource.data.ownerId == request.auth.uid));
+      allow read: if canReadLedger();
+      allow create, update: if canWriteFinanceLedger();
       allow delete: if false;
     }
 
     match /finance_payables/{id} {
-      allow read, write: if isVerifiedProfessional() &&
-        ((resource == null && request.resource.data.ownerId == request.auth.uid) ||
-         (resource != null && resource.data.ownerId == request.auth.uid &&
-          request.resource.data.ownerId == request.auth.uid));
+      allow read: if canReadLedger();
+      allow create, update: if canWriteFinanceLedger();
       allow delete: if false;
     }
 
     match /finance_receipts/{id} {
-      allow read, write: if isVerifiedProfessional() &&
-        ((resource == null && request.resource.data.ownerId == request.auth.uid) ||
-         (resource != null && resource.data.ownerId == request.auth.uid &&
-          request.resource.data.ownerId == request.auth.uid));
+      allow read: if canReadLedger();
+      allow create, update: if canWriteFinanceLedger();
       allow delete: if false;
     }
 
     match /finance_audit_logs/{id} {
-      allow read: if isVerifiedProfessional() &&
-                    resource.data.ownerId == request.auth.uid;
-      allow create: if isVerifiedProfessional() &&
-                      request.resource.data.ownerId == request.auth.uid;
+      allow read: if canReadLedger();
+      allow create: if canCreateFinanceAudit();
       allow update, delete: if false;
     }
 
-    // Faturamento / convenios (FASE 5).
+    // Faturamento / convenios (FASE 5 + FASE 9).
     match /insurance_plans/{id} {
-      allow read, write: if isVerifiedProfessional() &&
-        ((resource == null && request.resource.data.ownerId == request.auth.uid) ||
-         (resource != null && resource.data.ownerId == request.auth.uid &&
-          request.resource.data.ownerId == request.auth.uid));
+      allow read: if canReadLedger();
+      allow create, update: if canWriteBillingLedger();
       allow delete: if false;
     }
     match /patient_insurances/{id} {
-      allow read, write: if isVerifiedProfessional() &&
-        ((resource == null && request.resource.data.ownerId == request.auth.uid) ||
-         (resource != null && resource.data.ownerId == request.auth.uid &&
-          request.resource.data.ownerId == request.auth.uid));
+      allow read: if canReadLedger();
+      allow create, update: if canWriteBillingLedger();
       allow delete: if false;
     }
     match /insurance_authorizations/{id} {
-      allow read, write: if isVerifiedProfessional() &&
-        ((resource == null && request.resource.data.ownerId == request.auth.uid) ||
-         (resource != null && resource.data.ownerId == request.auth.uid &&
-          request.resource.data.ownerId == request.auth.uid));
+      allow read: if canReadLedger();
+      allow create, update: if canWriteBillingLedger();
       allow delete: if false;
     }
     match /billing_guides/{id} {
-      allow read, write: if isVerifiedProfessional() &&
-        ((resource == null && request.resource.data.ownerId == request.auth.uid) ||
-         (resource != null && resource.data.ownerId == request.auth.uid &&
-          request.resource.data.ownerId == request.auth.uid));
+      allow read: if canReadLedger();
+      allow create, update: if canWriteBillingLedger();
       allow delete: if false;
     }
     match /billing_batches/{id} {
-      allow read, write: if isVerifiedProfessional() &&
-        ((resource == null && request.resource.data.ownerId == request.auth.uid) ||
-         (resource != null && resource.data.ownerId == request.auth.uid &&
-          request.resource.data.ownerId == request.auth.uid));
+      allow read: if canReadLedger();
+      allow create, update: if canWriteBillingLedger();
       allow delete: if false;
     }
     match /billing_glosas/{id} {
-      allow read, write: if isVerifiedProfessional() &&
-        ((resource == null && request.resource.data.ownerId == request.auth.uid) ||
-         (resource != null && resource.data.ownerId == request.auth.uid &&
-          request.resource.data.ownerId == request.auth.uid));
+      allow read: if canReadLedger();
+      allow create, update: if canWriteBillingLedger();
       allow delete: if false;
     }
     match /billing_audit_logs/{id} {
-      allow read: if isVerifiedProfessional() &&
-                    resource.data.ownerId == request.auth.uid;
-      allow create: if isVerifiedProfessional() &&
-                      request.resource.data.ownerId == request.auth.uid;
+      allow read: if canReadLedger();
+      allow create: if canCreateFinanceAudit();
       allow update, delete: if false;
     }
 
-    // Estoque (FASE 6) — ledger por profissional (ownerId).
+    // Estoque (FASE 6 + FASE 9).
     match /inventory_items/{id} {
-      allow read, write: if isVerifiedProfessional() &&
-        ((resource == null && request.resource.data.ownerId == request.auth.uid) ||
-         (resource != null && resource.data.ownerId == request.auth.uid &&
-          request.resource.data.ownerId == request.auth.uid));
+      allow read: if canReadInventoryLedger();
+      allow create, update: if canWriteInventoryLedger();
       allow delete: if false;
     }
     match /inventory_lots/{id} {
-      allow read, write: if isVerifiedProfessional() &&
-        ((resource == null && request.resource.data.ownerId == request.auth.uid) ||
-         (resource != null && resource.data.ownerId == request.auth.uid &&
-          request.resource.data.ownerId == request.auth.uid));
+      allow read: if canReadInventoryLedger();
+      allow create, update: if canWriteInventoryLedger();
       allow delete: if false;
     }
     match /inventory_movements/{id} {
-      allow read, write: if isVerifiedProfessional() &&
-        ((resource == null && request.resource.data.ownerId == request.auth.uid) ||
-         (resource != null && resource.data.ownerId == request.auth.uid &&
-          request.resource.data.ownerId == request.auth.uid));
+      allow read: if canReadInventoryLedger();
+      allow create, update: if canWriteInventoryLedger();
       allow delete: if false;
     }
     match /inventory_suppliers/{id} {
-      allow read, write: if isVerifiedProfessional() &&
-        ((resource == null && request.resource.data.ownerId == request.auth.uid) ||
-         (resource != null && resource.data.ownerId == request.auth.uid &&
-          request.resource.data.ownerId == request.auth.uid));
+      allow read: if canReadInventoryLedger();
+      allow create, update: if canWriteInventoryLedger();
       allow delete: if false;
     }
     match /inventory_purchase_orders/{id} {
-      allow read, write: if isVerifiedProfessional() &&
-        ((resource == null && request.resource.data.ownerId == request.auth.uid) ||
-         (resource != null && resource.data.ownerId == request.auth.uid &&
-          request.resource.data.ownerId == request.auth.uid));
+      allow read: if canReadInventoryLedger();
+      allow create, update: if canWriteInventoryLedger();
       allow delete: if false;
     }
     match /inventory_counts/{id} {
-      allow read, write: if isVerifiedProfessional() &&
-        ((resource == null && request.resource.data.ownerId == request.auth.uid) ||
-         (resource != null && resource.data.ownerId == request.auth.uid &&
-          request.resource.data.ownerId == request.auth.uid));
+      allow read: if canReadInventoryLedger();
+      allow create, update: if canWriteInventoryLedger();
       allow delete: if false;
     }
     match /inventory_audit_logs/{id} {
-      allow read: if isVerifiedProfessional() &&
-                    resource.data.ownerId == request.auth.uid;
-      allow create: if isVerifiedProfessional() &&
-                      request.resource.data.ownerId == request.auth.uid;
+      allow read: if canReadInventoryLedger();
+      allow create: if canCreateFinanceAudit();
       allow update, delete: if false;
     }
 

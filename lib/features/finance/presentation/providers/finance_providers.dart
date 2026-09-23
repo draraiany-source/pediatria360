@@ -128,6 +128,7 @@ final FutureProvider<void> financeSyncFromAgendaProvider =
   await ref.read(financeRepositoryProvider).syncFromAppointments(
         ownerId: uid,
         appointments: agenda,
+        membership: ref.read(activeClinicMembershipProvider),
       );
   ref.invalidate(financeReceivablesProvider);
 });

@@ -6,6 +6,8 @@ import 'package:uuid/uuid.dart';
 import '../../../../core/theme/app_tokens.dart';
 import '../../../../shared/domain/entities/commerce.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
+import '../../../clinic_org/presentation/providers/clinic_org_providers.dart'
+    show activeClinicMembershipProvider;
 import '../../domain/finance_models.dart';
 import '../providers/finance_providers.dart';
 
@@ -109,7 +111,10 @@ class PayablesScreen extends ConsumerWidget {
       dueAt: DateTime.now().add(const Duration(days: 30)),
       createdAt: DateTime.now(),
     );
-    await ref.read(financeRepositoryProvider).createPayable(p);
+    await ref.read(financeRepositoryProvider).createPayable(
+          p,
+          membership: ref.read(activeClinicMembershipProvider),
+        );
     ref.invalidate(financePayablesProvider);
     desc.dispose();
     cents.dispose();
