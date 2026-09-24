@@ -136,7 +136,7 @@ class PermissionMatrixScreen extends ConsumerWidget {
 
   static Widget _cell(bool allowed) => Icon(
         allowed ? Icons.check_circle_outline : Icons.cancel_outlined,
-        color: allowed ? AppColors.teal : AppColors.error,
+        color: allowed ? AppColors.teal : AppColors.danger,
         size: 20,
       );
 }

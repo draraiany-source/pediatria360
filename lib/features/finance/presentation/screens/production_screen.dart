@@ -7,6 +7,7 @@ import '../../../telemedicine/data/telemedicine_repository.dart';
 import '../../../telemedicine/presentation/agenda_providers.dart'
     show unitScopedMyAgendaProvider;
 import '../../domain/finance_aggregators.dart';
+import '../../domain/finance_models.dart';
 import '../providers/finance_providers.dart';
 
 class ProductionScreen extends ConsumerWidget {
@@ -35,8 +36,8 @@ class ProductionScreen extends ConsumerWidget {
                 return ListTile(
                   title: Text(row.professionalName),
                   subtitle: Text(
-                    'Consultas ${row.consults} 뿯½ Retornos ${row.returns} 뿯½ '
-                    'Tele ${row.teleconsults} 뿯½ Cancel. ${row.cancellations} 뿯½ '
+                    'Consultas ${row.consults} · Retornos ${row.returns} · '
+                    'Tele ${row.teleconsults} · Cancel. ${row.cancellations} · '
                     'Faltas ${row.noShows}',
                   ),
                   trailing: Column(

@@ -203,7 +203,7 @@ class _AuditTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final Color severityColor = switch (event.severity) {
-      SecurityAuditSeverity.critical => AppColors.error,
+      SecurityAuditSeverity.critical => AppColors.danger,
       SecurityAuditSeverity.warning => AppColors.warning,
       SecurityAuditSeverity.info => AppColors.teal,
     };

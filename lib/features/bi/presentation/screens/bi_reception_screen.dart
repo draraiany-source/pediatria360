@@ -93,7 +93,9 @@ class BiReceptionScreen extends ConsumerWidget {
             crossAxisSpacing: AppSpacing.sm,
             mainAxisSpacing: AppSpacing.sm,
             childAspectRatio: 1.35,
-            children: cards.map(BiKpiTile.new).toList(growable: false),
+            children: cards
+                .map((BiKpiCardData d) => BiKpiTile(data: d))
+                .toList(growable: false),
           ),
           const SizedBox(height: AppSpacing.xl),
           QuickAccessCard(

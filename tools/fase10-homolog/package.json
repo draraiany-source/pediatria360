@@ -1,0 +1,11 @@
+{
+  "name": "pediatria360-fase10-homolog",
+  "private": true,
+  "scripts": {
+    "seed": "node seed_fictitious.js",
+    "matrix": "node run_matrix.js"
+  },
+  "dependencies": {
+    "firebase-admin": "^12.7.0"
+  }
+}

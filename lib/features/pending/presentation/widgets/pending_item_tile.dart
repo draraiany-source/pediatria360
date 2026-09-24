@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_tokens.dart';
-import '../../../../core/widgets/app_widgets.dart';
+import '../../../../core/widgets/brand_ui.dart';
 import '../../domain/pending_item.dart';
 
 class PendingItemTile extends StatelessWidget {

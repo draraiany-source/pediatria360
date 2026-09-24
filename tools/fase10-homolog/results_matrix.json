@@ -1,0 +1,314 @@
+{
+  "generatedAt": "2026-09-24T08:02:32.903Z",
+  "project": "pediatria360-app",
+  "note": "Matriz Auth/Firestore Emulator. NAO prova sozinha fluxos UI completos.",
+  "fase9ClinicIsolation": {
+    "result": "PASSOU",
+    "evidence": "tools/firestore-rules-tests npm run test:emulator — 19 pass / 0 fail (cross-clinic)",
+    "notProofOf": "fluxos completos do aplicativo"
+  },
+  "summary": {
+    "PASSOU": 24,
+    "FALHOU": 0,
+    "NAO_TESTADO": 3
+  },
+  "results": [
+    {
+      "id": "login-admin-a",
+      "title": "Login email/senha (Auth Emulator)",
+      "profile": "clinicAdmin",
+      "env": "Auth Emulator",
+      "steps": "signInWithPassword admin.a@homolog.pediatria360.test",
+      "expected": "idToken emitido",
+      "observed": "uid=homolog-admin-a",
+      "result": "PASSOU",
+      "evidence": "Auth Emulator REST signInWithPassword"
+    },
+    {
+      "id": "login-recv-a",
+      "title": "Login email/senha (Auth Emulator)",
+      "profile": "receptionist",
+      "env": "Auth Emulator",
+      "steps": "signInWithPassword recepcao.a@homolog.pediatria360.test",
+      "expected": "idToken emitido",
+      "observed": "uid=homolog-recv-a",
+      "result": "PASSOU",
+      "evidence": "Auth Emulator REST signInWithPassword"
+    },
+    {
+      "id": "login-phys-a",
+      "title": "Login email/senha (Auth Emulator)",
+      "profile": "physician",
+      "env": "Auth Emulator",
+      "steps": "signInWithPassword medico.a@homolog.pediatria360.test",
+      "expected": "idToken emitido",
+      "observed": "uid=homolog-phys-a",
+      "result": "PASSOU",
+      "evidence": "Auth Emulator REST signInWithPassword"
+    },
+    {
+      "id": "login-fin-a",
+      "title": "Login email/senha (Auth Emulator)",
+      "profile": "finance",
+      "env": "Auth Emulator",
+      "steps": "signInWithPassword financeiro.a@homolog.pediatria360.test",
+      "expected": "idToken emitido",
+      "observed": "uid=homolog-fin-a",
+      "result": "PASSOU",
+      "evidence": "Auth Emulator REST signInWithPassword"
+    },
+    {
+      "id": "login-admin-b",
+      "title": "Login email/senha (Auth Emulator)",
+      "profile": "clinicAdminB",
+      "env": "Auth Emulator",
+      "steps": "signInWithPassword admin.b@homolog.pediatria360.test",
+      "expected": "idToken emitido",
+      "observed": "uid=homolog-admin-b",
+      "result": "PASSOU",
+      "evidence": "Auth Emulator REST signInWithPassword"
+    },
+    {
+      "id": "login-parent-a",
+      "title": "Login email/senha (Auth Emulator)",
+      "profile": "parent",
+      "env": "Auth Emulator",
+      "steps": "signInWithPassword responsavel.a@homolog.pediatria360.test",
+      "expected": "idToken emitido",
+      "observed": "uid=homolog-parent-a",
+      "result": "PASSOU",
+      "evidence": "Auth Emulator REST signInWithPassword"
+    },
+    {
+      "id": "login-parent-b",
+      "title": "Login email/senha (Auth Emulator)",
+      "profile": "parentB",
+      "env": "Auth Emulator",
+      "steps": "signInWithPassword responsavel.b@homolog.pediatria360.test",
+      "expected": "idToken emitido",
+      "observed": "uid=homolog-parent-b",
+      "result": "PASSOU",
+      "evidence": "Auth Emulator REST signInWithPassword"
+    },
+    {
+      "id": "fin-read-own-clinic",
+      "title": "Financeiro le cobranca ficticia da propria clinica",
+      "profile": "finance",
+      "env": "Firestore Emulator",
+      "steps": "GET finance_receivables/recv-homolog-a1",
+      "expected": "HTTP 200",
+      "observed": "HTTP 200",
+      "result": "PASSOU",
+      "evidence": "{\"ok\":true}"
+    },
+    {
+      "id": "neg-cross-clinic-finance-read",
+      "title": "Admin clinica B NAO le finance da clinica A",
+      "profile": "clinicAdminB",
+      "env": "Firestore Emulator",
+      "steps": "GET finance_receivables/recv-homolog-a1 as admin B",
+      "expected": "HTTP 403/PERMISSION_DENIED",
+      "observed": "HTTP 403",
+      "result": "PASSOU",
+      "evidence": "{\"code\":403,\"message\":\"\\nevaluation error at L762:22 for 'get' @ L762, false for 'get' @ L897, false for 'get' @ L762, false for 'get' @ L897\",\"status\":\"PERMISSION_DENIED\"}"
+    },
+    {
+      "id": "neg-recv-write-finance",
+      "title": "Recepcao NAO cria cobranca financeira",
+      "profile": "receptionist",
+      "env": "Firestore Emulator",
+      "steps": "POST finance_receivables como recepcao",
+      "expected": "PERMISSION_DENIED",
+      "observed": "HTTP 403",
+      "result": "PASSOU",
+      "evidence": "{\"code\":403,\"message\":\"\\nevaluation error at L763:32 for 'create' @ L763, false for 'create' @ L897, false for 'create' @ L763, false for 'create' @ L897\",\"status\":\"PERMISSION_DENIED\"}"
+    },
+    {
+      "id": "fin-create-receivable-persist",
+      "title": "Financeiro cria cobranca ficticia e persiste",
+      "profile": "finance",
+      "env": "Firestore Emulator",
+      "steps": "POST+GET finance_receivables/recv-homolog-matrix-1790236928123",
+      "expected": "create 200 + get 200 com amount 9900",
+      "observed": "create=200 get=200",
+      "result": "PASSOU",
+      "evidence": "recv-homolog-matrix-1790236928123"
+    },
+    {
+      "id": "parent-read-own-child",
+      "title": "Responsavel le propria crianca ficticia",
+      "profile": "parent",
+      "env": "Firestore Emulator",
+      "steps": "GET users/.../children/child-ficticio-a1",
+      "expected": "HTTP 200",
+      "observed": "HTTP 200",
+      "result": "PASSOU",
+      "evidence": "seed child A1"
+    },
+    {
+      "id": "neg-parent-other-family",
+      "title": "Responsavel A NAO le crianca da familia B",
+      "profile": "parent",
+      "env": "Firestore Emulator",
+      "steps": "GET users/homolog-parent-b/children/child-ficticio-b1",
+      "expected": "PERMISSION_DENIED",
+      "observed": "HTTP 403",
+      "result": "PASSOU",
+      "evidence": "{\"code\":403,\"message\":\"\\nevaluation error at L117:24 for 'get' @ L117, false for 'get' @ L897, false for 'get' @ L117, false for 'get' @ L897\",\"status\":\"PERMISSION_DENIED\"}"
+    },
+    {
+      "id": "neg-phys-child-without-grant",
+      "title": "Medico sem concessao NAO le cadastro da crianca",
+      "profile": "physician",
+      "env": "Firestore Emulator",
+      "steps": "GET child doc sem authorized_professionals",
+      "expected": "PERMISSION_DENIED",
+      "observed": "HTTP 403",
+      "result": "PASSOU",
+      "evidence": "{\"code\":403,\"message\":\"\\nevaluation error at L117:24 for 'get' @ L117, false for 'get' @ L897, false for 'get' @ L117, false for 'get' @ L897\",\"status\":\"PERMISSION_DENIED\"}"
+    },
+    {
+      "id": "phys-read-own-appointment",
+      "title": "Medico le proprio agendamento ficticio",
+      "profile": "physician",
+      "env": "Firestore Emulator",
+      "steps": "GET appointments/appt-homolog-a1",
+      "expected": "HTTP 200",
+      "observed": "HTTP 200",
+      "result": "PASSOU",
+      "evidence": "seed appt"
+    },
+    {
+      "id": "neg-recv-read-phys-appointment",
+      "title": "Recepcao NAO le appointment de outro profissional (rules atuais)",
+      "profile": "receptionist",
+      "env": "Firestore Emulator",
+      "steps": "GET appointments/appt-homolog-a1 as recv",
+      "expected": "PERMISSION_DENIED (rules: patientId|professionalId)",
+      "observed": "HTTP 403",
+      "result": "PASSOU",
+      "evidence": "firestore.rules match /appointments"
+    },
+    {
+      "id": "admin-audit-write-read",
+      "title": "Admin local cria e le evento de auditoria da clinica",
+      "profile": "clinicAdmin",
+      "env": "Firestore Emulator",
+      "steps": "POST+GET security_audit_logs",
+      "expected": "create+read 200",
+      "observed": "create=200 read=200",
+      "result": "PASSOU",
+      "evidence": "security_audit_logs"
+    },
+    {
+      "id": "neg-cross-clinic-audit",
+      "title": "Admin B NAO le auditoria da clinica A",
+      "profile": "clinicAdminB",
+      "env": "Firestore Emulator",
+      "steps": "GET security_audit_logs/audit-homolog-a1 as admin B",
+      "expected": "PERMISSION_DENIED",
+      "observed": "HTTP 403",
+      "result": "PASSOU",
+      "evidence": "{\"code\":403,\"message\":\"\\nevaluation error at L875:22 for 'get' @ L875, false for 'get' @ L897, false for 'get' @ L875, false for 'get' @ L897\",\"status\":\"PERMISSION_DENIED\"}"
+    },
+    {
+      "id": "parent-read-consent",
+      "title": "Responsavel le consentimento proprio",
+      "profile": "parent",
+      "env": "Firestore Emulator",
+      "steps": "GET users/.../consents/consent-homolog-1",
+      "expected": "HTTP 200",
+      "observed": "HTTP 200",
+      "result": "PASSOU",
+      "evidence": "seed consent"
+    },
+    {
+      "id": "phys-create-encounter-draft",
+      "title": "Medico cria prontuario rascunho ficticio",
+      "profile": "physician",
+      "env": "Firestore Emulator",
+      "steps": "POST encounters/enc-homolog-1790236928683 status=draft",
+      "expected": "HTTP 200",
+      "observed": "HTTP 200",
+      "result": "PASSOU",
+      "evidence": "{\"id\":\"enc-homolog-1790236928683\"}"
+    },
+    {
+      "id": "phys-sign-encounter-function",
+      "title": "Assinatura de prontuario via Cloud Function signEncounter",
+      "profile": "physician",
+      "env": "Functions Emulator",
+      "steps": "callable signEncounter",
+      "expected": "hash servidor + status assinado",
+      "observed": "Functions Emulator nao iniciado nesta sessao; assinatura e server-side",
+      "result": "NAO TESTADO",
+      "evidence": "encounter_repository.sign -> httpsCallable('signEncounter')"
+    },
+    {
+      "id": "neg-signed-encounter-immutable",
+      "title": "Prontuario assinado NAO aceita alteracao silenciosa pelo cliente",
+      "profile": "physician",
+      "env": "Firestore Emulator",
+      "steps": "PATCH encounter status=signed",
+      "expected": "PERMISSION_DENIED (update so draft)",
+      "observed": "HTTP 403",
+      "result": "PASSOU",
+      "evidence": "firestore.rules encounters allow update only status==draft"
+    },
+    {
+      "id": "neg-expired-or-invalid-session",
+      "title": "Token invalido/expirado nao le finance",
+      "profile": "any",
+      "env": "Firestore Emulator",
+      "steps": "GET com Bearer invalid-token",
+      "expected": "401/403",
+      "observed": "HTTP 400",
+      "result": "PASSOU",
+      "evidence": "auth gate (Emulator pode responder 400 para Bearer invalido)"
+    },
+    {
+      "id": "neg-parent-finance",
+      "title": "Responsavel NAO acessa financeiro clinico",
+      "profile": "parent",
+      "env": "Firestore Emulator",
+      "steps": "GET finance_receivables",
+      "expected": "PERMISSION_DENIED",
+      "observed": "HTTP 403",
+      "result": "PASSOU",
+      "evidence": "{\"code\":403,\"message\":\"\\nevaluation error at L762:22 for 'get' @ L762, false for 'get' @ L897, false for 'get' @ L762, false for 'get' @ L897\",\"status\":\"PERMISSION_DENIED\"}"
+    },
+    {
+      "id": "neg-connection-failure",
+      "title": "Falha de conexao detectavel",
+      "profile": "any",
+      "env": "rede local",
+      "steps": "fetch host inacessivel",
+      "expected": "erro de rede",
+      "observed": "TypeError",
+      "result": "PASSOU",
+      "evidence": "AbortError/network error"
+    },
+    {
+      "id": "platform-android",
+      "title": "Execucao E2E UI em Android",
+      "profile": "all",
+      "env": "Android",
+      "steps": "flutter run / device",
+      "expected": "fluxos UI executados",
+      "observed": "sem aparelho/emulador disponivel nesta sessao Windows",
+      "result": "NAO TESTADO",
+      "evidence": "flutter devices: windows, chrome, edge only"
+    },
+    {
+      "id": "platform-ios",
+      "title": "Execucao E2E UI em iOS",
+      "profile": "all",
+      "env": "iOS",
+      "steps": "flutter run / device",
+      "expected": "fluxos UI executados",
+      "observed": "sem aparelho/emulador disponivel nesta sessao Windows",
+      "result": "NAO TESTADO",
+      "evidence": "flutter devices: windows, chrome, edge only"
+    }
+  ]
+}

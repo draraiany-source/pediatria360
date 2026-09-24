@@ -26,11 +26,17 @@ class DevMode {
   static const bool _skipAuthDefine =
       bool.fromEnvironment('SKIP_AUTH', defaultValue: false);
 
+  /// Força Auth Firebase real (FASE 10 / staging Emulator).
+  /// Ex.: `--dart-define=FORCE_REAL_AUTH=true`
+  static const bool _forceRealAuthDefine =
+      bool.fromEnvironment('FORCE_REAL_AUTH', defaultValue: false);
+
   /// Quando `true`, desliga o convidado nesta sessão e força login real.
   static bool requireRealAuth = false;
 
   static bool get isEnabled {
-    if (!_flag || requireRealAuth) return false;
+    if (_forceRealAuthDefine || requireRealAuth) return false;
+    if (!_flag) return false;
     if (kDebugMode) return true;
     return _skipAuthDefine && !AppConfig.isProduction;
   }

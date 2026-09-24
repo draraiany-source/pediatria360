@@ -83,7 +83,9 @@ class BiOpsScreen extends ConsumerWidget {
             crossAxisSpacing: AppSpacing.sm,
             mainAxisSpacing: AppSpacing.sm,
             childAspectRatio: 1.2,
-            children: cards.map(BiKpiTile.new).toList(growable: false),
+            children: cards
+                .map((BiKpiCardData d) => BiKpiTile(data: d))
+                .toList(growable: false),
           ),
           if (agenda.rescheduleNote != null)
             Padding(

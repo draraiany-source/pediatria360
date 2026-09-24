@@ -102,7 +102,9 @@ class BiClinicalScreen extends ConsumerWidget {
             crossAxisSpacing: AppSpacing.sm,
             mainAxisSpacing: AppSpacing.sm,
             childAspectRatio: 1.35,
-            children: cards.map(BiKpiTile.new).toList(growable: false),
+            children: cards
+                .map((BiKpiCardData d) => BiKpiTile(data: d))
+                .toList(growable: false),
           ),
           if (snapshot.development.recordCount == 0 &&
               snapshot.growth.assessmentCount == 0)
