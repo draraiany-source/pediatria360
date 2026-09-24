@@ -7,6 +7,10 @@ import 'security_audit_models.dart';
 
 /// Fachada para registrar eventos cross-cutting sem reescrever repositorios
 /// de dominio (finance/billing/inventory mantem trilhas proprias).
+///
+/// Politica IP/sessao (privacidade): [ip] e [sessionId] so sao persistidos
+/// quando o chamador fornece valores nao vazios realmente disponiveis no
+/// runtime. Nao inventar identificadores; omitir o campo se ausente.
 class AuditLogService {
   AuditLogService({required SecurityAuditRepository repository})
       : _repository = repository;

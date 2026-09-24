@@ -174,12 +174,24 @@ class GlosasScreen extends ConsumerWidget {
             FilledButton(
               onPressed: () async {
                 final String? uid = ref.read(currentUserProvider)?.uid;
+                final membership = ref.read(activeClinicMembershipProvider);
                 if (uid == null) return;
+                if (membership == null || !membership.active) {
+                  ScaffoldMessenger.of(ctx).showSnackBar(
+                    const SnackBar(
+                      content: Text(
+                        'Membership ativo obrigatorio para recurso de glosa.',
+                      ),
+                    ),
+                  );
+                  return;
+                }
                 await ref.read(billingRepositoryProvider).updateAppeal(
                       glosa: g,
                       status: BillingGlosaStatus.appealSent,
                       byUserId: uid,
                       justification: ctrl.text,
+                      membership: membership,
                     );
                 if (ctx.mounted) Navigator.pop(ctx);
                 ref.invalidate(billingGlosasProvider);

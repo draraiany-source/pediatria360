@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
+import '../../../core/error/failures.dart';
 import '../../../core/utils/result.dart';
 import '../../../shared/domain/entities/clinic_organization.dart';
 import '../../security/domain/tenant_scope.dart';
@@ -350,18 +351,31 @@ class BillingRepository {
     required BillingGlosa glosa,
     required BillingGlosaStatus status,
     required String byUserId,
+    ClinicMembership? membership,
+    String? unitId,
     String? justification,
     List<String>? docsUrls,
     String? responseNotes,
   }) =>
       guard(() async {
+        if (membership == null || !membership.active) {
+          throw const ValidationFailure(
+            'Membership ativo obrigatorio para escrita de faturamento.',
+          );
+        }
+        TenantScope.requireClinicAccess(membership, membership.clinicId);
         final BillingGlosa updated = glosa.copyWith(
           status: status,
           appealJustification: justification,
           appealDocsUrls: docsUrls,
           responseNotes: responseNotes,
         );
-        await _glosas.doc(updated.id).set(updated.toMap(), SetOptions(merge: true));
+        await _setLedger(
+          _glosas.doc(updated.id),
+          updated.toMap(),
+          membership: membership,
+          unitId: unitId,
+        );
         await _writeAudit(
           ownerId: glosa.ownerId,
           action: BillingAuditAction.appealUpdated,

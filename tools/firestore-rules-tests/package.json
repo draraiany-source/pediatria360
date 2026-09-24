@@ -2,11 +2,13 @@
   "name": "pediatria360-firestore-rules-tests",
   "private": true,
   "scripts": {
-    "test": "firebase emulators:exec --only firestore \"node --test test/ledger_tenant.test.js\"",
-    "test:offline": "node --test test/ledger_tenant.test.js"
+    "test": "firebase emulators:exec --only firestore --project pediatria360-rules-fase9 \"node --test test/ledger_tenant.test.js test/ledger_isolation.test.js\"",
+    "test:offline": "node --test test/ledger_tenant.test.js",
+    "test:emulator": "firebase emulators:exec --only firestore --project pediatria360-rules-fase9 \"node --test test/ledger_isolation.test.js\""
   },
   "devDependencies": {
     "@firebase/rules-unit-testing": "^4.0.1",
-    "firebase": "^11.0.0"
+    "firebase": "^11.0.0",
+    "firebase-tools": "^13.29.1"
   }
 }

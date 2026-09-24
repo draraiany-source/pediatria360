@@ -24,6 +24,8 @@ import '../../../notifications/presentation/notification_center_screen.dart';
 import '../../../telemedicine/data/telemedicine_repository.dart';
 import '../../../pending/domain/pending_item.dart';
 import '../../../pending/presentation/providers/pending_providers.dart';
+import '../../../telemedicine/presentation/agenda_providers.dart'
+    show unitScopedMyAgendaProvider;
 import '../../../telemedicine/presentation/telemedicine_screen.dart'
     show myAgendaProvider;
 
@@ -101,7 +103,7 @@ class _ProfessionalHome extends ConsumerWidget {
     final AsyncValue<List<PatientSummary>> patientsAsync =
         ref.watch(professionalPatientsProvider);
     final AsyncValue<List<Appointment>> agendaAsync =
-        ref.watch(myAgendaProvider);
+        ref.watch(unitScopedMyAgendaProvider);
     final int unread = ref.watch(unreadCountProvider);
     final PendingAttentionCounts attention =
         ref.watch(pendingAttentionCountsProvider);

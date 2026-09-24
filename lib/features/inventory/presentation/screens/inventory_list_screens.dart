@@ -52,6 +52,10 @@ class InventoryLotsScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final AsyncValue<List<InventoryLot>> async = ref.watch(inventoryLotsProvider);
     final DateTime now = DateTime.now();
+    final bool canTransfer = InventoryAccess.canStockOps(
+      user: ref.watch(currentUserProvider),
+      clinicMembership: ref.watch(activeClinicMembershipProvider),
+    );
     return _InventoryScaffold<InventoryLot>(
       title: 'Lotes',
       allowed: InventoryAccess.canView(
@@ -72,10 +76,116 @@ class InventoryLotsScreen extends ConsumerWidget {
         );
         return ListTile(
           title: Text('Lote ${lot.lotCode}'),
-          subtitle: Text('Validade ${lot.expiresAt.toIso8601String().substring(0, 10)}'),
+          subtitle: Text(
+            'Validade ${lot.expiresAt.toIso8601String().substring(0, 10)}'
+            '${lot.unitId != null && lot.unitId!.isNotEmpty ? ' · ${lot.unitId}' : ''}',
+          ),
           trailing: Text('${lot.qty} · ${st.label}'),
+          onLongPress: canTransfer
+              ? () => _showTransferDialog(context, ref, lot)
+              : null,
         );
       },
+    );
+  }
+
+  Future<void> _showTransferDialog(
+    BuildContext context,
+    WidgetRef ref,
+    InventoryLot lot,
+  ) async {
+    final membership = ref.read(activeClinicMembershipProvider);
+    if (membership == null || !membership.active) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Membership ativo obrigatorio para transferencia.'),
+        ),
+      );
+      return;
+    }
+    final List<String> destinations = membership.unitIds
+        .where((String u) => u.isNotEmpty && u != lot.unitId)
+        .toList();
+    if (destinations.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Informe ao menos duas unidades no membership para transferir.',
+          ),
+        ),
+      );
+      return;
+    }
+    String toUnit = destinations.first;
+    final TextEditingController qtyCtrl = TextEditingController(text: '1');
+    await showDialog<void>(
+      context: context,
+      builder: (BuildContext ctx) => AlertDialog(
+        title: const Text('Transferir lote entre unidades'),
+        content: StatefulBuilder(
+          builder: (BuildContext context, StateSetter setState) {
+            return Column(
+              mainAxisSize: MainAxisSize.min,
+              children: <Widget>[
+                Text('Origem: ${lot.unitId ?? '(sem unidade)'}'),
+                DropdownButtonFormField<String>(
+                  value: toUnit,
+                  items: destinations
+                      .map(
+                        (String u) => DropdownMenuItem<String>(
+                          value: u,
+                          child: Text(u),
+                        ),
+                      )
+                      .toList(),
+                  onChanged: (String? v) {
+                    if (v != null) setState(() => toUnit = v);
+                  },
+                  decoration: const InputDecoration(labelText: 'Destino'),
+                ),
+                TextField(
+                  controller: qtyCtrl,
+                  keyboardType: TextInputType.number,
+                  decoration: const InputDecoration(labelText: 'Quantidade'),
+                ),
+              ],
+            );
+          },
+        ),
+        actions: <Widget>[
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancelar'),
+          ),
+          FilledButton(
+            onPressed: () async {
+              final String? uid = ref.read(currentUserProvider)?.uid;
+              if (uid == null) return;
+              final int qty = int.tryParse(qtyCtrl.text.trim()) ?? 0;
+              final result =
+                  await ref.read(inventoryRepositoryProvider).transferLots(
+                        lot: lot,
+                        toUnitId: toUnit,
+                        qty: qty,
+                        byUserId: uid,
+                        membership: membership,
+                      );
+              if (!ctx.mounted) return;
+              result.fold(
+                (_) {
+                  ref.invalidate(inventoryLotsProvider);
+                  ref.invalidate(inventoryMovementsProvider);
+                  Navigator.pop(ctx);
+                },
+                (Failure f) => ScaffoldMessenger.of(ctx).showSnackBar(
+                  SnackBar(content: Text(f.message)),
+                ),
+              );
+            },
+            child: const Text('Transferir'),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -199,11 +309,24 @@ class InventoryMovementsScreen extends ConsumerWidget {
           FilledButton(
             onPressed: () async {
               final String? uid = ref.read(currentUserProvider)?.uid;
+              final membership = ref.read(activeClinicMembershipProvider);
               if (uid == null) return;
+              if (membership == null || !membership.active) {
+                ScaffoldMessenger.of(ctx).showSnackBar(
+                  const SnackBar(
+                    content: Text(
+                      'Membership ativo obrigatorio para movimentacao.',
+                    ),
+                  ),
+                );
+                return;
+              }
               final int qty = int.tryParse(qtyCtrl.text.trim()) ?? 0;
               final String id =
                   '${DateTime.now().millisecondsSinceEpoch}_${selected.id}';
               await ref.read(inventoryRepositoryProvider).recordMovement(
+                    membership: membership,
+                    ledgerUnitId: selected.unitId,
                     movement: InventoryMovement(
                       id: id,
                       itemId: selected.itemId,
@@ -295,13 +418,25 @@ class InventoryCountScreen extends ConsumerWidget {
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () async {
           final String? uid = ref.read(currentUserProvider)?.uid;
+          final membership = ref.read(activeClinicMembershipProvider);
           if (uid == null) return;
+          if (membership == null || !membership.active) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text(
+                  'Membership ativo obrigatorio para contagem de estoque.',
+                ),
+              ),
+            );
+            return;
+          }
           final List<InventoryLot> lots =
               await ref.read(inventoryLotsProvider.future);
           await ref.read(inventoryRepositoryProvider).startInventoryCount(
                 ownerId: uid,
                 byUserId: uid,
                 lots: lots,
+                membership: membership,
               );
           ref.invalidate(inventoryCountsProvider);
         },

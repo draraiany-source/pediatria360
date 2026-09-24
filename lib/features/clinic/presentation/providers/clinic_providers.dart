@@ -2,8 +2,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/providers/core_providers.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
+import '../../../clinic_org/presentation/providers/clinic_org_providers.dart';
 import '../../../notifications/presentation/notification_center_screen.dart';
 import '../../../telemedicine/data/telemedicine_repository.dart';
+import '../../../telemedicine/domain/agenda_unit_filter.dart';
 import '../../data/clinic_repository.dart';
 import '../../data/voice_consultation_repository.dart';
 import '../../domain/clinic_dashboard_stats.dart';
@@ -35,6 +37,23 @@ final StreamProvider<List<Appointment>> todayClinicAppointmentsProvider =
     return Stream<List<Appointment>>.value(const <Appointment>[]);
   }
   return ref.watch(clinicRepositoryProvider).watchTodayAppointments(uid);
+});
+
+/// Agenda do dia filtrada pelas unidades do membership ativo (recepcao).
+/// Nao amplia acesso — apenas restringe a lista ja autorizada.
+final Provider<AsyncValue<List<Appointment>>>
+    unitScopedTodayClinicAppointmentsProvider =
+    Provider<AsyncValue<List<Appointment>>>((Ref ref) {
+  final AsyncValue<List<Appointment>> agenda =
+      ref.watch(todayClinicAppointmentsProvider);
+  final membership = ref.watch(activeClinicMembershipProvider);
+  return agenda.when(
+    data: (List<Appointment> data) => AsyncData<List<Appointment>>(
+      filterAgendaByMembershipUnits(data, membership),
+    ),
+    loading: () => const AsyncLoading<List<Appointment>>(),
+    error: (Object e, StackTrace st) => AsyncError<List<Appointment>>(e, st),
+  );
 });
 
 final FutureProvider<ClinicDashboardStats> clinicDashboardStatsProvider =

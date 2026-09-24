@@ -368,8 +368,16 @@ class InventoryRepository {
     required String ownerId,
     required String byUserId,
     required List<InventoryLot> lots,
+    ClinicMembership? membership,
+    String? unitId,
   }) =>
       guard(() async {
+        if (membership == null || !membership.active) {
+          throw const ValidationFailure(
+            'Membership ativo obrigatorio para contagem de estoque.',
+          );
+        }
+        TenantScope.requireClinicAccess(membership, membership.clinicId);
         final String id = _counts.doc().id;
         final List<InventoryCountLine> lines = lots
             .map(
@@ -388,7 +396,13 @@ class InventoryRepository {
           startedAt: DateTime.now(),
           byUserId: byUserId,
         );
-        await _counts.doc(id).set(count.toMap());
+        await _counts.doc(id).set(
+              _ledgerPayload(
+                count.toMap(),
+                membership: membership,
+                unitId: unitId,
+              ),
+            );
         await _writeAudit(
           ownerId: ownerId,
           action: InventoryAuditAction.countStarted,

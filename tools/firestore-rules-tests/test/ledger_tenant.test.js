@@ -1,4 +1,4 @@
-﻿const { readFileSync } = require("node:fs");
+const { readFileSync } = require("node:fs");
 const { resolve } = require("node:path");
 const { test } = require("node:test");
 const assert = require("node:assert/strict");
@@ -20,8 +20,15 @@ test("finance_receivables uses tenant helpers", () => {
   assert.match(rules, /allow create, update: if canWriteFinanceLedger\(\)/);
 });
 
-test("emulator integration optional", async (t) => {
-  if (process.env.FIRESTORE_EMULATOR_HOST == null) {
-    t.skip("no emulator");
-  }
+test("billing and inventory collections bound to tenant helpers", () => {
+  assert.match(rules, /match \/billing_guides\/\{id\}/);
+  assert.match(rules, /allow create, update: if canWriteBillingLedger\(\)/);
+  assert.match(rules, /match \/inventory_lots\/\{id\}/);
+  assert.match(rules, /allow create, update: if canWriteInventoryLedger\(\)/);
+});
+
+test("security_audit_logs is append-only with clinicAdmin read", () => {
+  assert.match(rules, /match \/security_audit_logs\/\{id\}/);
+  assert.match(rules, /allow update, delete: if false/);
+  assert.match(rules, /isClinicAdmin\(resource\.data\.clinicId\)/);
 });

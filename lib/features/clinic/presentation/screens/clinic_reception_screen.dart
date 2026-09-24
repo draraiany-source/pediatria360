@@ -128,7 +128,7 @@ class _ClinicReceptionScreenState extends ConsumerState<ClinicReceptionScreen>
   @override
   Widget build(BuildContext context) {
     final AsyncValue<List<Appointment>> async =
-        ref.watch(todayClinicAppointmentsProvider);
+        ref.watch(unitScopedTodayClinicAppointmentsProvider);
 
     return Scaffold(
       backgroundColor: AppColors.lightBackground,
@@ -153,6 +153,7 @@ class _ClinicReceptionScreenState extends ConsumerState<ClinicReceptionScreen>
         error: (Object e, StackTrace _) => ErrorState(
           failure: ServerFailure(e.toString()),
           onRetry: () => ref.invalidate(todayClinicAppointmentsProvider),
+          // unitScoped deriva de todayClinicAppointmentsProvider.
         ),
         data: (List<Appointment> list) {
           if (list.isEmpty) {
