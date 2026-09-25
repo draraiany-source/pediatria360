@@ -9,7 +9,7 @@
 | Branch | main |
 | Commit pre-auditoria (sincronizado) | a580fd6 |
 | Checkpoint de seguranca | c0c0322 |
-| Commit desta entrega | (preencher apos push) |
+| Commit desta entrega | `c2fbec2` |
 | Versao app | 1.0.0+1 (pubspec.yaml) |
 | Classificacao | **NAO PRONTO para pacientes reais nem lojas** |
 | FASE 2 no GitHub | **SIM** (desde a580fd6) — auditoria anterior estava desatualizada neste ponto |
@@ -187,7 +187,7 @@ KPIs consultorio reais; CID busca; dedupe criancas; gamification data layer; ana
 | Item | Valor |
 |------|-------|
 | GitHub | https://github.com/draraiany-source/pediatria360 |
-| Commit auditado | (apos push) |
+| Commit auditado | `c2fbec2` — https://github.com/draraiany-source/pediatria360/commit/c2fbec2 |
 | URL publica | https://pediatria360-app--homolog-orcamento-a9dstse4.web.app (expira ~2026-10-25) |
 | Perfis no link publico | Convidado DevMode (SKIP_AUTH) — UI profissional local; **sem dados reais de pacientes** |
 | Localhost | **Nao** e o link publico; so desenvolvimento |
