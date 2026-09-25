@@ -14,6 +14,7 @@ import '../../../../shared/domain/entities/child.dart';
 import '../../../../shared/domain/entities/visit_summary.dart';
 import '../../../growth/domain/who_reference.dart';
 import '../providers/children_providers.dart';
+import 'child_guardians_screen.dart';
 import 'visit_summaries_screen.dart';
 
 class ChildDetailScreen extends ConsumerWidget {
@@ -227,6 +228,17 @@ class ChildDetailScreen extends ConsumerWidget {
                             ? AppColors.danger
                             : AppColors.moduleVaccines,
                         onTap: () => context.push(Routes.vaccines(child.id)),
+                      ),
+                      const SizedBox(height: AppSpacing.md),
+                      QuickActionTile(
+                        label: 'Responsaveis e permissoes',
+                        icon: Icons.family_restroom_outlined,
+                        color: AppColors.violet,
+                        onTap: () => Navigator.of(context).push(
+                          MaterialPageRoute<void>(
+                            builder: (_) => ChildGuardiansScreen(child: child),
+                          ),
+                        ),
                       ),
                       const SizedBox(height: AppSpacing.md),
                       QuickActionTile(

@@ -6,6 +6,7 @@ import '../../../core/config/firestore_paths.dart';
 import '../../../core/utils/result.dart';
 import '../../../shared/data/models/pre_visit_questionnaire_model.dart';
 import '../../../shared/domain/entities/pre_visit_questionnaire.dart';
+import '../../clinic/domain/agenda_scheduling.dart';
 
 /// Situação de uma consulta.
 /// Modalidade do atendimento.
@@ -17,7 +18,10 @@ import '../../../shared/domain/entities/pre_visit_questionnaire.dart';
 /// arbitrário.
 enum AppointmentType {
   presencial,
-  teleconsulta;
+  teleconsulta,
+  primeiraConsulta,
+  retorno,
+  procedimento;
 
   static AppointmentType fromName(String? value) =>
       AppointmentType.values.firstWhere(
@@ -28,6 +32,9 @@ enum AppointmentType {
   String get label => switch (this) {
         AppointmentType.presencial => 'Presencial',
         AppointmentType.teleconsulta => 'Teleconsulta',
+        AppointmentType.primeiraConsulta => 'Primeira consulta',
+        AppointmentType.retorno => 'Retorno',
+        AppointmentType.procedimento => 'Procedimento',
       };
 }
 
@@ -85,6 +92,8 @@ class Appointment extends Equatable {
     this.checkInNotes,
     this.roomLabel,
     this.unitId,
+    this.clinicId,
+    this.roomId,
   });
 
   factory Appointment.fromFirestore(
@@ -115,6 +124,8 @@ class Appointment extends Equatable {
       checkInNotes: data['checkInNotes'] as String?,
       roomLabel: data['roomLabel'] as String?,
       unitId: data['unitId'] as String?,
+      clinicId: data['clinicId'] as String?,
+      roomId: data['roomId'] as String?,
     );
   }
 
@@ -150,6 +161,12 @@ class Appointment extends Equatable {
   /// Unidade fisica da consulta (multitenant). Null = legado, visivel a todos.
   final String? unitId;
 
+  /// Clinica (multitenant). Null = agendamento legado sem clinica.
+  final String? clinicId;
+
+  /// Sala fisica (`clinics/{clinicId}/rooms/{roomId}`).
+  final String? roomId;
+
   DateTime get endsAt => startsAt.add(Duration(minutes: durationMinutes));
 
   bool get isPast => endsAt.isBefore(DateTime.now());
@@ -171,7 +188,19 @@ class Appointment extends Equatable {
       startsAt.difference(DateTime.now()).inHours >= 24;
 
   @override
-  List<Object?> get props => <Object?>[id, status, startsAt, roomUrl, type, workflowStatus, arrivedAt];
+  List<Object?> get props => <Object?>[
+        id,
+        status,
+        startsAt,
+        roomUrl,
+        type,
+        workflowStatus,
+        arrivedAt,
+        clinicId,
+        roomId,
+        unitId,
+        childId,
+      ];
 }
 
 /// Um horário disponível na agenda.
@@ -523,4 +552,245 @@ class TelemedicineRepository {
         }
         return url;
       });
+
+  /// Agenda da clinica (recepcao / admin) — mesma collection `appointments`.
+  Stream<List<Appointment>> watchClinicAgenda(String clinicId) =>
+      _appointments
+          .where('clinicId', isEqualTo: clinicId)
+          .orderBy('startsAt')
+          .limit(200)
+          .snapshots()
+          .map(
+            (QuerySnapshot<Map<String, dynamic>> s) =>
+                s.docs.map(Appointment.fromFirestore).toList(growable: false),
+          );
+
+  /// Cria consulta no consultorio (recepcao/profissional), com checagem de
+  /// conflito de profissional/sala e bloqueios. Nao gera segunda agenda.
+  Future<Result<String>> createClinicAppointment({
+    required String clinicId,
+    required String patientOwnerId,
+    required String professionalId,
+    required String professionalName,
+    required DateTime startsAt,
+    required AppointmentType type,
+    required String actorUid,
+    String? childId,
+    String? childName,
+    String? unitId,
+    String? roomId,
+    String? roomLabel,
+    String? reason,
+    int? durationMinutes,
+    AppointmentStatus status = AppointmentStatus.confirmed,
+    List<Appointment> existingInWindow = const <Appointment>[],
+    List<ScheduleBlock> blocks = const <ScheduleBlock>[],
+  }) =>
+      guard(() async {
+        final int duration = durationMinutes ??
+            defaultDurationForAppointmentType(type.name);
+        final AgendaConflict? conflict = findAgendaConflict(
+          startsAt: startsAt,
+          durationMinutes: duration,
+          professionalId: professionalId,
+          roomId: roomId ?? '',
+          existing: existingInWindow
+              .map(
+                (Appointment a) => AgendaInterval(
+                  id: a.id,
+                  startsAt: a.startsAt,
+                  durationMinutes: a.durationMinutes,
+                  professionalId: a.professionalId,
+                  roomId: a.roomId ?? '',
+                  status: a.status.name,
+                ),
+              )
+              .toList(growable: false),
+          blocks: blocks,
+        );
+        if (conflict != null) {
+          throw StateError(conflict.reason);
+        }
+
+        final DocumentReference<Map<String, dynamic>> ref = _appointments.doc();
+        final Map<String, dynamic> payload = <String, dynamic>{
+          'patientId': patientOwnerId,
+          'professionalId': professionalId,
+          'professionalName': professionalName,
+          'startsAt': Timestamp.fromDate(startsAt.toUtc()),
+          'durationMinutes': duration,
+          'status': status.name,
+          'createdAt': FieldValue.serverTimestamp(),
+          'type': type.name,
+          'clinicId': clinicId,
+          if (childId != null) 'childId': childId,
+          if (childName != null) 'childName': childName,
+          if (unitId != null) 'unitId': unitId,
+          if (roomId != null) 'roomId': roomId,
+          if (roomLabel != null) 'roomLabel': roomLabel,
+          if (reason != null) 'reason': reason,
+          'workflowStatus': 'scheduled',
+          'createdBy': actorUid,
+        };
+        await ref.set(payload);
+        await _appendAppointmentChange(
+          appointmentId: ref.id,
+          actorUid: actorUid,
+          action: 'created',
+          before: null,
+          after: payload,
+        );
+        return ref.id;
+      });
+
+  /// Reagenda consulta existente (mesmo id — evita duplicata).
+  Future<Result<void>> reschedule({
+    required String appointmentId,
+    required DateTime newStartsAt,
+    required String actorUid,
+    int? durationMinutes,
+    String? roomId,
+    String? roomLabel,
+    List<Appointment> existingInWindow = const <Appointment>[],
+    List<ScheduleBlock> blocks = const <ScheduleBlock>[],
+  }) =>
+      guard(() async {
+        final DocumentSnapshot<Map<String, dynamic>> snap =
+            await _appointments.doc(appointmentId).get();
+        if (!snap.exists) {
+          throw StateError('Agendamento nao encontrado.');
+        }
+        final Appointment current = Appointment.fromFirestore(snap);
+        final int duration = durationMinutes ?? current.durationMinutes;
+        final String effectiveRoom = roomId ?? current.roomId ?? '';
+        final AgendaConflict? conflict = findAgendaConflict(
+          startsAt: newStartsAt,
+          durationMinutes: duration,
+          professionalId: current.professionalId,
+          roomId: effectiveRoom,
+          ignoreAppointmentId: appointmentId,
+          existing: existingInWindow
+              .map(
+                (Appointment a) => AgendaInterval(
+                  id: a.id,
+                  startsAt: a.startsAt,
+                  durationMinutes: a.durationMinutes,
+                  professionalId: a.professionalId,
+                  roomId: a.roomId ?? '',
+                  status: a.status.name,
+                ),
+              )
+              .toList(growable: false),
+          blocks: blocks,
+        );
+        if (conflict != null) {
+          throw StateError(conflict.reason);
+        }
+
+        final Map<String, dynamic> before = snap.data()!;
+        final Map<String, dynamic> patch = <String, dynamic>{
+          'startsAt': Timestamp.fromDate(newStartsAt.toUtc()),
+          'durationMinutes': duration,
+          if (roomId != null) 'roomId': roomId,
+          if (roomLabel != null) 'roomLabel': roomLabel,
+          'rescheduledAt': FieldValue.serverTimestamp(),
+          'rescheduledBy': actorUid,
+          'previousStartsAt': before['startsAt'],
+        };
+        await _appointments.doc(appointmentId).update(patch);
+        await _appendAppointmentChange(
+          appointmentId: appointmentId,
+          actorUid: actorUid,
+          action: 'rescheduled',
+          before: before,
+          after: <String, dynamic>{...before, ...patch},
+        );
+      });
+
+  Future<Result<void>> cancelWithAudit({
+    required String appointmentId,
+    required String actorUid,
+    String? reason,
+  }) =>
+      guard(() async {
+        final DocumentSnapshot<Map<String, dynamic>> snap =
+            await _appointments.doc(appointmentId).get();
+        if (!snap.exists) {
+          throw StateError('Agendamento nao encontrado.');
+        }
+        final Map<String, dynamic> before = snap.data()!;
+        final Map<String, dynamic> patch = <String, dynamic>{
+          'status': AppointmentStatus.cancelled.name,
+          'cancelledAt': FieldValue.serverTimestamp(),
+          'cancelledBy': actorUid,
+          if (reason != null) 'cancelReason': reason,
+        };
+        await _appointments.doc(appointmentId).update(patch);
+        await _appendAppointmentChange(
+          appointmentId: appointmentId,
+          actorUid: actorUid,
+          action: 'cancelled',
+          before: before,
+          after: <String, dynamic>{...before, ...patch},
+        );
+      });
+
+  Future<Result<void>> confirmWithAudit({
+    required String appointmentId,
+    required String actorUid,
+  }) =>
+      guard(() async {
+        final DocumentSnapshot<Map<String, dynamic>> snap =
+            await _appointments.doc(appointmentId).get();
+        if (!snap.exists) {
+          throw StateError('Agendamento nao encontrado.');
+        }
+        final Map<String, dynamic> before = snap.data()!;
+        final Map<String, dynamic> patch = <String, dynamic>{
+          'status': AppointmentStatus.confirmed.name,
+          'confirmedAt': FieldValue.serverTimestamp(),
+          'confirmedBy': actorUid,
+        };
+        await _appointments.doc(appointmentId).update(patch);
+        await _appendAppointmentChange(
+          appointmentId: appointmentId,
+          actorUid: actorUid,
+          action: 'confirmed',
+          before: before,
+          after: <String, dynamic>{...before, ...patch},
+        );
+      });
+
+  Future<void> _appendAppointmentChange({
+    required String appointmentId,
+    required String actorUid,
+    required String action,
+    Map<String, dynamic>? before,
+    Map<String, dynamic>? after,
+  }) async {
+    final DocumentReference<Map<String, dynamic>> ref =
+        _appointments.doc(appointmentId).collection('change_log').doc();
+    await ref.set(<String, dynamic>{
+      'id': ref.id,
+      'action': action,
+      'actorUid': actorUid,
+      'at': DateTime.now().toUtc().toIso8601String(),
+      if (before != null) 'before': _sanitizeLogMap(before),
+      if (after != null) 'after': _sanitizeLogMap(after),
+    });
+  }
+
+  Map<String, dynamic> _sanitizeLogMap(Map<String, dynamic> raw) {
+    final Map<String, dynamic> out = <String, dynamic>{};
+    raw.forEach((String k, dynamic v) {
+      if (v is Timestamp) {
+        out[k] = v.toDate().toIso8601String();
+      } else if (v is FieldValue) {
+        // serverTimestamp / deletes — omitidos do log.
+      } else {
+        out[k] = v;
+      }
+    });
+    return out;
+  }
 }

@@ -34,6 +34,21 @@ service cloud.firestore {
              exists(/databases/$(database)/documents/users/$(request.auth.uid)/children/$(childId));
     }
 
+    // Responsavel secundario com autorizacao ativa e canViewData.
+    function isLinkedGuardianOf(ownerUid, childId) {
+      return signedIn() &&
+             exists(/databases/$(database)/documents/users/$(ownerUid)/children/$(childId)/guardians/$(request.auth.uid)) &&
+             get(/databases/$(database)/documents/users/$(ownerUid)/children/$(childId)/guardians/$(request.auth.uid)).data.status == 'active' &&
+             get(/databases/$(database)/documents/users/$(ownerUid)/children/$(childId)/guardians/$(request.auth.uid)).data.get('canViewData', false) == true;
+    }
+
+    function canReadChildCadastro(ownerUid, childId) {
+      return isOwner(ownerUid) ||
+             isLinkedGuardianOf(ownerUid, childId) ||
+             (isVerifiedProfessional() &&
+              exists(/databases/$(database)/documents/users/$(ownerUid)/children/$(childId)/authorized_professionals/$(request.auth.uid)));
+    }
+
     function userDoc() {
       return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
     }
@@ -114,9 +129,7 @@ service cloud.firestore {
       // todo profissional — o alerta de alergia que motivou o card existir
       // nunca chegava a quem mais precisava vê-lo.
       match /children/{childId} {
-        allow read: if isOwner(uid) ||
-                       (isVerifiedProfessional() &&
-                        exists(/databases/$(database)/documents/users/$(uid)/children/$(childId)/authorized_professionals/$(request.auth.uid)));
+        allow read: if canReadChildCadastro(uid, childId);
         allow write: if isOwner(uid);
 
         // Concessao de leitura do cadastro da crianca: so o responsavel
@@ -129,13 +142,38 @@ service cloud.firestore {
           allow write: if isOwner(uid);
         }
 
+        // Responsaveis vinculados (FASE 2) — permissoes explicitas.
+        match /guardians/{guardianUid} {
+          allow read: if isOwner(uid) || request.auth.uid == guardianUid;
+          allow create, update: if isOwner(uid) &&
+                                 request.resource.data.ownerId == uid &&
+                                 request.resource.data.childId == childId &&
+                                 request.resource.data.guardianUid == guardianUid;
+          allow delete: if false;
+        }
+
+        match /change_log/{logId} {
+          allow read: if isOwner(uid);
+          allow create: if isOwner(uid) &&
+                         request.resource.data.actorUid == request.auth.uid;
+          allow update, delete: if false;
+        }
+
         match /growth_records/{recordId} {
-          allow read, write: if isOwner(uid);
+          allow read, write: if isOwner(uid) || isLinkedGuardianOf(uid, childId);
         }
 
         match /vaccine_doses/{doseId} {
-          allow read, write: if isOwner(uid);
+          allow read, write: if isOwner(uid) || isLinkedGuardianOf(uid, childId);
         }
+      }
+
+      // Indice invertido: criancas vinculadas a um responsavel secundario.
+      match /linked_children/{childId} {
+        allow read: if isOwner(uid);
+        allow create, update: if signedIn() &&
+                               request.resource.data.guardianUid == uid;
+        allow delete: if false;
       }
 
       match /progress/{progressId} {
@@ -279,27 +317,74 @@ service cloud.firestore {
       allow write: if false;
     }
 
+    function isClinicAgendaStaff(clinicId) {
+      return clinicId != null &&
+             isClinicMember(clinicId) &&
+             clinicRole(clinicId) in
+               ['clinicAdmin', 'receptionist', 'physician',
+                'healthProfessional', 'technician', 'nursing'];
+    }
+
+    function isClinicReceptionOrAdmin(clinicId) {
+      return clinicId != null &&
+             isClinicMember(clinicId) &&
+             clinicRole(clinicId) in ['clinicAdmin', 'receptionist'];
+    }
+
     // ------------------------------------------------------- Telemedicina
 
     match /appointments/{appointmentId} {
       allow read: if isAdmin()
                   || (signedIn() &&
                       (resource.data.patientId == request.auth.uid ||
-                       resource.data.professionalId == request.auth.uid));
+                       resource.data.professionalId == request.auth.uid ||
+                       (resource.data.clinicId != null &&
+                        isClinicAgendaStaff(resource.data.clinicId)) ||
+                       (resource.data.childId != null &&
+                        resource.data.patientId != null &&
+                        isLinkedGuardianOf(resource.data.patientId,
+                                           resource.data.childId))));
 
-      allow create: if signedIn()
-                    && request.resource.data.patientId == request.auth.uid
-                    && request.resource.data.get('status', '') == 'requested';
+      allow create: if signedIn() && (
+                      (request.resource.data.patientId == request.auth.uid &&
+                       request.resource.data.get('status', '') == 'requested') ||
+                      (isVerifiedProfessional() &&
+                       request.resource.data.clinicId != null &&
+                       isClinicAgendaStaff(request.resource.data.clinicId) &&
+                       (isClinicReceptionOrAdmin(request.resource.data.clinicId) ||
+                        request.resource.data.professionalId == request.auth.uid) &&
+                       request.resource.data.keys().hasAll(
+                         ['patientId', 'professionalId', 'startsAt', 'status', 'clinicId']))
+                    );
 
-      // Cancelar é do paciente; confirmar e concluir é do profissional.
+      // Cancelar e do paciente; confirmar/concluir e do profissional;
+      // recepcao/admin da clinica podem remarcar/cancelar operacionalmente.
       allow update: if isAdmin()
                     || (signedIn()
                         && resource.data.patientId == request.auth.uid
                         && request.resource.data.status == 'cancelled')
                     || (isVerifiedProfessional()
-                        && resource.data.professionalId == request.auth.uid);
+                        && resource.data.professionalId == request.auth.uid)
+                    || (isVerifiedProfessional()
+                        && resource.data.clinicId != null
+                        && isClinicReceptionOrAdmin(resource.data.clinicId)
+                        && request.resource.data.clinicId == resource.data.clinicId
+                        && request.resource.data.professionalId ==
+                             resource.data.professionalId);
 
       allow delete: if false;
+
+      match /change_log/{logId} {
+        allow read: if isAdmin()
+                    || (signedIn() &&
+                        (get(/databases/$(database)/documents/appointments/$(appointmentId)).data.patientId == request.auth.uid ||
+                         get(/databases/$(database)/documents/appointments/$(appointmentId)).data.professionalId == request.auth.uid ||
+                         (get(/databases/$(database)/documents/appointments/$(appointmentId)).data.clinicId != null &&
+                          isClinicAgendaStaff(get(/databases/$(database)/documents/appointments/$(appointmentId)).data.clinicId))));
+        allow create: if signedIn() &&
+                       request.resource.data.actorUid == request.auth.uid;
+        allow update, delete: if false;
+      }
     }
 
     // O responsável preenche antes da consulta; profissional lê o que foi
@@ -749,6 +834,22 @@ service cloud.firestore {
                        (signedIn() && resource.data.userId == request.auth.uid);
         allow create, update: if isClinicAdmin(clinicId) || isAdmin();
         allow delete: if false;
+      }
+
+      // Salas fisicas (FASE 2) — leitura equipe; escrita admin clinica.
+      match /rooms/{roomId} {
+        allow read: if isClinicMember(clinicId) || isAdmin();
+        allow create, update: if isClinicAdmin(clinicId) || isAdmin();
+        allow delete: if false;
+      }
+
+      // Bloqueios de agenda (FASE 2).
+      match /schedule_blocks/{blockId} {
+        allow read: if isClinicAgendaStaff(clinicId) || isAdmin();
+        allow create, update: if isClinicAdmin(clinicId) ||
+                                 isClinicReceptionOrAdmin(clinicId) ||
+                                 isAdmin();
+        allow delete: if isClinicAdmin(clinicId) || isAdmin();
       }
 
       match /audit_logs/{logId} {

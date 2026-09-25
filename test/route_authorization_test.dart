@@ -2,6 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:pediatria360/core/router/route_authorization.dart';
 import 'package:pediatria360/core/router/routes.dart';
 import 'package:pediatria360/shared/domain/entities/app_user.dart';
+import 'package:pediatria360/shared/domain/entities/clinic_organization.dart';
 
 /// Testa `resolveRouteRedirect` — a decisão de autorização por trás do
 /// `GoRouter.redirect`, extraída para função pura precisamente para poder
@@ -33,6 +34,7 @@ void main() {
     bool authLoading = false,
     bool onboardingLoading = false,
     bool seenOnboarding = true,
+    ClinicMembership? clinicMembership,
   }) =>
       resolveRouteRedirect(
         maintenanceMode: maintenanceMode,
@@ -41,6 +43,7 @@ void main() {
         onboardingLoading: onboardingLoading,
         user: asUser,
         seenOnboarding: seenOnboarding,
+        clinicMembership: clinicMembership,
       );
 
   group('RESPONSÁVEL (parent)', () {
@@ -127,6 +130,32 @@ void main() {
           asUser: professional,
         ),
         isNull,
+      );
+    });
+
+    test('FASE2 recepcao com membership: agenda ok, pacientes bloqueado', () {
+      final ClinicMembership rec = ClinicMembership(
+        id: 'm1',
+        clinicId: 'c1',
+        userId: 'uid-teste',
+        role: ClinicRole.receptionist,
+        createdAt: DateTime(2026, 1, 1),
+      );
+      expect(
+        redirectFor(
+          location: Routes.agendaPath,
+          asUser: professional,
+          clinicMembership: rec,
+        ),
+        isNull,
+      );
+      expect(
+        redirectFor(
+          location: Routes.patientsPath,
+          asUser: professional,
+          clinicMembership: rec,
+        ),
+        Routes.homePath,
       );
     });
   });

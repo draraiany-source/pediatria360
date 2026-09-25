@@ -25,6 +25,7 @@ import '../../clinic_org/presentation/providers/clinic_org_providers.dart';
 import '../../emr/presentation/screens/encounter_editor_screen.dart';
 import '../../emr/presentation/screens/patient_timeline_screen.dart'
     show encounterRepositoryProvider;
+import '../../security/domain/permission_matrix.dart';
 import '../data/telemedicine_repository.dart';
 import 'telemedicine_screen.dart' show myAgendaProvider, myAvailabilityProvider, telemedicineRepositoryProvider;
 
@@ -76,8 +77,15 @@ class _ProfessionalAgendaScreenState
 
   Future<void> _confirm(Appointment a) async {
     setState(() => _busy = true);
-    final Result<void> result =
-        await ref.read(telemedicineRepositoryProvider).confirm(a.id);
+    final String? uid = ref.read(currentUserProvider)?.uid;
+    final Result<void> result = uid == null
+        ? const Result<void>.failure(
+            AuthFailure('Sessao expirada. Entre novamente.'),
+          )
+        : await ref.read(telemedicineRepositoryProvider).confirmWithAudit(
+              appointmentId: a.id,
+              actorUid: uid,
+            );
     if (!mounted) return;
     setState(() => _busy = false);
     result.fold(
@@ -111,8 +119,15 @@ class _ProfessionalAgendaScreenState
     if (!(confirmed ?? false) || !mounted) return;
 
     setState(() => _busy = true);
-    final Result<void> result =
-        await ref.read(telemedicineRepositoryProvider).cancel(a.id);
+    final String? uid = ref.read(currentUserProvider)?.uid;
+    final Result<void> result = uid == null
+        ? const Result<void>.failure(
+            AuthFailure('Sessao expirada. Entre novamente.'),
+          )
+        : await ref.read(telemedicineRepositoryProvider).cancelWithAudit(
+              appointmentId: a.id,
+              actorUid: uid,
+            );
     if (!mounted) return;
     setState(() => _busy = false);
     result.fold(
@@ -122,7 +137,70 @@ class _ProfessionalAgendaScreenState
     );
   }
 
+  Future<void> _reschedule(Appointment a) async {
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: a.startsAt,
+      firstDate: DateTime.now(),
+      lastDate: DateTime.now().add(const Duration(days: 365)),
+    );
+    if (picked == null || !mounted) return;
+    final TimeOfDay? time = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay.fromDateTime(a.startsAt),
+    );
+    if (time == null || !mounted) return;
+    final DateTime next = DateTime(
+      picked.year,
+      picked.month,
+      picked.day,
+      time.hour,
+      time.minute,
+    );
+    final String? uid = ref.read(currentUserProvider)?.uid;
+    if (uid == null) return;
+    final List<Appointment> existing =
+        ref.read(myAgendaProvider).valueOrNull ?? const <Appointment>[];
+    setState(() => _busy = true);
+    final Result<void> result =
+        await ref.read(telemedicineRepositoryProvider).reschedule(
+              appointmentId: a.id,
+              newStartsAt: next,
+              actorUid: uid,
+              existingInWindow: existing,
+            );
+    if (!mounted) return;
+    setState(() => _busy = false);
+    result.fold(
+      (_) => ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Consulta reagendada.')),
+      ),
+      (Failure f) => ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(f.message))),
+    );
+  }
+
   Future<void> _startEncounter(Appointment a) async {
+    final user = ref.read(currentUserProvider);
+    final membership = ref.read(activeClinicMembershipProvider);
+    if (user != null &&
+        !PermissionMatrix.allows(
+          user: user,
+          membership: membership,
+          module: PermissionModule.chart,
+          action: PermissionAction.view,
+        )) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Recepcao nao acessa evolucao clinica. Use o prontuario apenas '
+            'com perfil clinico autorizado.',
+          ),
+        ),
+      );
+      return;
+    }
+
     if (a.type == AppointmentType.teleconsulta) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -340,6 +418,7 @@ class _ProfessionalAgendaScreenState
               busy: _busy,
               onConfirm: () => _confirm(list[i]),
               onCancel: () => _cancel(list[i]),
+              onReschedule: () => _reschedule(list[i]),
               onStart: () => _startEncounter(list[i]),
             ),
           );
@@ -367,6 +446,7 @@ class _AppointmentCard extends StatelessWidget {
     required this.busy,
     required this.onConfirm,
     required this.onCancel,
+    required this.onReschedule,
     required this.onStart,
   });
 
@@ -374,6 +454,7 @@ class _AppointmentCard extends StatelessWidget {
   final bool busy;
   final VoidCallback onConfirm;
   final VoidCallback onCancel;
+  final VoidCallback onReschedule;
   final VoidCallback onStart;
 
   Color _statusColor(ColorScheme scheme) => switch (appointment.status) {
@@ -477,6 +558,11 @@ class _AppointmentCard extends StatelessWidget {
                   ),
                 if (appointment.status == AppointmentStatus.confirmed)
                   const SizedBox(width: AppSpacing.sm),
+                IconButton(
+                  onPressed: busy ? null : onReschedule,
+                  icon: const Icon(Icons.event_repeat_outlined),
+                  tooltip: 'Reagendar',
+                ),
                 IconButton(
                   onPressed: busy ? null : onCancel,
                   icon: const AppIcon(

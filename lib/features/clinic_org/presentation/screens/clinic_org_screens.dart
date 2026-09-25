@@ -10,6 +10,7 @@ import '../../../../core/widgets/brand_ui.dart';
 import '../../../../core/widgets/state_views.dart';
 import '../../../../shared/domain/entities/clinic_organization.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
+import '../../../clinic/presentation/screens/clinic_schedule_config_screen.dart';
 import '../providers/clinic_org_providers.dart';
 
 /// Hub: listar memberships, selecionar clinica ativa ou criar nova.
@@ -154,6 +155,19 @@ class ClinicOrgHubScreen extends ConsumerWidget {
             },
           ),
           const SizedBox(height: AppSpacing.xl),
+          ListTile(
+            leading: const Icon(Icons.meeting_room_outlined),
+            title: const Text('Salas e bloqueios de agenda'),
+            subtitle: const Text('Configuracao do consultorio (FASE 2)'),
+            onTap: () {
+              Navigator.of(context).push(
+                MaterialPageRoute<void>(
+                  builder: (_) => const ClinicScheduleConfigScreen(),
+                ),
+              );
+            },
+          ),
+          const SizedBox(height: AppSpacing.lg),
           const BrandSectionHeader(title: 'Minhas clinicas'),
           const SizedBox(height: AppSpacing.sm),
           membershipsAsync.when(

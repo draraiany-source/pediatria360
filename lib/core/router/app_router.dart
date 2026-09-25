@@ -10,6 +10,7 @@ import '../../features/auth/presentation/screens/register_screen.dart';
 import '../../features/auth/presentation/screens/role_setup_screen.dart';
 import '../../features/admin/presentation/admin_screen.dart';
 import '../../features/auth/presentation/screens/splash_screen.dart';
+import '../../features/clinic_org/presentation/providers/clinic_org_providers.dart';
 import '../../features/clinic/presentation/screens/clinic_dashboard_screen.dart';
 import '../../features/finance/presentation/screens/cash_flow_screen.dart';
 import '../../features/finance/presentation/screens/delinquency_screen.dart';
@@ -130,6 +131,7 @@ final Provider<GoRouter> routerProvider = Provider<GoRouter>((Ref ref) {
         user: auth.valueOrNull,
         seenOnboarding: onboarding.valueOrNull ?? false,
         unlockAllRoles: DevMode.isEnabled,
+        clinicMembership: ref.read(activeClinicMembershipProvider),
       );
     },
 

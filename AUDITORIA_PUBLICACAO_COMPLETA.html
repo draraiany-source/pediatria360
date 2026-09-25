@@ -1,0 +1,283 @@
+<!DOCTYPE html><html><head><meta charset='utf-8'><title>Auditoria Publicacao Pediatria360</title><style>body{font-family:Segoe UI,Arial,sans-serif;max-width:900px;margin:40px auto;padding:0 24px;line-height:1.45;color:#111}h1,h2,h3{page-break-after:avoid}pre,table{font-size:12px} @media print{body{margin:0}}</style></head><body><pre style='white-space:pre-wrap;font-family:inherit'># AUDITORIA COMPLETA PARA PUBLICACAO — Pediatria360<br/>
+<br/>
+| Campo | Valor |<br/>
+|-------|-------|<br/>
+| Documento | Auditoria de publicacao (entrega para PDF) |<br/>
+| Data | 2026-09-25 |<br/>
+| Produto | Pediatria 360 (`pediatria360` 1.0.0+1) |<br/>
+| Stack | Flutter (&gt;=3.32) + Riverpod + GoRouter + Firebase |<br/>
+| Commit remoto sincronizado | `bdf3ef760cfa3da0da7500fbc1b59010984e0939` (FASE 10) |<br/>
+| Trabalho local nao commitado | FASE 2 (cadastro/permissoes/agenda) — ver secao 11 |<br/>
+| Classificacao final | **NAO PRONTO PARA PUBLICACAO EM LOJA** |<br/>
+| Uso deste arquivo | Entregar ao programador para gerar PDF (Pandoc / Word / impressao) |<br/>
+<br/>
+---<br/>
+<br/>
+## 0. Instrucoes ao programador (gerar PDF)<br/>
+<br/>
+1. Abrir este arquivo em editor Markdown (VS Code / Typora / Obsidian).<br/>
+2. Opcao A — Pandoc:<br/>
+&nbsp;&nbsp; ```<br/>
+&nbsp;&nbsp; pandoc AUDITORIA_PUBLICACAO_COMPLETA.md -o AUDITORIA_PUBLICACAO_COMPLETA.pdf --pdf-engine=xelatex -V geometry:margin=2cm<br/>
+&nbsp;&nbsp; ```<br/>
+3. Opcao B — Word: Abrir .md no Word → Salvar como PDF.<br/>
+4. Opcao C — Navegador: converter MD→HTML e Imprimir → PDF.<br/>
+5. Manter tabelas e cabecalhos; nao omitir a secao 8 (bloqueadores P0).<br/>
+6. Anexar, se pedido: `BLOQUEADORES_PRODUCAO.md`, `CHECKLIST_PUBLICACAO_FINAL.md`, `FASE2_CONCLUIDA.md`, `RELATORIO_FASE10.md`.<br/>
+<br/>
+---<br/>
+<br/>
+## 1. Resumo executivo<br/>
+<br/>
+O Pediatria360 e uma plataforma pediatrica multi-perfil (familia, profissional, equipe clinica) com nucleo funcional em autenticacao Firebase, cadastro de criancas, vacinas, crescimento, EMR, agenda, biblioteca/cursos, IA, LGPD tecnica, e modulos de gestao (financeiro, faturamento, estoque, BI, auditoria/RBAC) introduzidos nas Fases 1–10.<br/>
+<br/>
+**Nao esta pronto para publicacao em Play Store / App Store / producao clinica plena**, porque:<br/>
+<br/>
+1. Termos e Privacidade sao URLs placeholder (`AppConfig`).<br/>
+2. Dados OMS e PNI no repositorio sao aproximacoes / precisam conferencia oficial.<br/>
+3. Video e pagamento desligados por flag; `joinConsultation` retorna `unimplemented`.<br/>
+4. Assinatura de encounter e selo de integridade (hash), **nao** ICP-Brasil.<br/>
+5. Plataformas nativas `android/` e `ios/` estao **parciais** (templates em `platform/`).<br/>
+6. Signing de release nao configurado (debug).<br/>
+7. App Check nao implementado; rules/indices precisam deploy em projeto de producao.<br/>
+8. Homologacao UI E2E (FASE 10) incompleta; FASE 11 (pre-publicacao) nao iniciada.<br/>
+9. Isolamento `unitId` ainda so na camada de app; parte do multitenant clinica depende de membership ativo.<br/>
+10. FASE 2 (responsaveis/agenda clinica) esta no working tree **sem commit/push**.<br/>
+<br/>
+### Veredito por canal<br/>
+<br/>
+| Canal | Veredito |<br/>
+|-------|----------|<br/>
+| Web staging / Emulator | Usavel para homologacao tecnica parcial |<br/>
+| Web producao | Bloqueado (legal, Firebase prod, ENV=prod, App Check) |<br/>
+| Android / iOS loja | Bloqueado (plataforma parcial, signing, legal, checklist) |<br/>
+| Uso clinico real com dados de pacientes | Bloqueado (OMS/PNI, LGPD, isolamento, homologacao) |<br/>
+<br/>
+---<br/>
+<br/>
+## 2. Escopo da auditoria<br/>
+<br/>
+| Incluido | Excluido |<br/>
+|----------|----------|<br/>
+| Codigo em `lib/`, `functions/`, rules, indices | Redacao juridica de Termos/Privacidade |<br/>
+| Documentos de fase e checklists existentes | Deploy real em producao |<br/>
+| Estado git local + remoto | Testes manuais novos em dispositivo fisico |<br/>
+| Riscos de publicacao e custos | Implementacao de correcao (esta auditoria e diagnostico) |<br/>
+<br/>
+Metodo: evidencia de codigo e documentos do repositorio (2026-09-25). Sem deploy.<br/>
+<br/>
+---<br/>
+<br/>
+## 3. Arquitetura<br/>
+<br/>
+- **Cliente:** Flutter, Riverpod, GoRouter, Hive/SQLite (offline), design system proprio.<br/>
+- **Backend:** Firebase Auth, Firestore, Storage, Cloud Functions (`southamerica-east1`), Messaging, Remote Config, Crashlytics, Analytics.<br/>
+- **Organizacao:** features em `lib/features/` (auth, children, growth, vaccines, emr, telemedicine, clinic, clinic_org, finance, billing, inventory, bi, security, privacy, library, courses, shop, ai, etc.).<br/>
+- **RBAC:** `UserRole` (plataforma) + `ClinicRole` / `PermissionMatrix` (clinica) + `firestore.rules`.<br/>
+<br/>
+---<br/>
+<br/>
+## 4. Inventario de modulos (estado atualizado)<br/>
+<br/>
+Legenda: **F** funcional | **P** parcial | **N** nao pronto para producao | **OFF** desligado por flag<br/>
+<br/>
+| Modulo | Status | Observacao |<br/>
+|--------|--------|------------|<br/>
+| auth | F | Firebase; DevMode guest em debug |<br/>
+| shell / home | F | Navegacao premium |<br/>
+| children | F | Cadastro unico sob `users/{uid}/children` |<br/>
+| guardians (FASE 2 local) | P/F | Vinculos + permissoes; UI pronta; sem commit |<br/>
+| growth | P | Matematica OMS OK; JSON aproximado |<br/>
+| vaccines | P | PNI local; validar gov.br |<br/>
+| emr / encounters | P | Draft + sign hash; CID manual |<br/>
+| telemedicine / agenda | P | Agenda real; video OFF |<br/>
+| clinic (recepcao/triagem/voz) | P | Fluxos operacionais; KPIs historicos parciais |<br/>
+| clinic_org | P | Clinica ativa + memberships |<br/>
+| finance | P | Ledgers + UI; isolamento clinicId nas rules (FASE 9) |<br/>
+| billing | P | Guias/lotes; sem operador TISS real |<br/>
+| inventory | P | Estoque/compras |<br/>
+| bi | P | Hub + KPIs; dados reais da agenda/ledger |<br/>
+| security / audit / permissions | P | Matriz + logs; export parcial |<br/>
+| privacy / LGPD tecnica | F/P | Export/delete/consent; textos legais pendentes |<br/>
+| library / courses | P | Conteudo CMS; Bunny flags |<br/>
+| shop | OFF/P | Pedido/estoque; gateway OFF |<br/>
+| ai | P | Chat + cotas; voz clinica parcial |<br/>
+| notifications | P | Centro de avisos |<br/>
+| admin | P | CMS conteudo |<br/>
+| gamification / tools | P | XP / calculadoras |<br/>
+| pre-consulta / transcric&#227;o / IA clinica plena | N | Fora do escopo marcado como concluido |<br/>
+| neuropediatria (escalas M-CHAT etc.) | N | Nao como modulo |<br/>
+<br/>
+---<br/>
+<br/>
+## 5. Rotas principais<br/>
+<br/>
+**Publicas:** login, registro, recuperar senha, onboarding, manutencao, 404.<br/>
+<br/>
+**Familia:** inicio, criancas, biblioteca, IA, ferramentas, perfil, cursos, loja, avisos, telemedicina.<br/>
+<br/>
+**Profissional (UserRole.professional):** pacientes, agenda, consultorio, suplementacao, clinica, financeiro, faturamento, estoque, BI, auditoria, permissoes.<br/>
+<br/>
+**Admin plataforma:** `/admin`.<br/>
+<br/>
+**Gate FASE 2 (local):** membership `receptionist` bloqueia `/pacientes` e `/consultorio/ia` via `PermissionMatrix` + `resolveRouteRedirect`.<br/>
+<br/>
+---<br/>
+<br/>
+## 6. Seguranca e multitenant<br/>
+<br/>
+### Pontos fortes<br/>
+- Rules com `ownsChild`, membership de clinica, ledgers com isolamento cross-clinic (testes FASE 9: 19 pass).<br/>
+- Encounter assinado imutavel (evidencia FASE 10).<br/>
+- Matriz Auth/Firestore FASE 10: 24 pass / 0 fail / 3 nao testados.<br/>
+- DevMode desligavel com `FORCE_REAL_AUTH=true` e `ENV=prod`.<br/>
+<br/>
+### Lacunas<br/>
+- `unitId`: isolamento sobretudo no app, nao nas rules.<br/>
+- App Check ausente.<br/>
+- Rules/indices do working tree (incl. FASE 2) precisam deploy consciente.<br/>
+- Unlock de roles em DevMode (`unlockAllRoles`) — nunca em release de loja.<br/>
+- FASE 2 nao commitada: risco de divergencia entre codigo local e `origin/main`.<br/>
+<br/>
+---<br/>
+<br/>
+## 7. Homologacao (FASE 10) — o que ja foi provado<br/>
+<br/>
+| Camada | Resultado |<br/>
+|--------|-----------|<br/>
+| Rules multiempresa (FASE 9) | 19 pass |<br/>
+| Matriz Auth/Firestore (FASE 10) | 24 pass / 0 fail / 3 nao testados |<br/>
+| UI login/navegar E2E browser | **NAO TESTADO** (acessibilidade Flutter web) |<br/>
+| Android / iOS E2E | **NAO TESTADO** |<br/>
+| `signEncounter` com Functions Emulator | **NAO TESTADO** |<br/>
+| Deploy producao | **Nao realizado** |<br/>
+| FASE 11 | **Nao iniciada** |<br/>
+<br/>
+Testes unitarios FASE 2 (local): **46 passed** (conflitos agenda, guardians, RBAC rota/matriz).<br/>
+<br/>
+---<br/>
+<br/>
+## 8. Bloqueadores P0 para publicacao (loja / producao)<br/>
+<br/>
+| # | Bloqueador | Evidencia | Acao |<br/>
+|---|------------|-----------|------|<br/>
+| 1 | Termos/Privacidade placeholder | `lib/core/config/app_config.dart` | Publicar URLs reais revisadas por juridico |<br/>
+| 2 | Dados LGPD do controlador | `BLOQUEADORES_PRODUCAO.md` | CNPJ, DPO, dominio, e-mail suporte reais |<br/>
+| 3 | Plataforma Android/iOS incompleta | pastas parciais; templates em `platform/` | `flutter create` + migrate (`ANTES_DE_COMPILAR.md`) |<br/>
+| 4 | Signing release | keystore / provisioning | Configurar antes do primeiro AAB/IPA |<br/>
+| 5 | Firebase producao | options, SHA, dominio Auth | `flutterfire configure` + App Check |<br/>
+| 6 | Deploy rules/indices/storage | `firestore.rules`, `firestore.indexes.json` | Deploy **antes** de dados reais |<br/>
+| 7 | OMS / PNI nao validados clinicamente | `who_reference.json`, `pni_calendar.dart` | Substituir/conferir fontes oficiais |<br/>
+| 8 | ENV padrao `dev` | `AppConfig.environment` | Builds de loja com `--dart-define=ENV=prod` |<br/>
+| 9 | Expectativa de video/pagamento | flags false + CF unimplemented | Nao prometer na store listing; ou integrar provedor |<br/>
+| 10 | Homologacao UI E2E incompleta | `RELATORIO_FASE10.md` | Concluir roteiro por perfil + FASE 11 |<br/>
+<br/>
+### Bloqueadores P1 (altos, nao necessariamente loja no dia 1 se escopo reduzido)<br/>
+<br/>
+- CID sem busca por descricao.<br/>
+- Assinatura != ICP-Brasil (comunicar claramente).<br/>
+- UI criar agendamento recepcao incompleta (FASE 2 parcial).<br/>
+- Isolamento `unitId` nas rules.<br/>
+- Controles de content review (`reviewedBy`) na biblioteca.<br/>
+- Commit/push da FASE 2 e indices `clinicId`+`startsAt`.<br/>
+<br/>
+---<br/>
+<br/>
+## 9. Checklist minimo de publicacao (condensado)<br/>
+<br/>
+Fonte: `CHECKLIST_PUBLICACAO_FINAL.md` + esta auditoria.<br/>
+<br/>
+### Compilacao<br/>
+- [ ] `flutter doctor -v` limpo<br/>
+- [ ] `flutter analyze` sem erros<br/>
+- [ ] `flutter test` suite completa<br/>
+- [ ] Functions: `tsc` + `npm test`<br/>
+- [ ] Rules emulator (Firestore + Storage)<br/>
+- [ ] `flutter build appbundle --release` / `ipa` / `web --release` com `ENV=prod`<br/>
+<br/>
+### Firebase / seguranca<br/>
+- [ ] `firebase_options` reais (nao placeholder)<br/>
+- [ ] Rules + indices + storage deployados<br/>
+- [ ] App Check<br/>
+- [ ] Google Sign-In SHA<br/>
+- [ ] Sem chaves no cliente; DevMode/SKIP_AUTH off em prod<br/>
+<br/>
+### Legal / clinico<br/>
+- [ ] Termos e Privacidade reais<br/>
+- [ ] DPO / suporte / CNPJ<br/>
+- [ ] OMS LMS oficial + PNI conferido<br/>
+- [ ] Textos da loja sem prometer video/pagamento/ICP se nao houver<br/>
+<br/>
+### Homologacao<br/>
+- [ ] Roteiro FASE 10 UI por perfil<br/>
+- [ ] Android e/ou iOS em dispositivo<br/>
+- [ ] Export/delete LGPD ponta a ponta<br/>
+- [ ] FASE 11 (pre-pub) autorizada e concluida<br/>
+<br/>
+---<br/>
+<br/>
+## 10. Custos e dependencias externas identificados<br/>
+<br/>
+| Item | Status | Custo tipico |<br/>
+|------|--------|--------------|<br/>
+| Firebase (Auth/Firestore/Functions/Hosting) | Em uso | Pay-as-you-go Google |<br/>
+| Indice composto agendas (`clinicId`+`startsAt`) | Pendente deploy | Custo padrao Firestore |<br/>
+| Provedor video (Daily/Twilio/Whereby) | Nao contratado | Contrato + compliance CFM/LGPD |<br/>
+| Gateway pagamento | Nao contratado | Taxas Stripe/MP/Pagar.me |<br/>
+| Bunny.net (cursos) | Flags/defines | Plano CDN/stream |<br/>
+| Anthropic (IA) | Segredo Functions | API usage |<br/>
+| Conta Apple Developer / Google Play | Necessaria para loja | Anuidade / taxa unica |<br/>
+| Juridico (Termos/Privacidade) | Pendente | Honorarios |<br/>
+| Certificado ICP-Brasil (se exigido) | Nao integrado | Certificado + integracao |<br/>
+<br/>
+---<br/>
+<br/>
+## 11. Trabalho local FASE 2 (nao publicado no remoto)<br/>
+<br/>
+Presente no working tree em 2026-09-25 (nao commitado no momento da auditoria):<br/>
+<br/>
+- Guardians, salas/bloqueios, conflitos de agenda, RBAC recepcao, rules e testes (46 pass).<br/>
+- Documento: `FASE2_CONCLUIDA.md` / recuperacao `FASE2_RECOVERY.md`.<br/>
+- **Risco:** quem gerar PDF/release a partir so de `origin/main` **nao** incluem FASE 2 ate commit/push.<br/>
+<br/>
+Recomendacao ao programador: alinhar com o product owner se o PDF deve refletir (A) so `origin/main` ou (B) main + FASE 2 local.<br/>
+<br/>
+---<br/>
+<br/>
+## 12. O que esta funcional vs parcial vs nao implementado (quadro unico)<br/>
+<br/>
+### Funcional (nucleo)<br/>
+Auth Firebase; criancas; shell; calculadoras; LGPD export/delete tecnico; agenda profissional basica; parte educacional (biblioteca/cursos com ressalvas); matriz rules multiempresa em ledgers.<br/>
+<br/>
+### Parcial (usar com ressalvas)<br/>
+Crescimento/vacinas (dados); EMR; consultorio; telemedicina sem video; finance/billing/inventory/BI; clinic_org; FASE 2 guardians/agenda clinica; notificacoes; admin CMS.<br/>
+<br/>
+### Nao pronto / desligado<br/>
+Video consulta; gateway pagamento; ICP-Brasil; App Check; plataformas loja completas; textos legais; FASE 11; UI E2E completa; escalas neuropediatricas; operador TISS real; pre-consulta/prontuario IA como “concluidos”.<br/>
+<br/>
+---<br/>
+<br/>
+## 13. Plano sugerido ate publicacao (ordem)<br/>
+<br/>
+1. Commit/revisao FASE 2 + deploy indices/rules em staging.<br/>
+2. Completar plataformas Android/iOS + signing.<br/>
+3. Firebase projeto producao + App Check + `ENV=prod`.<br/>
+4. Juridico: Termos/Privacidade/DPO.<br/>
+5. OMS/PNI oficiais.<br/>
+6. Homologacao UI E2E (FASE 10 restante) + FASE 11.<br/>
+7. Soft launch web ou closed testing Play/TestFlight **sem** prometer video/pagamento.<br/>
+8. Integracoes video/pagamento so quando contratos e compliance existirem.<br/>
+<br/>
+---<br/>
+<br/>
+## 14. Conclusao<br/>
+<br/>
+**Pediatria360 nao deve ser publicado nas lojas nem usado com pacientes reais no estado atual.**<br/>
+<br/>
+O produto tem base tecnica solida e evolucao relevante (Fases 1–10 + FASE 2 local), mas os bloqueadores P0 (legal, nativo/signing, Firebase prod, dados clinicos oficiais, homologacao UI) impedem classificacao “pronto para publicacao”.<br/>
+<br/>
+Este documento e a fotografia de auditoria para decisao de product owner e para o programador gerar o PDF de entrega.<br/>
+<br/>
+---<br/>
+<br/>
+*Fim da auditoria — 2026-09-25 — Pediatria360*</pre><p><em>Abra este HTML no navegador e use Imprimir → Salvar como PDF.</em></p></body></html>

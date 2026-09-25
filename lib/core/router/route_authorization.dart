@@ -1,21 +1,13 @@
+import '../../features/security/domain/permission_matrix.dart';
 import '../../shared/domain/entities/app_user.dart';
+import '../../shared/domain/entities/clinic_organization.dart';
 import 'routes.dart';
 
-/// Política de autorização de rota — para onde redirecionar, dado o estado
-/// atual da sessão e a rota que se está tentando acessar.
+/// Politica de autorizacao de rota — para onde redirecionar, dado o estado
+/// atual da sessao e a rota que se esta tentando acessar.
 ///
-/// ## Por que isto existe separado do `GoRouter`
-///
-/// A função `redirect:` do `GoRouter` recebe `BuildContext` e
-/// `GoRouterState`, e lê `ref.read(...)` diretamente — nada disso é
-/// testável sem simular o framework inteiro. Esta função não recebe nada
-/// do Flutter: só os valores que a decisão realmente depende. O
-/// `GoRouter.redirect` vira uma casca fina que coleta esses valores e
-/// chama esta função — a decisão em si mora aqui, testável com um
-/// `AppUser` de mentira e uma string de rota, nada mais.
-///
-/// Retorna o caminho para onde redirecionar, ou `null` se a rota atual já
-/// é permitida.
+/// Retorna o caminho para onde redirecionar, ou `null` se a rota atual ja
+/// e permitida.
 String? resolveRouteRedirect({
   required bool maintenanceMode,
   required String location,
@@ -24,6 +16,7 @@ String? resolveRouteRedirect({
   required AppUser? user,
   required bool seenOnboarding,
   bool unlockAllRoles = false,
+  ClinicMembership? clinicMembership,
 }) {
   // 1. Manutencao bloqueia tudo, inclusive telas publicas.
   if (maintenanceMode) {
@@ -65,8 +58,8 @@ String? resolveRouteRedirect({
     return Routes.homePath;
   }
 
-  // Em DEV_MODE o usuário local precisa abrir admin + prontuário/agenda
-  // para testar UI. Em release, unlockAllRoles é sempre false.
+  // Em DEV_MODE o usuario local precisa abrir admin + prontuario/agenda
+  // para testar UI. Em release, unlockAllRoles e sempre false.
   if (unlockAllRoles) {
     return null;
   }
@@ -76,12 +69,7 @@ String? resolveRouteRedirect({
     return Routes.homePath;
   }
 
-  // 7. Prontuario, agenda e consultorio exigem papel de profissional. Bloqueia
-  // tambem o admin — administracao da plataforma nao e a mesma coisa que
-  // autorizacao clinica, e nao deveria dar acesso automatico a prontuario
-  // so por ser admin. Essa mesma regra ja existe, separadamente, nas
-  // regras do Firestore (`encounters/{id}`) — aqui e a segunda camada,
-  // nao a unica.
+  // 7. Area profissional de plataforma (UserRole).
   final bool isProfessionalArea = location.startsWith(Routes.patientsPath) ||
       location.startsWith(Routes.agendaPath) ||
       location.startsWith(Routes.clinicPath) ||
@@ -95,6 +83,21 @@ String? resolveRouteRedirect({
       location.startsWith(Routes.clinicOrgPath);
   if (isProfessionalArea && user.role != UserRole.professional) {
     return Routes.homePath;
+  }
+
+  // 8. FASE 2 — RBAC clinico: recepcao nao abre evolucao/prontuario por URL.
+  if (user.role == UserRole.professional && clinicMembership != null) {
+    final bool isChartArea = location.startsWith(Routes.patientsPath) ||
+        location.startsWith(Routes.clinicVoicePath);
+    if (isChartArea &&
+        !PermissionMatrix.allows(
+          user: user,
+          membership: clinicMembership,
+          module: PermissionModule.chart,
+          action: PermissionAction.view,
+        )) {
+      return Routes.homePath;
+    }
   }
 
   return null;

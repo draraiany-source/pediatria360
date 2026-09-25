@@ -168,7 +168,8 @@ class PermissionMatrix {
         return role.canManageAgenda || role.canAccessClinicalChart;
       }
       if (action == PermissionAction.create || action == PermissionAction.edit) {
-        return role.canAccessClinicalChart;
+        // Recepcao: cadastro administrativo; evolucao clinica continua em [chart].
+        return role.canAccessClinicalChart || role == ClinicRole.receptionist;
       }
       return role.canManageStaff;
     }

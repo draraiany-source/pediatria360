@@ -110,6 +110,38 @@ void main() {
         isFalse,
       );
     });
+
+    test('FASE2 receptionist: agenda sim, chart nao', () {
+      final AppUser user = pro(uid: 'rec');
+      final ClinicMembership m = membership(ClinicRole.receptionist);
+      expect(
+        PermissionMatrix.allows(
+          user: user,
+          membership: m,
+          module: PermissionModule.agenda,
+          action: PermissionAction.create,
+        ),
+        isTrue,
+      );
+      expect(
+        PermissionMatrix.allows(
+          user: user,
+          membership: m,
+          module: PermissionModule.chart,
+          action: PermissionAction.view,
+        ),
+        isFalse,
+      );
+      expect(
+        PermissionMatrix.allows(
+          user: user,
+          membership: m,
+          module: PermissionModule.patients,
+          action: PermissionAction.create,
+        ),
+        isTrue,
+      );
+    });
   });
 
   group('PermissionMatrix allows expected roles', () {
