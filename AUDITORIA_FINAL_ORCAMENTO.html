@@ -1,0 +1,227 @@
+<!DOCTYPE html><html lang="pt-BR"><head><meta charset="utf-8"/><title>Auditoria Final Orcamento Pediatria360</title>
+<style>
+body{font-family:Segoe UI,Arial,sans-serif;max-width:920px;margin:32px auto;padding:0 20px;line-height:1.45;color:#111}
+h1{font-size:1.6rem} @media print{body{margin:12mm}}
+.note{background:#f5f5f5;padding:12px;border-radius:8px;margin:16px 0}
+a{color:#0b57d0}
+</style></head><body>
+<div class="note"><strong>Link publico homologacao:</strong> <a href="https://pediatria360-app--homolog-orcamento-a9dstse4.web.app">https://pediatria360-app--homolog-orcamento-a9dstse4.web.app</a><br/>
+<strong>GitHub:</strong> <a href="https://github.com/draraiany-source/pediatria360">https://github.com/draraiany-source/pediatria360</a><br/>
+Imprima este arquivo (Ctrl+P → Salvar como PDF) para enviar ao programador.</div>
+<pre style="white-space:pre-wrap;font-family:inherit"># AUDITORIA FINAL PARA ORCAMENTO — Pediatria360<br/>
+<br/>
+| Campo | Valor |<br/>
+|-------|-------|<br/>
+| Documento | Auditoria atualizada para programador avaliar e orcar |<br/>
+| Data da auditoria | 2026-09-25 |<br/>
+| Base da auditoria anterior | AUDITORIA_PUBLICACAO_COMPLETA.md (25/09/2026) |<br/>
+| Repositorio | https://github.com/draraiany-source/pediatria360 |<br/>
+| Branch | main |<br/>
+| Commit pre-auditoria (sincronizado) | a580fd6 |<br/>
+| Checkpoint de seguranca | c0c0322 |<br/>
+| Commit desta entrega | (preencher apos push) |<br/>
+| Versao app | 1.0.0+1 (pubspec.yaml) |<br/>
+| Classificacao | **NAO PRONTO para pacientes reais nem lojas** |<br/>
+| FASE 2 no GitHub | **SIM** (desde a580fd6) — auditoria anterior estava desatualizada neste ponto |<br/>
+<br/>
+---<br/>
+<br/>
+## 0. Como o programador deve usar este documento<br/>
+<br/>
+1. Clonar o repositorio no commit indicado.<br/>
+2. Abrir a URL publica de homologacao (secao 9) para ver a UI.<br/>
+3. Usar o inventario (secao 3) e o backlog P0/P1 (secao 7) para orcar.<br/>
+4. Nao assumir que tela = fluxo completo; ler coluna &quot;Estado real&quot;.<br/>
+<br/>
+---<br/>
+<br/>
+## 1. Etapa 1 — Versao preservada<br/>
+<br/>
+| Item | Resultado |<br/>
+|------|-----------|<br/>
+| Repo local | `C:/Users/Lenovo/Desktop/pediatria360/pediatria360` |<br/>
+| Remote | `https://github.com/draraiany-source/pediatria360.git` |<br/>
+| Branch | `main` |<br/>
+| Local == remoto (inicio) | `a580fd6` |<br/>
+| FASE 2 no remoto | Confirmado (guardians, agenda_scheduling, FASE2_CONCLUIDA.md) |<br/>
+| Pendencias locais | so log `tools/fase2_test_out.txt` (agora no .gitignore) |<br/>
+| Commit de seguranca | `c0c0322` — checkpoint antes das correcoes |<br/>
+| Perda de dados / conflito | Nenhum |<br/>
+<br/>
+---<br/>
+<br/>
+## 2. Etapa 2 — Inventario de modulos (estado no codigo atual)<br/>
+<br/>
+Legenda: **F** funcional ponta a ponta no ambiente configurado | **P** parcial (UI+dados, falta integracao/config) | **V** so visual / stub | **OFF** desligado por flag | **N** ausente<br/>
+<br/>
+| Modulo | Estado | Evidencia / arquivos | Risco | Prioridade |<br/>
+|--------|--------|----------------------|-------|------------|<br/>
+| Auth (login/cadastro/recuperar) | F | `lib/features/auth/` | URLs legais placeholder | P0 legal |<br/>
+| Shell / navegacao / voltar | F/P | `app_shell.dart`, GoRouter | Deep links OK; alguns fluxos usam push | P2 |<br/>
+| Criancas | F | `children/` | Deduplicacao CPF parcial | P2 |<br/>
+| Responsaveis (FASE 2) | F/P | `child_guardian*`, rules | UI criar via UID; sem dedupe | P1 |<br/>
+| Agenda consultorio | F/P | `telemedicine_repository`, `agenda_scheduling` | UI criar agendamento recepcao incompleta | P1 |<br/>
+| Salas/bloqueios | F | `clinic_schedule_*` | So admin clinica | P2 |<br/>
+| Consultorio / recepcao | P | `clinic/` | KPIs zerados em parte | P2 |<br/>
+| Prontuario / EMR | P | `emr/` | Hash != ICP; CID manual | P0 clinico comunicacao |<br/>
+| Crescimento | P | `growth/`, `who_reference.json` | JSON aproximado OMS | P0 clinico |<br/>
+| Vacinas | P | `vaccines/`, `pni_calendar.dart` | Validar gov.br | P0 clinico |<br/>
+| IA chat | P | `ai/` + CF `aiChat` | Depende Anthropic secret | P1 |<br/>
+| Voz / prontuario IA | P | `clinic/voice_*`, CF voice | Nao marcar como concluido | P1 |<br/>
+| Telemedicina video | OFF | `AppConfig.videoConsultationEnabled=false`; CF unimplemented | Nao prometer | P0 listing |<br/>
+| Cursos / biblioteca | P | `courses/`, `library/` | Bunny dart-defines | P1 |<br/>
+| Notificacoes | P | `notifications/` | FCM config dispositivo | P2 |<br/>
+| Financeiro | P | `finance/` | Rules tenant; sem gateway | P1 |<br/>
+| Faturamento | P | `billing/` | Sem operador TISS real | P1 |<br/>
+| Estoque | P | `inventory/` | Integracao vacinas parcial | P2 |<br/>
+| BI | P | `bi/` | Depende dados reais | P2 |<br/>
+| Admin CMS | P | `admin/` | Papel UserRole.admin | P2 |<br/>
+| Permissoes / auditoria | F/P | `permission_matrix`, `security/` | unitId app-layer | P1 |<br/>
+| LGPD tecnica | F/P | `privacy/` + CF privacy | Textos juridicos pendentes | P0 legal |<br/>
+| Loja / pagamento | OFF/P | `shop/`; `paymentGatewayEnabled=false` | paymentUrl null | P0 listing |<br/>
+| Clinic org multitenant | P | `clinic_org/` | unitId rules incompleto | P1 |<br/>
+| Suplementacao | P | `supplementation/` | Textos clinicos placeholder | P1 medico |<br/>
+| Android loja | N/P | `android/` parcial; templates `platform/` | Impede AAB | P0 |<br/>
+| iOS loja | N/P | sem xcodeproj | Impede IPA | P0 |<br/>
+| Web | F/P | `web/` + hosting | Homologacao | — |<br/>
+<br/>
+### Tres perfis<br/>
+<br/>
+| Perfil | O que funciona | Limitacao comprovada |<br/>
+|--------|----------------|----------------------|<br/>
+| Responsavel (parent) | Criancas, crescimento, vacinas, biblioteca, IA (com cota) | Sem area profissional |<br/>
+| Profissional / medico | Agenda, pacientes, EMR, consultorio | Video OFF; ICP nao |<br/>
+| Recepcao (ClinicRole) | Agenda, cadastro admin; chart negado na matriz + rota + **timeline** | Isolamento unitId parcial |<br/>
+<br/>
+---<br/>
+<br/>
+## 3. Etapa 3 — Correcoes feitas nesta rodada<br/>
+<br/>
+| Correcao | Arquivo | Status |<br/>
+|----------|---------|--------|<br/>
+| Checkpoint + gitignore log | `CHECKPOINT_AUDITORIA_PROGRAMADOR.md`, `.gitignore` | Feito (`c0c0322`) |<br/>
+| Bypass RBAC: timeline via Navigator.push (home/360/pendencias) | `patient_timeline_screen.dart` | Feito — bloqueio na propria tela |<br/>
+<br/>
+### Nao corrigido (depende de voce / externo)<br/>
+<br/>
+- Termos/Privacidade reais (juridico)<br/>
+- OMS LMS oficial / PNI gov.br (validacao clinica)<br/>
+- Android/iOS scaffolding + signing + icones<br/>
+- App Check, deploy rules em producao<br/>
+- Provedor video / gateway pagamento / ICP-Brasil<br/>
+- Conta Apple/Google Play<br/>
+<br/>
+---<br/>
+<br/>
+## 4. Etapa 4 — Testes e evidencias<br/>
+<br/>
+| Teste | Resultado | Ambiente |<br/>
+|-------|-----------|----------|<br/>
+| `flutter test` permission_matrix + route_authorization + fase2_agenda_guardians | **46 passed** (2026-09-25) | Windows local |<br/>
+| flutter analyze completo | Nao concluido nesta sessao (historico de hang) | — |<br/>
+| Functions npm test | Nao executado nesta sessao | — |<br/>
+| Rules emulator suite completa | Nao reexecutado (FASE 9: 19 pass; FASE 10: 24 pass — historico) | Emulator |<br/>
+| Build Android AAB | **Nao testado** — plataforma incompleta | — |<br/>
+| Build iOS | **Nao testado** — sem Xcodeproj / macOS | — |<br/>
+| Build web release homolog | **OK** `flutter build web --release --no-wasm-dry-run` + SKIP_AUTH staging | Windows |<br/>
+| UI E2E 3 perfis no browser publico | Parcial / convidado SKIP_AUTH | Homolog web |<br/>
+| Login real Emulator no link publico | **Nao aplicavel** — Emulator nao e publico | — |<br/>
+<br/>
+**Nao declarar &quot;testado&quot;** o que so compilou: APK/AAB/IPA nao gerados.<br/>
+<br/>
+---<br/>
+<br/>
+## 5. Bloqueios que ainda impedem pacientes reais / lojas<br/>
+<br/>
+1. OMS/PNI nao validados como oficiais<br/>
+2. Termos/Privacidade / DPO / CNPJ<br/>
+3. Android/iOS incompletos + signing debug<br/>
+4. App Check ausente<br/>
+5. Confirmacao de deploy rules/indices no projeto de producao<br/>
+6. Video e pagamento OFF (nao prometer na loja)<br/>
+7. Assinatura encounter != ICP-Brasil<br/>
+8. Homologacao UI E2E incompleta (FASE 10)<br/>
+9. SKIP_AUTH so para homologacao staging — nunca `ENV=prod` com skip<br/>
+<br/>
+---<br/>
+<br/>
+## 6. Trabalho restante para orcamento (criterios objetivos)<br/>
+<br/>
+### P0 — bloquear loja / uso clinico<br/>
+| Item | Criterio de pronto |<br/>
+|------|-------------------|<br/>
+| Scaffold Android/iOS + icones | `flutter build appbundle` e build iOS sem erro |<br/>
+| Keystore / certificados | AAB/IPA assinados release |<br/>
+| Juridico Termos/Privacidade | URLs reais no AppConfig + aceite |<br/>
+| OMS + PNI oficiais | Arquivos substituidos + aviso removido ou atualizado |<br/>
+| App Check + rules deploy prod | App inicia com App Check; rules ativas no console |<br/>
+| Store listing honesto | Sem video/pagamento/ICP se nao integrados |<br/>
+<br/>
+### P1 — produto clinico / operacao<br/>
+| Item | Criterio de pronto |<br/>
+|------|-------------------|<br/>
+| UI criar agendamento recepcao | Fluxo E2E sem API so |<br/>
+| unitId nas rules | Teste cross-unit falha no emulator |<br/>
+| Bunny + secrets IA | Aula toca; aiChat responde em staging |<br/>
+| Fechar lacunas patient 360 RBAC | Rota 360 tambem gated (parcialmente coberto pela timeline) |<br/>
+| Testes E2E 3 perfis | Roteiro FASE 10 UI completo |<br/>
+<br/>
+### P2 — qualidade<br/>
+KPIs consultorio reais; CID busca; dedupe criancas; gamification data layer; analyze CI.<br/>
+<br/>
+---<br/>
+<br/>
+## 7. Dependencias e decisoes do contratante<br/>
+<br/>
+- Textos Termos/Privacidade e dados do controlador (LGPD)<br/>
+- Tabelas OMS oficiais e conferencia PNI<br/>
+- Contas Google Play / Apple Developer<br/>
+- Keystore e certificados<br/>
+- Contratar video (Daily/Twilio…) e/ou pagamento (Stripe/MP…)<br/>
+- Secrets Firebase (Anthropic, Bunny)<br/>
+- Autorizar `firebase deploy` hosting/rules no projeto `pediatria360-app`<br/>
+- Escopo: soft launch web vs lojas nativas<br/>
+<br/>
+---<br/>
+<br/>
+## 8. Arquivos alterados nesta entrega (apos checkpoint)<br/>
+<br/>
+- `lib/features/emr/presentation/screens/patient_timeline_screen.dart` — guarda chart<br/>
+- Documentos de auditoria final (este arquivo + HTML/PDF)<br/>
+- (atualizar lista no commit final)<br/>
+<br/>
+---<br/>
+<br/>
+## 9. Homologacao publica e GitHub<br/>
+<br/>
+| Item | Valor |<br/>
+|------|-------|<br/>
+| GitHub | https://github.com/draraiany-source/pediatria360 |<br/>
+| Commit auditado | (apos push) |<br/>
+| URL publica | https://pediatria360-app--homolog-orcamento-a9dstse4.web.app (expira ~2026-10-25) |<br/>
+| Perfis no link publico | Convidado DevMode (SKIP_AUTH) — UI profissional local; **sem dados reais de pacientes** |<br/>
+| Localhost | **Nao** e o link publico; so desenvolvimento |<br/>
+| APK / AAB | **Nao gerados** (plataforma Android incompleta) |<br/>
+<br/>
+### O que o programador consegue testar no link publico<br/>
+- Navegacao shell, telas de agenda/consultorio/financeiro (UI)<br/>
+- Estados vazios / loading quando Firestore nega convidado<br/>
+<br/>
+### O que NAO testa no link publico<br/>
+- Login Auth real por perfil<br/>
+- Persistencia clinica real<br/>
+- Video, pagamento, ICP<br/>
+- Isolamento multi-clinica com memberships reais<br/>
+<br/>
+---<br/>
+<br/>
+## 10. Conclusao<br/>
+<br/>
+O Pediatria360 evoluiu desde a auditoria de 25/09: **FASE 2 esta no GitHub**, finance/billing/BI/inventory existem como modulos, e foi corrigido o bypass de prontuario via push. Continua **nao publicavel** nas lojas nem apto a pacientes reais pelos bloqueios P0 acima.<br/>
+<br/>
+Este documento e a base para orcamento do trabalho restante.<br/>
+<br/>
+---<br/>
+<br/>
+*Fim — auditoria programador Pediatria360 — 2026-09-25*</pre>
+</body></html>

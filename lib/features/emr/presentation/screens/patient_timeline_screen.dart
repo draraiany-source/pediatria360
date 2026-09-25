@@ -25,6 +25,7 @@ import '../../../../shared/domain/entities/vaccine.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../clinic_org/presentation/providers/clinic_org_providers.dart';
 import '../../../children/presentation/providers/children_providers.dart';
+import '../../../security/domain/permission_matrix.dart';
 import '../../../vaccines/domain/pni_calendar.dart';
 import '../../data/encounter_repository.dart';
 import 'document_viewer_screen.dart';
@@ -120,6 +121,42 @@ class PatientTimelineScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    // FASE 2 / auditoria: bloqueia navegacao por push (home, patient 360,
+    // pendencias) alem do redirect de GoRouter em /pacientes.
+    final user = ref.watch(currentUserProvider);
+    final membership = ref.watch(activeClinicMembershipProvider);
+    if (user != null &&
+        !PermissionMatrix.allows(
+          user: user,
+          membership: membership,
+          module: PermissionModule.chart,
+          action: PermissionAction.view,
+        )) {
+      return Scaffold(
+        appBar: AppBar(
+          title: const Text('Acesso restrito'),
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back_rounded),
+            onPressed: () {
+              if (context.canPop()) {
+                context.pop();
+              } else {
+                context.go(Routes.homePath);
+              }
+            },
+          ),
+        ),
+        body: const EmptyState(
+          icon: Icons.lock_outline_rounded,
+          title: 'Evolucao clinica indisponivel',
+          message:
+              'Seu perfil nesta clinica nao tem permissao para abrir o '
+              'prontuario. Use a agenda e o cadastro administrativo, ou '
+              'peca acesso clinico ao administrador.',
+        ),
+      );
+    }
+
     final AsyncValue<List<Encounter>> encounters =
         ref.watch(patientEncountersProvider(patientId));
     final AsyncValue<List<ClinicalDocument>> documents =
