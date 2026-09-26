@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/router/route_access.dart';
 import '../../../core/router/routes.dart';
 import '../../auth/presentation/providers/auth_providers.dart';
 import '../../emr/presentation/screens/encounter_editor_screen.dart';
@@ -17,42 +18,58 @@ Future<void> runPendingAction(
   PendingActionKind action,
 ) async {
   final String? childId = item.childId ?? item.patientId;
+
+  void open(String route, {bool replace = false}) {
+    if (!canOpenRouteNow(ref, route)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Seu perfil atual nao abre esta area. Troque a area de '
+            'trabalho ou encaminhe ao responsavel.',
+          ),
+        ),
+      );
+      return;
+    }
+    replace ? context.go(route) : context.push(route);
+  }
+
   switch (action) {
     case PendingActionKind.openPatient:
     case PendingActionKind.openPatient360:
       if (childId != null && childId.isNotEmpty) {
-        context.push(Routes.clinicPatient360(childId));
+        open(Routes.clinicPatient360(childId));
       } else {
-        context.go(Routes.patientsPath);
+        open(Routes.patientsPath, replace: true);
       }
     case PendingActionKind.scheduleReturn:
     case PendingActionKind.rescheduleAppointment:
     case PendingActionKind.openAgenda:
-      context.go(Routes.agendaPath);
+      open(Routes.agendaPath, replace: true);
     case PendingActionKind.openVaccines:
     case PendingActionKind.registerVaccineDose:
       if (childId != null && childId.isNotEmpty) {
-        context.push(Routes.vaccines(childId));
+        open(Routes.vaccines(childId));
       }
     case PendingActionKind.openLabResult:
     case PendingActionKind.openSupplementLabs:
       if (item.referenceId != null) {
-        context.push(
+        open(
           Routes.supplementLabDetail(
             item.referenceId!,
             childId: childId,
           ),
         );
       } else {
-        context.push(Routes.supplementLabsPath);
+        open(Routes.supplementLabsPath);
       }
     case PendingActionKind.markExamReviewed:
       await _resolvePending(ref, item, note: 'Exame revisado');
       if (context.mounted && childId != null) {
-        context.push(Routes.clinicPatient360(childId));
+        open(Routes.clinicPatient360(childId));
       }
     case PendingActionKind.replyMessage:
-      context.go(Routes.notificationsPath);
+      open(Routes.notificationsPath, replace: true);
     case PendingActionKind.openDocument:
     case PendingActionKind.signDocument:
     case PendingActionKind.downloadDocument:
@@ -76,34 +93,34 @@ Future<void> runPendingAction(
         }
       }
     case PendingActionKind.openAppointment:
-      context.go(Routes.agendaPath);
+      open(Routes.agendaPath, replace: true);
     case PendingActionKind.registerPayment:
       if (item.sourceKey.startsWith('finance_recv:')) {
         final String recvId = item.referenceId ?? item.sourceKey.split(':').last;
-        context.push(
+        open(
           '${Routes.financeReceivablesPath}?receivableId=${Uri.encodeComponent(recvId)}',
         );
       } else if (item.referenceId != null) {
-        context.push(
+        open(
           '${Routes.financeReceivablesPath}?appointmentId=${Uri.encodeComponent(item.referenceId!)}',
         );
       } else {
-        context.push(Routes.financePath);
+        open(Routes.financePath);
       }
     case PendingActionKind.openInventory:
-      context.push(Routes.inventoryPath);
+      open(Routes.inventoryPath);
     case PendingActionKind.openBilling:
       final String sub = item.referenceId ?? '';
       if (sub == 'glosas') {
-        context.push(Routes.billingGlosasPath);
+        open(Routes.billingGlosasPath);
       } else if (sub == 'lotes') {
-        context.push(Routes.billingBatchesPath);
+        open(Routes.billingBatchesPath);
       } else if (sub == 'guias') {
-        context.push(Routes.billingGuidesPath);
+        open(Routes.billingGuidesPath);
       } else if (sub == 'autorizacoes') {
-        context.push(Routes.billingAuthorizationsPath);
+        open(Routes.billingAuthorizationsPath);
       } else {
-        context.push(Routes.billingPath);
+        open(Routes.billingPath);
       }
     case PendingActionKind.openEncounterDraft:
       if (item.referenceId != null) {
