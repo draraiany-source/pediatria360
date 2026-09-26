@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/config/app_assets.dart';
+import '../../../../core/config/capi_pose.dart';
 import '../../../../core/responsive/responsive.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/app_icon.dart';
@@ -189,6 +191,7 @@ class _VaccinesScreenState extends ConsumerState<VaccinesScreen> {
             return EmptyState(
               icon: Icons.vaccines_outlined,
               asset: AppIcons.vaccineCard,
+              illustration: AppAssets.capiForPose(CapiPose.boasVindas),
               title: 'Calendário não gerado',
               message: 'Vamos montar o calendário do PNI a partir da data '
                   'de nascimento de ${child.firstName}.',
