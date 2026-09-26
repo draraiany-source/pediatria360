@@ -3,13 +3,26 @@
 | Campo | Valor |
 |-------|-------|
 | Documento | Auditoria de publicacao (entrega para PDF) |
-| Data | 2026-09-25 |
+| Data original | 2026-09-25 |
+| Revisao codigo | 2026-09-26 (prep. publicacao + push plataformas) |
 | Produto | Pediatria 360 (`pediatria360` 1.0.0+1) |
 | Stack | Flutter (>=3.32) + Riverpod + GoRouter + Firebase |
-| Commit remoto sincronizado | `bdf3ef760cfa3da0da7500fbc1b59010984e0939` (FASE 10) |
-| Trabalho local nao commitado | FASE 2 (cadastro/permissoes/agenda) — ver secao 11 |
+| Commit remoto (pre-revisao) | `988de4d` (FASE 2 ja no GitHub desde `a580fd6`) |
 | Classificacao final | **NAO PRONTO PARA PUBLICACAO EM LOJA** |
 | Uso deste arquivo | Entregar ao programador para gerar PDF (Pandoc / Word / impressao) |
+| Relatorio desta rodada | `RELATORIO_PUBLICACAO_FINAL.md` |
+
+### Atualizacao 2026-09-26 (conferida no codigo)
+
+| Achado 25/09 | Situacao em 26/09 |
+|--------------|-------------------|
+| FASE 2 sem commit/push | **Desatualizado** — FASE 2 esta em `origin/main` desde `a580fd6` |
+| `android/` / `ios/` parciais | **Corrigido no codigo** — scaffolds completos + AGP 8.9.1, minSdk>=23, SDK 36 |
+| DevMode / SKIP_AUTH em prod | **Corrigido** — `DevMode.isEnabled` retorna `false` se `ENV=prod` |
+| Video / pagamento / ICP / TISS / voz | **Confirmado OFF / nao concluidos** — nao marcar como prontos |
+| Termos / Privacidade / CNPJ | **Ainda placeholders** — nao inventados |
+| OMS / PNI | **Ainda aproximacao / conferencia pendente** — avisos na UI; dados nao substituidos |
+| App Check / keystore / lojas | **Ainda pendente** (depende de voce + Firebase Console) |
 
 ---
 
@@ -37,21 +50,21 @@ O Pediatria360 e uma plataforma pediatrica multi-perfil (familia, profissional, 
 2. Dados OMS e PNI no repositorio sao aproximacoes / precisam conferencia oficial.
 3. Video e pagamento desligados por flag; `joinConsultation` retorna `unimplemented`.
 4. Assinatura de encounter e selo de integridade (hash), **nao** ICP-Brasil.
-5. Plataformas nativas `android/` e `ios/` estao **parciais** (templates em `platform/`).
-6. Signing de release nao configurado (debug).
+5. Plataformas nativas: scaffolds Android/iOS versionados (26/09); **signing release ainda debug**.
+6. Signing de release nao configurado (keystore propria pendente).
 7. App Check nao implementado; rules/indices precisam deploy em projeto de producao.
 8. Homologacao UI E2E (FASE 10) incompleta; FASE 11 (pre-publicacao) nao iniciada.
 9. Isolamento `unitId` ainda so na camada de app; parte do multitenant clinica depende de membership ativo.
-10. FASE 2 (responsaveis/agenda clinica) esta no working tree **sem commit/push**.
+10. ~~FASE 2 sem commit~~ — **resolvido no remoto** (`a580fd6`+); manter secao 11 so como historico.
 
 ### Veredito por canal
 
 | Canal | Veredito |
 |-------|----------|
 | Web staging / Emulator | Usavel para homologacao tecnica parcial |
-| Web producao | Bloqueado (legal, Firebase prod, ENV=prod, App Check) |
-| Android / iOS loja | Bloqueado (plataforma parcial, signing, legal, checklist) |
-| Uso clinico real com dados de pacientes | Bloqueado (OMS/PNI, LGPD, isolamento, homologacao) |
+| Web producao | Bloqueado (legal, Firebase prod, App Check, dominio) |
+| Android / iOS loja | Bloqueado (signing, contas loja, legal, checklist; scaffold OK) |
+| Uso clinico real com dados de pacientes | Bloqueado (OMS/PNI, LGPD, App Check, homologacao) |
 
 ---
 
@@ -232,28 +245,24 @@ Fonte: `CHECKLIST_PUBLICACAO_FINAL.md` + esta auditoria.
 
 ---
 
-## 11. Trabalho local FASE 2 (nao publicado no remoto)
+## 11. Trabalho FASE 2 (historico 25/09 — resolvido no remoto)
 
-Presente no working tree em 2026-09-25 (nao commitado no momento da auditoria):
+Em 2026-09-25 constava no working tree sem push. **Em 26/09 confirmado em `origin/main` desde `a580fd6`** (guardians, salas/bloqueios, conflitos, RBAC recepcao, rules/testes).
 
-- Guardians, salas/bloqueios, conflitos de agenda, RBAC recepcao, rules e testes (46 pass).
-- Documento: `FASE2_CONCLUIDA.md` / recuperacao `FASE2_RECOVERY.md`.
-- **Risco:** quem gerar PDF/release a partir so de `origin/main` **nao** incluem FASE 2 ate commit/push.
-
-Recomendacao ao programador: alinhar com o product owner se o PDF deve refletir (A) so `origin/main` ou (B) main + FASE 2 local.
+Documento de epoca: `FASE2_CONCLUIDA.md` / `FASE2_RECOVERY.md`.
 
 ---
 
 ## 12. O que esta funcional vs parcial vs nao implementado (quadro unico)
 
 ### Funcional (nucleo)
-Auth Firebase; criancas; shell; calculadoras; LGPD export/delete tecnico; agenda profissional basica; parte educacional (biblioteca/cursos com ressalvas); matriz rules multiempresa em ledgers.
+Auth Firebase; criancas; shell; calculadoras; LGPD export/delete tecnico; agenda profissional basica; parte educacional (biblioteca/cursos com ressalvas); matriz rules multiempresa em ledgers; FASE 2 guardians/agenda (codigo + testes unitarios; E2E UI nao reexecutado nesta revisao).
 
 ### Parcial (usar com ressalvas)
-Crescimento/vacinas (dados); EMR; consultorio; telemedicina sem video; finance/billing/inventory/BI; clinic_org; FASE 2 guardians/agenda clinica; notificacoes; admin CMS.
+Crescimento/vacinas (**dados OMS/PNI precisam validacao clinica**); EMR; consultorio; telemedicina sem video; finance/billing/inventory/BI; clinic_org; notificacoes; admin CMS; plataformas Android/iOS (scaffold OK, signing/loja pendente).
 
 ### Nao pronto / desligado
-Video consulta; gateway pagamento; ICP-Brasil; App Check; plataformas loja completas; textos legais; FASE 11; UI E2E completa; escalas neuropediatricas; operador TISS real; pre-consulta/prontuario IA como “concluidos”.
+Video consulta; gateway pagamento; ICP-Brasil; App Check; textos legais finais; FASE 11; UI E2E completa em dispositivo; escalas neuropediatricas; operador TISS real; pre-consulta/prontuario por voz como “concluidos”.
 
 ---
 
