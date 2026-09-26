@@ -5,6 +5,8 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/error/failures.dart';
 import '../../../../core/router/routes.dart';
+import '../../../../core/config/app_assets.dart';
+import '../../../../core/config/capi_pose.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_tokens.dart';
 import '../../../../core/widgets/brand_ui.dart';
@@ -116,9 +118,10 @@ class BiHubScreen extends ConsumerWidget {
               ),
             const SizedBox(height: AppSpacing.md),
             if (cards.isEmpty)
-              const BiEmptyState(
+              BiEmptyState(
                 title: 'Nenhum KPI visivel para seu perfil ou periodo.',
                 subtitle: 'Ajuste o periodo ou aguarde dados operacionais.',
+                illustration: AppAssets.capiLupa,
               )
             else
               LayoutBuilder(
