@@ -3,12 +3,15 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
+import '../../../../core/config/app_assets.dart';
 import '../../../../core/config/app_config.dart';
+import '../../../../core/config/capi_pose.dart';
 import '../../../../core/router/routes.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_tokens.dart';
 import '../../../../core/widgets/brand_ui.dart';
 import '../../../../core/widgets/feature_unavailable.dart';
+import '../../../../core/widgets/capi_illustration.dart';
 import '../../../../core/widgets/state_views.dart';
 import '../../../../shared/domain/entities/app_user.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
@@ -45,10 +48,15 @@ class WorkspaceHomeScreen extends ConsumerWidget {
 }
 
 class _HomeHeader extends ConsumerWidget {
-  const _HomeHeader({required this.title, required this.subtitle});
+  const _HomeHeader({
+    required this.title,
+    required this.subtitle,
+    this.capiPose,
+  });
 
   final String title;
   final String subtitle;
+  final CapiPose? capiPose;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -90,23 +98,34 @@ class _HomeHeader extends ConsumerWidget {
           const SizedBox(height: AppSpacing.md),
           AppCard(
             color: AppColors.softBlue,
-            child: Column(
+            child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
-                Text(
-                  title,
-                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                        color: AppColors.navy,
-                        fontWeight: FontWeight.w800,
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: <Widget>[
+                      Text(
+                        title,
+                        style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                              color: AppColors.navy,
+                              fontWeight: FontWeight.w800,
+                            ),
                       ),
-                ),
-                const SizedBox(height: AppSpacing.sm),
-                Text(
-                  subtitle,
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: AppColors.navy.withValues(alpha: 0.8),
+                      const SizedBox(height: AppSpacing.sm),
+                      Text(
+                        subtitle,
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                              color: AppColors.navy.withValues(alpha: 0.8),
+                            ),
                       ),
+                    ],
+                  ),
                 ),
+                if (capiPose != null) ...<Widget>[
+                  const SizedBox(width: AppSpacing.sm),
+                  CapiIllustration(pose: capiPose!, size: 96),
+                ],
               ],
             ),
           ),
@@ -192,6 +211,7 @@ class _AdminHome extends ConsumerWidget {
         _HomeHeader(
           title: 'Bem-vindo(a), $name',
           subtitle: WorkspaceProfile.admin.homeSubtitle,
+          capiPose: CapiPose.boasVindas,
         ),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
@@ -287,6 +307,7 @@ class _ProfessionalHome extends ConsumerWidget {
         _HomeHeader(
           title: 'Ola, $name',
           subtitle: WorkspaceProfile.professional.homeSubtitle,
+          capiPose: CapiPose.aceno,
         ),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
@@ -301,6 +322,7 @@ class _ProfessionalHome extends ConsumerWidget {
                             'Quando houver horarios, a proxima consulta '
                             'aparece aqui.',
                         icon: Icons.event_available_outlined,
+                        illustration: AppAssets.capiLupa,
                         actionLabel: 'Abrir agenda',
                         onAction: () => context.go(Routes.agendaPath),
                       )
@@ -488,6 +510,7 @@ class _ReceptionHome extends ConsumerWidget {
         _HomeHeader(
           title: 'Area da recepcao',
           subtitle: WorkspaceProfile.receptionist.homeSubtitle,
+          capiPose: CapiPose.aceno,
         ),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
@@ -546,6 +569,7 @@ class _ReceptionHome extends ConsumerWidget {
                       'A lista preenche com a agenda real da clinica. '
                       'Nao exibimos dados ilustrativos.',
                   icon: Icons.event_busy_outlined,
+                  illustration: AppAssets.capiLupa,
                   actionLabel: 'Abrir agenda',
                   onAction: () => context.go(Routes.agendaPath),
                 )
@@ -694,6 +718,7 @@ class _PatientHome extends ConsumerWidget {
         _HomeHeader(
           title: 'Ola, $name',
           subtitle: WorkspaceProfile.patient.homeSubtitle,
+          capiPose: CapiPose.aceno,
         ),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
