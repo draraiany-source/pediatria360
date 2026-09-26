@@ -1,0 +1,55 @@
+import 'package:firebase_app_check/firebase_app_check.dart';
+import 'package:flutter/foundation.dart';
+
+import '../config/app_config.dart';
+import 'app_logger.dart';
+
+/// Ativa App Check em modo preparacao (token gerado; rules ainda nao exigem).
+///
+/// So roda com `--dart-define=ENABLE_APP_CHECK=true`. Em debug usa provedor
+/// de debug (registrar o token no Console). Em release usa Play Integrity /
+/// DeviceCheck / App Attest. Web exige `APP_CHECK_RECAPTCHA_SITE_KEY`.
+class AppCheckBootstrap {
+  const AppCheckBootstrap._();
+
+  static Future<void> activateIfEnabled() async {
+    if (!AppConfig.appCheckEnabled) {
+      AppLogger.info(
+        'App Check desligado (ENABLE_APP_CHECK=false)',
+        tag: 'boot',
+      );
+      return;
+    }
+
+    try {
+      if (kIsWeb) {
+        const String siteKey = AppConfig.appCheckRecaptchaSiteKey;
+        if (siteKey.isEmpty) {
+          AppLogger.info(
+            'App Check web ignorado: defina APP_CHECK_RECAPTCHA_SITE_KEY',
+            tag: 'boot',
+          );
+          return;
+        }
+        await FirebaseAppCheck.instance.activate(
+          webProvider: ReCaptchaV3Provider(siteKey),
+        );
+      } else {
+        await FirebaseAppCheck.instance.activate(
+          androidProvider: kDebugMode
+              ? AndroidProvider.debug
+              : AndroidProvider.playIntegrity,
+          appleProvider: kDebugMode
+              ? AppleProvider.debug
+              : AppleProvider.appAttest,
+        );
+      }
+      AppLogger.info(
+        'App Check ativo (monitor/prepare — rules sem exigencia)',
+        tag: 'boot',
+      );
+    } catch (error, stack) {
+      await AppLogger.error(error, stack, reason: 'app_check.activate');
+    }
+  }
+}

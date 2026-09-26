@@ -14,6 +14,7 @@ class EmptyState extends StatelessWidget {
     required this.message,
     this.icon = Icons.inbox_outlined,
     this.asset,
+    this.illustration,
     this.actionLabel,
     this.onAction,
     this.animation,
@@ -29,6 +30,9 @@ class EmptyState extends StatelessWidget {
   ///
   /// Nos vazios de erro o ícone continua: animação alegre sobre falha é ruído.
   final String? animation;
+
+  /// PNG de ilustracao (ex.: Capi) — usado quando nao ha [animation].
+  final String? illustration;
 
   final String title;
   final String message;
@@ -57,6 +61,14 @@ class EmptyState extends StatelessWidget {
                     errorBuilder: (BuildContext context, Object error, _) =>
                         Icon(icon, size: 40, color: theme.colorScheme.outline),
                   ),
+                )
+              else if (illustration != null)
+                Image.asset(
+                  illustration!,
+                  height: 140,
+                  fit: BoxFit.contain,
+                  errorBuilder: (BuildContext context, Object error, _) =>
+                      Icon(icon, size: 40, color: theme.colorScheme.outline),
                 )
               else
                 Container(

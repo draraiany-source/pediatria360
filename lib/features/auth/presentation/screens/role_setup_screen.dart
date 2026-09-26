@@ -88,8 +88,9 @@ class _RoleSetupScreenState extends ConsumerState<RoleSetupScreen> {
                   ),
                   const SizedBox(height: AppSpacing.sm),
                   Text(
-                    'Isso define o conteudo que aparece para voce. Da para '
-                    'mudar depois nos ajustes.',
+                    'Isso define o conteudo inicial do app. Funcionarios '
+                    '(recepcao/financeiro) recebem acesso pela clinica — '
+                    'nao escolhem esses papeis aqui.',
                     style: theme.textTheme.bodyMedium?.copyWith(
                       color: theme.colorScheme.onSurfaceVariant,
                     ),

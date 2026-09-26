@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../config/app_config.dart';
 import '../../features/auth/presentation/providers/auth_providers.dart';
 import '../../features/auth/presentation/screens/forgot_password_screen.dart';
 import '../../features/auth/presentation/screens/login_screen.dart';
@@ -11,6 +12,7 @@ import '../../features/auth/presentation/screens/role_setup_screen.dart';
 import '../../features/admin/presentation/admin_screen.dart';
 import '../../features/auth/presentation/screens/splash_screen.dart';
 import '../../features/clinic_org/presentation/providers/clinic_org_providers.dart';
+import '../../features/workspace/presentation/providers/workspace_providers.dart';
 import '../../features/clinic/presentation/screens/clinic_dashboard_screen.dart';
 import '../../features/finance/presentation/screens/cash_flow_screen.dart';
 import '../../features/finance/presentation/screens/delinquency_screen.dart';
@@ -74,6 +76,7 @@ import '../config/dev_mode.dart';
 import '../providers/core_providers.dart';
 import '../services/app_logger.dart';
 import '../services/remote_config_service.dart';
+import '../widgets/feature_unavailable.dart';
 import 'route_authorization.dart';
 import 'routes.dart';
 
@@ -132,6 +135,7 @@ final Provider<GoRouter> routerProvider = Provider<GoRouter>((Ref ref) {
         seenOnboarding: onboarding.valueOrNull ?? false,
         unlockAllRoles: DevMode.isEnabled,
         clinicMembership: ref.read(activeClinicMembershipProvider),
+        workspace: ref.read(currentWorkspaceProvider),
       );
     },
 
@@ -719,38 +723,80 @@ final Provider<GoRouter> routerProvider = Provider<GoRouter>((Ref ref) {
       GoRoute(
         path: Routes.clinicVoicePath,
         name: Routes.clinicVoiceName,
-        builder: (BuildContext context, GoRouterState state) =>
-            const VoiceHomeScreen(),
+        builder: (BuildContext context, GoRouterState state) {
+          if (!AppConfig.voiceConsultationEnabled) {
+            return const FeatureUnavailableScreen(
+              title: 'Consulta com IA',
+              message:
+                  'A gravacao assistida e o prontuario por voz ainda nao '
+                  'estao disponiveis nesta versao de teste. Use o prontuario '
+                  'manual no editor de atendimento.',
+            );
+          }
+          return const VoiceHomeScreen();
+        },
         routes: <RouteBase>[
           GoRoute(
             path: 'consentimento',
             name: Routes.clinicVoiceConsentName,
-            builder: (BuildContext context, GoRouterState state) =>
-                const VoiceConsentScreen(),
+            builder: (BuildContext context, GoRouterState state) {
+              if (!AppConfig.voiceConsultationEnabled) {
+                return const FeatureUnavailableScreen(
+                  title: 'Consulta com IA',
+                  message:
+                      'Funcao fora do escopo deste teste fechado.',
+                );
+              }
+              return const VoiceConsentScreen();
+            },
           ),
           GoRoute(
             path: 'sessao/:sessionId',
             name: Routes.clinicVoiceLiveName,
-            builder: (BuildContext context, GoRouterState state) =>
-                VoiceLiveScreen(
-              sessionId: state.pathParameters['sessionId']!,
-            ),
+            builder: (BuildContext context, GoRouterState state) {
+              if (!AppConfig.voiceConsultationEnabled) {
+                return const FeatureUnavailableScreen(
+                  title: 'Consulta com IA',
+                  message:
+                      'Funcao fora do escopo deste teste fechado.',
+                );
+              }
+              return VoiceLiveScreen(
+                sessionId: state.pathParameters['sessionId']!,
+              );
+            },
           ),
           GoRoute(
             path: 'revisao/:sessionId',
             name: Routes.clinicVoiceReviewName,
-            builder: (BuildContext context, GoRouterState state) =>
-                VoiceReviewScreen(
-              sessionId: state.pathParameters['sessionId']!,
-            ),
+            builder: (BuildContext context, GoRouterState state) {
+              if (!AppConfig.voiceConsultationEnabled) {
+                return const FeatureUnavailableScreen(
+                  title: 'Consulta com IA',
+                  message:
+                      'Funcao fora do escopo deste teste fechado.',
+                );
+              }
+              return VoiceReviewScreen(
+                sessionId: state.pathParameters['sessionId']!,
+              );
+            },
           ),
           GoRoute(
             path: 'final/:sessionId',
             name: Routes.clinicVoiceFinalName,
-            builder: (BuildContext context, GoRouterState state) =>
-                VoiceFinalReviewScreen(
-              sessionId: state.pathParameters['sessionId']!,
-            ),
+            builder: (BuildContext context, GoRouterState state) {
+              if (!AppConfig.voiceConsultationEnabled) {
+                return const FeatureUnavailableScreen(
+                  title: 'Consulta com IA',
+                  message:
+                      'Funcao fora do escopo deste teste fechado.',
+                );
+              }
+              return VoiceFinalReviewScreen(
+                sessionId: state.pathParameters['sessionId']!,
+              );
+            },
           ),
         ],
       ),

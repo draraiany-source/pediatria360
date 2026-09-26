@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
+import '../../../../core/config/app_config.dart';
 import '../../../../core/error/failures.dart';
 import '../../../../core/router/routes.dart';
 import '../../../../core/theme/app_colors.dart';
@@ -758,18 +759,20 @@ class _ModulesTab extends StatelessWidget {
           onTap: () => context.push(Routes.vaccines(childId)),
         ),
         const SizedBox(height: AppSpacing.sm),
-        QuickAccessCard(
-          label: 'Consulta com IA',
-          subtitle: 'Iniciar gravação assistida',
-          icon: Icons.mic_rounded,
-          asset: AppIcons.microphone,
-          color: AppColors.navy,
-          wide: true,
-          onTap: () => context.push(
-            '${Routes.clinicVoicePath}?childId=$childId',
+        if (AppConfig.voiceConsultationEnabled) ...<Widget>[
+          QuickAccessCard(
+            label: 'Consulta com IA',
+            subtitle: 'Iniciar gravação assistida',
+            icon: Icons.mic_rounded,
+            asset: AppIcons.microphone,
+            color: AppColors.navy,
+            wide: true,
+            onTap: () => context.push(
+              '${Routes.clinicVoicePath}?childId=$childId',
+            ),
           ),
-        ),
-        const SizedBox(height: AppSpacing.sm),
+          const SizedBox(height: AppSpacing.sm),
+        ],
         QuickAccessCard(
           label: 'Suplementação',
           subtitle: 'Exames, calculadora e acompanhamento',

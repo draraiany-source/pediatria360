@@ -14,6 +14,7 @@ import '../../../../core/theme/app_tokens.dart';
 import '../../../../core/utils/result.dart';
 import '../../../../core/utils/validators.dart';
 import '../../../../core/widgets/app_widgets.dart';
+import '../../../../core/widgets/child_avatar.dart';
 import '../../../../core/widgets/clinical_ui.dart';
 import '../../../../core/widgets/skeleton.dart';
 import '../../../../core/widgets/state_views.dart';
@@ -1520,19 +1521,11 @@ class _PatientSummaryCard extends StatelessWidget {
               children: <Widget>[
                 Row(
                   children: <Widget>[
-                    CircleAvatar(
+                    ChildAvatarImage(
+                      name: child.name,
+                      seed: child.id,
+                      photoUrl: child.photoUrl,
                       radius: 24,
-                      backgroundColor: AppColors.avatarFor(child.id),
-                      backgroundImage: child.photoUrl != null
-                          ? NetworkImage(child.photoUrl!)
-                          : null,
-                      child: child.photoUrl == null
-                          ? Text(
-                              child.initials,
-                              style: theme.textTheme.titleMedium
-                                  ?.copyWith(color: Colors.white),
-                            )
-                          : null,
                     ),
                     const SizedBox(width: AppSpacing.md),
                     Expanded(

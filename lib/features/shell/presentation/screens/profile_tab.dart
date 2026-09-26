@@ -96,6 +96,7 @@ class ProfileTab extends ConsumerWidget {
                             PersonAvatar(
                               name: user.name,
                               seed: user.uid,
+                              photoUrl: user.photoUrl,
                               radius: 40,
                             ),
                             Positioned(

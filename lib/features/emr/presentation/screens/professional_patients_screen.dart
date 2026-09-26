@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/config/app_assets.dart';
+import '../../../../core/config/capi_pose.dart';
 import '../../../../core/error/failures.dart';
 import '../../../../core/config/dev_mode.dart';
 import '../../../../core/providers/core_providers.dart';
@@ -451,6 +453,7 @@ class _ProfessionalPatientsScreenState
                     return EmptyState(
                       icon: Icons.people_outline_rounded,
                       asset: AppIcons.patients,
+                      illustration: AppAssets.capiForPose(CapiPose.bracosAbertos),
                       title: 'Nenhum paciente ainda',
                       message:
                           'Os pacientes aparecem aqui depois do primeiro '
@@ -472,6 +475,7 @@ class _ProfessionalPatientsScreenState
                   if (patients.isEmpty) {
                     return EmptyState(
                       icon: Icons.search_off_rounded,
+                      illustration: AppAssets.capiLupa,
                       title: 'Nada encontrado',
                       message: _query.isNotEmpty
                           ? 'Nenhum paciente com "$_query".'
