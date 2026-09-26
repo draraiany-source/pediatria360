@@ -379,6 +379,13 @@ class _ProfessionalHome extends ConsumerWidget {
                     onTap: () => context.go(Routes.agendaPath),
                   ),
                   _QuickSquare(
+                    title: 'Consultorio',
+                    subtitle: 'Gestao 360',
+                    icon: Icons.local_hospital_outlined,
+                    color: AppColors.navy,
+                    onTap: () => context.go(Routes.clinicPath),
+                  ),
+                  _QuickSquare(
                     title: 'Prontuario',
                     subtitle: 'Pacientes',
                     icon: Icons.folder_shared_outlined,

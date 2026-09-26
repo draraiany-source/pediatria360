@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_tokens.dart';
+import '../../../../core/widgets/back_or_home_button.dart';
 import '../../../../shared/domain/entities/app_user.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../clinic_org/presentation/providers/clinic_org_providers.dart';
@@ -24,7 +25,7 @@ class PermissionMatrixScreen extends ConsumerWidget {
       clinicMembership: membership,
     )) {
       return Scaffold(
-        appBar: AppBar(title: const Text('Permissoes')),
+        appBar: AppBar(leading: const BackOrHomeButton(), title: const Text('Permissoes')),
         body: const UnauthorizedAccessView(module: PermissionModule.users),
       );
     }
@@ -44,6 +45,7 @@ class PermissionMatrixScreen extends ConsumerWidget {
     return Scaffold(
       backgroundColor: AppColors.lightBackground,
       appBar: AppBar(
+        leading: const BackOrHomeButton(),
         title: const Text('Matriz de permissoes'),
         backgroundColor: Colors.white,
         foregroundColor: AppColors.navy,

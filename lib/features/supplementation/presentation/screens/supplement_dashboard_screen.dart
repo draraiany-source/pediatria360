@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/router/routes.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_tokens.dart';
+import '../../../../core/widgets/back_or_home_button.dart';
 import '../../../../core/widgets/brand_ui.dart';
 import '../providers/supplement_providers.dart';
 import '../widgets/supplement_widgets.dart';
@@ -69,6 +70,7 @@ class _SupplementDashboardScreenState
     return Scaffold(
       backgroundColor: AppColors.lightBackground,
       appBar: AppBar(
+        leading: const BackOrHomeButton(),
         title: const Text('Suplementacao Pediatrica'),
         backgroundColor: Colors.white,
         foregroundColor: AppColors.navy,

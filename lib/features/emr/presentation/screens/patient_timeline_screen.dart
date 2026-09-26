@@ -14,6 +14,7 @@ import '../../../../core/theme/app_tokens.dart';
 import '../../../../core/utils/result.dart';
 import '../../../../core/utils/validators.dart';
 import '../../../../core/widgets/app_widgets.dart';
+import '../../../../core/widgets/back_or_home_button.dart';
 import '../../../../core/widgets/child_avatar.dart';
 import '../../../../core/widgets/clinical_ui.dart';
 import '../../../../core/widgets/skeleton.dart';
@@ -222,7 +223,7 @@ class PatientTimelineScreen extends ConsumerWidget {
             ],
           ),
           leading: IconButton(
-            onPressed: () => context.pop(),
+            onPressed: () => context.popOrHome(),
             icon: const AppIcon(
               asset: AppIcons.back,
               size: 22,

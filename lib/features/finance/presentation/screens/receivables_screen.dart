@@ -167,7 +167,7 @@ class ReceivablesScreen extends ConsumerWidget {
         }
       case 'appt':
         if (r.appointmentId != null) {
-          context.push(Routes.appointment(r.appointmentId!));
+          context.go(Routes.agendaPath);
         }
       case 'patient':
         if (r.childId != null) {

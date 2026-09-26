@@ -76,11 +76,7 @@ Future<void> runPendingAction(
         }
       }
     case PendingActionKind.openAppointment:
-      if (item.referenceId != null) {
-        context.push(Routes.appointment(item.referenceId!));
-      } else {
-        context.go(Routes.agendaPath);
-      }
+      context.go(Routes.agendaPath);
     case PendingActionKind.registerPayment:
       if (item.sourceKey.startsWith('finance_recv:')) {
         final String recvId = item.referenceId ?? item.sourceKey.split(':').last;
@@ -92,7 +88,7 @@ Future<void> runPendingAction(
           '${Routes.financeReceivablesPath}?appointmentId=${Uri.encodeComponent(item.referenceId!)}',
         );
       } else {
-        context.go(Routes.financePath);
+        context.push(Routes.financePath);
       }
     case PendingActionKind.openInventory:
       context.push(Routes.inventoryPath);

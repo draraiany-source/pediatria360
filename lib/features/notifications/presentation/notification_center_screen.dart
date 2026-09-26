@@ -16,6 +16,7 @@ import '../../../core/theme/app_tokens.dart';
 import '../../../core/utils/result.dart';
 import '../../../core/utils/validators.dart';
 import '../../../core/widgets/app_widgets.dart';
+import '../../../core/widgets/back_or_home_button.dart';
 import '../../../core/widgets/skeleton.dart';
 import '../../../core/widgets/state_views.dart';
 import '../../auth/presentation/providers/auth_providers.dart';
@@ -157,7 +158,7 @@ class NotificationCenterScreen extends ConsumerWidget {
         automaticallyImplyLeading: false,
         leading: context.canPop()
             ? IconButton(
-                onPressed: () => context.pop(),
+                onPressed: () => context.popOrHome(),
                 icon: const Icon(Icons.arrow_back_rounded, color: AppColors.brand),
                 tooltip: 'Voltar',
               )

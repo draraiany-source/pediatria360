@@ -15,6 +15,7 @@ import '../../../core/utils/result.dart';
 import '../../../core/utils/validators.dart';
 import '../../../core/router/routes.dart';
 import '../../../core/widgets/app_widgets.dart';
+import '../../../core/widgets/back_or_home_button.dart';
 import '../../../core/widgets/clinical_ui.dart';
 import '../../../core/widgets/skeleton.dart';
 import '../../../core/widgets/state_views.dart';
@@ -292,7 +293,7 @@ class _ProfessionalAgendaScreenState
         automaticallyImplyLeading: false,
         leading: context.canPop()
             ? IconButton(
-                onPressed: () => context.pop(),
+                onPressed: () => context.popOrHome(),
                 icon: const AppIcon(
             asset: AppIcons.back,
             size: 22,

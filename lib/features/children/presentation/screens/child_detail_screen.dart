@@ -8,6 +8,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_tokens.dart';
 import '../../../../core/utils/validators.dart';
 import '../../../../core/widgets/app_widgets.dart';
+import '../../../../core/widgets/back_or_home_button.dart';
 import '../../../../core/widgets/child_avatar.dart';
 import '../../../../core/widgets/clinical_ui.dart';
 import '../../../../core/widgets/state_views.dart';
@@ -50,7 +51,7 @@ class ChildDetailScreen extends ConsumerWidget {
         appBar: AppBar(
           backgroundColor: scaffoldBg,
           leading: IconButton(
-            onPressed: () => context.pop(),
+            onPressed: () => context.popOrHome(),
             icon: Icon(
               Icons.arrow_back_rounded,
               color: isDark ? AppColors.violetSoft : null,
@@ -78,7 +79,7 @@ class ChildDetailScreen extends ConsumerWidget {
             backgroundColor: scaffoldBg,
             foregroundColor: ink,
             leading: IconButton(
-              onPressed: () => context.pop(),
+              onPressed: () => context.popOrHome(),
               icon: Icon(
                 Icons.arrow_back_rounded,
                 color: isDark ? AppColors.violetSoft : null,

@@ -860,8 +860,10 @@ final Provider<GoRouter> routerProvider = Provider<GoRouter>((Ref ref) {
             path: Routes.patientsPath,
             name: Routes.patientsName,
             pageBuilder: (BuildContext context, GoRouterState state) =>
-                const NoTransitionPage<void>(
-              child: ProfessionalPatientsScreen(),
+                NoTransitionPage<void>(
+              child: ProfessionalPatientsScreen(
+                initialQuery: state.uri.queryParameters['q'],
+              ),
             ),
           ),
           GoRoute(

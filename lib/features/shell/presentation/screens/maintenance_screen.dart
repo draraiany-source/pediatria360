@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../../core/providers/core_providers.dart';
+import '../../../../core/router/routes.dart';
 import '../../../../core/services/remote_config_service.dart';
 import '../../../../core/widgets/state_views.dart';
 
@@ -22,7 +24,12 @@ class MaintenanceScreen extends ConsumerWidget {
           title: 'Em manutencao',
           message: config.maintenanceMessage,
           actionLabel: 'Tentar novamente',
-          onAction: () async => config.refresh(),
+          onAction: () async {
+            await config.refresh();
+            if (context.mounted && !config.maintenanceMode) {
+              context.go(Routes.splashPath);
+            }
+          },
         ),
       ),
     );

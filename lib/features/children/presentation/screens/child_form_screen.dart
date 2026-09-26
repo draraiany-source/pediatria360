@@ -7,6 +7,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_tokens.dart';
 import '../../../../core/utils/validators.dart';
 import '../../../../core/widgets/app_widgets.dart';
+import '../../../../core/widgets/back_or_home_button.dart';
 import '../../../../core/widgets/child_avatar.dart';
 import '../../../../shared/domain/entities/child.dart';
 import '../providers/children_providers.dart';
@@ -201,7 +202,7 @@ class _ChildFormScreenState extends ConsumerState<ChildFormScreen> {
       appBar: AppBar(
         title: Text(_isEditing ? 'Editar criança' : 'Nova criança'),
         leading: IconButton(
-          onPressed: () => context.pop(),
+          onPressed: () => context.popOrHome(),
           icon: const Icon(Icons.close_rounded),
           tooltip: 'Cancelar',
         ),

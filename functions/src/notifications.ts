@@ -390,7 +390,7 @@ export const onLabResultCreated = onDocumentCreated(
       type: "labResult",
       title: "Novo resultado de exame",
       body: "Um resultado foi registrado no prontuário.",
-      route: "/prontuario",
+      route: "/avisos",
     });
   }
 );

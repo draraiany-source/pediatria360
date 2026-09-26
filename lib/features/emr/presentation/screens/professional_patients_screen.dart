@@ -183,7 +183,9 @@ enum PatientFilter {
 /// É a porta de entrada do prontuário: daqui se chega à linha do tempo e, dela,
 /// ao atendimento.
 class ProfessionalPatientsScreen extends ConsumerStatefulWidget {
-  const ProfessionalPatientsScreen({super.key});
+  const ProfessionalPatientsScreen({super.key, this.initialQuery});
+
+  final String? initialQuery;
 
   @override
   ConsumerState<ProfessionalPatientsScreen> createState() =>
@@ -196,6 +198,39 @@ class _ProfessionalPatientsScreenState
   Timer? _debounce;
   String _query = '';
   PatientFilter _filter = PatientFilter.all;
+
+  @override
+  void initState() {
+    super.initState();
+    final String initial = widget.initialQuery?.trim() ?? '';
+    if (initial.isNotEmpty) {
+      _search.text = initial;
+      _query = initial;
+    }
+  }
+
+  Future<void> _pickFilter(BuildContext context) async {
+    final PatientFilter? picked = await showModalBottomSheet<PatientFilter>(
+      context: context,
+      showDragHandle: true,
+      builder: (BuildContext sheetContext) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            for (final PatientFilter f in PatientFilter.values)
+              ListTile(
+                title: Text(f.label),
+                trailing: f == _filter
+                    ? const Icon(Icons.check_rounded, color: AppColors.brand)
+                    : null,
+                onTap: () => Navigator.of(sheetContext).pop(f),
+              ),
+          ],
+        ),
+      ),
+    );
+    if (picked != null && mounted) setState(() => _filter = picked);
+  }
 
   @override
   void dispose() {
@@ -325,7 +360,7 @@ class _ProfessionalPatientsScreenState
                     title: 'Pacientes',
                     subtitle: 'Gerencie e acompanhe seus pacientes.',
                     trailing: TextButton.icon(
-                      onPressed: () {},
+                      onPressed: () => _pickFilter(context),
                       icon: const AppIcon(
                         asset: AppIcons.filter,
                         size: 18,

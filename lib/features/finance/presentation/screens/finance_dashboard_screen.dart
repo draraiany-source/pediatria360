@@ -6,6 +6,7 @@ import '../../../../core/error/failures.dart' show AuthFailure, ServerFailure;
 import '../../../../core/router/routes.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_tokens.dart';
+import '../../../../core/widgets/back_or_home_button.dart';
 import '../../../../core/widgets/brand_ui.dart';
 import '../../../../core/widgets/state_views.dart';
 import '../../../../shared/domain/entities/commerce.dart';
@@ -29,7 +30,7 @@ class FinanceDashboardScreen extends ConsumerWidget {
     );
     if (!allowed) {
       return Scaffold(
-        appBar: AppBar(title: const Text('Financeiro')),
+        appBar: AppBar(leading: const BackOrHomeButton(), title: const Text('Financeiro')),
         body: const ErrorState(
           failure: AuthFailure('Sem permissao para o modulo financeiro.'),
         ),
@@ -46,6 +47,7 @@ class FinanceDashboardScreen extends ConsumerWidget {
     return Scaffold(
       backgroundColor: AppColors.lightBackground,
       appBar: AppBar(
+        leading: const BackOrHomeButton(),
         title: const Text('Financeiro'),
         backgroundColor: Colors.white,
         foregroundColor: AppColors.navy,

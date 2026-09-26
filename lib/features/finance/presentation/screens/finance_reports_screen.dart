@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:printing/printing.dart';
 
 import '../../../../core/theme/app_tokens.dart';
+import '../../../../core/widgets/back_or_home_button.dart';
 import '../../domain/finance_aggregators.dart';
 import '../../domain/finance_models.dart';
 import '../providers/finance_providers.dart';
@@ -15,7 +16,7 @@ class FinanceReportsScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Relatorios')),
+      appBar: AppBar(leading: const BackOrHomeButton(), title: const Text('Relatorios')),
       body: ListView(
         padding: const EdgeInsets.all(AppSpacing.lg),
         children: <Widget>[
