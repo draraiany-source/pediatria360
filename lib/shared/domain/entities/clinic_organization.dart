@@ -79,6 +79,7 @@ class ClinicOrganization extends Equatable {
     this.logoUrl,
     this.active = true,
     this.plan = 'basic',
+    this.ownerUserId = '',
   });
 
   factory ClinicOrganization.fromMap(Map<String, dynamic> map, {String? id}) {
@@ -94,6 +95,7 @@ class ClinicOrganization extends Equatable {
       logoUrl: map['logoUrl'] as String?,
       active: (map['active'] as bool?) ?? true,
       plan: (map['plan'] as String?) ?? 'basic',
+      ownerUserId: (map['ownerUserId'] as String?) ?? '',
       createdAt: DateTime.tryParse((map['createdAt'] as String?) ?? '') ??
           DateTime.fromMillisecondsSinceEpoch(0),
     );
@@ -110,6 +112,7 @@ class ClinicOrganization extends Equatable {
   final String? logoUrl;
   final bool active;
   final String plan;
+  final String ownerUserId;
   final DateTime createdAt;
 
   Map<String, dynamic> toMap() => <String, dynamic>{
@@ -124,11 +127,13 @@ class ClinicOrganization extends Equatable {
         'logoUrl': logoUrl,
         'active': active,
         'plan': plan,
+        'ownerUserId': ownerUserId,
         'createdAt': createdAt.toIso8601String(),
       };
 
   @override
-  List<Object?> get props => <Object?>[id, name, cnpj, active, plan];
+  List<Object?> get props =>
+      <Object?>[id, name, cnpj, active, plan, ownerUserId];
 }
 
 class ClinicUnit extends Equatable {

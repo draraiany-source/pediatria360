@@ -78,3 +78,14 @@ Desktop.ini
 # Logs locais de teste
 tools/fase2_test_out.txt
 
+
+# Backups do migrate_platforms
+**/*.pre-migration
+# Logs locais de build/teste
+tools/*_build.txt
+tools/*_tests.txt
+tools/migrate_out.txt
+tools/flutter_create_*.txt
+tools/auditoria_*.txt
+tools/publish_*.txt
+

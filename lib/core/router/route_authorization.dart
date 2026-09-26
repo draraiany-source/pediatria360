@@ -1,4 +1,5 @@
 import '../../features/security/domain/permission_matrix.dart';
+import '../../features/workspace/domain/workspace_profile.dart';
 import '../../shared/domain/entities/app_user.dart';
 import '../../shared/domain/entities/clinic_organization.dart';
 import 'routes.dart';
@@ -17,6 +18,7 @@ String? resolveRouteRedirect({
   required bool seenOnboarding,
   bool unlockAllRoles = false,
   ClinicMembership? clinicMembership,
+  WorkspaceProfile? workspace,
 }) {
   // 1. Manutencao bloqueia tudo, inclusive telas publicas.
   if (maintenanceMode) {
@@ -64,13 +66,13 @@ String? resolveRouteRedirect({
     return null;
   }
 
-  // 6. Area administrativa exige papel de admin.
+  // 6. Area administrativa CMS exige papel de admin de plataforma.
   if (location.startsWith(Routes.adminPath) && !user.role.isAdmin) {
     return Routes.homePath;
   }
 
-  // 7. Area profissional de plataforma (UserRole).
-  final bool isProfessionalArea = location.startsWith(Routes.patientsPath) ||
+  // 7. Areas de equipe (clinica / financeiro / BI).
+  final bool isStaffArea = location.startsWith(Routes.patientsPath) ||
       location.startsWith(Routes.agendaPath) ||
       location.startsWith(Routes.clinicPath) ||
       location.startsWith(Routes.financePath) ||
@@ -81,8 +83,20 @@ String? resolveRouteRedirect({
       location.startsWith(Routes.permissionsPath) ||
       location.startsWith(Routes.supplementPath) ||
       location.startsWith(Routes.clinicOrgPath);
-  if (isProfessionalArea && user.role != UserRole.professional) {
-    return Routes.homePath;
+
+  if (isStaffArea) {
+    if (user.role == UserRole.professional) {
+      // ok
+    } else if (user.role.isAdmin) {
+      final bool adminAllowed = location.startsWith(Routes.adminPath) ||
+          location.startsWith(Routes.permissionsPath) ||
+          location.startsWith(Routes.auditPath) ||
+          location.startsWith(Routes.biPath) ||
+          location.startsWith(Routes.clinicOrgPath);
+      if (!adminAllowed) return Routes.homePath;
+    } else {
+      return Routes.homePath;
+    }
   }
 
   // 8. FASE 2 — RBAC clinico: recepcao nao abre evolucao/prontuario por URL.
@@ -97,6 +111,31 @@ String? resolveRouteRedirect({
           action: PermissionAction.view,
         )) {
       return Routes.homePath;
+    }
+  }
+
+  // 9. Area de trabalho ativa (perfil concedido) — reforco de UI/rota.
+  if (workspace != null && user.role == UserRole.professional) {
+    final bool isChart = location.startsWith(Routes.patientsPath) ||
+        location.startsWith(Routes.clinicVoicePath) ||
+        location.startsWith(Routes.supplementPath);
+    final bool isFinance = location.startsWith(Routes.financePath) ||
+        location.startsWith(Routes.billingPath) ||
+        location.startsWith(Routes.inventoryPath);
+
+    switch (workspace) {
+      case WorkspaceProfile.receptionist:
+        if (isChart || isFinance) return Routes.homePath;
+      case WorkspaceProfile.finance:
+        if (isChart) return Routes.homePath;
+        if (location.startsWith(Routes.clinicReceptionPath) ||
+            location.startsWith(Routes.clinicPendingPath)) {
+          return Routes.homePath;
+        }
+      case WorkspaceProfile.professional:
+      case WorkspaceProfile.admin:
+      case WorkspaceProfile.patient:
+        break;
     }
   }
 
