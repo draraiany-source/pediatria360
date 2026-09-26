@@ -7,6 +7,7 @@ class FirestorePaths {
   // Collections raiz
   static const String users = 'users';
   static const String children = 'children';
+  static const String childRegistry = 'child_registry';
   static const String articles = 'articles';
   static const String courses = 'courses';
   static const String lessons = 'lessons';

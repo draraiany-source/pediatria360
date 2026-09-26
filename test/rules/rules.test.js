@@ -40,6 +40,7 @@ const {
   query,
   where,
   serverTimestamp,
+  writeBatch,
 } = require("firebase/firestore");
 const {
   ref,
@@ -147,6 +148,7 @@ beforeEach(async () => {
       name: "Manuela",
       sex: "female",
     });
+    await setDoc(doc(db, "child_registry", "filha"), { ownerUid: ANA });
     await setDoc(
       doc(db, "users", ANA, "children", "filha", "growth_records", "m1"),
       { weightKg: 9.6, heightCm: 75 }
@@ -1412,6 +1414,403 @@ describe("visit_summaries", () => {
     await assertFails(
       updateDoc(doc(as(DR_NOVO), "visit_summaries", "atendimento-1"), {
         guidance: "tentando editar resumo de outro profissional",
+      })
+    );
+  });
+});
+
+// ===========================================================================
+// child_registry — posse da crianca nao pode ser forjada
+// ===========================================================================
+
+describe("child_registry — posse da crianca", () => {
+  function novaCriancaComRegistro(db, owner, childId) {
+    const batch = writeBatch(db);
+    batch.set(doc(db, "users", owner, "children", childId), {
+      ownerId: owner,
+      name: "Crianca ficticia",
+    });
+    batch.set(doc(db, "child_registry", childId), { ownerUid: owner });
+    return batch.commit();
+  }
+
+  test("a mae cadastra crianca nova junto com o registro", async () => {
+    await assertSucceeds(novaCriancaComRegistro(as(ANA), ANA, "novo"));
+  });
+
+  test("cadastro de crianca SEM registro e recusado", async () => {
+    await assertFails(
+      setDoc(doc(as(ANA), "users", ANA, "children", "sem-registro"), {
+        ownerId: ANA,
+        name: "Crianca ficticia",
+      })
+    );
+  });
+
+  test("outro responsavel NAO cria documento com o id da filha alheia", async () => {
+    await assertFails(novaCriancaComRegistro(as(BRUNO), BRUNO, "filha"));
+    await assertFails(
+      setDoc(doc(as(BRUNO), "users", BRUNO, "children", "filha"), {
+        ownerId: BRUNO,
+      })
+    );
+  });
+
+  test("registro sem a crianca correspondente e recusado", async () => {
+    await assertFails(
+      setDoc(doc(as(BRUNO), "child_registry", "qualquer"), { ownerUid: BRUNO })
+    );
+  });
+
+  test("registro em nome de outra pessoa e recusado", async () => {
+    const db = as(BRUNO);
+    const batch = writeBatch(db);
+    batch.set(doc(db, "users", BRUNO, "children", "x1"), { ownerId: BRUNO });
+    batch.set(doc(db, "child_registry", "x1"), { ownerUid: ANA });
+    await assertFails(batch.commit());
+  });
+
+  test("registro nao pode ser alterado nem apagado", async () => {
+    await assertFails(
+      updateDoc(doc(as(ANA), "child_registry", "filha"), { ownerUid: BRUNO })
+    );
+    await assertFails(deleteDoc(doc(as(ANA), "child_registry", "filha")));
+  });
+
+  test("dono le o proprio registro; outro nao", async () => {
+    await assertSucceeds(getDoc(doc(as(ANA), "child_registry", "filha")));
+    await assertFails(getDoc(doc(as(BRUNO), "child_registry", "filha")));
+  });
+
+  test("documento-isca antigo NAO da acesso ao prontuario quando ha registro", async () => {
+    // Simula um documento forjado antes desta regra existir.
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      await setDoc(
+        doc(context.firestore(), "users", BRUNO, "children", "filha"),
+        { ownerId: BRUNO }
+      );
+    });
+    await assertFails(getDoc(doc(as(BRUNO), "encounters", "atendimento-1")));
+    await assertFails(getDoc(doc(as(BRUNO), "lab_results", "exame-1")));
+    await assertSucceeds(getDoc(doc(as(ANA), "encounters", "atendimento-1")));
+  });
+
+  test("crianca antiga sem registro continua acessivel ao dono", async () => {
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      const db = context.firestore();
+      await setDoc(doc(db, "users", ANA, "children", "legado"), {
+        ownerId: ANA,
+      });
+      await setDoc(doc(db, "encounters", "atendimento-legado"), {
+        patientId: "legado",
+        professionalId: DRA,
+        status: "signed",
+      });
+    });
+    await assertSucceeds(
+      getDoc(doc(as(ANA), "encounters", "atendimento-legado"))
+    );
+    await assertSucceeds(
+      updateDoc(doc(as(ANA), "users", ANA, "children", "legado"), {
+        name: "Atualizado",
+      })
+    );
+  });
+
+  test("a mae atualiza o cadastro da filha registrada", async () => {
+    await assertSucceeds(
+      updateDoc(doc(as(ANA), "users", ANA, "children", "filha"), {
+        name: "Manuela Silva",
+      })
+    );
+  });
+});
+
+// ===========================================================================
+// Registros clinicos — atualizacao so pelo autor atual
+// ===========================================================================
+
+describe("registros clinicos — sem sequestro na atualizacao", () => {
+  const DRA2 = "uid_dra2";
+
+  beforeEach(async () => {
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      const db = context.firestore();
+      await setDoc(doc(db, "users", DRA2), {
+        email: "dra2@exemplo.com",
+        name: "Dra. Ficticia 2",
+        role: "professional",
+        plan: "pro",
+        professionalVerified: true,
+        xp: 0,
+      });
+      await setDoc(doc(db, "triage_records", "t1"), {
+        childId: "filha",
+        professionalId: DRA,
+      });
+      await setDoc(doc(db, "development_records", "d1"), {
+        childId: "filha",
+        professionalId: DRA,
+      });
+      await setDoc(doc(db, "supplement_lab_results", "s1"), {
+        childId: "filha",
+        recordedBy: DRA,
+      });
+      await setDoc(doc(db, "supplement_prescriptions", "p1"), {
+        childId: "filha",
+        professionalId: DRA,
+        status: "draft",
+      });
+      await setDoc(doc(db, "supplement_clinical_notes", "n1"), {
+        childId: "filha",
+        professionalId: DRA,
+        text: "nota ficticia",
+      });
+      await setDoc(doc(db, "supplement_ai_drafts", "a1"), {
+        childId: "filha",
+        professionalId: DRA,
+      });
+    });
+  });
+
+  const alvos = [
+    ["lab_results", "exame-1", "professionalId"],
+    ["triage_records", "t1", "professionalId"],
+    ["development_records", "d1", "professionalId"],
+    ["supplement_lab_results", "s1", "recordedBy"],
+    ["supplement_prescriptions", "p1", "professionalId"],
+    ["supplement_clinical_notes", "n1", "professionalId"],
+  ];
+
+  test.each(alvos)(
+    "outro profissional NAO grava o proprio id em %s alheio",
+    async (col, id, campo) => {
+      await assertFails(
+        setDoc(doc(as(DRA2), col, id), { [campo]: DRA2 }, { merge: true })
+      );
+    }
+  );
+
+  test.each(alvos)("autor atualiza o proprio registro em %s", async (col, id) => {
+    await assertSucceeds(
+      setDoc(doc(as(DRA), col, id), { nota: "revisado" }, { merge: true })
+    );
+  });
+
+  test("autor NAO troca o paciente do registro", async () => {
+    await assertFails(
+      updateDoc(doc(as(DRA), "triage_records", "t1"), { childId: "outra" })
+    );
+    await assertFails(
+      updateDoc(doc(as(DRA), "lab_results", "exame-1"), { patientId: "outra" })
+    );
+  });
+
+  test("autor NAO repassa o registro para outro profissional", async () => {
+    await assertFails(
+      updateDoc(doc(as(DRA), "development_records", "d1"), {
+        professionalId: DRA2,
+      })
+    );
+  });
+
+  test("autor le as proprias notas e rascunhos de suplementacao", async () => {
+    await assertSucceeds(getDoc(doc(as(DRA), "supplement_clinical_notes", "n1")));
+    await assertSucceeds(getDoc(doc(as(DRA), "supplement_ai_drafts", "a1")));
+    await assertFails(getDoc(doc(as(DRA2), "supplement_clinical_notes", "n1")));
+    await assertFails(getDoc(doc(as(DRA2), "supplement_ai_drafts", "a1")));
+  });
+});
+
+// ===========================================================================
+// Vinculo com a clinica, agendamentos e responsaveis vinculados
+// ===========================================================================
+
+describe("clinica, agendamentos e responsaveis vinculados", () => {
+  const REC = "uid_recepcao";
+  const FIN = "uid_financeiro";
+  const CLIN = "clinica-ficticia";
+
+  async function vinculo(db, uid, role, { ativoClinica = true, papelClinica } = {}) {
+    await setDoc(doc(db, "users", uid, "clinic_memberships", CLIN), {
+      id: uid,
+      userId: uid,
+      clinicId: CLIN,
+      role,
+      active: true,
+    });
+    await setDoc(doc(db, "clinics", CLIN, "memberships", uid), {
+      id: uid,
+      userId: uid,
+      clinicId: CLIN,
+      role: papelClinica || role,
+      active: ativoClinica,
+    });
+  }
+
+  beforeEach(async () => {
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      const db = context.firestore();
+      for (const uid of [REC, FIN]) {
+        await setDoc(doc(db, "users", uid), {
+          role: "professional",
+          professionalVerified: true,
+          plan: "free",
+          xp: 0,
+        });
+      }
+      await vinculo(db, REC, "receptionist");
+      await vinculo(db, FIN, "finance");
+      await setDoc(doc(db, "appointments", "consulta-clinica"), {
+        patientId: ANA,
+        professionalId: DRA,
+        clinicId: CLIN,
+        childId: "filha",
+        status: "confirmed",
+        startsAt: new Date(),
+      });
+      await setDoc(
+        doc(db, "users", ANA, "children", "filha", "guardians", BRUNO),
+        {
+          ownerId: ANA,
+          childId: "filha",
+          guardianUid: BRUNO,
+          status: "active",
+          canViewData: true,
+        }
+      );
+    });
+  });
+
+  test("recepcao ativa le a agenda da clinica", async () => {
+    await assertSucceeds(getDoc(doc(as(REC), "appointments", "consulta-clinica")));
+  });
+
+  test("recepcao desativada NA CLINICA perde o acesso (copia do usuario velha)", async () => {
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      await vinculo(context.firestore(), REC, "receptionist", { ativoClinica: false });
+    });
+    await assertFails(getDoc(doc(as(REC), "appointments", "consulta-clinica")));
+  });
+
+  test("papel rebaixado na clinica vale sobre a copia do usuario", async () => {
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      await vinculo(context.firestore(), REC, "receptionist", { papelClinica: "finance" });
+    });
+    await assertFails(getDoc(doc(as(REC), "appointments", "consulta-clinica")));
+  });
+
+  test("financeiro marca o atendimento como pago, e so isso", async () => {
+    await assertSucceeds(
+      updateDoc(doc(as(FIN), "appointments", "consulta-clinica"), { paid: true })
+    );
+    await assertFails(
+      updateDoc(doc(as(FIN), "appointments", "consulta-clinica"), {
+        status: "cancelled",
+      })
+    );
+  });
+
+  test("paciente cancela, mas nao muda outros campos junto", async () => {
+    await assertSucceeds(
+      updateDoc(doc(as(ANA), "appointments", "consulta1"), {
+        status: "cancelled",
+        cancelledAt: serverTimestamp(),
+      })
+    );
+    await assertFails(
+      updateDoc(doc(as(ANA), "appointments", "consulta-concluida"), {
+        status: "cancelled",
+        paid: true,
+      })
+    );
+  });
+
+  test("paciente solicita consulta simples para crianca propria", async () => {
+    await assertSucceeds(
+      setDoc(doc(as(ANA), "appointments", "pedido-ana"), {
+        patientId: ANA,
+        professionalId: DRA,
+        childId: "filha",
+        status: "requested",
+      })
+    );
+  });
+
+  test("paciente NAO cria agendamento com clinica/pagamento nem para crianca alheia", async () => {
+    await assertFails(
+      setDoc(doc(as(ANA), "appointments", "forjado-1"), {
+        patientId: ANA,
+        professionalId: DRA,
+        status: "requested",
+        clinicId: CLIN,
+      })
+    );
+    await assertFails(
+      setDoc(doc(as(ANA), "appointments", "forjado-2"), {
+        patientId: ANA,
+        professionalId: DRA,
+        status: "requested",
+        paid: true,
+      })
+    );
+    await assertFails(
+      setDoc(doc(as(DRA), "appointments", "forjado-3"), {
+        patientId: DRA,
+        professionalId: DRA,
+        childId: "filha",
+        status: "requested",
+      })
+    );
+  });
+
+  test("change_log so de quem participa do agendamento", async () => {
+    await assertSucceeds(
+      setDoc(doc(as(ANA), "appointments", "consulta1", "change_log", "l1"), {
+        actorUid: ANA,
+        action: "cancelled",
+      })
+    );
+    await assertFails(
+      setDoc(doc(as(BRUNO), "appointments", "consulta1", "change_log", "l2"), {
+        actorUid: BRUNO,
+        action: "forjado",
+      })
+    );
+  });
+
+  test("responsavel vinculado le crescimento/vacinas, mas nao grava", async () => {
+    await assertSucceeds(
+      getDoc(doc(as(BRUNO), "users", ANA, "children", "filha", "growth_records", "m1"))
+    );
+    await assertFails(
+      setDoc(
+        doc(as(BRUNO), "users", ANA, "children", "filha", "growth_records", "m2"),
+        { weightKg: 1 }
+      )
+    );
+    await assertFails(
+      updateDoc(
+        doc(as(BRUNO), "users", ANA, "children", "filha", "vaccine_doses", "bcg-1"),
+        { appliedAt: new Date() }
+      )
+    );
+  });
+
+  test("linked_children so e gravado pelo dono da crianca", async () => {
+    await assertSucceeds(
+      setDoc(doc(as(ANA), "users", BRUNO, "linked_children", "filha"), {
+        guardianUid: BRUNO,
+        childId: "filha",
+        ownerId: ANA,
+        status: "active",
+      })
+    );
+    await assertFails(
+      setDoc(doc(as(BRUNO), "users", ANA, "linked_children", "falsa"), {
+        guardianUid: ANA,
+        childId: "falsa",
+        ownerId: BRUNO,
       })
     );
   });

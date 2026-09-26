@@ -107,6 +107,10 @@ async function main() {
     sex: "M",
   }, { merge: true });
 
+  // Registro de posse (ver ownsChild em firestore.rules).
+  await db.doc("child_registry/child-ficticio-a1").set({ ownerUid: "homolog-parent-a" });
+  await db.doc("child_registry/child-ficticio-b1").set({ ownerUid: "homolog-parent-b" });
+
   // Agendamento ficticio medico A
   const starts = new Date();
   starts.setHours(starts.getHours() + 2, 0, 0, 0);

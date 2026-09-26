@@ -219,13 +219,16 @@ class SyncService {
             return;
           }
 
-          await ref.set(
-            <String, dynamic>{
-              ...resolution.merged!,
-              'updatedAt': FieldValue.serverTimestamp(),
-            },
-            SetOptions(merge: true),
-          );
+          final Map<String, dynamic> data = <String, dynamic>{
+            ...resolution.merged!,
+            'updatedAt': FieldValue.serverTimestamp(),
+          };
+          if (entry.entity == SyncEntity.children &&
+              entry.operation == OutboxOperation.create) {
+            await _createChildWithRegistry(ref, data);
+          } else {
+            await ref.set(data, SetOptions(merge: true));
+          }
 
           await db.recordSyncEvent(
             SyncEvent(
@@ -315,6 +318,31 @@ class SyncService {
       local: local,
       remote: snapshot.data() ?? const <String, dynamic>{},
     );
+  }
+
+  /// Crianca nova vai junto com o registro de propriedade (child_registry):
+  /// as regras so aceitam a criacao com os dois no mesmo lote.
+  Future<void> _createChildWithRegistry(
+    DocumentReference<Map<String, dynamic>> childRef,
+    Map<String, dynamic> data,
+  ) async {
+    final DocumentReference<Map<String, dynamic>> registry = _firestore
+        .collection(FirestorePaths.childRegistry)
+        .doc(childRef.id);
+    final DocumentSnapshot<Map<String, dynamic>> existing =
+        await registry.get();
+    if (existing.exists) {
+      // Retentativa de um envio que ja tinha dado certo.
+      await childRef.set(data, SetOptions(merge: true));
+      return;
+    }
+    final WriteBatch batch = _firestore.batch()
+      ..set(childRef, data, SetOptions(merge: true))
+      ..set(registry, <String, dynamic>{
+        'ownerUid': childRef.parent.parent!.id,
+        'createdAt': FieldValue.serverTimestamp(),
+      });
+    await batch.commit();
   }
 
   Future<void> _clearDirty(OutboxEntry entry) async {

@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-09-26T22:32:03.278Z",
-  "project": "pediatria360-app",
+  "generatedAt": "2026-09-26T23:52:42.049Z",
+  "project": "demo-pediatria360",
   "note": "Matriz Auth/Firestore Emulator. NAO prova sozinha fluxos UI completos.",
   "fase9ClinicIsolation": {
     "result": "PASSOU",
@@ -110,7 +110,7 @@
       "expected": "HTTP 403/PERMISSION_DENIED",
       "observed": "HTTP 403",
       "result": "PASSOU",
-      "evidence": "{\"code\":403,\"message\":\"\\nevaluation error at L890:22 for 'get' @ L890, false for 'get' @ L1025, false for 'get' @ L890, false for 'get' @ L1025\",\"status\":\"PERMISSION_DENIED\"}"
+      "evidence": "{\"code\":403,\"message\":\"\\nevaluation error at L978:22 for 'get' @ L978, false for 'get' @ L1113, false for 'get' @ L978, false for 'get' @ L1113\",\"status\":\"PERMISSION_DENIED\"}"
     },
     {
       "id": "neg-recv-write-finance",
@@ -121,18 +121,18 @@
       "expected": "PERMISSION_DENIED",
       "observed": "HTTP 403",
       "result": "PASSOU",
-      "evidence": "{\"code\":403,\"message\":\"\\nevaluation error at L891:32 for 'create' @ L891, false for 'create' @ L1025, false for 'create' @ L891, false for 'create' @ L1025\",\"status\":\"PERMISSION_DENIED\"}"
+      "evidence": "{\"code\":403,\"message\":\"\\nevaluation error at L979:32 for 'create' @ L979, false for 'create' @ L1113, false for 'create' @ L979, false for 'create' @ L1113\",\"status\":\"PERMISSION_DENIED\"}"
     },
     {
       "id": "fin-create-receivable-persist",
       "title": "Financeiro cria cobranca ficticia e persiste",
       "profile": "finance",
       "env": "Firestore Emulator",
-      "steps": "POST+GET finance_receivables/recv-homolog-matrix-1790461917432",
+      "steps": "POST+GET finance_receivables/recv-homolog-matrix-1790466759847",
       "expected": "create 200 + get 200 com amount 9900",
       "observed": "create=200 get=200",
       "result": "PASSOU",
-      "evidence": "recv-homolog-matrix-1790461917432"
+      "evidence": "recv-homolog-matrix-1790466759847"
     },
     {
       "id": "parent-read-own-child",
@@ -154,7 +154,7 @@
       "expected": "PERMISSION_DENIED",
       "observed": "HTTP 403",
       "result": "PASSOU",
-      "evidence": "{\"code\":403,\"message\":\"\\nevaluation error at L132:24 for 'get' @ L132, false for 'get' @ L1025, false for 'get' @ L132, false for 'get' @ L1025\",\"status\":\"PERMISSION_DENIED\"}"
+      "evidence": "{\"code\":403,\"message\":\"\\nevaluation error at L171:24 for 'get' @ L171, false for 'get' @ L1113, false for 'get' @ L171, false for 'get' @ L1113\",\"status\":\"PERMISSION_DENIED\"}"
     },
     {
       "id": "neg-phys-child-without-grant",
@@ -165,7 +165,7 @@
       "expected": "PERMISSION_DENIED",
       "observed": "HTTP 403",
       "result": "PASSOU",
-      "evidence": "{\"code\":403,\"message\":\"\\nevaluation error at L132:24 for 'get' @ L132, false for 'get' @ L1025, false for 'get' @ L132, false for 'get' @ L1025\",\"status\":\"PERMISSION_DENIED\"}"
+      "evidence": "{\"code\":403,\"message\":\"\\nevaluation error at L171:24 for 'get' @ L171, false for 'get' @ L1113, false for 'get' @ L171, false for 'get' @ L1113\",\"status\":\"PERMISSION_DENIED\"}"
     },
     {
       "id": "phys-read-own-appointment",
@@ -220,7 +220,7 @@
       "expected": "PERMISSION_DENIED",
       "observed": "HTTP 403",
       "result": "PASSOU",
-      "evidence": "{\"code\":403,\"message\":\"\\nevaluation error at L347:22 for 'get' @ L347, false for 'get' @ L1025, false for 'get' @ L347, false for 'get' @ L1025\",\"status\":\"PERMISSION_DENIED\"}"
+      "evidence": "{\"code\":403,\"message\":\"\\nevaluation error at L400:22 for 'get' @ L400, false for 'get' @ L1113, false for 'get' @ L400, false for 'get' @ L1113\",\"status\":\"PERMISSION_DENIED\"}"
     },
     {
       "id": "neg-fin-read-child",
@@ -231,7 +231,7 @@
       "expected": "PERMISSION_DENIED",
       "observed": "HTTP 403",
       "result": "PASSOU",
-      "evidence": "{\"code\":403,\"message\":\"\\nevaluation error at L132:24 for 'get' @ L132, false for 'get' @ L1025, false for 'get' @ L132, false for 'get' @ L1025\",\"status\":\"PERMISSION_DENIED\"}"
+      "evidence": "{\"code\":403,\"message\":\"\\nevaluation error at L171:24 for 'get' @ L171, false for 'get' @ L1113, false for 'get' @ L171, false for 'get' @ L1113\",\"status\":\"PERMISSION_DENIED\"}"
     },
     {
       "id": "admin-audit-write-read",
@@ -253,7 +253,7 @@
       "expected": "PERMISSION_DENIED",
       "observed": "HTTP 403",
       "result": "PASSOU",
-      "evidence": "{\"code\":403,\"message\":\"\\nevaluation error at L1003:22 for 'get' @ L1003, false for 'get' @ L1025, false for 'get' @ L1003, false for 'get' @ L1025\",\"status\":\"PERMISSION_DENIED\"}"
+      "evidence": "{\"code\":403,\"message\":\"\\nevaluation error at L1091:22 for 'get' @ L1091, false for 'get' @ L1113, false for 'get' @ L1091, false for 'get' @ L1113\",\"status\":\"PERMISSION_DENIED\"}"
     },
     {
       "id": "parent-read-consent",
@@ -271,11 +271,11 @@
       "title": "Medico cria prontuario rascunho ficticio",
       "profile": "physician",
       "env": "Firestore Emulator",
-      "steps": "POST encounters/enc-homolog-1790461919456 status=draft",
+      "steps": "POST encounters/enc-homolog-1790466760831 status=draft",
       "expected": "HTTP 200",
       "observed": "HTTP 200",
       "result": "PASSOU",
-      "evidence": "{\"id\":\"enc-homolog-1790461919456\"}"
+      "evidence": "{\"id\":\"enc-homolog-1790466760831\"}"
     },
     {
       "id": "phys-sign-encounter-function",
@@ -308,7 +308,7 @@
       "expected": "PERMISSION_DENIED",
       "observed": "HTTP 403",
       "result": "PASSOU",
-      "evidence": "{\"code\":403,\"message\":\"\\nevaluation error at L454:22 for 'get' @ L454, false for 'get' @ L1025, false for 'get' @ L454, false for 'get' @ L1025\",\"status\":\"PERMISSION_DENIED\"}"
+      "evidence": "{\"code\":403,\"message\":\"\\nevaluation error at L528:22 for 'get' @ L528, false for 'get' @ L1113, false for 'get' @ L528, false for 'get' @ L1113\",\"status\":\"PERMISSION_DENIED\"}"
     },
     {
       "id": "neg-fin-read-encounter",
@@ -319,7 +319,7 @@
       "expected": "PERMISSION_DENIED",
       "observed": "HTTP 403",
       "result": "PASSOU",
-      "evidence": "{\"code\":403,\"message\":\"\\nevaluation error at L454:22 for 'get' @ L454, false for 'get' @ L1025, false for 'get' @ L454, false for 'get' @ L1025\",\"status\":\"PERMISSION_DENIED\"}"
+      "evidence": "{\"code\":403,\"message\":\"\\nevaluation error at L528:22 for 'get' @ L528, false for 'get' @ L1113, false for 'get' @ L528, false for 'get' @ L1113\",\"status\":\"PERMISSION_DENIED\"}"
     },
     {
       "id": "neg-parent-b-read-encounter",
@@ -330,7 +330,7 @@
       "expected": "PERMISSION_DENIED",
       "observed": "HTTP 403",
       "result": "PASSOU",
-      "evidence": "{\"code\":403,\"message\":\"\\nevaluation error at L454:22 for 'get' @ L454, false for 'get' @ L1025, false for 'get' @ L454, false for 'get' @ L1025\",\"status\":\"PERMISSION_DENIED\"}"
+      "evidence": "{\"code\":403,\"message\":\"\\nevaluation error at L528:22 for 'get' @ L528, false for 'get' @ L1113, false for 'get' @ L528, false for 'get' @ L1113\",\"status\":\"PERMISSION_DENIED\"}"
     },
     {
       "id": "neg-expired-or-invalid-session",
@@ -352,7 +352,7 @@
       "expected": "PERMISSION_DENIED",
       "observed": "HTTP 403",
       "result": "PASSOU",
-      "evidence": "{\"code\":403,\"message\":\"\\nevaluation error at L890:22 for 'get' @ L890, false for 'get' @ L1025, false for 'get' @ L890, false for 'get' @ L1025\",\"status\":\"PERMISSION_DENIED\"}"
+      "evidence": "{\"code\":403,\"message\":\"\\nevaluation error at L978:22 for 'get' @ L978, false for 'get' @ L1113, false for 'get' @ L978, false for 'get' @ L1113\",\"status\":\"PERMISSION_DENIED\"}"
     },
     {
       "id": "neg-connection-failure",

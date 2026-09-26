@@ -1,0 +1,10 @@
+{
+  "name": "pediatria360-migrations",
+  "private": true,
+  "scripts": {
+    "backfill-child-registry": "node backfill_child_registry.js"
+  },
+  "dependencies": {
+    "firebase-admin": "^12.7.0"
+  }
+}

@@ -162,10 +162,13 @@ async function requireVerifiedProfessional(uid: string | undefined) {
 async function buildContext(
   task: ClinicalTask,
   uid: string,
-  encounterId?: string,
-  patientId?: string
+  encounterId?: string
 ): Promise<string> {
   const blocks: string[] = [];
+  // Paciente vem sempre do atendimento do proprio profissional; o patientId
+  // enviado pelo cliente e ignorado (senao resumia o historico de qualquer
+  // crianca).
+  let ownedPatientId: string | undefined;
 
   if (encounterId) {
     const doc = await db().collection("encounters").doc(encounterId).get();
@@ -182,6 +185,8 @@ async function buildContext(
         "Este atendimento não é seu."
       );
     }
+
+    ownedPatientId = typeof e.patientId === "string" ? e.patientId : undefined;
 
     const a = e.anamnesis ?? {};
     const v = e.vitals ?? {};
@@ -238,6 +243,7 @@ async function buildContext(
     const labs = await db()
       .collection("lab_results")
       .where("patientId", "==", e.patientId)
+      .where("professionalId", "==", uid)
       .orderBy("collectedAt", "desc")
       .limit(30)
       .get();
@@ -260,10 +266,11 @@ async function buildContext(
   }
 
   // Histórico: só para a tarefa que precisa dele.
-  if (task === "summarizeHistory" && patientId) {
+  if (task === "summarizeHistory" && ownedPatientId) {
     const previous = await db()
       .collection("encounters")
-      .where("patientId", "==", patientId)
+      .where("patientId", "==", ownedPatientId)
+      .where("professionalId", "==", uid)
       .where("status", "in", ["signed", "amended"])
       .orderBy("startedAt", "desc")
       .limit(15)
@@ -397,7 +404,7 @@ export const clinicalAssist = onCall(
       };
     }
 
-    const context = await buildContext(task, actor.uid, encounterId, patientId);
+    const context = await buildContext(task, actor.uid, encounterId);
 
     if (!context && !freeText) {
       throw new HttpsError(

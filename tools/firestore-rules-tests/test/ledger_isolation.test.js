@@ -52,6 +52,13 @@ async function seedMembership(db, uid, clinicId, role, unitIds = []) {
     active: true,
     unitIds,
   });
+  await db.doc(`clinics/${clinicId}/memberships/${uid}`).set({
+    userId: uid,
+    clinicId,
+    role,
+    active: true,
+    unitIds,
+  });
 }
 
 async function seedLedger(db, collection, id, data) {
