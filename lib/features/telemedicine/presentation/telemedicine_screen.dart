@@ -18,7 +18,10 @@ import '../../../core/utils/validators.dart';
 import '../../../core/widgets/app_widgets.dart';
 import '../../../core/widgets/clinical_ui.dart';
 import '../../../core/widgets/skeleton.dart';
+import '../../../core/widgets/feature_unavailable.dart';
 import '../../../core/widgets/state_views.dart';
+import '../../../core/config/app_assets.dart';
+import '../../../core/config/capi_pose.dart';
 import '../../../shared/domain/entities/commerce.dart';
 import '../../auth/presentation/providers/auth_providers.dart';
 import '../data/telemedicine_repository.dart';
@@ -246,6 +249,15 @@ class TelemedicineScreen extends ConsumerWidget {
                   ),
                 ),
                 const SizedBox(height: AppSpacing.lg),
+                if (!AppConfig.videoConsultationEnabled)
+                  const Padding(
+                    padding: EdgeInsets.only(bottom: AppSpacing.md),
+                    child: FeatureOffBanner(
+                      text:
+                          'Telemedicina em prototipo: a sala de video ainda '
+                          'nao esta disponivel ponta a ponta nesta versao.',
+                    ),
+                  ),
                 // O aviso vem primeiro, antes de qualquer opção de agendar.
                 // Quem abre telemedicina com uma criança passando mal precisa
                 // ler isto antes de esperar por um horário.
@@ -347,8 +359,9 @@ class TelemedicineScreen extends ConsumerWidget {
                   ),
                   data: (List<ProfessionalProfile> list) {
                     if (list.isEmpty) {
-                      return const EmptyState(
+                      return EmptyState(
                         icon: Icons.medical_services_outlined,
+                        illustration: AppAssets.capiForPose(CapiPose.boasVindas),
                         title: 'Nenhum profissional disponível',
                         message: 'Os atendentes aparecem aqui depois que a '
                             'equipe verificar o registro profissional.',
