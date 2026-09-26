@@ -7,6 +7,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_tokens.dart';
 import '../../../../core/utils/validators.dart';
 import '../../../../core/widgets/app_widgets.dart';
+import '../../../../core/widgets/child_avatar.dart';
 import '../../../../shared/domain/entities/child.dart';
 import '../providers/children_providers.dart';
 
@@ -43,6 +44,7 @@ class _ChildFormScreenState extends ConsumerState<ChildFormScreen> {
   ChildSex _sex = ChildSex.male;
   String? _bloodType;
   int? _gestationalWeeks;
+  String? _photoUrl;
   bool _loaded = false;
 
   bool get _isEditing => widget.childId != null;
@@ -83,6 +85,7 @@ class _ChildFormScreenState extends ConsumerState<ChildFormScreen> {
     _address.text = child.address ?? '';
     _cpf.text = child.cpf ?? '';
     _insurance.text = child.insurance ?? '';
+    _photoUrl = child.photoUrl;
   }
 
   Future<void> _pickBirthDate() async {
@@ -127,7 +130,7 @@ class _ChildFormScreenState extends ConsumerState<ChildFormScreen> {
       name: _name.text.trim(),
       birthDate: _birthDate!,
       sex: _sex,
-      photoUrl: existing.photoUrl,
+      photoUrl: _photoUrl,
       bloodType: _bloodType,
       allergies: _splitList(_allergies.text),
       conditions: _splitList(_conditions.text),
@@ -218,6 +221,11 @@ class _ChildFormScreenState extends ConsumerState<ChildFormScreen> {
                   prefixIcon: Icons.person_outline_rounded,
                   textCapitalization: TextCapitalization.words,
                   validator: Validators.name,
+                ),
+                const SizedBox(height: AppSpacing.lg),
+                ChildAvatarPicker(
+                  selectedPhotoUrl: _photoUrl,
+                  onSelected: (String? url) => setState(() => _photoUrl = url),
                 ),
                 const SizedBox(height: AppSpacing.lg),
                 InkWell(
