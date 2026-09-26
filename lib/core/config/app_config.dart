@@ -27,13 +27,29 @@ class AppConfig {
 
   // ------------------------------------------------------- Recursos incompletos
   //
-  // Enquanto a integração real não existir, o recurso fica desligado por uma
-  // flag central — não apagado. Isso preserva o código já testado (criação
-  // de pedido, baixa de estoque em transação) e torna a reativação um único
-  // valor, no dia em que o gateway for conectado, em vez de reconstruir a
-  // tela do zero.
+  // Flags da v1 de teste fechado: só o que funciona ponta a ponta fica
+  // navegável. Código permanece no repo; a reativação é um booleano.
   static const bool paymentGatewayEnabled = false;
   static const bool videoConsultationEnabled = false;
+
+  /// Prontuário por voz / consulta com IA. UI e fluxo de rascunho existem,
+  /// mas sem STT/ASR real de ponta a ponta — fora do escopo do teste fechado.
+  static const bool voiceConsultationEnabled = false;
+
+  /// Conector TISS com operadora. Há esqueleto XML local; envio real ausente.
+  static const bool tissOperatorEnabled = false;
+
+  /// Assinatura digital ICP-Brasil. Encounters usam hash interno, não ICP.
+  static const bool icpDigitalSignatureEnabled = false;
+
+  /// App Check: ativar só com `--dart-define=ENABLE_APP_CHECK=true` após
+  /// registrar apps no Console. Rules NÃO exigem token até você decidir.
+  static const bool appCheckEnabled =
+      bool.fromEnvironment('ENABLE_APP_CHECK', defaultValue: false);
+
+  /// Site key reCAPTCHA v3 (web) — fornecida no Console; não inventar.
+  static const String appCheckRecaptchaSiteKey =
+      String.fromEnvironment('APP_CHECK_RECAPTCHA_SITE_KEY');
 
   // ---------------------------------------------------------------- Ambiente
   static const String environment =

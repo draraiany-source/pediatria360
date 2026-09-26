@@ -13,13 +13,14 @@ import 'package:hive_flutter/hive_flutter.dart';
 
 import '../config/app_config.dart';
 import '../../firebase_options.dart';
+import 'app_check_bootstrap.dart';
 import 'app_logger.dart';
 import 'notification_service.dart';
 
 /// Inicializacao da infraestrutura, antes do primeiro frame.
 ///
-/// Ordem importa: Firebase -> Crashlytics (para capturar erros do proprio
-/// bootstrap) -> persistencia local -> emuladores (se pedido).
+/// Ordem importa: Firebase -> App Check (opcional) -> Crashlytics ->
+/// persistencia local -> emuladores (se pedido).
 class FirebaseBootstrap {
   const FirebaseBootstrap._();
 
@@ -28,6 +29,7 @@ class FirebaseBootstrap {
       options: DefaultFirebaseOptions.currentPlatform,
     );
 
+    await AppCheckBootstrap.activateIfEnabled();
     await _setupCrashlytics();
     await _setupFirestore();
     await _setupHive();
