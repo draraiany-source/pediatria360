@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/config/app_assets.dart';
 import '../../../core/error/failures.dart';
 import '../../../core/config/dev_mode.dart';
 import '../../../core/providers/core_providers.dart';
@@ -397,6 +398,7 @@ class _ProfessionalAgendaScreenState
             return EmptyState(
               icon: Icons.event_available_outlined,
               asset: AppIcons.schedule,
+              illustration: AppAssets.capiLupa,
               title: _range == _AgendaRange.today
                   ? 'Nenhuma consulta hoje'
                   : 'Nenhuma consulta nos próximos 7 dias',
