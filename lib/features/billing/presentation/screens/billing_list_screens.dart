@@ -3,7 +3,6 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/config/app_assets.dart';
-import '../../../../core/config/capi_pose.dart';
 import '../../../../core/error/failures.dart';
 import '../../../../core/theme/app_tokens.dart';
 import '../../../../core/widgets/state_views.dart';
