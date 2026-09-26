@@ -46,7 +46,9 @@ class _RoleSetupScreenState extends ConsumerState<RoleSetupScreen> {
     final bool consented = await showConsentSheet(context, ref);
     if (!consented || !mounted) return;
 
-    await ref.read(authControllerProvider.notifier).completeOnboarding(
+    await ref
+        .read(authControllerProvider.notifier)
+        .completeOnboarding(
           role: _role,
           crm: _isProfessional ? _crm.text : null,
           specialty: _isProfessional ? _specialty : null,
@@ -59,8 +61,10 @@ class _RoleSetupScreenState extends ConsumerState<RoleSetupScreen> {
     final AuthActionState state = ref.watch(authControllerProvider);
     final AppUser? user = ref.watch(currentUserProvider);
 
-    ref.listen<AuthActionState>(authControllerProvider,
-        (AuthActionState? previous, AuthActionState next) {
+    ref.listen<AuthActionState>(authControllerProvider, (
+      AuthActionState? previous,
+      AuthActionState next,
+    ) {
       if (next.failure != null && context.mounted) {
         ScaffoldMessenger.of(context)
           ..hideCurrentSnackBar()
@@ -69,6 +73,18 @@ class _RoleSetupScreenState extends ConsumerState<RoleSetupScreen> {
     });
 
     return Scaffold(
+      appBar: AppBar(
+        automaticallyImplyLeading: false,
+        actions: <Widget>[
+          TextButton.icon(
+            onPressed: state.isLoading
+                ? null
+                : () => ref.read(authControllerProvider.notifier).signOut(),
+            icon: const Icon(Icons.logout_rounded),
+            label: const Text('Sair'),
+          ),
+        ],
+      ),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(AppSpacing.xl),
@@ -99,7 +115,8 @@ class _RoleSetupScreenState extends ConsumerState<RoleSetupScreen> {
                   _RoleOption(
                     icon: Icons.family_restroom_rounded,
                     title: 'Sou pai, mae ou responsavel',
-                    body: 'Acompanhamento de crescimento, vacinas, sono, '
+                    body:
+                        'Acompanhamento de crescimento, vacinas, sono, '
                         'amamentacao e a IA para tirar duvidas do dia a dia.',
                     color: AppColors.petrol,
                     selected: _role == UserRole.parent,
@@ -109,12 +126,12 @@ class _RoleSetupScreenState extends ConsumerState<RoleSetupScreen> {
                   _RoleOption(
                     icon: Icons.medical_services_outlined,
                     title: 'Sou profissional de saude',
-                    body: 'Protocolos clinicos, calculadoras de dose, '
+                    body:
+                        'Protocolos clinicos, calculadoras de dose, '
                         'interpretacao de exames e telemedicina.',
                     color: AppColors.raspberry,
                     selected: _isProfessional,
-                    onTap: () =>
-                        setState(() => _role = UserRole.professional),
+                    onTap: () => setState(() => _role = UserRole.professional),
                   ),
                   if (_isProfessional) ...<Widget>[
                     const SizedBox(height: AppSpacing.xl),
@@ -131,7 +148,10 @@ class _RoleSetupScreenState extends ConsumerState<RoleSetupScreen> {
                       value: _specialty,
                       decoration: const InputDecoration(
                         labelText: 'Area de atuacao',
-                        prefixIcon: Icon(Icons.local_hospital_outlined, size: 20),
+                        prefixIcon: Icon(
+                          Icons.local_hospital_outlined,
+                          size: 20,
+                        ),
                       ),
                       items: professionalSpecialties
                           .map(

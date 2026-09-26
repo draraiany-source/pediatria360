@@ -67,32 +67,34 @@ String? resolveRouteRedirect({
   }
 
   // 6. Area administrativa CMS exige papel de admin de plataforma.
-  if (location.startsWith(Routes.adminPath) && !user.role.isAdmin) {
+  if (_under(location, Routes.adminPath) && !user.role.isAdmin) {
     return Routes.homePath;
   }
 
   // 7. Areas de equipe (clinica / financeiro / BI).
-  final bool isStaffArea = location.startsWith(Routes.patientsPath) ||
-      location.startsWith(Routes.agendaPath) ||
-      location.startsWith(Routes.clinicPath) ||
-      location.startsWith(Routes.financePath) ||
-      location.startsWith(Routes.billingPath) ||
-      location.startsWith(Routes.inventoryPath) ||
-      location.startsWith(Routes.biPath) ||
-      location.startsWith(Routes.auditPath) ||
-      location.startsWith(Routes.permissionsPath) ||
-      location.startsWith(Routes.supplementPath) ||
-      location.startsWith(Routes.clinicOrgPath);
+  final bool isStaffArea =
+      _under(location, Routes.patientsPath) ||
+      _under(location, Routes.agendaPath) ||
+      _under(location, Routes.clinicPath) ||
+      _under(location, Routes.financePath) ||
+      _under(location, Routes.billingPath) ||
+      _under(location, Routes.inventoryPath) ||
+      _under(location, Routes.biPath) ||
+      _under(location, Routes.auditPath) ||
+      _under(location, Routes.permissionsPath) ||
+      _under(location, Routes.supplementPath) ||
+      _under(location, Routes.clinicOrgPath);
 
   if (isStaffArea) {
     if (user.role == UserRole.professional) {
       // ok
     } else if (user.role.isAdmin) {
-      final bool adminAllowed = location.startsWith(Routes.adminPath) ||
-          location.startsWith(Routes.permissionsPath) ||
-          location.startsWith(Routes.auditPath) ||
-          location.startsWith(Routes.biPath) ||
-          location.startsWith(Routes.clinicOrgPath);
+      final bool adminAllowed =
+          _under(location, Routes.adminPath) ||
+          _under(location, Routes.permissionsPath) ||
+          _under(location, Routes.auditPath) ||
+          _under(location, Routes.biPath) ||
+          _under(location, Routes.clinicOrgPath);
       if (!adminAllowed) return Routes.homePath;
     } else {
       return Routes.homePath;
@@ -101,8 +103,9 @@ String? resolveRouteRedirect({
 
   // 8. FASE 2 — RBAC clinico: recepcao nao abre evolucao/prontuario por URL.
   if (user.role == UserRole.professional && clinicMembership != null) {
-    final bool isChartArea = location.startsWith(Routes.patientsPath) ||
-        location.startsWith(Routes.clinicVoicePath);
+    final bool isChartArea =
+        _under(location, Routes.patientsPath) ||
+        _under(location, Routes.clinicVoicePath);
     if (isChartArea &&
         !PermissionMatrix.allows(
           user: user,
@@ -116,20 +119,22 @@ String? resolveRouteRedirect({
 
   // 9. Area de trabalho ativa (perfil concedido) — reforco de UI/rota.
   if (workspace != null && user.role == UserRole.professional) {
-    final bool isChart = location.startsWith(Routes.patientsPath) ||
-        location.startsWith(Routes.clinicVoicePath) ||
-        location.startsWith(Routes.supplementPath);
-    final bool isFinance = location.startsWith(Routes.financePath) ||
-        location.startsWith(Routes.billingPath) ||
-        location.startsWith(Routes.inventoryPath);
+    final bool isChart =
+        _under(location, Routes.patientsPath) ||
+        _under(location, Routes.clinicVoicePath) ||
+        _under(location, Routes.supplementPath);
+    final bool isFinance =
+        _under(location, Routes.financePath) ||
+        _under(location, Routes.billingPath) ||
+        _under(location, Routes.inventoryPath);
 
     switch (workspace) {
       case WorkspaceProfile.receptionist:
         if (isChart || isFinance) return Routes.homePath;
       case WorkspaceProfile.finance:
         if (isChart) return Routes.homePath;
-        if (location.startsWith(Routes.clinicReceptionPath) ||
-            location.startsWith(Routes.clinicPendingPath)) {
+        if (_under(location, Routes.clinicReceptionPath) ||
+            _under(location, Routes.clinicPendingPath)) {
           return Routes.homePath;
         }
       case WorkspaceProfile.professional:
@@ -141,3 +146,7 @@ String? resolveRouteRedirect({
 
   return null;
 }
+
+/// `/bi` cobre `/bi` e `/bi/...`, mas nao `/biblioteca`.
+bool _under(String location, String base) =>
+    location == base || location.startsWith('$base/');

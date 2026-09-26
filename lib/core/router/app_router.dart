@@ -71,7 +71,9 @@ import '../../features/telemedicine/presentation/telemedicine_screen.dart';
 import '../../features/shell/presentation/screens/profile_tab.dart';
 import '../../features/tools/presentation/screens/tools_screen.dart';
 import '../../features/notifications/presentation/notification_center_screen.dart';
+import '../../features/workspace/domain/workspace_profile.dart';
 import '../../shared/domain/entities/app_user.dart';
+import '../../shared/domain/entities/clinic_organization.dart';
 import '../config/dev_mode.dart';
 import '../providers/core_providers.dart';
 import '../services/app_logger.dart';
@@ -98,6 +100,14 @@ class _RouterRefresh extends ChangeNotifier {
     ref.listen<AsyncValue<bool>>(
       onboardingSeenProvider,
       (AsyncValue<bool>? _, AsyncValue<bool> __) => notifyListeners(),
+    );
+    ref.listen<ClinicMembership?>(
+      activeClinicMembershipProvider,
+      (ClinicMembership? _, ClinicMembership? __) => notifyListeners(),
+    );
+    ref.listen<WorkspaceProfile>(
+      currentWorkspaceProvider,
+      (WorkspaceProfile? _, WorkspaceProfile __) => notifyListeners(),
     );
   }
 }
