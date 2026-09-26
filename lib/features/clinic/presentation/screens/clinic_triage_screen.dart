@@ -90,10 +90,10 @@ class _ClinicTriageScreenState extends ConsumerState<ClinicTriageScreen> {
             );
         if (!mounted) return;
         setState(() => _saving = false);
-        await ScaffoldMessenger.of(context).showSnackBar(
+        ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Triagem salva. Paciente aguardando medico.')),
-        ).closed;
-        Navigator.of(context).maybePop();
+        );
+        await Navigator.of(context).maybePop();
       },
       (Failure f) async {
         setState(() {

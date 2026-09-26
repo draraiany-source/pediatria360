@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pediatria360/core/config/dev_mode.dart';
@@ -42,6 +42,7 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
     expect(find.byType(Scaffold), findsWidgets);
-    expect(find.textContaining('Acesso'), findsOneWidget);
+    expect(find.textContaining('Ola, ${DevMode.user.firstName}'), findsOneWidget);
+    expect(find.text('Agenda'), findsWidgets);
   });
 }

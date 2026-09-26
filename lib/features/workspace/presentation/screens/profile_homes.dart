@@ -142,7 +142,6 @@ class _NavTile extends StatelessWidget {
     required this.icon,
     required this.color,
     required this.onTap,
-    this.trailing,
   });
 
   final String title;
@@ -150,7 +149,6 @@ class _NavTile extends StatelessWidget {
   final IconData icon;
   final Color color;
   final VoidCallback onTap;
-  final Widget? trailing;
 
   @override
   Widget build(BuildContext context) {
@@ -186,7 +184,6 @@ class _NavTile extends StatelessWidget {
               ],
             ),
           ),
-          if (trailing != null) trailing!,
           const Icon(Icons.chevron_right_rounded, color: AppColors.navy),
         ],
       ),
