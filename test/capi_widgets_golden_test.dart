@@ -10,12 +10,17 @@ import 'package:pediatria360/core/widgets/state_views.dart';
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  Future<void> pumpFrame(WidgetTester tester, Widget child) async {
+  Future<void> pumpFramed(
+    WidgetTester tester,
+    Widget child,
+  ) async {
     await tester.pumpWidget(
       MaterialApp(
         theme: ThemeData(
           useMaterial3: true,
-          colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF4C9BFF)),
+          colorScheme: ColorScheme.fromSeed(
+            seedColor: const Color(0xFF5C9BF5),
+          ),
         ),
         home: Scaffold(
           body: Center(child: child),
@@ -26,10 +31,18 @@ void main() {
   }
 
   testWidgets('golden: Capi welcome illustration', (WidgetTester tester) async {
-    await pumpFrame(
+    await pumpFramed(
       tester,
       const CapiIllustration(pose: CapiPose.boasVindas, size: 180),
     );
+    await tester.runAsync(() async {
+      final context = tester.element(find.byType(CapiIllustration));
+      await precacheImage(
+        const AssetImage(AppAssets.capiBoasVindas),
+        context,
+      );
+    });
+    await tester.pumpAndSettle();
     await expectLater(
       find.byType(CapiIllustration),
       matchesGoldenFile('../docs/screenshots/capi_welcome.png'),
@@ -37,12 +50,13 @@ void main() {
   });
 
   testWidgets('golden: child avatar picker', (WidgetTester tester) async {
-    await pumpFrame(
+    await pumpFramed(
       tester,
       SizedBox(
         width: 420,
         child: ChildAvatarPicker(
-          selectedPhotoUrl: ChildAvatarRef.encode(AppAssets.avatarMeninaCoral),
+          selectedPhotoUrl:
+              ChildAvatarRef.encode(AppAssets.avatarMeninaCoral),
           onSelected: (_) {},
         ),
       ),
@@ -54,7 +68,7 @@ void main() {
   });
 
   testWidgets('golden: empty state with Capi', (WidgetTester tester) async {
-    await pumpFrame(
+    await pumpFramed(
       tester,
       SizedBox(
         width: 360,
@@ -62,7 +76,8 @@ void main() {
           icon: Icons.menu_book_outlined,
           illustration: AppAssets.capiForPose(CapiPose.boasVindas),
           title: 'Biblioteca vazia',
-          message: 'Conteudos aparecem aqui quando estiverem disponiveis.',
+          message:
+              'Conteudos aparecem aqui quando estiverem disponiveis.',
           actionLabel: 'Explorar',
           onAction: () {},
         ),
