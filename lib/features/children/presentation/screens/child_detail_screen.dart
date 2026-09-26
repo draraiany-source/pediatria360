@@ -8,6 +8,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_tokens.dart';
 import '../../../../core/utils/validators.dart';
 import '../../../../core/widgets/app_widgets.dart';
+import '../../../../core/widgets/child_avatar.dart';
 import '../../../../core/widgets/clinical_ui.dart';
 import '../../../../core/widgets/state_views.dart';
 import '../../../../shared/domain/entities/child.dart';
@@ -127,17 +128,12 @@ class ChildDetailScreen extends ConsumerWidget {
                 ),
                 child: Row(
                   children: <Widget>[
-                    if (child.photoUrl != null)
-                      CircleAvatar(
-                        radius: 32,
-                        backgroundImage: NetworkImage(child.photoUrl!),
-                      )
-                    else
-                      PersonAvatar(
-                        name: child.name,
-                        seed: child.id,
-                        radius: 32,
-                      ),
+                    ChildAvatarImage(
+                      name: child.name,
+                      seed: child.id,
+                      photoUrl: child.photoUrl,
+                      radius: 32,
+                    ),
                     const SizedBox(width: AppSpacing.lg),
                     Expanded(
                       child: Column(
