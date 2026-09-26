@@ -217,16 +217,26 @@ service cloud.firestore {
       match /clinical_assist_usage/{day} {
         allow read: if isOwner(uid);
         allow write: if false;
+      }
 
-      // Memberships multitenant (indice invertido). Escrita via cliente
-      // apenas na criacao da propria clinica (clinicAdmin) ? reforcado nas
-      // rules da clinica; aqui o dono le e o proprio user escreve seu vinculo.
+      // Memberships multitenant (indice invertido): users/{uid}/clinic_memberships/{clinicId}
+      // Escrita so espelhando um doc em clinics/{clinicId}/memberships/{id} —
+      // impede forjar vinculo a clinica alheia so alterando o indice invertido.
       match /clinic_memberships/{clinicId} {
         allow read: if isOwner(uid);
         allow create, update: if isOwner(uid) &&
-                               request.resource.data.userId == uid;
+                               request.resource.data.userId == uid &&
+                               request.resource.data.clinicId == clinicId &&
+                               request.resource.data.keys().hasAll(
+                                 ['id', 'userId', 'clinicId', 'role', 'active']
+                               ) &&
+                               exists(/databases/$(database)/documents/clinics/$(clinicId)/memberships/$(request.resource.data.id)) &&
+                               get(/databases/$(database)/documents/clinics/$(clinicId)/memberships/$(request.resource.data.id)).data.userId == uid &&
+                               get(/databases/$(database)/documents/clinics/$(clinicId)/memberships/$(request.resource.data.id)).data.role ==
+                                 request.resource.data.role &&
+                               get(/databases/$(database)/documents/clinics/$(clinicId)/memberships/$(request.resource.data.id)).data.active ==
+                                 request.resource.data.active;
         allow delete: if false;
-      }
       }
 
       match /supplementation/{docId} {
@@ -684,8 +694,11 @@ service cloud.firestore {
 
     function isClinicMember(clinicId) {
       return signedIn() &&
+             clinicId != null &&
              exists(/databases/$(database)/documents/users/$(request.auth.uid)/clinic_memberships/$(clinicId)) &&
-             clinicMemberDoc(clinicId).data.active == true;
+             clinicMemberDoc(clinicId).data.active == true &&
+             clinicMemberDoc(clinicId).data.userId == request.auth.uid &&
+             clinicMemberDoc(clinicId).data.clinicId == clinicId;
     }
 
     function clinicRole(clinicId) {
@@ -816,11 +829,15 @@ service cloud.firestore {
     }
 
     match /clinics/{clinicId} {
-      allow read: if isClinicMember(clinicId) || isAdmin();
+      allow read: if isClinicMember(clinicId) || isAdmin() ||
+                     (signedIn() &&
+                      resource.data.get('ownerUserId', '') == request.auth.uid);
       // Criacao: profissional autenticado (onboarding). Admin plataforma tambem.
+      // ownerUserId obriga o criador a se identificar — usado no 1o membership.
       allow create: if signedIn() &&
                        (isVerifiedProfessional() || isAdmin()) &&
-                       isValidString('name', 200);
+                       isValidString('name', 200) &&
+                       request.resource.data.ownerUserId == request.auth.uid;
       allow update: if isClinicAdmin(clinicId) || isAdmin();
       allow delete: if false;
 
@@ -832,7 +849,17 @@ service cloud.firestore {
       match /memberships/{membershipId} {
         allow read: if isClinicMember(clinicId) || isAdmin() ||
                        (signedIn() && resource.data.userId == request.auth.uid);
-        allow create, update: if isClinicAdmin(clinicId) || isAdmin();
+        // Admin da clinica, plataforma, ou dono criando o primeiro vinculo
+        // clinicAdmin (onboarding — espelha ownerUserId da clinica).
+        allow create: if isClinicAdmin(clinicId) || isAdmin() ||
+                         (isVerifiedProfessional() &&
+                          request.resource.data.userId == request.auth.uid &&
+                          request.resource.data.clinicId == clinicId &&
+                          request.resource.data.role == 'clinicAdmin' &&
+                          request.resource.data.id == membershipId &&
+                          get(/databases/$(database)/documents/clinics/$(clinicId))
+                              .data.ownerUserId == request.auth.uid);
+        allow update: if isClinicAdmin(clinicId) || isAdmin();
         allow delete: if false;
       }
 

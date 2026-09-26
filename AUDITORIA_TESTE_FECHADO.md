@@ -66,3 +66,15 @@
 ```
 flutter run --dart-define=ENV=prod --dart-define=ENABLE_APP_CHECK=true
 ```
+
+## Correcao de seguranca (follow-up auditoria)
+
+Achado critico no nesting de rules: `clinic_memberships` estava sob `clinical_assist_usage/{day}` (path errado vs app `users/{uid}/clinic_memberships/{clinicId}`).
+
+Corrigido em `firestore.rules`:
+- Path do indice invertido alinhado ao app
+- Escrita do indice so espelhando `clinics/{id}/memberships/{id}`
+- `ownerUserId` na clinica + 1o membership so pelo dono
+- `isClinicMember` valida `userId` e `clinicId` no doc
+
+**Deploy:** as rules precisam ser publicadas no Firebase do ambiente de teste (`firebase deploy --only firestore:rules`) — nao feito automaticamente aqui.
