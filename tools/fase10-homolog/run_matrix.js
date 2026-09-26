@@ -77,6 +77,34 @@ async function fsCreate(idToken, docPath, fields) {
   return { status: res.status, body: await res.json().catch(() => ({})) };
 }
 
+async function fsRunQuery(idToken, collectionId, filters) {
+  const url = `http://${FS_HOST}/v1/projects/${PROJECT}/databases/(default)/documents:runQuery`;
+  const res = await fetch(url, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${idToken}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      structuredQuery: {
+        from: [{ collectionId }],
+        where: { compositeFilter: { op: "AND", filters } },
+      },
+    }),
+  });
+  const body = await res.json().catch(() => []);
+  const docs = Array.isArray(body) ? body.filter((r) => r.document).length : 0;
+  return { status: res.status, docs, body };
+}
+
+function fieldFilter(field, op, value) {
+  return { fieldFilter: { field: { fieldPath: field }, op, value } };
+}
+
+function ts(date) {
+  return { timestampValue: date.toISOString() };
+}
+
 function str(v) {
   return { stringValue: String(v) };
 }
@@ -278,18 +306,82 @@ async function main() {
       evidence: "seed appt",
     });
   }
+  // Fase 2: recepcao da mesma clinica le a agenda para check-in.
   if (recvA) {
     const g = await fsGet(recvA, "appointments/appt-homolog-a1");
     record({
-      id: "neg-recv-read-phys-appointment",
-      title: "Recepcao NAO le appointment de outro profissional (rules atuais)",
+      id: "recv-read-same-clinic-appointment",
+      title: "Recepcao le agendamento da propria clinica (check-in)",
       profile: "receptionist",
       env: "Firestore Emulator",
-      steps: "GET appointments/appt-homolog-a1 as recv",
-      expected: "PERMISSION_DENIED (rules: patientId|professionalId)",
+      steps: "GET appointments/appt-homolog-a1 as recv A",
+      expected: "HTTP 200 (isClinicAgendaStaff)",
+      observed: `HTTP ${g.status}`,
+      result: g.status === 200 ? "PASSOU" : "FALHOU",
+      evidence: "firestore.rules match /appointments -> isClinicAgendaStaff",
+    });
+
+    const start = new Date();
+    start.setHours(0, 0, 0, 0);
+    const end = new Date(start.getTime() + 24 * 3600 * 1000);
+    const own = await fsRunQuery(recvA, "appointments", [
+      fieldFilter("clinicId", "EQUAL", str("clinicHomologA")),
+      fieldFilter("startsAt", "GREATER_THAN_OR_EQUAL", ts(start)),
+      fieldFilter("startsAt", "LESS_THAN", ts(end)),
+    ]);
+    record({
+      id: "recv-list-clinic-today",
+      title: "Recepcao lista a agenda do dia da propria clinica",
+      profile: "receptionist",
+      env: "Firestore Emulator",
+      steps: "runQuery appointments clinicId==A && startsAt hoje",
+      expected: "HTTP 200 com o agendamento ficticio",
+      observed: `HTTP ${own.status} docs=${own.docs}`,
+      result: own.status === 200 && own.docs >= 1 ? "PASSOU" : "FALHOU",
+      evidence: "ClinicRepository.watchTodayClinicAppointments",
+    });
+
+    const other = await fsRunQuery(recvA, "appointments", [
+      fieldFilter("clinicId", "EQUAL", str("clinicHomologB")),
+    ]);
+    record({
+      id: "neg-recv-list-other-clinic",
+      title: "Recepcao A NAO lista agenda da clinica B",
+      profile: "receptionist",
+      env: "Firestore Emulator",
+      steps: "runQuery appointments clinicId==B as recv A",
+      expected: "PERMISSION_DENIED",
+      observed: `HTTP ${other.status}`,
+      result: other.status === 403 || other.status === 401 ? "PASSOU" : "FALHOU",
+      evidence: "isClinicAgendaStaff(clinicHomologB) falso",
+    });
+  }
+  if (adminB) {
+    const g = await fsGet(adminB, "appointments/appt-homolog-a1");
+    record({
+      id: "neg-cross-clinic-appointment",
+      title: "Admin clinica B NAO le agendamento da clinica A",
+      profile: "clinicAdminB",
+      env: "Firestore Emulator",
+      steps: "GET appointments/appt-homolog-a1 as admin B",
+      expected: "PERMISSION_DENIED",
       observed: `HTTP ${g.status}`,
       result: g.status === 403 || g.status === 401 ? "PASSOU" : "FALHOU",
-      evidence: "firestore.rules match /appointments",
+      evidence: JSON.stringify(g.body?.error || {}).slice(0, 200),
+    });
+  }
+  if (finTok) {
+    const g = await fsGet(finTok, "users/homolog-parent-a/children/child-ficticio-a1");
+    record({
+      id: "neg-fin-read-child",
+      title: "Financeiro NAO le cadastro clinico da crianca",
+      profile: "finance",
+      env: "Firestore Emulator",
+      steps: "GET users/homolog-parent-a/children/child-ficticio-a1 as finance",
+      expected: "PERMISSION_DENIED",
+      observed: `HTTP ${g.status}`,
+      result: g.status === 403 || g.status === 401 ? "PASSOU" : "FALHOU",
+      evidence: JSON.stringify(g.body?.error || {}).slice(0, 200),
     });
   }
 
@@ -417,6 +509,25 @@ async function main() {
         observed: `HTTP ${u.status}`,
         result: u.status === 403 || u.status === 401 || u.status === 400 ? "PASSOU" : "FALHOU",
         evidence: "firestore.rules encounters allow update only status==draft",
+      });
+    }
+    for (const [who, tok, role] of [
+      ["recv", recvA, "receptionist"],
+      ["fin", finTok, "finance"],
+      ["parent-b", parentB, "parentB"],
+    ]) {
+      if (!tok) continue;
+      const g = await fsGet(tok, `encounters/${signedId}`);
+      record({
+        id: `neg-${who}-read-encounter`,
+        title: `${role} NAO le prontuario (encounter) de paciente`,
+        profile: role,
+        env: "Firestore Emulator",
+        steps: `GET encounters/${signedId}`,
+        expected: "PERMISSION_DENIED",
+        observed: `HTTP ${g.status}`,
+        result: g.status === 403 || g.status === 401 ? "PASSOU" : "FALHOU",
+        evidence: JSON.stringify(g.body?.error || {}).slice(0, 200),
       });
     }
   }

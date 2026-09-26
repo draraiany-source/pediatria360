@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-24T08:02:32.903Z",
+  "generatedAt": "2026-09-26T22:32:03.278Z",
   "project": "pediatria360-app",
   "note": "Matriz Auth/Firestore Emulator. NAO prova sozinha fluxos UI completos.",
   "fase9ClinicIsolation": {
@@ -8,7 +8,7 @@
     "notProofOf": "fluxos completos do aplicativo"
   },
   "summary": {
-    "PASSOU": 24,
+    "PASSOU": 31,
     "FALHOU": 0,
     "NAO_TESTADO": 3
   },
@@ -110,7 +110,7 @@
       "expected": "HTTP 403/PERMISSION_DENIED",
       "observed": "HTTP 403",
       "result": "PASSOU",
-      "evidence": "{\"code\":403,\"message\":\"\\nevaluation error at L762:22 for 'get' @ L762, false for 'get' @ L897, false for 'get' @ L762, false for 'get' @ L897\",\"status\":\"PERMISSION_DENIED\"}"
+      "evidence": "{\"code\":403,\"message\":\"\\nevaluation error at L890:22 for 'get' @ L890, false for 'get' @ L1025, false for 'get' @ L890, false for 'get' @ L1025\",\"status\":\"PERMISSION_DENIED\"}"
     },
     {
       "id": "neg-recv-write-finance",
@@ -121,18 +121,18 @@
       "expected": "PERMISSION_DENIED",
       "observed": "HTTP 403",
       "result": "PASSOU",
-      "evidence": "{\"code\":403,\"message\":\"\\nevaluation error at L763:32 for 'create' @ L763, false for 'create' @ L897, false for 'create' @ L763, false for 'create' @ L897\",\"status\":\"PERMISSION_DENIED\"}"
+      "evidence": "{\"code\":403,\"message\":\"\\nevaluation error at L891:32 for 'create' @ L891, false for 'create' @ L1025, false for 'create' @ L891, false for 'create' @ L1025\",\"status\":\"PERMISSION_DENIED\"}"
     },
     {
       "id": "fin-create-receivable-persist",
       "title": "Financeiro cria cobranca ficticia e persiste",
       "profile": "finance",
       "env": "Firestore Emulator",
-      "steps": "POST+GET finance_receivables/recv-homolog-matrix-1790236928123",
+      "steps": "POST+GET finance_receivables/recv-homolog-matrix-1790461917432",
       "expected": "create 200 + get 200 com amount 9900",
       "observed": "create=200 get=200",
       "result": "PASSOU",
-      "evidence": "recv-homolog-matrix-1790236928123"
+      "evidence": "recv-homolog-matrix-1790461917432"
     },
     {
       "id": "parent-read-own-child",
@@ -154,7 +154,7 @@
       "expected": "PERMISSION_DENIED",
       "observed": "HTTP 403",
       "result": "PASSOU",
-      "evidence": "{\"code\":403,\"message\":\"\\nevaluation error at L117:24 for 'get' @ L117, false for 'get' @ L897, false for 'get' @ L117, false for 'get' @ L897\",\"status\":\"PERMISSION_DENIED\"}"
+      "evidence": "{\"code\":403,\"message\":\"\\nevaluation error at L132:24 for 'get' @ L132, false for 'get' @ L1025, false for 'get' @ L132, false for 'get' @ L1025\",\"status\":\"PERMISSION_DENIED\"}"
     },
     {
       "id": "neg-phys-child-without-grant",
@@ -165,7 +165,7 @@
       "expected": "PERMISSION_DENIED",
       "observed": "HTTP 403",
       "result": "PASSOU",
-      "evidence": "{\"code\":403,\"message\":\"\\nevaluation error at L117:24 for 'get' @ L117, false for 'get' @ L897, false for 'get' @ L117, false for 'get' @ L897\",\"status\":\"PERMISSION_DENIED\"}"
+      "evidence": "{\"code\":403,\"message\":\"\\nevaluation error at L132:24 for 'get' @ L132, false for 'get' @ L1025, false for 'get' @ L132, false for 'get' @ L1025\",\"status\":\"PERMISSION_DENIED\"}"
     },
     {
       "id": "phys-read-own-appointment",
@@ -179,15 +179,59 @@
       "evidence": "seed appt"
     },
     {
-      "id": "neg-recv-read-phys-appointment",
-      "title": "Recepcao NAO le appointment de outro profissional (rules atuais)",
+      "id": "recv-read-same-clinic-appointment",
+      "title": "Recepcao le agendamento da propria clinica (check-in)",
       "profile": "receptionist",
       "env": "Firestore Emulator",
-      "steps": "GET appointments/appt-homolog-a1 as recv",
-      "expected": "PERMISSION_DENIED (rules: patientId|professionalId)",
+      "steps": "GET appointments/appt-homolog-a1 as recv A",
+      "expected": "HTTP 200 (isClinicAgendaStaff)",
+      "observed": "HTTP 200",
+      "result": "PASSOU",
+      "evidence": "firestore.rules match /appointments -> isClinicAgendaStaff"
+    },
+    {
+      "id": "recv-list-clinic-today",
+      "title": "Recepcao lista a agenda do dia da propria clinica",
+      "profile": "receptionist",
+      "env": "Firestore Emulator",
+      "steps": "runQuery appointments clinicId==A && startsAt hoje",
+      "expected": "HTTP 200 com o agendamento ficticio",
+      "observed": "HTTP 200 docs=1",
+      "result": "PASSOU",
+      "evidence": "ClinicRepository.watchTodayClinicAppointments"
+    },
+    {
+      "id": "neg-recv-list-other-clinic",
+      "title": "Recepcao A NAO lista agenda da clinica B",
+      "profile": "receptionist",
+      "env": "Firestore Emulator",
+      "steps": "runQuery appointments clinicId==B as recv A",
+      "expected": "PERMISSION_DENIED",
       "observed": "HTTP 403",
       "result": "PASSOU",
-      "evidence": "firestore.rules match /appointments"
+      "evidence": "isClinicAgendaStaff(clinicHomologB) falso"
+    },
+    {
+      "id": "neg-cross-clinic-appointment",
+      "title": "Admin clinica B NAO le agendamento da clinica A",
+      "profile": "clinicAdminB",
+      "env": "Firestore Emulator",
+      "steps": "GET appointments/appt-homolog-a1 as admin B",
+      "expected": "PERMISSION_DENIED",
+      "observed": "HTTP 403",
+      "result": "PASSOU",
+      "evidence": "{\"code\":403,\"message\":\"\\nevaluation error at L347:22 for 'get' @ L347, false for 'get' @ L1025, false for 'get' @ L347, false for 'get' @ L1025\",\"status\":\"PERMISSION_DENIED\"}"
+    },
+    {
+      "id": "neg-fin-read-child",
+      "title": "Financeiro NAO le cadastro clinico da crianca",
+      "profile": "finance",
+      "env": "Firestore Emulator",
+      "steps": "GET users/homolog-parent-a/children/child-ficticio-a1 as finance",
+      "expected": "PERMISSION_DENIED",
+      "observed": "HTTP 403",
+      "result": "PASSOU",
+      "evidence": "{\"code\":403,\"message\":\"\\nevaluation error at L132:24 for 'get' @ L132, false for 'get' @ L1025, false for 'get' @ L132, false for 'get' @ L1025\",\"status\":\"PERMISSION_DENIED\"}"
     },
     {
       "id": "admin-audit-write-read",
@@ -209,7 +253,7 @@
       "expected": "PERMISSION_DENIED",
       "observed": "HTTP 403",
       "result": "PASSOU",
-      "evidence": "{\"code\":403,\"message\":\"\\nevaluation error at L875:22 for 'get' @ L875, false for 'get' @ L897, false for 'get' @ L875, false for 'get' @ L897\",\"status\":\"PERMISSION_DENIED\"}"
+      "evidence": "{\"code\":403,\"message\":\"\\nevaluation error at L1003:22 for 'get' @ L1003, false for 'get' @ L1025, false for 'get' @ L1003, false for 'get' @ L1025\",\"status\":\"PERMISSION_DENIED\"}"
     },
     {
       "id": "parent-read-consent",
@@ -227,11 +271,11 @@
       "title": "Medico cria prontuario rascunho ficticio",
       "profile": "physician",
       "env": "Firestore Emulator",
-      "steps": "POST encounters/enc-homolog-1790236928683 status=draft",
+      "steps": "POST encounters/enc-homolog-1790461919456 status=draft",
       "expected": "HTTP 200",
       "observed": "HTTP 200",
       "result": "PASSOU",
-      "evidence": "{\"id\":\"enc-homolog-1790236928683\"}"
+      "evidence": "{\"id\":\"enc-homolog-1790461919456\"}"
     },
     {
       "id": "phys-sign-encounter-function",
@@ -256,6 +300,39 @@
       "evidence": "firestore.rules encounters allow update only status==draft"
     },
     {
+      "id": "neg-recv-read-encounter",
+      "title": "receptionist NAO le prontuario (encounter) de paciente",
+      "profile": "receptionist",
+      "env": "Firestore Emulator",
+      "steps": "GET encounters/enc-homolog-signed-immutable",
+      "expected": "PERMISSION_DENIED",
+      "observed": "HTTP 403",
+      "result": "PASSOU",
+      "evidence": "{\"code\":403,\"message\":\"\\nevaluation error at L454:22 for 'get' @ L454, false for 'get' @ L1025, false for 'get' @ L454, false for 'get' @ L1025\",\"status\":\"PERMISSION_DENIED\"}"
+    },
+    {
+      "id": "neg-fin-read-encounter",
+      "title": "finance NAO le prontuario (encounter) de paciente",
+      "profile": "finance",
+      "env": "Firestore Emulator",
+      "steps": "GET encounters/enc-homolog-signed-immutable",
+      "expected": "PERMISSION_DENIED",
+      "observed": "HTTP 403",
+      "result": "PASSOU",
+      "evidence": "{\"code\":403,\"message\":\"\\nevaluation error at L454:22 for 'get' @ L454, false for 'get' @ L1025, false for 'get' @ L454, false for 'get' @ L1025\",\"status\":\"PERMISSION_DENIED\"}"
+    },
+    {
+      "id": "neg-parent-b-read-encounter",
+      "title": "parentB NAO le prontuario (encounter) de paciente",
+      "profile": "parentB",
+      "env": "Firestore Emulator",
+      "steps": "GET encounters/enc-homolog-signed-immutable",
+      "expected": "PERMISSION_DENIED",
+      "observed": "HTTP 403",
+      "result": "PASSOU",
+      "evidence": "{\"code\":403,\"message\":\"\\nevaluation error at L454:22 for 'get' @ L454, false for 'get' @ L1025, false for 'get' @ L454, false for 'get' @ L1025\",\"status\":\"PERMISSION_DENIED\"}"
+    },
+    {
       "id": "neg-expired-or-invalid-session",
       "title": "Token invalido/expirado nao le finance",
       "profile": "any",
@@ -275,7 +352,7 @@
       "expected": "PERMISSION_DENIED",
       "observed": "HTTP 403",
       "result": "PASSOU",
-      "evidence": "{\"code\":403,\"message\":\"\\nevaluation error at L762:22 for 'get' @ L762, false for 'get' @ L897, false for 'get' @ L762, false for 'get' @ L897\",\"status\":\"PERMISSION_DENIED\"}"
+      "evidence": "{\"code\":403,\"message\":\"\\nevaluation error at L890:22 for 'get' @ L890, false for 'get' @ L1025, false for 'get' @ L890, false for 'get' @ L1025\",\"status\":\"PERMISSION_DENIED\"}"
     },
     {
       "id": "neg-connection-failure",

@@ -89,3 +89,6 @@ tools/flutter_create_*.txt
 tools/auditoria_*.txt
 tools/publish_*.txt
 
+
+# Logs locais de verificacao
+tools/*.txt

@@ -28,13 +28,20 @@ class ClinicRepository {
       _firestore.collection(FirestorePaths.triageRecords);
 
   /// Agendamentos do profissional com inicio no dia civil atual (local).
-  Stream<List<Appointment>> watchTodayAppointments(String professionalId) {
+  Stream<List<Appointment>> watchTodayAppointments(String professionalId) =>
+      _watchToday(_appointments.where('professionalId', isEqualTo: professionalId));
+
+  /// Agendamentos da clinica inteira no dia civil atual (recepcao/admin).
+  /// As regras so liberam a leitura para a equipe de agenda da clinica.
+  Stream<List<Appointment>> watchTodayClinicAppointments(String clinicId) =>
+      _watchToday(_appointments.where('clinicId', isEqualTo: clinicId));
+
+  Stream<List<Appointment>> _watchToday(Query<Map<String, dynamic>> base) {
     final DateTime now = DateTime.now();
     final DateTime start = DateTime(now.year, now.month, now.day);
     final DateTime end = start.add(const Duration(days: 1));
 
-    return _appointments
-        .where('professionalId', isEqualTo: professionalId)
+    return base
         .where('startsAt', isGreaterThanOrEqualTo: Timestamp.fromDate(start))
         .where('startsAt', isLessThan: Timestamp.fromDate(end))
         .snapshots()

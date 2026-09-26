@@ -15,6 +15,8 @@ import '../../../../core/widgets/capi_illustration.dart';
 import '../../../../core/widgets/state_views.dart';
 import '../../../../shared/domain/entities/app_user.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
+import '../../../clinic/presentation/providers/clinic_providers.dart'
+    show unitScopedTodayClinicAppointmentsProvider;
 import '../../../notifications/presentation/notification_center_screen.dart';
 import '../../../telemedicine/data/telemedicine_repository.dart';
 import '../../../telemedicine/presentation/agenda_providers.dart'
@@ -486,7 +488,7 @@ class _ReceptionHome extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final AsyncValue<List<Appointment>> agendaAsync =
-        ref.watch(unitScopedMyAgendaProvider);
+        ref.watch(unitScopedTodayClinicAppointmentsProvider);
     final List<Appointment> agenda =
         agendaAsync.valueOrNull ?? const <Appointment>[];
     final DateTime now = DateTime.now();
