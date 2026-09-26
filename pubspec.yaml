@@ -101,5 +101,7 @@ flutter:
     - assets/icons/Pediatria360_Icones_Premium/
     - assets/icons/Pediatria360_Icones_Premium/icones/
     - assets/illustrations/
+    - assets/illustrations/capi/
+    - assets/illustrations/avatars/
     - assets/lottie/
     - assets/data/
