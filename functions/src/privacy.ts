@@ -33,6 +33,7 @@
 import { onCall, HttpsError } from "firebase-functions/v2/https";
 import { onSchedule } from "firebase-functions/v2/scheduler";
 import * as admin from "firebase-admin";
+import { FieldValue, Timestamp } from "firebase-admin/firestore";
 import * as logger from "firebase-functions/logger";
 import { createHash } from "crypto";
 
@@ -84,6 +85,19 @@ const CONSENT_PURPOSES = {
 
 type ConsentPurpose = keyof typeof CONSENT_PURPOSES;
 
+/**
+ * Ids que aparecem como patientId no prontuario: o do titular e os das
+ * criancas dele (o atendimento e aberto em nome da crianca).
+ */
+async function patientIdsOf(uid: string): Promise<string[]> {
+  const children = await db()
+    .collection("users")
+    .doc(uid)
+    .collection("children")
+    .get();
+  return [uid, ...children.docs.map((c) => c.id)];
+}
+
 /** Registra ou atualiza o consentimento. */
 export const recordConsent = onCall({ region: REGION }, async (request) => {
   const uid = request.auth?.uid;
@@ -128,7 +142,7 @@ export const recordConsent = onCall({ region: REGION }, async (request) => {
     }
   }
 
-  const now = admin.firestore.FieldValue.serverTimestamp();
+  const now = FieldValue.serverTimestamp();
 
   // Cada alteração vira um registro novo. O histórico de consentimento é o
   // que prova, depois, o que foi consentido e quando — inclusive para os
@@ -190,14 +204,14 @@ export const revokeConsent = onCall({ region: REGION }, async (request) => {
 
   await userRef.update({
     consentPurposes: updated,
-    consentUpdatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    consentUpdatedAt: FieldValue.serverTimestamp(),
   });
 
   await userRef.collection("consents").add({
     version: CONSENT_VERSION,
     purposes: updated,
     revoked: purpose,
-    grantedAt: admin.firestore.FieldValue.serverTimestamp(),
+    grantedAt: FieldValue.serverTimestamp(),
   });
 
   logger.info("Consentimento revogado", { uid, purpose });
@@ -226,7 +240,8 @@ export const exportUserData = onCall(
     const user = userDoc.data() ?? {};
 
     // Campos internos não vão para a exportação — não são dado do titular.
-    const { fcmTokens, ...profile } = user;
+    const profile: Record<string, unknown> = { ...user };
+    delete profile.fcmTokens;
 
     const dump: Record<string, unknown> = {
       _formato: "Pediatria360 — exportação de dados pessoais (LGPD Art. 18)",
@@ -279,9 +294,24 @@ export const exportUserData = onCall(
       return snap.docs.map((d) => ({ _id: d.id, ...d.data() }));
     }
 
-    dump.atendimentos = await readRoot("encounters", "patientId");
-    dump.documentosClinicos = await readRoot("clinical_documents", "patientId");
-    dump.exames = await readRoot("lab_results", "patientId");
+    /** No prontuario, patientId e o id da crianca (ou o do titular). */
+    async function readClinical(
+      collection: string
+    ): Promise<Record<string, unknown>[]> {
+      const rows: Record<string, unknown>[] = [];
+      for (const id of [uid, ...children.docs.map((c) => c.id)]) {
+        const snap = await db()
+          .collection(collection)
+          .where("patientId", "==", id)
+          .get();
+        rows.push(...snap.docs.map((d) => ({ _id: d.id, ...d.data() })));
+      }
+      return rows;
+    }
+
+    dump.atendimentos = await readClinical("encounters");
+    dump.documentosClinicos = await readClinical("clinical_documents");
+    dump.exames = await readClinical("lab_results");
     dump.consultas = await readRoot("appointments", "patientId");
     dump.pedidos = await readRoot("orders", "ownerId");
 
@@ -323,7 +353,7 @@ export const exportUserData = onCall(
     await db().collection("audit_log").add({
       action: "data_exported",
       actorUid: uid,
-      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      createdAt: FieldValue.serverTimestamp(),
     });
 
     logger.info("Dados exportados", { uid, bytes: json.length });
@@ -356,31 +386,35 @@ export const requestDataDeletion = onCall(
     );
 
     // Quantos atendimentos assinados serão retidos por obrigação legal.
-    const signedEncounters = await db()
-      .collection("encounters")
-      .where("patientId", "==", uid)
-      .where("status", "in", ["signed", "amended"])
-      .count()
-      .get();
+    let retainedEncounters = 0;
+    for (const id of await patientIdsOf(uid)) {
+      const signed = await db()
+        .collection("encounters")
+        .where("patientId", "==", id)
+        .where("status", "in", ["signed", "amended"])
+        .count()
+        .get();
+      retainedEncounters += signed.data().count;
+    }
 
     await db().collection("deletion_requests").doc(uid).set({
       uid,
-      requestedAt: admin.firestore.FieldValue.serverTimestamp(),
-      scheduledFor: admin.firestore.Timestamp.fromDate(scheduledFor),
+      requestedAt: FieldValue.serverTimestamp(),
+      scheduledFor: Timestamp.fromDate(scheduledFor),
       reason: reason?.slice(0, 500) ?? null,
       status: "scheduled",
-      retainedEncounters: signedEncounters.data().count,
+      retainedEncounters,
     });
 
     await db().collection("users").doc(uid).update({
-      deletionScheduledFor: admin.firestore.Timestamp.fromDate(scheduledFor),
+      deletionScheduledFor: Timestamp.fromDate(scheduledFor),
     });
 
     await db().collection("audit_log").add({
       action: "deletion_requested",
       actorUid: uid,
       scheduledFor,
-      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      createdAt: FieldValue.serverTimestamp(),
     });
 
     logger.warn("Exclusão solicitada", { uid, scheduledFor });
@@ -388,7 +422,7 @@ export const requestDataDeletion = onCall(
     return {
       scheduledFor: scheduledFor.toISOString(),
       graceDays: DELETION_GRACE_DAYS,
-      retainedEncounters: signedEncounters.data().count,
+      retainedEncounters,
       retentionYears: MEDICAL_RECORD_RETENTION_YEARS,
     };
   }
@@ -413,11 +447,11 @@ export const cancelDataDeletion = onCall(
 
     await ref.update({
       status: "cancelled",
-      cancelledAt: admin.firestore.FieldValue.serverTimestamp(),
+      cancelledAt: FieldValue.serverTimestamp(),
     });
 
     await db().collection("users").doc(uid).update({
-      deletionScheduledFor: admin.firestore.FieldValue.delete(),
+      deletionScheduledFor: FieldValue.delete(),
     });
 
     logger.info("Exclusão cancelada", { uid });
@@ -439,7 +473,7 @@ export const processScheduledDeletions = onSchedule(
     timeZone: "America/Sao_Paulo",
   },
   async () => {
-    const now = admin.firestore.Timestamp.now();
+    const now = Timestamp.now();
 
     const due = await db()
       .collection("deletion_requests")
@@ -458,33 +492,38 @@ export const processScheduledDeletions = onSchedule(
         // pelo prazo do CFM. Sem isso, a plataforma descumpriria a obrigação
         // de guarda — e um prontuário apagado prejudica também o profissional
         // que precisa comprovar sua conduta.
-        const encounters = await db()
-          .collection("encounters")
-          .where("patientId", "==", uid)
-          .where("status", "in", ["signed", "amended"])
-          .get();
+        const patientIds = await patientIdsOf(uid);
+        let anonymized = 0;
+        for (const patientId of patientIds) {
+          const encounters = await db()
+            .collection("encounters")
+            .where("patientId", "==", patientId)
+            .where("status", "in", ["signed", "amended"])
+            .get();
 
-        const anonymousId = `anon_${createHash("sha256")
-          .update(uid)
-          .digest("hex")
-          .slice(0, 16)}`;
+          const anonymousId = `anon_${createHash("sha256")
+            .update(patientId)
+            .digest("hex")
+            .slice(0, 16)}`;
 
-        const batch = db().batch();
-        encounters.docs.forEach((d) =>
-          batch.update(d.ref, {
-            patientId: anonymousId,
-            patientName: null,
-            patientBirthDate: null,
-            anonymizedAt: admin.firestore.FieldValue.serverTimestamp(),
-            retentionUntil: admin.firestore.Timestamp.fromDate(
-              new Date(
-                Date.now() +
-                  MEDICAL_RECORD_RETENTION_YEARS * 365 * 24 * 60 * 60 * 1000
-              )
-            ),
-          })
-        );
-        await batch.commit();
+          const batch = db().batch();
+          encounters.docs.forEach((d) =>
+            batch.update(d.ref, {
+              patientId: anonymousId,
+              patientName: null,
+              patientBirthDate: null,
+              anonymizedAt: FieldValue.serverTimestamp(),
+              retentionUntil: Timestamp.fromDate(
+                new Date(
+                  Date.now() +
+                    MEDICAL_RECORD_RETENTION_YEARS * 365 * 24 * 60 * 60 * 1000
+                )
+              ),
+            })
+          );
+          await batch.commit();
+          anonymized += encounters.size;
+        }
 
         // 2. Apaga tudo o mais.
         await db().recursiveDelete(db().collection("users").doc(uid));
@@ -509,19 +548,22 @@ export const processScheduledDeletions = onSchedule(
         }
 
         await db().collection("leaderboard").doc(uid).delete();
+        for (const childId of patientIds.slice(1)) {
+          await db().collection("child_registry").doc(childId).delete();
+        }
 
         // 3. Remove a credencial de acesso.
         await admin.auth().deleteUser(uid).catch(() => undefined);
 
         await req.ref.update({
           status: "completed",
-          completedAt: admin.firestore.FieldValue.serverTimestamp(),
-          anonymizedEncounters: encounters.size,
+          completedAt: FieldValue.serverTimestamp(),
+          anonymizedEncounters: anonymized,
         });
 
         logger.warn("Conta excluída", {
           uid,
-          anonymized: encounters.size,
+          anonymized,
         });
       } catch (error) {
         logger.error("Falha ao excluir conta", { uid, error });

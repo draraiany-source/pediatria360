@@ -8,6 +8,7 @@
 import { onCall, HttpsError } from "firebase-functions/v2/https";
 import { defineSecret } from "firebase-functions/params";
 import * as admin from "firebase-admin";
+import { FieldValue } from "firebase-admin/firestore";
 import * as logger from "firebase-functions/logger";
 
 const REGION = "southamerica-east1";
@@ -122,7 +123,7 @@ export const startVoiceConsultation = onCall(
     }
 
     const ref = db().collection("voice_sessions").doc();
-    const now = admin.firestore.FieldValue.serverTimestamp();
+    const now = FieldValue.serverTimestamp();
     const payload = {
       id: ref.id,
       childId,
@@ -181,7 +182,7 @@ export const updateVoiceSession = onCall(
 
     await ref.update({
       status: next,
-      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      updatedAt: FieldValue.serverTimestamp(),
     });
 
     return { ok: true, status: next };
@@ -206,8 +207,8 @@ export const finalizeVoiceRecording = onCall(
 
     const patch: Record<string, unknown> = {
       status: "processing",
-      endedAt: admin.firestore.FieldValue.serverTimestamp(),
-      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      endedAt: FieldValue.serverTimestamp(),
+      updatedAt: FieldValue.serverTimestamp(),
     };
 
     if (Array.isArray(transcript) && transcript.length > 0) {
@@ -371,7 +372,7 @@ Modelo de evolucao pedido: ${template}.`;
     await ref.update({
       draft,
       status: "draftReady",
-      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      updatedAt: FieldValue.serverTimestamp(),
     });
 
     return { ok: true, draft };
@@ -444,8 +445,8 @@ export const applyVoiceDraftToEncounter = onCall(
         signedAt: null,
         signatureHash: null,
         signedBy: null,
-        createdAt: admin.firestore.FieldValue.serverTimestamp(),
-        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        createdAt: FieldValue.serverTimestamp(),
+        updatedAt: FieldValue.serverTimestamp(),
         sourceVoiceSessionId: sessionRef.id,
         aiDraft: true,
       });
@@ -498,7 +499,7 @@ export const applyVoiceDraftToEncounter = onCall(
         },
         assessment: draft.assessment ?? NOT_INFORMED,
         plan: draft.plan ?? NOT_INFORMED,
-        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        updatedAt: FieldValue.serverTimestamp(),
         sourceVoiceSessionId: sessionRef.id,
         aiDraft: true,
         // signedAt / signatureHash / signedBy intencionalmente omitidos
@@ -508,7 +509,7 @@ export const applyVoiceDraftToEncounter = onCall(
     await sessionRef.update({
       status: "applied",
       encounterId,
-      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      updatedAt: FieldValue.serverTimestamp(),
     });
 
     return { ok: true, encounterId };
@@ -526,7 +527,7 @@ export const discardVoiceSession = onCall(
       status: "discarded",
       draft: null,
       audioStored: false,
-      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      updatedAt: FieldValue.serverTimestamp(),
     });
 
     return { ok: true };

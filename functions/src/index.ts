@@ -14,6 +14,7 @@ import { onCall, HttpsError } from "firebase-functions/v2/https";
 import { onDocumentWritten } from "firebase-functions/v2/firestore";
 import { defineSecret } from "firebase-functions/params";
 import * as admin from "firebase-admin";
+import { FieldValue, Timestamp } from "firebase-admin/firestore";
 import * as logger from "firebase-functions/logger";
 
 admin.initializeApp();
@@ -294,7 +295,7 @@ export const aiChat = onCall(
 
       if (childDoc.exists) {
         const child = childDoc.data() ?? {};
-        const birth = (child.birthDate as admin.firestore.Timestamp)?.toDate();
+        const birth = (child.birthDate as Timestamp)?.toDate();
         const months = birth
           ? Math.floor((Date.now() - birth.getTime()) / (1000 * 60 * 60 * 24 * 30.44))
           : null;
@@ -417,7 +418,7 @@ export const aiChat = onCall(
     }
 
     // ------------------------------------------------------------ Persistência
-    const now = admin.firestore.FieldValue.serverTimestamp();
+    const now = FieldValue.serverTimestamp();
     const batch = db.batch();
 
     if (!conversationId) {
@@ -432,7 +433,7 @@ export const aiChat = onCall(
     } else {
       batch.update(convRef, {
         updatedAt: now,
-        messageCount: admin.firestore.FieldValue.increment(2),
+        messageCount: FieldValue.increment(2),
       });
     }
 
@@ -455,7 +456,7 @@ export const aiChat = onCall(
     batch.set(
       usageRef,
       {
-        count: admin.firestore.FieldValue.increment(1),
+        count: FieldValue.increment(1),
         limit,
         unlimited,
         updatedAt: now,

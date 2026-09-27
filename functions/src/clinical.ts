@@ -28,6 +28,7 @@
 import { onCall, HttpsError } from "firebase-functions/v2/https";
 import { defineSecret } from "firebase-functions/params";
 import * as admin from "firebase-admin";
+import { FieldValue, Timestamp } from "firebase-admin/firestore";
 import * as logger from "firebase-functions/logger";
 
 const REGION = "southamerica-east1";
@@ -281,7 +282,7 @@ async function buildContext(
         previous.docs
           .map((d) => {
             const e = d.data();
-            const date = (e.startedAt as admin.firestore.Timestamp)
+            const date = (e.startedAt as Timestamp)
               ?.toDate()
               .toLocaleDateString("pt-BR");
             const dx = ((e.diagnoses ?? []) as { description: string }[])
@@ -365,9 +366,9 @@ async function consumeClinicalQuota(
 ): Promise<void> {
   await ref.set(
     {
-      count: admin.firestore.FieldValue.increment(1),
+      count: FieldValue.increment(1),
       limit: CLINICAL_ASSIST_DAILY_LIMIT,
-      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      updatedAt: FieldValue.serverTimestamp(),
     },
     { merge: true }
   );
@@ -471,7 +472,7 @@ export const clinicalAssist = onCall(
       encounterId: encounterId ?? null,
       patientId: patientId ?? null,
       actorUid: actor.uid,
-      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      createdAt: FieldValue.serverTimestamp(),
       outputLength: text.length,
     });
 

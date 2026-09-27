@@ -14,6 +14,7 @@
 import { onCall, onRequest, HttpsError } from "firebase-functions/v2/https";
 import { defineSecret, defineString } from "firebase-functions/params";
 import * as admin from "firebase-admin";
+import { FieldValue } from "firebase-admin/firestore";
 import * as logger from "firebase-functions/logger";
 import { createHash } from "crypto";
 
@@ -277,7 +278,7 @@ export const bunnyWebhook = onRequest({ region: REGION }, async (req, res) => {
     batch.update(doc.ref, {
       videoStatus: Status,
       videoReady: Status === 4,
-      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      updatedAt: FieldValue.serverTimestamp(),
     })
   );
   await batch.commit();

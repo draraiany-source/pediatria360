@@ -16,6 +16,7 @@
 
 import { onCall, HttpsError } from "firebase-functions/v2/https";
 import * as admin from "firebase-admin";
+import { FieldValue, Timestamp } from "firebase-admin/firestore";
 import * as logger from "firebase-functions/logger";
 import { hasActiveBookingConflict, isPastAppointmentTime } from "./booking";
 
@@ -124,7 +125,7 @@ async function priceCart(
       couponMessage = "Cupom não encontrado.";
     } else {
       const coupon = couponDoc.data() ?? {};
-      const now = admin.firestore.Timestamp.now();
+      const now = Timestamp.now();
 
       if (coupon.active !== true) {
         couponMessage = "Este cupom não está mais ativo.";
@@ -255,7 +256,7 @@ export const createOrder = onCall({ region: REGION }, async (request) => {
         );
       }
       tx.update(productRefs[index], {
-        stock: admin.firestore.FieldValue.increment(-needed),
+        stock: FieldValue.increment(-needed),
       });
     });
 
@@ -270,12 +271,12 @@ export const createOrder = onCall({ region: REGION }, async (request) => {
       status: "pending",
       paymentMethod,
       address,
-      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      createdAt: FieldValue.serverTimestamp(),
     });
 
     if (priced.couponValid && couponCode) {
       tx.update(db().collection("coupons").doc(couponCode.toUpperCase()), {
-        usedCount: admin.firestore.FieldValue.increment(1),
+        usedCount: FieldValue.increment(1),
       });
     }
   });
@@ -335,8 +336,8 @@ export const getAvailability = onCall({ region: REGION }, async (request) => {
   const booked = await db()
     .collection("appointments")
     .where("professionalId", "==", professionalId)
-    .where("startsAt", ">=", admin.firestore.Timestamp.fromDate(dayStart))
-    .where("startsAt", "<", admin.firestore.Timestamp.fromDate(dayEnd))
+    .where("startsAt", ">=", Timestamp.fromDate(dayStart))
+    .where("startsAt", "<", Timestamp.fromDate(dayEnd))
     .get();
 
   const takenTimes = new Set(
@@ -345,7 +346,7 @@ export const getAvailability = onCall({ region: REGION }, async (request) => {
         const status = d.data().status;
         return status !== "cancelled" && status !== "noShow";
       })
-      .map((d) => (d.data().startsAt as admin.firestore.Timestamp).toMillis())
+      .map((d) => (d.data().startsAt as Timestamp).toMillis())
   );
 
   const now = Date.now();
@@ -410,7 +411,7 @@ export const bookAppointment = onCall({ region: REGION }, async (request) => {
   }
 
   const appointmentRef = db().collection("appointments").doc();
-  const timestamp = admin.firestore.Timestamp.fromDate(start);
+  const timestamp = Timestamp.fromDate(start);
 
   await db().runTransaction(async (tx) => {
     // Relê o horário dentro da transação: entre a consulta da agenda e o
@@ -446,7 +447,7 @@ export const bookAppointment = onCall({ region: REGION }, async (request) => {
       childId: childId ?? null,
       childName,
       reason: reason?.slice(0, 500) ?? null,
-      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      createdAt: FieldValue.serverTimestamp(),
     });
   });
 
@@ -477,7 +478,7 @@ export const joinConsultation = onCall({ region: REGION }, async (request) => {
     throw new HttpsError("permission-denied", "Você não participa desta consulta.");
   }
 
-  const start = (appointment.startsAt as admin.firestore.Timestamp).toDate();
+  const start = (appointment.startsAt as Timestamp).toDate();
   const end = new Date(
     start.getTime() + (appointment.durationMinutes ?? 30) * 60000
   );

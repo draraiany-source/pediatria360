@@ -24,6 +24,7 @@ import { onSchedule } from "firebase-functions/v2/scheduler";
 import { onDocumentCreated } from "firebase-functions/v2/firestore";
 import { onCall, HttpsError } from "firebase-functions/v2/https";
 import * as admin from "firebase-admin";
+import { FieldValue, Timestamp } from "firebase-admin/firestore";
 import * as logger from "firebase-functions/logger";
 
 const REGION = "southamerica-east1";
@@ -166,7 +167,7 @@ async function push({ uid, type, title, body, route, urgent }: Push): Promise<bo
 
   if (dead.length > 0) {
     await userDoc.ref.update({
-      fcmTokens: admin.firestore.FieldValue.arrayRemove(...dead),
+      fcmTokens: FieldValue.arrayRemove(...dead),
     });
   }
 
@@ -182,7 +183,7 @@ async function push({ uid, type, title, body, route, urgent }: Push): Promise<bo
       body,
       route: route ?? null,
       read: false,
-      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      createdAt: FieldValue.serverTimestamp(),
     });
 
   return response.successCount > 0;
@@ -220,8 +221,8 @@ export const checkVaccineReminders = onSchedule(
       const doses = await db()
         .collectionGroup("vaccine_doses")
         .where("appliedAt", "==", null)
-        .where("dueAt", ">=", admin.firestore.Timestamp.fromDate(target))
-        .where("dueAt", "<", admin.firestore.Timestamp.fromDate(next))
+        .where("dueAt", ">=", Timestamp.fromDate(target))
+        .where("dueAt", "<", Timestamp.fromDate(next))
         .limit(500)
         .get();
 
@@ -281,15 +282,15 @@ export const checkAppointmentReminders = onSchedule(
     const soon = await db()
       .collection("appointments")
       .where("status", "in", ["confirmed", "requested"])
-      .where("startsAt", ">=", admin.firestore.Timestamp.fromDate(inOneHour))
-      .where("startsAt", "<", admin.firestore.Timestamp.fromDate(windowEnd))
+      .where("startsAt", ">=", Timestamp.fromDate(inOneHour))
+      .where("startsAt", "<", Timestamp.fromDate(windowEnd))
       .get();
 
     for (const doc of soon.docs) {
       const a = doc.data();
       if (a.reminderSentOneHour === true) continue;
 
-      const time = (a.startsAt as admin.firestore.Timestamp)
+      const time = (a.startsAt as Timestamp)
         .toDate()
         .toLocaleTimeString("pt-BR", {
           hour: "2-digit",
@@ -339,7 +340,7 @@ export const checkOpenDrafts = onSchedule(
     const drafts = await db()
       .collection("encounters")
       .where("status", "==", "draft")
-      .where("startedAt", "<", admin.firestore.Timestamp.fromDate(cutoff))
+      .where("startedAt", "<", Timestamp.fromDate(cutoff))
       .limit(300)
       .get();
 
@@ -385,8 +386,16 @@ export const onLabResultCreated = onDocumentCreated(
     const patientId = result.patientId as string;
     if (!patientId || patientId.startsWith("pending_")) return;
 
+    // No prontuario, patientId e o id da crianca; quem recebe e o responsavel.
+    const registry = await db()
+      .collection("child_registry")
+      .doc(patientId)
+      .get();
+    const ownerUid = registry.get("ownerUid") as string | undefined;
+    if (!ownerUid) return;
+
     await push({
-      uid: patientId,
+      uid: ownerUid,
       type: "labResult",
       title: "Novo resultado de exame",
       body: "Um resultado foi registrado no prontuário.",
@@ -446,7 +455,7 @@ export const updateNotificationSettings = onCall(
 
     await db().collection("users").doc(uid).update({
       notificationPrefs: clean,
-      notificationPrefsUpdatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      notificationPrefsUpdatedAt: FieldValue.serverTimestamp(),
     });
 
     return { ok: true };
@@ -464,7 +473,7 @@ export const registerDevice = onCall({ region: REGION }, async (request) => {
   }
 
   await db().collection("users").doc(uid).update({
-    fcmTokens: admin.firestore.FieldValue.arrayUnion(token),
+    fcmTokens: FieldValue.arrayUnion(token),
   });
 
   return { ok: true };
@@ -478,7 +487,7 @@ export const unregisterDevice = onCall({ region: REGION }, async (request) => {
   const { token } = request.data as { token: string };
 
   await db().collection("users").doc(uid).update({
-    fcmTokens: admin.firestore.FieldValue.arrayRemove(token),
+    fcmTokens: FieldValue.arrayRemove(token),
   });
 
   return { ok: true };

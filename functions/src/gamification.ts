@@ -13,6 +13,7 @@ import { onCall, HttpsError } from "firebase-functions/v2/https";
 import { onSchedule } from "firebase-functions/v2/scheduler";
 import { onDocumentDeleted } from "firebase-functions/v2/firestore";
 import * as admin from "firebase-admin";
+import { FieldValue, Timestamp } from "firebase-admin/firestore";
 import * as logger from "firebase-functions/logger";
 
 const REGION = "southamerica-east1";
@@ -88,8 +89,8 @@ export const awardXp = onCall({ region: REGION }, async (request) => {
         dayRef,
         {
           counts: { ...counts, [action]: used + 1 },
-          references: admin.firestore.FieldValue.arrayUnion(key),
-          updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+          references: FieldValue.arrayUnion(key),
+          updatedAt: FieldValue.serverTimestamp(),
         },
         { merge: true }
       );
@@ -98,15 +99,15 @@ export const awardXp = onCall({ region: REGION }, async (request) => {
         dayRef,
         {
           counts: { ...counts, [action]: used + 1 },
-          updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+          updatedAt: FieldValue.serverTimestamp(),
         },
         { merge: true }
       );
     }
 
     tx.update(userRef, {
-      xp: admin.firestore.FieldValue.increment(value),
-      lastActiveAt: admin.firestore.FieldValue.serverTimestamp(),
+      xp: FieldValue.increment(value),
+      lastActiveAt: FieldValue.serverTimestamp(),
     });
 
     return value;
@@ -136,7 +137,7 @@ export const registerDailyActivity = onCall({ region: REGION }, async (request) 
     const today = new Date();
     today.setUTCHours(0, 0, 0, 0);
 
-    const lastRaw = data.lastStreakDate as admin.firestore.Timestamp | undefined;
+    const lastRaw = data.lastStreakDate as Timestamp | undefined;
     const last = lastRaw?.toDate();
     if (last) last.setUTCHours(0, 0, 0, 0);
 
@@ -153,7 +154,7 @@ export const registerDailyActivity = onCall({ region: REGION }, async (request) 
       tx.update(userRef, {
         streakDays: 1,
         longestStreak: Math.max(longest, 1),
-        lastStreakDate: admin.firestore.Timestamp.fromDate(today),
+        lastStreakDate: Timestamp.fromDate(today),
         streakGraceUsed: false,
         streakGraceWeek: thisWeek,
       });
@@ -181,10 +182,10 @@ export const registerDailyActivity = onCall({ region: REGION }, async (request) 
     tx.update(userRef, {
       streakDays: next,
       longestStreak: Math.max(longest, next),
-      lastStreakDate: admin.firestore.Timestamp.fromDate(today),
+      lastStreakDate: Timestamp.fromDate(today),
       streakGraceUsed: usedGrace || (graceWeek === thisWeek && graceUsed),
       streakGraceWeek: thisWeek,
-      xp: admin.firestore.FieldValue.increment(XP_VALUES.dailyOpen),
+      xp: FieldValue.increment(XP_VALUES.dailyOpen),
     });
 
     return { streakDays: next, kept: gap <= 2 };
@@ -229,7 +230,7 @@ export const rebuildLeaderboard = onSchedule(
         xp: data.xp ?? 0,
         position: index + 1,
         photoUrl: data.photoUrl ?? null,
-        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        updatedAt: FieldValue.serverTimestamp(),
       });
     });
 
@@ -273,7 +274,7 @@ export const verifyProfessional = onCall({ region: REGION }, async (request) => 
   await db().collection("users").doc(targetUid).update({
     professionalVerified: approved,
     verificationNote: note ?? null,
-    verifiedAt: admin.firestore.FieldValue.serverTimestamp(),
+    verifiedAt: FieldValue.serverTimestamp(),
     verifiedBy: request.auth!.uid,
   });
 
@@ -283,7 +284,7 @@ export const verifyProfessional = onCall({ region: REGION }, async (request) => 
     targetUid,
     actorUid: request.auth!.uid,
     note: note ?? null,
-    createdAt: admin.firestore.FieldValue.serverTimestamp(),
+    createdAt: FieldValue.serverTimestamp(),
   });
 
   logger.info("Verificação profissional", { targetUid, approved });
@@ -295,7 +296,7 @@ export const verifyProfessional = onCall({ region: REGION }, async (request) => 
 export const adminDashboard = onCall({ region: REGION }, async (request) => {
   await requireAdmin(request.auth?.uid);
 
-  const thirtyDaysAgo = admin.firestore.Timestamp.fromDate(
+  const thirtyDaysAgo = Timestamp.fromDate(
     new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
   );
 
