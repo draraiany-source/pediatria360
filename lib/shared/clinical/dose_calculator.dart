@@ -76,6 +76,11 @@ class DrugPresentation {
             '${formatDoseNumber(perVolumeMl ?? 0)} mL'
       : '${formatDoseNumber(amount)} ${amountUnit.label} por $unitName';
 
+  /// Nome com a concentração, sem repeti-la quando o nome já a contém.
+  String get displayName => label.contains(concentrationLabel)
+      ? label
+      : '$label ($concentrationLabel)';
+
   /// Erro de cadastro que impede o uso da apresentação.
   String? get validationError {
     if (!amount.isFinite || amount <= 0) {

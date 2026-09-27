@@ -384,10 +384,17 @@ class _Shortcuts extends StatelessWidget {
       runSpacing: AppSpacing.sm,
       children: <Widget>[
         for (final (String, IconData, String) i in items)
-          ActionChip(
-            avatar: Icon(i.$2, size: 18, color: AppColors.brand),
-            label: Text(i.$1),
-            onPressed: () => context.go(i.$3),
+          // O ActionChip e anunciado como caixa de selecao no Flutter Web.
+          Semantics(
+            button: true,
+            label: i.$1,
+            excludeSemantics: true,
+            onTap: () => context.go(i.$3),
+            child: ActionChip(
+              avatar: Icon(i.$2, size: 18, color: AppColors.brand),
+              label: Text(i.$1),
+              onPressed: () => context.go(i.$3),
+            ),
           ),
       ],
     );

@@ -321,7 +321,7 @@ class _DoseCalculatorPanelState extends State<DoseCalculatorPanel> {
                         DropdownMenuItem<String>(
                           value: p.id,
                           child: Text(
-                            '${p.label} (${p.concentrationLabel})',
+                            p.displayName,
                             overflow: TextOverflow.ellipsis,
                           ),
                         ),
@@ -422,8 +422,7 @@ class _DoseCalculatorPanelState extends State<DoseCalculatorPanel> {
                   controlAffinity: ListTileControlAffinity.leading,
                   contentPadding: EdgeInsets.zero,
                   title: Text(
-                    'Conferi a apresentação: ${calc.presentation!.label} '
-                    '(${calc.presentation!.concentrationLabel}).',
+                    'Conferi a apresentação: ${calc.presentation!.displayName}.',
                   ),
                 ),
               ],
