@@ -67,6 +67,7 @@ class EmptyState extends StatelessWidget {
                   illustration!,
                   height: 140,
                   fit: BoxFit.contain,
+                  excludeFromSemantics: true,
                   errorBuilder: (BuildContext context, Object error, _) =>
                       Icon(icon, size: 40, color: theme.colorScheme.outline),
                 )

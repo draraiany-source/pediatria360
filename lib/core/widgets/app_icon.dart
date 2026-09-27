@@ -37,6 +37,7 @@ class AppIcon extends StatelessWidget {
         height: size,
         fit: fit,
         filterQuality: FilterQuality.high,
+        excludeFromSemantics: true,
         errorBuilder: (BuildContext context, Object error, StackTrace? stack) {
           return Icon(
             fallback ?? Icons.medical_services_outlined,

@@ -18,11 +18,14 @@ class CapiIllustration extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Sem container, os textos vizinhos seriam lidos como parte da imagem.
     return Semantics(
+      container: true,
       label: semanticLabel,
       image: true,
       child: Image.asset(
         AppAssets.capiForPose(pose),
+        excludeFromSemantics: true,
         width: size,
         height: size,
         fit: BoxFit.contain,

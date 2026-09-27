@@ -158,7 +158,13 @@ class DemoTag extends StatelessWidget {
 void showDemoSnack(BuildContext context, String message) {
   ScaffoldMessenger.of(context)
     ..hideCurrentSnackBar()
-    ..showSnackBar(SnackBar(content: Text(message)));
+    ..showSnackBar(
+      SnackBar(
+        content: Text(message),
+        duration: const Duration(seconds: 3),
+        showCloseIcon: true,
+      ),
+    );
 }
 
 /// Carregamento simulado com estado de erro opcional.
