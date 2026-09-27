@@ -1,0 +1,171 @@
+import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+
+import 'demo_session.dart';
+import 'screens/agenda_screens.dart';
+import 'screens/business_screens.dart';
+import 'screens/care_screens.dart';
+import 'screens/home_screen.dart';
+import 'screens/patients_screens.dart';
+import 'screens/record_screens.dart';
+import 'screens/restricted_screen.dart';
+import 'screens/welcome_screen.dart';
+import 'widgets/demo_shell.dart';
+import 'widgets/demo_widgets.dart';
+
+/// Libera o modulo para o perfil atual ou mostra "Acesso restrito".
+Widget _guard(DemoModule module, Widget child) =>
+    demoSession.canOpen(module) ? child : DemoRestrictedScreen(module: module);
+
+Page<void> _tab(GoRouterState state, DemoModule module, Widget child) =>
+    NoTransitionPage<void>(key: state.pageKey, child: _guard(module, child));
+
+/// Rotas da demonstracao. Cada tela tem endereco proprio (`/#/agenda`),
+/// entao voltar do navegador, gesto do iPhone e voltar do Android seguem o
+/// historico normal.
+final GoRouter demoRouter = GoRouter(
+  initialLocation: '/',
+  refreshListenable: demoSession,
+  redirect: (BuildContext context, GoRouterState state) {
+    // `?perfil=recepcao` permite compartilhar um link ja no perfil certo.
+    final DemoProfile? fromLink =
+        DemoProfile.fromSlug(state.uri.queryParameters['perfil']);
+    if (fromLink != null) demoSession.enterSilently(fromLink);
+
+    final bool atWelcome = state.matchedLocation == '/';
+    if (demoSession.profile == null && !atWelcome) return '/';
+    return null;
+  },
+  errorBuilder: (BuildContext context, GoRouterState state) => Scaffold(
+    appBar: AppBar(title: const Text('Página não encontrada')),
+    body: DemoEmpty(
+      title: 'Endereço inexistente',
+      message: 'Esta página não existe na demonstração.',
+      actionLabel: 'Ir para o início',
+      onAction: () => context.go(demoSession.profile == null ? '/' : '/inicio'),
+    ),
+  ),
+  routes: <RouteBase>[
+    GoRoute(
+      path: '/',
+      builder: (BuildContext context, GoRouterState state) =>
+          const DemoWelcomeScreen(),
+    ),
+    ShellRoute(
+      builder: (BuildContext context, GoRouterState state, Widget child) =>
+          DemoShell(location: state.matchedLocation, child: child),
+      routes: <RouteBase>[
+        GoRoute(
+          path: '/inicio',
+          pageBuilder: (BuildContext context, GoRouterState state) =>
+              _tab(state, DemoModule.inicio, const DemoHomeScreen()),
+        ),
+        GoRoute(
+          path: '/pacientes',
+          pageBuilder: (BuildContext context, GoRouterState state) =>
+              _tab(state, DemoModule.pacientes, const DemoPatientsScreen()),
+          routes: <RouteBase>[
+            GoRoute(
+              path: 'novo',
+              builder: (BuildContext context, GoRouterState state) =>
+                  _guard(DemoModule.pacientes, const DemoPatientFormScreen()),
+            ),
+            GoRoute(
+              path: ':id',
+              builder: (BuildContext context, GoRouterState state) => _guard(
+                DemoModule.pacientes,
+                DemoPatientDetailScreen(patientId: state.pathParameters['id']!),
+              ),
+              routes: <RouteBase>[
+                GoRoute(
+                  path: 'prontuario',
+                  builder: (BuildContext context, GoRouterState state) =>
+                      demoSession.canSeeClinicalRecord
+                          ? DemoRecordScreen(
+                              patientId: state.pathParameters['id']!)
+                          : const DemoRestrictedScreen(
+                              module: DemoModule.pacientes,
+                              title: 'Prontuário',
+                            ),
+                  routes: <RouteBase>[
+                    GoRoute(
+                      path: 'nova',
+                      builder: (BuildContext context, GoRouterState state) =>
+                          demoSession.canSeeClinicalRecord
+                              ? DemoEncounterEditorScreen(
+                                  patientId: state.pathParameters['id']!)
+                              : const DemoRestrictedScreen(
+                                  module: DemoModule.pacientes,
+                                  title: 'Prontuário',
+                                ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ],
+        ),
+        GoRoute(
+          path: '/agenda',
+          pageBuilder: (BuildContext context, GoRouterState state) =>
+              _tab(state, DemoModule.agenda, const DemoAgendaScreen()),
+          routes: <RouteBase>[
+            GoRoute(
+              path: ':id',
+              builder: (BuildContext context, GoRouterState state) => _guard(
+                DemoModule.agenda,
+                DemoAppointmentDetailScreen(
+                    appointmentId: state.pathParameters['id']!),
+              ),
+            ),
+          ],
+        ),
+        GoRoute(
+          path: '/vacinacao',
+          pageBuilder: (BuildContext context, GoRouterState state) => _tab(
+            state,
+            DemoModule.vacinacao,
+            DemoVaccinesScreen(
+              key: ValueKey<String?>(state.uri.queryParameters['paciente']),
+              initialPatientId: state.uri.queryParameters['paciente'],
+            ),
+          ),
+        ),
+        GoRoute(
+          path: '/telemedicina',
+          pageBuilder: (BuildContext context, GoRouterState state) => _tab(
+              state, DemoModule.telemedicina, const DemoTelemedicineScreen()),
+        ),
+        GoRoute(
+          path: '/biblioteca',
+          pageBuilder: (BuildContext context, GoRouterState state) =>
+              _tab(state, DemoModule.biblioteca, const DemoLibraryScreen()),
+          routes: <RouteBase>[
+            GoRoute(
+              path: ':id',
+              builder: (BuildContext context, GoRouterState state) => _guard(
+                DemoModule.biblioteca,
+                DemoArticleScreen(articleId: state.pathParameters['id']!),
+              ),
+            ),
+          ],
+        ),
+        GoRoute(
+          path: '/relatorios',
+          pageBuilder: (BuildContext context, GoRouterState state) =>
+              _tab(state, DemoModule.relatorios, const DemoReportsScreen()),
+        ),
+        GoRoute(
+          path: '/financeiro',
+          pageBuilder: (BuildContext context, GoRouterState state) =>
+              _tab(state, DemoModule.financeiro, const DemoFinanceScreen()),
+        ),
+        GoRoute(
+          path: '/perfil',
+          pageBuilder: (BuildContext context, GoRouterState state) =>
+              _tab(state, DemoModule.perfil, const DemoProfileScreen()),
+        ),
+      ],
+    ),
+  ],
+);
