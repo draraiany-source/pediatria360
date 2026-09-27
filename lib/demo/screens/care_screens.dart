@@ -61,7 +61,7 @@ class _DemoVaccinesScreenState extends State<DemoVaccinesScreen> {
                   const DemoNotice(
                     icon: Icons.science_outlined,
                     color: AppColors.warning,
-                    text: 'Registros ilustrativos com nomes genericos. Não use '
+                    text: 'Registros ilustrativos com nomes genéricos. Não use '
                         'como referência de calendário vacinal: no app real '
                         'o calendário depende de fonte oficial e validação '
                         'profissional.',
@@ -264,7 +264,7 @@ class DemoTelemedicineScreen extends StatelessWidget {
                   runSpacing: AppSpacing.sm,
                   children: <Widget>[
                     _RoundButton(Icons.mic_off_outlined, 'Microfone'),
-                    _RoundButton(Icons.videocam_off_outlined, 'Camera'),
+                    _RoundButton(Icons.videocam_off_outlined, 'Câmera'),
                     _RoundButton(Icons.call_end_rounded, 'Encerrar',
                         color: AppColors.danger),
                   ],

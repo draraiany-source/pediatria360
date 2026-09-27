@@ -27,27 +27,32 @@ class DemoBanner extends StatelessWidget {
             ),
             child: Row(
               children: <Widget>[
-                const Icon(Icons.science_outlined,
-                    size: 16, color: AppColors.navy),
+                const Icon(
+                  Icons.science_outlined,
+                  size: 16,
+                  color: AppColors.navy,
+                ),
                 const SizedBox(width: AppSpacing.sm),
                 Expanded(
                   child: Text(
-                    'DEMONSTRAÇÃO - dados fictícios, nada é salvo',
+                    MediaQuery.sizeOf(context).width < 480
+                        ? 'DEMONSTRAÇÃO · dados fictícios'
+                        : 'DEMONSTRAÇÃO - dados fictícios, nada é salvo',
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                          color: AppColors.navy,
-                          fontWeight: FontWeight.w800,
-                          letterSpacing: 0.3,
-                        ),
+                      color: AppColors.navy,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: 0.3,
+                    ),
                   ),
                 ),
                 Text(
                   'Saiba mais',
                   style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                        color: AppColors.navy,
-                        decoration: TextDecoration.underline,
-                      ),
+                    color: AppColors.navy,
+                    decoration: TextDecoration.underline,
+                  ),
                 ),
               ],
             ),
@@ -141,10 +146,10 @@ class DemoTag extends StatelessWidget {
       child: Text(
         label.toUpperCase(),
         style: Theme.of(context).textTheme.labelSmall?.copyWith(
-              color: color,
-              fontWeight: FontWeight.w800,
-              letterSpacing: 0.4,
-            ),
+          color: color,
+          fontWeight: FontWeight.w800,
+          letterSpacing: 0.4,
+        ),
       ),
     );
   }
@@ -248,18 +253,17 @@ class DemoEmpty extends StatelessWidget {
               title,
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    color: AppColors.navy,
-                    fontWeight: FontWeight.w800,
-                  ),
+                color: AppColors.navy,
+                fontWeight: FontWeight.w800,
+              ),
             ),
             const SizedBox(height: AppSpacing.sm),
             Text(
               message,
               textAlign: TextAlign.center,
-              style: Theme.of(context)
-                  .textTheme
-                  .bodyMedium
-                  ?.copyWith(color: AppColors.inkMuted),
+              style: Theme.of(
+                context,
+              ).textTheme.bodyMedium?.copyWith(color: AppColors.inkMuted),
             ),
             if (actionLabel != null && onAction != null) ...<Widget>[
               const SizedBox(height: AppSpacing.lg),
@@ -301,19 +305,16 @@ class DemoSectionTitle extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(
-        top: AppSpacing.lg,
-        bottom: AppSpacing.sm,
-      ),
+      padding: const EdgeInsets.only(top: AppSpacing.lg, bottom: AppSpacing.sm),
       child: Row(
         children: <Widget>[
           Expanded(
             child: Text(
               title,
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    color: AppColors.navy,
-                    fontWeight: FontWeight.w800,
-                  ),
+                color: AppColors.navy,
+                fontWeight: FontWeight.w800,
+              ),
             ),
           ),
           if (trailing != null) trailing!,

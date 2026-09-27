@@ -260,7 +260,7 @@ class _DemoEncounterEditorScreenState
                         ),
                         const SizedBox(height: AppSpacing.sm),
                         const Text(
-                          'Na demonstração não há IA nem gravacao de voz: o '
+                          'Na demonstração não há IA nem gravação de voz: o '
                           'botão insere um modelo fixo. No app real a IA só '
                           'prepara um rascunho, e o profissional revisa e '
                           'confirma antes de qualquer registro.',

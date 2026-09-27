@@ -276,7 +276,7 @@ class DemoSeed {
         const DemoVaccineRecord(
           patientId: 'p1',
           name: 'Vacina exemplo B',
-          dose: 'Reforco',
+          dose: 'Reforço',
           status: DemoVaccineStatus.pendente,
         ),
         DemoVaccineRecord(
@@ -312,7 +312,7 @@ class DemoSeed {
     DemoArticle(
       id: 'c2',
       title: 'Introdução alimentar: primeiros passos',
-      category: 'Alimentacao',
+      category: 'Alimentação',
       minutes: 6,
       summary: 'Conteúdo de exemplo. O texto real passa por revisão '
           'profissional antes de ser publicado no app.',

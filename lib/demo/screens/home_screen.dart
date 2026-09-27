@@ -358,7 +358,7 @@ class DemoStatusChip extends StatelessWidget {
       DemoAppointmentStatus.agendado => ('Agendado', AppColors.inkMuted),
       DemoAppointmentStatus.confirmado => ('Confirmado', AppColors.brand),
       DemoAppointmentStatus.chegou => ('Chegou', AppColors.warning),
-      DemoAppointmentStatus.concluido => ('Concluido', AppColors.tealDeep),
+      DemoAppointmentStatus.concluido => ('Concluído', AppColors.tealDeep),
     };
     return ClinicalBadge(label: label, color: color);
   }

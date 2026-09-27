@@ -277,7 +277,7 @@ class DemoAppointmentDetailScreen extends StatelessWidget {
                               DemoAppointmentStatus.agendado => 'Agendado',
                               DemoAppointmentStatus.confirmado => 'Confirmado',
                               DemoAppointmentStatus.chegou => 'Chegou',
-                              DemoAppointmentStatus.concluido => 'Concluido',
+                              DemoAppointmentStatus.concluido => 'Concluído',
                             }),
                             selected: a.status == s,
                             onSelected: (_) {
