@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<!--
+  Pagina da DEMONSTRACAO web (lib/main_demo.dart).
+  Nao carrega SDKs nem qualquer servico do app real.
+  Usado por tools/demo/build_demo.ps1 no lugar de web/index.html.
+
+  A Content-Security-Policy so libera o proprio site e as fontes. Assim o
+  navegador recusa qualquer conexao que um plugin registrado automaticamente
+  pelo Flutter tente abrir (Google Sign-In, APIs do Google etc.).
+-->
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data: https://fonts.gstatic.com; connect-src 'self' https://fonts.gstatic.com; worker-src 'self' blob:; frame-src 'none'; object-src 'none'; base-uri 'self'; form-action 'none'">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+  <meta name="description" content="Demonstração do Pediatria 360 com dados fictícios. Não é o aplicativo real.">
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="theme-color" content="#14676B">
+
+  <title>Pediatria 360 – DEMONSTRAÇÃO (dados fictícios)</title>
+  <base href="$FLUTTER_BASE_HREF">
+
+  <style>
+    #loading {
+      position: fixed; inset: 0;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      background: linear-gradient(180deg, #E9F1F1 0%, #F7FAFA 100%);
+      font-family: system-ui, -apple-system, sans-serif;
+      transition: opacity .3s ease;
+    }
+    #loading.hidden { opacity: 0; pointer-events: none; }
+    .ring {
+      width: 44px; height: 44px;
+      border: 3px solid rgba(20,103,107,.2);
+      border-top-color: #14676B;
+      border-radius: 50%;
+      animation: spin .9s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .label { margin-top: 18px; color: #14676B; font-size: 14px; font-weight: 600; }
+    .demo {
+      margin-top: 10px; padding: 4px 12px; border-radius: 999px;
+      background: #F6C453; color: #3B2A00; font-size: 12px; font-weight: 700;
+      letter-spacing: .04em;
+    }
+  </style>
+</head>
+<body>
+  <div id="loading">
+    <div class="ring"></div>
+    <div class="label">Pediatria 360</div>
+    <div class="demo">DEMONSTRAÇÃO – dados fictícios</div>
+  </div>
+
+  <script src="demo_loader.js"></script>
+  <script src="flutter_bootstrap.js" async></script>
+</body>
+</html>
