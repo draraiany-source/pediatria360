@@ -430,9 +430,9 @@ class _AgeCard extends StatelessWidget {
                 ? 'não informada'
                 : '${formatGestationalAge(ga)}${preterm ? ' (prematuro)' : ''}',
           ),
-          row('Idade cronológica hoje', formatAgeDays(today.chronologicalDays)),
+          row('Idade cronológica hoje', today.chronologicalLabel),
           if (today.usesCorrected)
-            row('Idade corrigida hoje', formatAgeDays(today.correctedDays!)),
+            row('Idade corrigida hoje', today.correctedLabel!),
           if (preterm && !today.usesCorrected)
             row(
               'Idade corrigida',
@@ -603,8 +603,8 @@ class _PointTile extends StatelessWidget {
     final String value =
         '${formatGrowthNumber(p.measured, decimals)} ${p.indicator.unit}';
     final String age =
-        'Idade ${formatAgeDays(p.age.chronologicalDays)}'
-        '${p.age.usesCorrected ? ' - corrigida ${formatAgeDays(p.age.correctedDays!)}' : ''}';
+        'Idade ${p.age.chronologicalLabel}'
+        '${p.age.usesCorrected ? ' - corrigida ${p.age.correctedLabel!}' : ''}';
     return Padding(
       padding: const EdgeInsets.only(bottom: AppSpacing.sm),
       child: PremiumCard(
@@ -1303,8 +1303,8 @@ class _Preview extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
           Text(
-            'Idade na data: ${formatAgeDays(age.chronologicalDays)}'
-            '${age.usesCorrected ? ' - corrigida ${formatAgeDays(age.correctedDays!)}' : ''}',
+            'Idade na data: ${age.chronologicalLabel}'
+            '${age.usesCorrected ? ' - corrigida ${age.correctedLabel!}' : ''}',
             style: t.bodyMedium?.copyWith(fontWeight: FontWeight.w700),
           ),
           const SizedBox(height: 4),

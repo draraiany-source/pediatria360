@@ -85,7 +85,7 @@ class GrowthPdf {
           'Nascimento',
           s(
             '${formatGrowthDate(birthDate)} - idade atual '
-            '${formatAgeDays(GrowthAge.of(birthDate: birthDate, at: now).chronologicalDays)}',
+            '${GrowthAge.of(birthDate: birthDate, at: now).chronologicalLabel}',
           ),
         ),
         _kv('Sexo', s(sex.label)),
@@ -176,6 +176,15 @@ class GrowthPdf {
               color: PdfColor.fromInt(0xFFEAF0F8),
             ),
             border: pw.TableBorder.all(color: _line, width: 0.5),
+            columnWidths: <pw.TableColumnWidth>[
+              const pw.FixedColumnWidth(54),
+              const pw.FixedColumnWidth(62),
+              if (preterm) const pw.FixedColumnWidth(66),
+              const pw.FixedColumnWidth(48),
+              const pw.FlexColumnWidth(),
+              const pw.FixedColumnWidth(38),
+              const pw.FixedColumnWidth(46),
+            ].asMap(),
             headers: <String>[
               'Data',
               'Idade',
@@ -189,11 +198,9 @@ class GrowthPdf {
               for (final GrowthPoint p in points)
                 <String>[
                   formatGrowthDate(p.measurement.values.date),
-                  formatAgeDays(p.age.chronologicalDays),
+                  p.age.chronologicalLabel,
                   if (preterm)
-                    p.age.correctedDays == null
-                        ? '-'
-                        : formatAgeDays(p.age.correctedDays!),
+                    p.age.correctedDays == null ? '-' : p.age.correctedLabel!,
                   '${formatGrowthNumber(p.measured, g == GrowthIndicator.weightForAge ? 3 : 1)}'
                       '${p.adjustment == null ? '' : ' *'}'
                       '${p.measurement.wasCorrected ? ' (c)' : ''}',

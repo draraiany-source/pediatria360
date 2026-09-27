@@ -269,21 +269,45 @@ double _erf(double x) {
 /// semanas que faltaram para 40) é usada até 24 meses de idade cronológica.
 /// Esses limites seguem a prática usual e dependem de validação clínica.
 class GrowthAge {
-  const GrowthAge._(this.chronologicalDays, this.correctedDays);
+  const GrowthAge._(
+    this.chronologicalDays,
+    this.correctedDays,
+    this._birth,
+    this._at,
+  );
 
   factory GrowthAge.of({
     required DateTime birthDate,
     required DateTime at,
     int? gestationalAgeDays,
   }) {
-    final int chrono = _dateOnly(at).difference(_dateOnly(birthDate)).inDays;
+    final DateTime birth = _dateOnly(birthDate);
+    final DateTime day = _dateOnly(at);
+    final int chrono = day.difference(birth).inDays;
     final bool preterm =
         gestationalAgeDays != null && gestationalAgeDays < pretermBelowDays;
     if (!preterm || chrono > correctUntilChronologicalDays) {
-      return GrowthAge._(chrono, null);
+      return GrowthAge._(chrono, null, birth, day);
     }
-    return GrowthAge._(chrono, chrono - (termDays - gestationalAgeDays));
+    return GrowthAge._(
+      chrono,
+      chrono - (termDays - gestationalAgeDays),
+      birth,
+      day,
+    );
   }
+
+  final DateTime _birth;
+  final DateTime _at;
+
+  /// Idade em calendário (meses e dias contados pelas datas).
+  String get chronologicalLabel => formatAgeBetween(_birth, _at);
+
+  /// Idade corrigida em calendário, contada a partir da data provável do
+  /// termo (40 semanas).
+  String? get correctedLabel => correctedDays == null
+      ? null
+      : formatAgeBetween(_at.subtract(Duration(days: correctedDays!)), _at);
 
   static const int termDays = 280;
   static const int pretermBelowDays = 37 * 7;
@@ -733,6 +757,38 @@ String formatAgeDays(int days) {
   final int rm = months % 12;
   final String y = '$years anos';
   return rm == 0 ? y : '$y e $rm ${rm == 1 ? 'mês' : 'meses'}';
+}
+
+/// Idade entre duas datas em meses e dias de calendário (antes de 24 meses)
+/// ou anos e meses. Datas invertidas contam semanas antes do termo.
+String formatAgeBetween(DateTime from, DateTime to) {
+  final DateTime a = _dateOnly(from);
+  final DateTime b = _dateOnly(to);
+  if (b.isBefore(a)) return formatAgeDays(b.difference(a).inDays);
+  int months = (b.year - a.year) * 12 + b.month - a.month;
+  DateTime anchor = _addMonths(a, months);
+  if (anchor.isAfter(b)) {
+    months--;
+    anchor = _addMonths(a, months);
+  }
+  final int days = b.difference(anchor).inDays;
+  if (months < 1) return '$days ${days == 1 ? 'dia' : 'dias'}';
+  if (months < 24) {
+    final String m = '$months ${months == 1 ? 'mês' : 'meses'}';
+    return days == 0 ? m : '$m e $days ${days == 1 ? 'dia' : 'dias'}';
+  }
+  final int years = months ~/ 12;
+  final int rm = months % 12;
+  final String y = '$years anos';
+  return rm == 0 ? y : '$y e $rm ${rm == 1 ? 'mês' : 'meses'}';
+}
+
+DateTime _addMonths(DateTime d, int months) {
+  final int total = d.year * 12 + (d.month - 1) + months;
+  final int year = total ~/ 12;
+  final int month = total % 12 + 1;
+  final int last = DateTime(year, month + 1, 0).day;
+  return DateTime(year, month, d.day > last ? last : d.day);
 }
 
 String formatGestationalAge(int days) {

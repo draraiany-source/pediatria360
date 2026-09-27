@@ -62,7 +62,7 @@ class GrowthChart extends StatelessWidget {
         ? 'nenhuma medida nesta faixa de idade'
         : '${visible.length} ${visible.length == 1 ? 'medida' : 'medidas'}; '
               'última ${formatGrowthNumber(visible.last.value!, 2)} $unit aos '
-              '${formatAgeDays(visible.last.age.referenceDays)}';
+              '${visible.last.age.correctedLabel ?? visible.last.age.chronologicalLabel}';
     return Semantics(
       container: true,
       label: 'Gráfico ${indicator.title}, ${window.label}: $summary.',

@@ -319,4 +319,47 @@ void main() {
     expect(GrowthSex.fromLabel('Menina'), GrowthSex.female);
     expect(GrowthSex.fromLabel('Menino'), GrowthSex.male);
   });
+
+  test('idade exibida em calendario', () {
+    expect(
+      formatAgeBetween(DateTime(2025, 7, 3), DateTime(2026, 7, 3)),
+      '12 meses',
+    );
+    expect(
+      formatAgeBetween(DateTime(2025, 7, 3), DateTime(2025, 8, 2)),
+      '30 dias',
+    );
+    expect(
+      formatAgeBetween(DateTime(2025, 7, 3), DateTime(2025, 8, 3)),
+      '1 mês',
+    );
+    expect(
+      formatAgeBetween(DateTime(2025, 1, 31), DateTime(2025, 3, 1)),
+      '1 mês e 1 dia',
+    );
+    expect(
+      formatAgeBetween(DateTime(2023, 1, 10), DateTime(2025, 10, 20)),
+      '2 anos e 9 meses',
+    );
+    expect(
+      formatAgeBetween(DateTime(2025, 7, 3), DateTime(2025, 6, 19)),
+      '2 semanas antes do termo',
+    );
+
+    final GrowthAge a = GrowthAge.of(
+      birthDate: DateTime(2025, 7, 3),
+      at: DateTime(2026, 9, 17),
+      gestationalAgeDays: 34 * 7 + 2,
+    );
+    expect(a.chronologicalLabel, '14 meses e 14 dias');
+    // Termo provavel: 40 dias depois do nascimento (12/08/2025).
+    expect(a.correctedLabel, '13 meses e 5 dias');
+    expect(
+      GrowthAge.of(
+        birthDate: DateTime(2020, 1, 1),
+        at: DateTime(2026, 1, 1),
+      ).correctedLabel,
+      isNull,
+    );
+  });
 }
