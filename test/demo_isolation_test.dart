@@ -18,6 +18,8 @@ void main() {
     'lottie',
     'equatable',
     'shimmer',
+    // Gera o PDF dos documentos no proprio navegador, sem rede.
+    'pdf',
     'pediatria360',
   };
 

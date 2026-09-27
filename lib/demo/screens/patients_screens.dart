@@ -6,6 +6,8 @@ import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_tokens.dart';
 import '../../core/widgets/child_avatar.dart';
 import '../../core/widgets/clinical_ui.dart';
+import '../../shared/clinical/dose_calculator.dart';
+import '../demo_clinical.dart';
 import '../demo_data.dart';
 import '../demo_session.dart';
 import '../widgets/demo_widgets.dart';
@@ -33,8 +35,7 @@ class _DemoPatientsScreenState extends State<DemoPatientsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final bool isGuardian =
-        demoSession.profile == DemoProfile.responsavel;
+    final bool isGuardian = demoSession.profile == DemoProfile.responsavel;
     return Scaffold(
       backgroundColor: AppColors.lightBackground,
       appBar: AppBar(
@@ -56,14 +57,20 @@ class _DemoPatientsScreenState extends State<DemoPatientsScreen> {
             final List<DemoPatient> list = q.isEmpty
                 ? all
                 : all
-                    .where((DemoPatient p) => p.name.toLowerCase().contains(q))
-                    .toList();
+                      .where(
+                        (DemoPatient p) => p.name.toLowerCase().contains(q),
+                      )
+                      .toList();
             return DemoContent(
               child: Column(
                 children: <Widget>[
                   Padding(
                     padding: const EdgeInsets.fromLTRB(
-                        AppSpacing.lg, AppSpacing.md, AppSpacing.lg, 0),
+                      AppSpacing.lg,
+                      AppSpacing.md,
+                      AppSpacing.lg,
+                      0,
+                    ),
                     child: TextField(
                       controller: _search,
                       onChanged: (String v) => setState(() => _query = v),
@@ -97,8 +104,12 @@ class _DemoPatientsScreenState extends State<DemoPatientsScreen> {
                                 : CapiPose.lupa,
                           )
                         : ListView.separated(
-                            padding: const EdgeInsets.fromLTRB(AppSpacing.lg,
-                                AppSpacing.md, AppSpacing.lg, 96),
+                            padding: const EdgeInsets.fromLTRB(
+                              AppSpacing.lg,
+                              AppSpacing.md,
+                              AppSpacing.lg,
+                              96,
+                            ),
                             itemCount: list.length,
                             separatorBuilder: (_, __) =>
                                 const SizedBox(height: AppSpacing.sm),
@@ -138,10 +149,14 @@ class _PatientTile extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
-                Text(patient.name,
-                    style: Theme.of(context).textTheme.titleSmall),
-                Text('${patient.ageLabel} - ${patient.sexLabel}',
-                    style: Theme.of(context).textTheme.bodySmall),
+                Text(
+                  patient.name,
+                  style: Theme.of(context).textTheme.titleSmall,
+                ),
+                Text(
+                  '${patient.ageLabel} - ${patient.sexLabel}',
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
               ],
             ),
           ),
@@ -174,15 +189,15 @@ class DemoPatientDetailScreen extends StatelessWidget {
             appBar: AppBar(title: const Text('Paciente')),
             body: DemoEmpty(
               title: 'Paciente não encontrado',
-              message: 'Este registro não existe ou não pertence ao perfil '
+              message:
+                  'Este registro não existe ou não pertence ao perfil '
                   'atual.',
               actionLabel: 'Voltar para a lista',
               onAction: () => context.go('/pacientes'),
             ),
           );
         }
-        final bool isGuardian =
-            demoSession.profile == DemoProfile.responsavel;
+        final bool isGuardian = demoSession.profile == DemoProfile.responsavel;
         return Scaffold(
           backgroundColor: AppColors.lightBackground,
           appBar: AppBar(title: Text(p.name)),
@@ -210,9 +225,7 @@ class DemoPatientDetailScreen extends StatelessWidget {
                               children: <Widget>[
                                 Text(
                                   p.name,
-                                  style: Theme.of(context)
-                                      .textTheme
-                                      .titleLarge
+                                  style: Theme.of(context).textTheme.titleLarge
                                       ?.copyWith(
                                         color: AppColors.navy,
                                         fontWeight: FontWeight.w800,
@@ -220,12 +233,24 @@ class DemoPatientDetailScreen extends StatelessWidget {
                                 ),
                                 const SizedBox(height: 2),
                                 Text('${p.ageLabel} - ${p.sexLabel}'),
-                                Text('Nascimento: ${demoDate(p.birthDate)}',
-                                    style:
-                                        Theme.of(context).textTheme.bodySmall),
-                                Text('Responsável: ${p.guardianName}',
-                                    style:
-                                        Theme.of(context).textTheme.bodySmall),
+                                Text(
+                                  'Nascimento: ${demoDate(p.birthDate)}',
+                                  style: Theme.of(context).textTheme.bodySmall,
+                                ),
+                                Text(
+                                  'Responsável: ${p.guardianName}',
+                                  style: Theme.of(context).textTheme.bodySmall,
+                                ),
+                                if (demoSession.canSeeClinicalRecord)
+                                  Text(
+                                    p.weightKg == null
+                                        ? 'Peso: não registrado'
+                                        : 'Peso: ${formatDoseNumber(p.weightKg!)} kg '
+                                              '(${demoDate(p.weighedAt!)})',
+                                    style: Theme.of(
+                                      context,
+                                    ).textTheme.bodySmall,
+                                  ),
                               ],
                             ),
                           ),
@@ -241,14 +266,46 @@ class DemoPatientDetailScreen extends StatelessWidget {
                       ),
                     ],
                     const DemoSectionTitle('Ações'),
+                    if (demoSession.canUseClinicalTools)
+                      _ActionTile(
+                        icon: Icons.play_circle_outline_rounded,
+                        title: 'Iniciar consulta',
+                        subtitle: 'Consulta, avaliação, conduta e documentos',
+                        highlight: true,
+                        onTap: () {
+                          final DemoConsultation c = demoSession
+                              .startConsultation(p.id);
+                          context.go('/pacientes/${p.id}/consulta/${c.id}');
+                        },
+                      ),
                     if (demoSession.canSeeClinicalRecord)
                       _ActionTile(
                         icon: Icons.description_outlined,
                         title: 'Prontuário',
-                        subtitle: 'Evoluções e nova consulta',
+                        subtitle: 'Consultas, evoluções e documentos',
                         onTap: () =>
                             context.go('/pacientes/${p.id}/prontuario'),
                       ),
+                    if (demoSession.canUseClinicalTools) ...<Widget>[
+                      _ActionTile(
+                        icon: Icons.folder_open_outlined,
+                        title: 'Documentos',
+                        subtitle:
+                            '${demoSession.documentsFor(p.id).length} no histórico',
+                        onTap: () =>
+                            context.go('/pacientes/${p.id}/documentos'),
+                      ),
+                      _ActionTile(
+                        icon: Icons.calculate_outlined,
+                        title: 'Calculadora de doses',
+                        subtitle: p.weightKg == null
+                            ? 'Sem peso registrado: cálculo bloqueado'
+                            : 'Peso ${formatDoseNumber(p.weightKg!)} kg em '
+                                  '${demoDate(p.weighedAt!)}',
+                        onTap: () =>
+                            context.go('/calculadora?paciente=${p.id}'),
+                      ),
+                    ],
                     if (demoSession.canOpen(DemoModule.vacinacao))
                       _ActionTile(
                         icon: Icons.vaccines_outlined,
@@ -268,7 +325,8 @@ class DemoPatientDetailScreen extends StatelessWidget {
                     if (!demoSession.canSeeClinicalRecord && !isGuardian)
                       const DemoNotice(
                         icon: Icons.shield_outlined,
-                        text: 'Este perfil vê apenas o cadastro. Prontuário e '
+                        text:
+                            'Este perfil vê apenas o cadastro. Prontuário e '
                             'restrito aos profissionais de saúde.',
                       ),
                   ],
@@ -291,7 +349,11 @@ class DemoPatientDetailScreen extends StatelessWidget {
         builder: (BuildContext context, StateSetter setSheet) => SafeArea(
           child: SingleChildScrollView(
             padding: const EdgeInsets.fromLTRB(
-                AppSpacing.lg, 0, AppSpacing.lg, AppSpacing.lg),
+              AppSpacing.lg,
+              0,
+              AppSpacing.lg,
+              AppSpacing.lg,
+            ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: <Widget>[
@@ -313,10 +375,14 @@ class DemoPatientDetailScreen extends StatelessWidget {
                       child: FilledButton(
                         onPressed: () {
                           demoSession.setAvatar(
-                              p, ChildAvatarRef.pathFrom(selected));
+                            p,
+                            ChildAvatarRef.pathFrom(selected),
+                          );
                           Navigator.of(sheet).pop();
-                          showDemoSnack(context,
-                              'Avatar atualizado só nesta demonstração.');
+                          showDemoSnack(
+                            context,
+                            'Avatar atualizado só nesta demonstração.',
+                          );
                         },
                         child: const Text('Aplicar'),
                       ),
@@ -338,6 +404,7 @@ class _ActionTile extends StatelessWidget {
     required this.title,
     required this.subtitle,
     required this.onTap,
+    this.highlight = false,
   });
 
   final IconData icon;
@@ -345,30 +412,61 @@ class _ActionTile extends StatelessWidget {
   final String subtitle;
   final VoidCallback onTap;
 
+  /// Ação principal do profissional, em cor sólida.
+  final bool highlight;
+
   @override
   Widget build(BuildContext context) {
+    final TextTheme t = Theme.of(context).textTheme;
+    final Widget row = Row(
+      children: <Widget>[
+        Icon(icon, color: highlight ? Colors.white : AppColors.brand),
+        const SizedBox(width: AppSpacing.md),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              Text(
+                title,
+                style: highlight
+                    ? t.titleSmall?.copyWith(color: Colors.white)
+                    : t.titleSmall,
+              ),
+              Text(
+                subtitle,
+                style: highlight
+                    ? t.bodySmall?.copyWith(color: const Color(0xFFDCE6FF))
+                    : t.bodySmall,
+              ),
+            ],
+          ),
+        ),
+        Icon(
+          Icons.chevron_right_rounded,
+          color: highlight ? Colors.white : null,
+        ),
+      ],
+    );
     return Padding(
       padding: const EdgeInsets.only(bottom: AppSpacing.sm),
-      child: PremiumCard(
-        padding: const EdgeInsets.all(AppSpacing.md),
-        onTap: onTap,
-        child: Row(
-          children: <Widget>[
-            Icon(icon, color: AppColors.brand),
-            const SizedBox(width: AppSpacing.md),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: <Widget>[
-                  Text(title, style: Theme.of(context).textTheme.titleSmall),
-                  Text(subtitle, style: Theme.of(context).textTheme.bodySmall),
-                ],
+      child: highlight
+          ? Material(
+              color: AppColors.brand,
+              borderRadius: AppRadius.xlAll,
+              child: InkWell(
+                onTap: onTap,
+                borderRadius: AppRadius.xlAll,
+                child: Padding(
+                  padding: const EdgeInsets.all(AppSpacing.md),
+                  child: row,
+                ),
               ),
+            )
+          : PremiumCard(
+              padding: const EdgeInsets.all(AppSpacing.md),
+              onTap: onTap,
+              child: row,
             ),
-            const Icon(Icons.chevron_right_rounded),
-          ],
-        ),
-      ),
     );
   }
 }
@@ -461,8 +559,10 @@ class _DemoPatientFormScreenState extends State<DemoPatientFormScreen> {
       guardianName: _guardian.text.trim(),
       avatarAsset: ChildAvatarRef.pathFrom(_avatar),
     );
-    showDemoSnack(context,
-        '${p.name} adicionado nesta demonstração (some ao recarregar).');
+    showDemoSnack(
+      context,
+      '${p.name} adicionado nesta demonstração (some ao recarregar).',
+    );
     context.go('/pacientes/${p.id}');
   }
 
@@ -495,15 +595,17 @@ class _DemoPatientFormScreenState extends State<DemoPatientFormScreen> {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: <Widget>[
                     const DemoNotice(
-                      text: 'Use apenas nomes fictícios. O cadastro fica só '
+                      text:
+                          'Use apenas nomes fictícios. O cadastro fica só '
                           'nesta aba e não é enviado a nenhum servidor.',
                     ),
                     const SizedBox(height: AppSpacing.lg),
                     TextFormField(
                       controller: _name,
                       textCapitalization: TextCapitalization.words,
-                      decoration:
-                          const InputDecoration(labelText: 'Nome completo *'),
+                      decoration: const InputDecoration(
+                        labelText: 'Nome completo *',
+                      ),
                       validator: (String? v) {
                         final String t = (v ?? '').trim();
                         if (t.isEmpty) return 'Informe o nome.';
@@ -517,9 +619,11 @@ class _DemoPatientFormScreenState extends State<DemoPatientFormScreen> {
                     OutlinedButton.icon(
                       onPressed: _pickDate,
                       icon: const Icon(Icons.cake_outlined),
-                      label: Text(_birth == null
-                          ? 'Data de nascimento *'
-                          : 'Nascimento: ${demoDate(_birth!)}'),
+                      label: Text(
+                        _birth == null
+                            ? 'Data de nascimento *'
+                            : 'Nascimento: ${demoDate(_birth!)}',
+                      ),
                     ),
                     const SizedBox(height: AppSpacing.md),
                     DropdownButtonFormField<String>(
@@ -527,9 +631,13 @@ class _DemoPatientFormScreenState extends State<DemoPatientFormScreen> {
                       decoration: const InputDecoration(labelText: 'Sexo *'),
                       items: const <DropdownMenuItem<String>>[
                         DropdownMenuItem<String>(
-                            value: 'Menina', child: Text('Feminino')),
+                          value: 'Menina',
+                          child: Text('Feminino'),
+                        ),
                         DropdownMenuItem<String>(
-                            value: 'Menino', child: Text('Masculino')),
+                          value: 'Menino',
+                          child: Text('Masculino'),
+                        ),
                       ],
                       onChanged: (String? v) => setState(() => _sex = v),
                       validator: (String? v) =>
@@ -541,7 +649,8 @@ class _DemoPatientFormScreenState extends State<DemoPatientFormScreen> {
                         controller: _guardian,
                         textCapitalization: TextCapitalization.words,
                         decoration: const InputDecoration(
-                            labelText: 'Nome do responsável *'),
+                          labelText: 'Nome do responsável *',
+                        ),
                         validator: (String? v) => (v ?? '').trim().isEmpty
                             ? 'Informe o responsável.'
                             : null,
@@ -572,7 +681,9 @@ class _DemoPatientFormScreenState extends State<DemoPatientFormScreen> {
                                     width: 18,
                                     height: 18,
                                     child: CircularProgressIndicator(
-                                        strokeWidth: 2, color: Colors.white),
+                                      strokeWidth: 2,
+                                      color: Colors.white,
+                                    ),
                                   )
                                 : const Text('Salvar'),
                           ),

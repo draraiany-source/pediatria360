@@ -73,7 +73,7 @@ class DrugPresentation {
 
   String get concentrationLabel => isLiquid
       ? '${formatDoseNumber(amount)} ${amountUnit.label}/'
-          '${formatDoseNumber(perVolumeMl ?? 0)} mL'
+            '${formatDoseNumber(perVolumeMl ?? 0)} mL'
       : '${formatDoseNumber(amount)} ${amountUnit.label} por $unitName';
 
   /// Erro de cadastro que impede o uso da apresentação.
@@ -256,9 +256,11 @@ class DoseCalculation {
   bool get hasCritical => alerts.any((DoseAlert a) => a.isCritical);
   bool get hasWarnings => alerts.any((DoseAlert a) => !a.isCritical);
   bool get canInsert => !isBlocked && !hasCritical;
-  bool get exceedsMax => alerts.any((DoseAlert a) =>
-      a.kind == DoseAlertKind.aboveMaxSingle ||
-      a.kind == DoseAlertKind.aboveMaxDaily);
+  bool get exceedsMax => alerts.any(
+    (DoseAlert a) =>
+        a.kind == DoseAlertKind.aboveMaxSingle ||
+        a.kind == DoseAlertKind.aboveMaxDaily,
+  );
 
   /// Dose por administração como será lida pelo responsável.
   String get perAdministrationLabel {
@@ -277,8 +279,7 @@ class DoseCalculation {
 }
 
 int ageInMonths(DateTime birthDate, DateTime now) {
-  int months =
-      (now.year - birthDate.year) * 12 + now.month - birthDate.month;
+  int months = (now.year - birthDate.year) * 12 + now.month - birthDate.month;
   if (now.day < birthDate.day) months--;
   return math.max(0, months);
 }
@@ -322,8 +323,10 @@ class PediatricDoseCalculator {
       blockers.add('Selecione um medicamento com referência cadastrada.');
     } else {
       if (!reference.validated) {
-        blockers.add('A referência de dose de ${reference.drugName} ainda '
-            'não foi validada. Cálculo bloqueado.');
+        blockers.add(
+          'A referência de dose de ${reference.drugName} ainda '
+          'não foi validada. Cálculo bloqueado.',
+        );
       }
       if (reference.source.trim().isEmpty) {
         blockers.add('A referência de dose não informa a fonte.');
@@ -354,8 +357,9 @@ class PediatricDoseCalculator {
       final String? err = presentation.validationError;
       if (err != null) blockers.add(err);
       if (reference != null &&
-          !reference.presentations
-              .any((DrugPresentation p) => p.id == presentation.id)) {
+          !reference.presentations.any(
+            (DrugPresentation p) => p.id == presentation.id,
+          )) {
         blockers.add('A apresentação não pertence a ${reference.drugName}.');
       }
     }
@@ -382,18 +386,26 @@ class PediatricDoseCalculator {
       perDose = mgPerKg * w;
       perDay = perDose * n;
       steps
-        ..add('${formatDoseNumber(mgPerKg)} mg/kg/dose × $wLabel = '
-            '${formatDoseNumber(perDose)} mg por dose')
-        ..add('${formatDoseNumber(perDose)} mg × $n doses/dia '
-            '(${ref.intervalLabel}) = ${formatDoseNumber(perDay)} mg/dia');
+        ..add(
+          '${formatDoseNumber(mgPerKg)} mg/kg/dose × $wLabel = '
+          '${formatDoseNumber(perDose)} mg por dose',
+        )
+        ..add(
+          '${formatDoseNumber(perDose)} mg × $n doses/dia '
+          '(${ref.intervalLabel}) = ${formatDoseNumber(perDay)} mg/dia',
+        );
     } else {
       perDay = mgPerKg * w;
       perDose = perDay / n;
       steps
-        ..add('${formatDoseNumber(mgPerKg)} mg/kg/dia × $wLabel = '
-            '${formatDoseNumber(perDay)} mg/dia')
-        ..add('${formatDoseNumber(perDay)} mg/dia ÷ $n doses '
-            '(${ref.intervalLabel}) = ${formatDoseNumber(perDose)} mg por dose');
+        ..add(
+          '${formatDoseNumber(mgPerKg)} mg/kg/dia × $wLabel = '
+          '${formatDoseNumber(perDay)} mg/dia',
+        )
+        ..add(
+          '${formatDoseNumber(perDay)} mg/dia ÷ $n doses '
+          '(${ref.intervalLabel}) = ${formatDoseNumber(perDose)} mg por dose',
+        );
     }
 
     final bool aboveSingle =
@@ -410,30 +422,38 @@ class PediatricDoseCalculator {
         perDose = perDay / n;
       }
       limited = true;
-      steps.add('Limitado à dose máxima: ${formatDoseNumber(perDose)} mg por '
-          'dose e ${formatDoseNumber(perDay)} mg/dia');
-      alerts.add(DoseAlert(
-        DoseAlertKind.limitedToMax,
-        DoseAlertSeverity.warning,
-        'A dose calculada ultrapassava o máximo e foi limitada a '
-        '${formatDoseNumber(perDose)} mg por dose.',
-      ));
+      steps.add(
+        'Limitado à dose máxima: ${formatDoseNumber(perDose)} mg por '
+        'dose e ${formatDoseNumber(perDay)} mg/dia',
+      );
+      alerts.add(
+        DoseAlert(
+          DoseAlertKind.limitedToMax,
+          DoseAlertSeverity.warning,
+          'A dose calculada ultrapassava o máximo e foi limitada a '
+          '${formatDoseNumber(perDose)} mg por dose.',
+        ),
+      );
     } else {
       if (aboveSingle) {
-        alerts.add(DoseAlert(
-          DoseAlertKind.aboveMaxSingle,
-          DoseAlertSeverity.critical,
-          'Dose por administração (${formatDoseNumber(perDose)} mg) acima do '
-          'máximo de ${formatDoseNumber(ref.maxSingleDoseMg!)} mg.',
-        ));
+        alerts.add(
+          DoseAlert(
+            DoseAlertKind.aboveMaxSingle,
+            DoseAlertSeverity.critical,
+            'Dose por administração (${formatDoseNumber(perDose)} mg) acima do '
+            'máximo de ${formatDoseNumber(ref.maxSingleDoseMg!)} mg.',
+          ),
+        );
       }
       if (aboveDaily) {
-        alerts.add(DoseAlert(
-          DoseAlertKind.aboveMaxDaily,
-          DoseAlertSeverity.critical,
-          'Dose diária (${formatDoseNumber(perDay)} mg) acima do máximo de '
-          '${formatDoseNumber(ref.maxDailyDoseMg!)} mg/dia.',
-        ));
+        alerts.add(
+          DoseAlert(
+            DoseAlertKind.aboveMaxDaily,
+            DoseAlertSeverity.critical,
+            'Dose diária (${formatDoseNumber(perDay)} mg) acima do máximo de '
+            '${formatDoseNumber(ref.maxDailyDoseMg!)} mg/dia.',
+          ),
+        );
       }
     }
 
@@ -441,57 +461,71 @@ class PediatricDoseCalculator {
     double? units;
     if (pres.isLiquid) {
       ml = perDose / pres.mgPerMl!;
-      steps.add('${formatDoseNumber(perDose)} mg ÷ '
-          '${formatDoseNumber(pres.mgPerMl!)} mg/mL (${pres.label}) = '
-          '${formatDoseNumber(ml)} mL por dose');
+      steps.add(
+        '${formatDoseNumber(perDose)} mg ÷ '
+        '${formatDoseNumber(pres.mgPerMl!)} mg/mL (${pres.label}) = '
+        '${formatDoseNumber(ml)} mL por dose',
+      );
       if (pres.maxVolumePerDoseMl != null && ml > pres.maxVolumePerDoseMl!) {
-        alerts.add(DoseAlert(
-          DoseAlertKind.volumeOutOfRange,
-          DoseAlertSeverity.warning,
-          'Volume por dose (${formatDoseNumber(ml)} mL) acima da faixa '
-          'configurada para esta apresentação '
-          '(${formatDoseNumber(pres.maxVolumePerDoseMl!)} mL).',
-        ));
+        alerts.add(
+          DoseAlert(
+            DoseAlertKind.volumeOutOfRange,
+            DoseAlertSeverity.warning,
+            'Volume por dose (${formatDoseNumber(ml)} mL) acima da faixa '
+            'configurada para esta apresentação '
+            '(${formatDoseNumber(pres.maxVolumePerDoseMl!)} mL).',
+          ),
+        );
       }
     } else {
       units = perDose / pres.mgPerUnit!;
-      steps.add('${formatDoseNumber(perDose)} mg ÷ '
-          '${formatDoseNumber(pres.mgPerUnit!)} mg por ${pres.unitName} = '
-          '${formatDoseNumber(units)} ${pres.unitName}(s) por dose');
+      steps.add(
+        '${formatDoseNumber(perDose)} mg ÷ '
+        '${formatDoseNumber(pres.mgPerUnit!)} mg por ${pres.unitName} = '
+        '${formatDoseNumber(units)} ${pres.unitName}(s) por dose',
+      );
       final double step = pres.splittable ? 0.5 : 1;
       final double nearest = (units / step).round() * step;
       if (nearest == 0 || (units - nearest).abs() / units > 0.1) {
-        alerts.add(DoseAlert(
-          DoseAlertKind.incompatiblePresentation,
-          DoseAlertSeverity.critical,
-          'A dose não corresponde a uma fração utilizável do ${pres.unitName} '
-          '(${formatDoseNumber(units)} por dose). Escolha outra apresentação.',
-        ));
+        alerts.add(
+          DoseAlert(
+            DoseAlertKind.incompatiblePresentation,
+            DoseAlertSeverity.critical,
+            'A dose não corresponde a uma fração utilizável do ${pres.unitName} '
+            '(${formatDoseNumber(units)} por dose). Escolha outra apresentação.',
+          ),
+        );
       }
     }
 
     if (pres.minAgeMonths != null && age < pres.minAgeMonths!) {
-      alerts.add(DoseAlert(
-        DoseAlertKind.incompatiblePresentation,
-        DoseAlertSeverity.critical,
-        '${pres.label} não é adequada para ${formatAgeMonths(age)} '
-        '(mínimo configurado: ${formatAgeMonths(pres.minAgeMonths!)}).',
-      ));
+      alerts.add(
+        DoseAlert(
+          DoseAlertKind.incompatiblePresentation,
+          DoseAlertSeverity.critical,
+          '${pres.label} não é adequada para ${formatAgeMonths(age)} '
+          '(mínimo configurado: ${formatAgeMonths(pres.minAgeMonths!)}).',
+        ),
+      );
     }
     if (ref.minAgeMonths != null && age < ref.minAgeMonths!) {
-      alerts.add(DoseAlert(
-        DoseAlertKind.ageRestriction,
-        DoseAlertSeverity.critical,
-        '${ref.drugName} tem restrição de idade: mínimo de '
-        '${formatAgeMonths(ref.minAgeMonths!)} na referência cadastrada.',
-      ));
+      alerts.add(
+        DoseAlert(
+          DoseAlertKind.ageRestriction,
+          DoseAlertSeverity.critical,
+          '${ref.drugName} tem restrição de idade: mínimo de '
+          '${formatAgeMonths(ref.minAgeMonths!)} na referência cadastrada.',
+        ),
+      );
     }
     if (ref.maxAgeMonths != null && age > ref.maxAgeMonths!) {
-      alerts.add(DoseAlert(
-        DoseAlertKind.ageRestriction,
-        DoseAlertSeverity.critical,
-        'A referência cadastrada vale até ${formatAgeMonths(ref.maxAgeMonths!)}.',
-      ));
+      alerts.add(
+        DoseAlert(
+          DoseAlertKind.ageRestriction,
+          DoseAlertSeverity.critical,
+          'A referência cadastrada vale até ${formatAgeMonths(ref.maxAgeMonths!)}.',
+        ),
+      );
     }
 
     final List<String> terms = <String>[ref.drugName, ...ref.allergyKeywords]
@@ -502,34 +536,40 @@ class PediatricDoseCalculator {
       final String a = allergy.toLowerCase().trim();
       if (a.isEmpty) continue;
       if (terms.any((String t) => a.contains(t) || t.contains(a))) {
-        alerts.add(DoseAlert(
-          DoseAlertKind.allergy,
-          DoseAlertSeverity.critical,
-          'Alergia registrada: "$allergy".',
-        ));
+        alerts.add(
+          DoseAlert(
+            DoseAlertKind.allergy,
+            DoseAlertSeverity.critical,
+            'Alergia registrada: "$allergy".',
+          ),
+        );
       }
     }
 
     if ((ref.minMgPerKg != null && mgPerKg < ref.minMgPerKg! - _eps) ||
         (ref.maxMgPerKg != null && mgPerKg > ref.maxMgPerKg! + _eps)) {
-      alerts.add(DoseAlert(
-        DoseAlertKind.outOfConfiguredRange,
-        DoseAlertSeverity.warning,
-        '${formatDoseNumber(mgPerKg)} ${ref.basis.label} fora da faixa '
-        'configurada (${formatDoseNumber(ref.minMgPerKg ?? 0)} a '
-        '${formatDoseNumber(ref.maxMgPerKg ?? mgPerKg)} ${ref.basis.label}).',
-      ));
+      alerts.add(
+        DoseAlert(
+          DoseAlertKind.outOfConfiguredRange,
+          DoseAlertSeverity.warning,
+          '${formatDoseNumber(mgPerKg)} ${ref.basis.label} fora da faixa '
+          'configurada (${formatDoseNumber(ref.minMgPerKg ?? 0)} a '
+          '${formatDoseNumber(ref.maxMgPerKg ?? mgPerKg)} ${ref.basis.label}).',
+        ),
+      );
     }
 
     final Duration weightAge = now.difference(patient.weighedAt!);
     final Duration maxWeightAge = policy.maxAgeFor(age);
     if (weightAge > maxWeightAge) {
-      alerts.add(DoseAlert(
-        DoseAlertKind.outdatedWeight,
-        DoseAlertSeverity.warning,
-        'Peso registrado há ${weightAge.inDays} dias (limite para a idade: '
-        '${maxWeightAge.inDays} dias). Considere pesar novamente.',
-      ));
+      alerts.add(
+        DoseAlert(
+          DoseAlertKind.outdatedWeight,
+          DoseAlertSeverity.warning,
+          'Peso registrado há ${weightAge.inDays} dias (limite para a idade: '
+          '${maxWeightAge.inDays} dias). Considere pesar novamente.',
+        ),
+      );
     }
 
     return DoseCalculation._(

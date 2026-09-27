@@ -7,11 +7,13 @@
   A Content-Security-Policy so libera o proprio site e as fontes. Assim o
   navegador recusa qualquer conexao que um plugin registrado automaticamente
   pelo Flutter tente abrir (Google Sign-In, APIs do Google etc.).
+  frame-src/object-src aceitam blob: apenas para exibir e imprimir o PDF
+  gerado no proprio navegador (pdf_helper.js).
 -->
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data: https://fonts.gstatic.com; connect-src 'self' https://fonts.gstatic.com; worker-src 'self' blob:; frame-src 'none'; object-src 'none'; base-uri 'self'; form-action 'none'">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data: https://fonts.gstatic.com; connect-src 'self' https://fonts.gstatic.com; worker-src 'self' blob:; frame-src 'self' blob:; object-src 'self' blob:; base-uri 'self'; form-action 'none'">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
   <meta name="description" content="Demonstração do Pediatria 360 com dados fictícios. Não é o aplicativo real.">
   <meta name="robots" content="noindex, nofollow">
@@ -54,6 +56,7 @@
   </div>
 
   <script src="demo_loader.js"></script>
+  <script src="pdf_helper.js"></script>
   <script src="flutter_bootstrap.js" async></script>
 </body>
 </html>

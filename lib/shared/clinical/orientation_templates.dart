@@ -42,7 +42,7 @@ class OrientationTemplate {
     final String weight = c.weightKg == null
         ? '[peso]'
         : '${formatDoseNumber(c.weightKg!)} kg'
-            '${c.weighedAt == null ? '' : ' em ${formatDocDate(c.weighedAt!)}'}';
+              '${c.weighedAt == null ? '' : ' em ${formatDocDate(c.weighedAt!)}'}';
     return body
         .replaceAll('{{crianca}}', c.patientName)
         .replaceAll('{{idade}}', age)

@@ -32,10 +32,13 @@ class AppColors {
 
   static const Color vital = Color(0xFF4C7DFF);
 
+  /// Destaque de navegação (menu, abas) com contraste sobre branco.
+  static const Color brandIndicator = Color(0xFFD3DEFD);
+
   // ------------------------------------------------------------ Semântica
-  static const Color success = Color(0xFF2FC7B5);
-  static const Color warning = Color(0xFFFF8A3D);
-  static const Color danger = Color(0xFFFF5A6B);
+  static const Color success = Color(0xFF12877A);
+  static const Color warning = Color(0xFFC2570C);
+  static const Color danger = Color(0xFFD42A42);
   static const Color info = brand;
   static const Color emergency = Color(0xFFE11D48);
 
@@ -44,10 +47,10 @@ class AppColors {
 
   // ------------------------------------------------------------ Neutros light
   static const Color ink = Color(0xFF0E2A66);
-  static const Color inkMuted = Color(0xFF7A8BA8);
-  static const Color line = Color(0xFFE6ECF5);
+  static const Color inkMuted = Color(0xFF4A5B7A);
+  static const Color line = Color(0xFFCBD5E4);
 
-  static const Color lightBackground = Color(0xFFFAFBFD);
+  static const Color lightBackground = Color(0xFFEEF2F8);
   static const Color lightSurface = Color(0xFFFFFFFF);
   static const Color lightSurfaceAlt = Color(0xFFEDF3FF);
   static const Color lightSurfaceElevated = Color(0xFFFFFFFF);
@@ -90,7 +93,7 @@ class AppColors {
   static const LinearGradient ambientLight = LinearGradient(
     begin: Alignment.topCenter,
     end: Alignment.bottomCenter,
-    colors: <Color>[Color(0xFFFAFBFD), Color(0xFFEDF3FF)],
+    colors: <Color>[Color(0xFFF1F4FA), Color(0xFFE4ECFA)],
   );
 
   static const LinearGradient ambientDark = LinearGradient(

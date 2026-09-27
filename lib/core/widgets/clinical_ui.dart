@@ -28,8 +28,9 @@ class PremiumCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final ThemeData theme = Theme.of(context);
     final bool isDark = theme.brightness == Brightness.dark;
-    final Color? border = borderColor ??
-        (isDark ? AppColors.brand.withValues(alpha: 0.22) : null);
+    final Color border =
+        borderColor ??
+        (isDark ? AppColors.brand.withValues(alpha: 0.22) : AppColors.line);
 
     final Widget content = Padding(
       padding: padding ?? AppSpacing.card,
@@ -45,7 +46,7 @@ class PremiumCard extends StatelessWidget {
           decoration: BoxDecoration(
             color: isDark ? AppColors.darkSurface : Colors.white,
             borderRadius: AppRadius.xlAll,
-            border: border == null ? null : Border.all(color: border),
+            border: Border.all(color: border),
             gradient: isDark ? AppColors.cardGlow : null,
             boxShadow: glow
                 ? AppShadows.glow

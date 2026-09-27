@@ -1,14 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import '../shared/clinical/clinical_documents.dart';
 import 'demo_session.dart';
 import 'screens/agenda_screens.dart';
 import 'screens/business_screens.dart';
 import 'screens/care_screens.dart';
+import 'screens/consultation_screen.dart';
+import 'screens/documents_screens.dart';
+import 'screens/dose_screens.dart';
 import 'screens/home_screen.dart';
 import 'screens/patients_screens.dart';
 import 'screens/record_screens.dart';
 import 'screens/restricted_screen.dart';
+import 'screens/supplement_screens.dart';
 import 'screens/welcome_screen.dart';
 import 'widgets/demo_shell.dart';
 import 'widgets/demo_widgets.dart';
@@ -16,6 +21,16 @@ import 'widgets/demo_widgets.dart';
 /// Libera o modulo para o perfil atual ou mostra "Acesso restrito".
 Widget _guard(DemoModule module, Widget child) =>
     demoSession.canOpen(module) ? child : DemoRestrictedScreen(module: module);
+
+/// Consulta, documentos e calculadora: so o profissional de saude.
+/// O ScaffoldMessenger proprio faz os avisos aparecerem acima da barra de
+/// acoes do fluxo, e nao sobre ela.
+Widget _clinical(String title, Widget child) => demoSession.canUseClinicalTools
+    ? ScaffoldMessenger(child: child)
+    : DemoRestrictedScreen(module: DemoModule.pacientes, title: title);
+
+Widget _flow(DemoModule module, Widget child) =>
+    _guard(module, ScaffoldMessenger(child: child));
 
 Page<void> _tab(GoRouterState state, DemoModule module, Widget child) =>
     NoTransitionPage<void>(key: state.pageKey, child: _guard(module, child));
@@ -28,8 +43,9 @@ final GoRouter demoRouter = GoRouter(
   refreshListenable: demoSession,
   redirect: (BuildContext context, GoRouterState state) {
     // `?perfil=recepcao` permite compartilhar um link ja no perfil certo.
-    final DemoProfile? fromLink =
-        DemoProfile.fromSlug(state.uri.queryParameters['perfil']);
+    final DemoProfile? fromLink = DemoProfile.fromSlug(
+      state.uri.queryParameters['perfil'],
+    );
     if (fromLink != null) demoSession.enterSilently(fromLink);
 
     final bool atWelcome = state.matchedLocation == '/';
@@ -81,25 +97,137 @@ final GoRouter demoRouter = GoRouter(
                   path: 'prontuario',
                   builder: (BuildContext context, GoRouterState state) =>
                       demoSession.canSeeClinicalRecord
-                          ? DemoRecordScreen(
-                              patientId: state.pathParameters['id']!)
-                          : const DemoRestrictedScreen(
-                              module: DemoModule.pacientes,
-                              title: 'Prontuário',
-                            ),
+                      ? DemoRecordScreen(patientId: state.pathParameters['id']!)
+                      : const DemoRestrictedScreen(
+                          module: DemoModule.pacientes,
+                          title: 'Prontuário',
+                        ),
                   routes: <RouteBase>[
                     GoRoute(
                       path: 'nova',
                       builder: (BuildContext context, GoRouterState state) =>
                           demoSession.canSeeClinicalRecord
-                              ? DemoEncounterEditorScreen(
-                                  patientId: state.pathParameters['id']!)
-                              : const DemoRestrictedScreen(
-                                  module: DemoModule.pacientes,
-                                  title: 'Prontuário',
-                                ),
+                          ? DemoEncounterEditorScreen(
+                              patientId: state.pathParameters['id']!,
+                            )
+                          : const DemoRestrictedScreen(
+                              module: DemoModule.pacientes,
+                              title: 'Prontuário',
+                            ),
                     ),
                   ],
+                ),
+                GoRoute(
+                  path: 'consulta/:cid',
+                  builder: (BuildContext context, GoRouterState state) =>
+                      _clinical(
+                        'Consulta',
+                        DemoConsultationScreen(
+                          key: ValueKey<String>(state.uri.toString()),
+                          patientId: state.pathParameters['id']!,
+                          consultationId: state.pathParameters['cid']!,
+                          initialStep: state.uri.queryParameters['etapa'],
+                        ),
+                      ),
+                ),
+                GoRoute(
+                  path: 'documentos',
+                  builder: (BuildContext context, GoRouterState state) =>
+                      _clinical(
+                        'Documentos',
+                        DemoDocumentsScreen(
+                          patientId: state.pathParameters['id']!,
+                        ),
+                      ),
+                  routes: <RouteBase>[
+                    GoRoute(
+                      path: 'novo',
+                      builder: (BuildContext context, GoRouterState state) =>
+                          _clinical(
+                            'Documentos',
+                            DemoDocumentEditorScreen(
+                              key: ValueKey<String>(state.uri.toString()),
+                              patientId: state.pathParameters['id']!,
+                              kind: DocKind.fromSlug(
+                                state.uri.queryParameters['tipo'],
+                              ),
+                              consultationId:
+                                  state.uri.queryParameters['consulta'],
+                            ),
+                          ),
+                    ),
+                    GoRoute(
+                      path: ':docId',
+                      builder: (BuildContext context, GoRouterState state) =>
+                          _clinical(
+                            'Documentos',
+                            DemoDocumentViewerScreen(
+                              key: ValueKey<String>(state.uri.toString()),
+                              patientId: state.pathParameters['id']!,
+                              docId: state.pathParameters['docId']!,
+                            ),
+                          ),
+                      routes: <RouteBase>[
+                        GoRoute(
+                          path: 'editar',
+                          builder:
+                              (BuildContext context, GoRouterState state) =>
+                                  _clinical(
+                                    'Documentos',
+                                    DemoDocumentEditorScreen(
+                                      key: ValueKey<String>(
+                                        state.uri.toString(),
+                                      ),
+                                      patientId: state.pathParameters['id']!,
+                                      docId: state.pathParameters['docId'],
+                                    ),
+                                  ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ],
+        ),
+        GoRoute(
+          path: '/calculadora',
+          pageBuilder: (BuildContext context, GoRouterState state) => _tab(
+            state,
+            DemoModule.calculadora,
+            DemoCalculatorScreen(
+              key: ValueKey<String?>(state.uri.queryParameters['paciente']),
+              initialPatientId: state.uri.queryParameters['paciente'],
+            ),
+          ),
+        ),
+        GoRoute(
+          path: '/suplementacao',
+          pageBuilder: (BuildContext context, GoRouterState state) => _tab(
+            state,
+            DemoModule.suplementacao,
+            const DemoSupplementsScreen(),
+          ),
+          routes: <RouteBase>[
+            GoRoute(
+              path: ':sid',
+              builder: (BuildContext context, GoRouterState state) => _flow(
+                DemoModule.suplementacao,
+                DemoSupplementDetailScreen(
+                  sheetId: state.pathParameters['sid']!,
+                ),
+              ),
+              routes: <RouteBase>[
+                GoRoute(
+                  path: 'editar',
+                  builder: (BuildContext context, GoRouterState state) => _flow(
+                    DemoModule.suplementacao,
+                    DemoSupplementEditScreen(
+                      key: ValueKey<String>(state.uri.toString()),
+                      sheetId: state.pathParameters['sid']!,
+                    ),
+                  ),
                 ),
               ],
             ),
@@ -115,7 +243,8 @@ final GoRouter demoRouter = GoRouter(
               builder: (BuildContext context, GoRouterState state) => _guard(
                 DemoModule.agenda,
                 DemoAppointmentDetailScreen(
-                    appointmentId: state.pathParameters['id']!),
+                  appointmentId: state.pathParameters['id']!,
+                ),
               ),
             ),
           ],
@@ -134,7 +263,10 @@ final GoRouter demoRouter = GoRouter(
         GoRoute(
           path: '/telemedicina',
           pageBuilder: (BuildContext context, GoRouterState state) => _tab(
-              state, DemoModule.telemedicina, const DemoTelemedicineScreen()),
+            state,
+            DemoModule.telemedicina,
+            const DemoTelemedicineScreen(),
+          ),
         ),
         GoRoute(
           path: '/biblioteca',
