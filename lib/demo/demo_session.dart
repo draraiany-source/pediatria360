@@ -3,10 +3,13 @@ import 'package:flutter/material.dart';
 
 import '../shared/clinical/clinical_documents.dart';
 import '../shared/clinical/dose_calculator.dart';
+import '../shared/clinical/growth.dart';
+import '../shared/clinical/lab_results.dart';
 import '../shared/clinical/orientation_templates.dart';
 import '../shared/clinical/supplement_library.dart';
 import 'demo_clinical.dart';
 import 'demo_data.dart';
+import 'demo_growth.dart';
 
 /// Perfis da demonstracao — espelham as areas de trabalho do app real.
 enum DemoProfile {
@@ -149,6 +152,10 @@ class DemoSession extends ChangeNotifier {
   late List<ClinicalDocRecord> documents;
   late List<OrientationTemplate> orientationTemplates;
   late List<SupplementSheet> supplementSheets;
+  late List<GrowthMeasurement> growth;
+  late List<GestationalAgeChange> gestationalAgeChanges;
+  late List<LabResult> labs;
+  late List<SupplementDecision> supplementDecisions;
   final List<DemoArticle> articles = DemoSeed.articles;
   final List<DoseReference> doseReferences = DemoClinicalSeed.doseReferences;
 
@@ -165,6 +172,13 @@ class DemoSession extends ChangeNotifier {
     documents = DemoClinicalSeed.documents(patients, now);
     orientationTemplates = DemoClinicalSeed.orientationTemplates(now);
     supplementSheets = List<SupplementSheet>.of(kSupplementSheets);
+    for (final DemoPatient p in patients) {
+      p.gestationalAgeDays = DemoGrowthSeed.gestationalAgeDays[p.id];
+    }
+    growth = DemoGrowthSeed.measurements(patients, now);
+    gestationalAgeChanges = <GestationalAgeChange>[];
+    labs = DemoGrowthSeed.labResults(now);
+    supplementDecisions = DemoGrowthSeed.decisions(now);
   }
 
   void enter(DemoProfile profile) {
@@ -352,11 +366,24 @@ class DemoSession extends ChangeNotifier {
     notifyListeners();
   }
 
-  void updateWeight(DemoPatient p, double kg, DateTime weighedAt) {
-    p
-      ..weightKg = kg
-      ..weighedAt = weighedAt;
-    notifyListeners();
+  /// Peso lançado na consulta: vira também uma medida da curva.
+  void updateWeight(
+    DemoPatient p,
+    double kg,
+    DateTime weighedAt, {
+    String? consultationId,
+  }) {
+    addMeasurement(
+      p,
+      GrowthMeasurement(
+        id: 'g${_nextId++}',
+        patientId: p.id,
+        values: GrowthValues(date: weighedAt, weightKg: kg),
+        author: currentAuthor,
+        recordedAt: DateTime.now(),
+        consultationId: consultationId,
+      ),
+    );
   }
 
   List<ClinicalDocRecord> documentsFor(String patientId) =>
@@ -419,6 +446,140 @@ class DemoSession extends ChangeNotifier {
     ];
     notifyListeners();
   }
+
+  // ------------------------------------------------ Crescimento
+
+  /// Curvas: o profissional vê o detalhe; o responsável, a visão simples
+  /// das crianças vinculadas a ele. Os demais perfis não veem.
+  bool get canSeeGrowth =>
+      _profile == DemoProfile.profissional ||
+      _profile == DemoProfile.responsavel;
+
+  bool get canEditGrowth => canUseClinicalTools;
+
+  String newId(String prefix) => '$prefix${_nextId++}';
+
+  List<GrowthMeasurement> growthFor(String patientId) =>
+      growth.where((GrowthMeasurement m) => m.patientId == patientId).toList()
+        ..sort(
+          (GrowthMeasurement a, GrowthMeasurement b) =>
+              a.values.date.compareTo(b.values.date),
+        );
+
+  GrowthMeasurement? measurementById(String id) {
+    for (final GrowthMeasurement m in growth) {
+      if (m.id == id) return m;
+    }
+    return null;
+  }
+
+  void addMeasurement(DemoPatient p, GrowthMeasurement m) {
+    growth = <GrowthMeasurement>[...growth, m];
+    _syncWeight(p);
+    notifyListeners();
+  }
+
+  /// Correção ou anulação: a medida nova substitui a anterior na lista, e
+  /// o valor antigo segue no histórico da própria medida.
+  void replaceMeasurement(DemoPatient p, GrowthMeasurement m) {
+    growth = <GrowthMeasurement>[
+      for (final GrowthMeasurement g in growth) g.id == m.id ? m : g,
+    ];
+    _syncWeight(p);
+    notifyListeners();
+  }
+
+  /// O peso usado pela calculadora é o da medida válida mais recente.
+  void _syncWeight(DemoPatient p) {
+    GrowthMeasurement? latest;
+    for (final GrowthMeasurement m in growthFor(p.id)) {
+      if (m.voided || m.values.weightKg == null) continue;
+      if (latest == null || !m.values.date.isBefore(latest.values.date)) {
+        latest = m;
+      }
+    }
+    p
+      ..weightKg = latest?.values.weightKg
+      ..weighedAt = latest?.values.date;
+  }
+
+  void setGestationalAge(DemoPatient p, int? days, String reason) {
+    if (p.gestationalAgeDays == days) return;
+    gestationalAgeChanges = <GestationalAgeChange>[
+      ...gestationalAgeChanges,
+      GestationalAgeChange(
+        patientId: p.id,
+        before: p.gestationalAgeDays,
+        after: days,
+        reason: reason,
+        author: currentAuthor,
+        at: DateTime.now(),
+      ),
+    ];
+    p.gestationalAgeDays = days;
+    notifyListeners();
+  }
+
+  // ------------------------------------------------ Exames
+
+  List<LabResult> labsFor(String patientId) =>
+      labs.where((LabResult r) => r.patientId == patientId).toList();
+
+  LabResult? labById(String id) {
+    for (final LabResult r in labs) {
+      if (r.id == id) return r;
+    }
+    return null;
+  }
+
+  void saveLab(LabResult r) {
+    final bool exists = labs.any((LabResult x) => x.id == r.id);
+    labs = <LabResult>[
+      if (!exists) r,
+      for (final LabResult x in labs) x.id == r.id ? r : x,
+    ];
+    notifyListeners();
+  }
+
+  // ------------------------------------------------ Suplementação do paciente
+
+  SupplementDecision? decisionFor(String patientId, String topicId) {
+    for (final SupplementDecision d in supplementDecisions) {
+      if (d.patientId == patientId && d.topicId == topicId) return d;
+    }
+    return null;
+  }
+
+  void saveDecision(SupplementDecision d) {
+    final bool exists = supplementDecisions.any(
+      (SupplementDecision x) => x.id == d.id,
+    );
+    supplementDecisions = <SupplementDecision>[
+      if (!exists) d,
+      for (final SupplementDecision x in supplementDecisions)
+        x.id == d.id ? d : x,
+    ];
+    notifyListeners();
+  }
+}
+
+/// Alteração da idade gestacional ao nascer (fica no histórico).
+class GestationalAgeChange {
+  const GestationalAgeChange({
+    required this.patientId,
+    required this.before,
+    required this.after,
+    required this.reason,
+    required this.author,
+    required this.at,
+  });
+
+  final String patientId;
+  final int? before;
+  final int? after;
+  final String reason;
+  final String author;
+  final DateTime at;
 }
 
 /// Instancia unica da aba. Recarregar a pagina volta ao estado inicial.

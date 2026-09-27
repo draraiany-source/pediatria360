@@ -13,7 +13,11 @@ import '../widgets/demo_widgets.dart';
 import '../widgets/flow_widgets.dart';
 
 /// Abre a calculadora sobre o receituário e devolve o item conferido.
-Future<RxItem?> openDoseCalculator(BuildContext context, DemoPatient patient) =>
+Future<RxItem?> openDoseCalculator(
+  BuildContext context,
+  DemoPatient patient, {
+  String? contextNote,
+}) =>
     Navigator.of(context).push<RxItem>(
       MaterialPageRoute<RxItem>(
         fullscreenDialog: true,
@@ -29,6 +33,7 @@ Future<RxItem?> openDoseCalculator(BuildContext context, DemoPatient patient) =>
           ),
           body: DoseCalculatorPanel(
             patient: patient,
+            contextNote: contextNote,
             insertLabel: 'Inserir na receita',
             onInsert: (RxItem item) => Navigator.of(c).pop(item),
           ),
@@ -90,7 +95,11 @@ class DoseCalculatorPanel extends StatefulWidget {
     super.key,
     this.patient,
     this.onInsertForPatient,
+    this.contextNote,
   });
+
+  /// Origem do cálculo (ex.: decisão de suplementação), mostrada no topo.
+  final String? contextNote;
 
   /// `null` mostra a escolha de paciente.
   final DemoPatient? patient;
@@ -229,6 +238,13 @@ class _DoseCalculatorPanelState extends State<DoseCalculatorPanel> {
                     'uma referência validada; não sugere tratamento nem gera '
                     'prescrição sozinha.',
               ),
+              if (widget.contextNote != null) ...<Widget>[
+                const SizedBox(height: AppSpacing.sm),
+                DemoNotice(
+                  icon: Icons.link_rounded,
+                  text: widget.contextNote!,
+                ),
+              ],
               const SizedBox(height: AppSpacing.md),
               if (widget.patient == null)
                 Semantics(

@@ -522,7 +522,7 @@ void main() {
         find.textContaining('RASCUNHO - não usar como conduta'),
         findsOneWidget,
       );
-      expect(find.text('Não preenchido'), findsNWidgets(9));
+      expect(find.text('Não preenchido'), findsNWidgets(8));
       await tapText(tester, 'Editar ficha');
       await tapText(tester, 'Validar ficha');
       expect(find.textContaining('Para validar, faltam'), findsOneWidget);
@@ -549,6 +549,13 @@ void main() {
           '/pacientes/p1/documentos/d1',
           '/pacientes/p1/documentos/novo?tipo=receituario',
           '/pacientes/p1/consulta/c1',
+          '/pacientes/p1/exames',
+          '/pacientes/p1/exames/l2',
+          '/pacientes/p1/exames/novo',
+          '/pacientes/p1/suplementacao',
+          '/pacientes/p1/suplementacao/ferro',
+          '/pacientes/p1/crescimento/nova',
+          '/pacientes/p1/crescimento/g1/corrigir',
         ]) {
           await goTo(tester, path);
           expect(

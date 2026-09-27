@@ -21,13 +21,21 @@ class SheetField {
   final String label;
 }
 
+/// Blocos de cada tema. Todos precisam estar preenchidos para validar.
 const List<SheetField> kSheetFields = <SheetField>[
-  SheetField('indicacao', 'Indicação'),
-  SheetField('faixaEtaria', 'Faixa etária'),
-  SheetField('avaliacaoClinica', 'Avaliação clínica'),
-  SheetField('avaliacaoLaboratorial', 'Avaliação laboratorial'),
-  SheetField('apresentacoes', 'Apresentações'),
+  SheetField('avaliacao', 'Avaliação'),
+  SheetField('exames', 'Exames relacionados'),
+  SheetField('fontesAlimentares', 'Fontes alimentares'),
   SheetField('cuidados', 'Cuidados'),
+  SheetField('conteudoClinico', 'Conteúdo clínico validado'),
+];
+
+/// Grupos usados nos filtros da biblioteca.
+const List<String> kSheetGroups = <String>[
+  'Vitaminas',
+  'Minerais',
+  'Ácidos graxos',
+  'Exames',
 ];
 
 class SupplementSheet {
@@ -45,7 +53,7 @@ class SupplementSheet {
   final String id;
   final String title;
 
-  /// 'Exames' ou 'Nutrientes'.
+  /// Um dos [kSheetGroups].
   final String group;
   final Map<String, String> content;
   final String source;
@@ -54,6 +62,11 @@ class SupplementSheet {
   final SheetStatus status;
 
   bool get isDraft => status == SheetStatus.draft;
+
+  /// Texto usado pela busca: título, grupo e conteúdo preenchido.
+  String get searchText => <String>[title, group, ...content.values]
+      .join(' ')
+      .toLowerCase();
 
   String valueOf(String key) => (content[key] ?? '').trim();
 
@@ -115,24 +128,131 @@ class SupplementSheet {
 /// Temas da biblioteca. Conteúdo vazio de propósito.
 const List<SupplementSheet> kSupplementSheets = <SupplementSheet>[
   SupplementSheet(id: 'exames', title: 'Exames laboratoriais', group: 'Exames'),
-  SupplementSheet(id: 'ferro', title: 'Ferro', group: 'Nutrientes'),
-  SupplementSheet(id: 'b12', title: 'Vitamina B12', group: 'Nutrientes'),
+  SupplementSheet(id: 'ferro', title: 'Ferro', group: 'Minerais'),
+  SupplementSheet(id: 'b12', title: 'Vitamina B12', group: 'Vitaminas'),
   SupplementSheet(
     id: 'acido-folico',
     title: 'Ácido fólico',
-    group: 'Nutrientes',
+    group: 'Vitaminas',
   ),
-  SupplementSheet(id: 'zinco', title: 'Zinco', group: 'Nutrientes'),
-  SupplementSheet(id: 'b6', title: 'Vitamina B6', group: 'Nutrientes'),
-  SupplementSheet(id: 'vit-a', title: 'Vitamina A', group: 'Nutrientes'),
-  SupplementSheet(id: 'vit-d', title: 'Vitamina D', group: 'Nutrientes'),
-  SupplementSheet(id: 'vit-e', title: 'Vitamina E', group: 'Nutrientes'),
-  SupplementSheet(id: 'vit-k', title: 'Vitamina K', group: 'Nutrientes'),
-  SupplementSheet(id: 'vit-c', title: 'Vitamina C', group: 'Nutrientes'),
-  SupplementSheet(id: 'magnesio', title: 'Magnésio', group: 'Nutrientes'),
-  SupplementSheet(id: 'omega-3', title: 'Ômega-3', group: 'Nutrientes'),
-  SupplementSheet(id: 'calcio', title: 'Cálcio', group: 'Nutrientes'),
-  SupplementSheet(id: 'complexo-b', title: 'Complexo B', group: 'Nutrientes'),
-  SupplementSheet(id: 'selenio', title: 'Selênio', group: 'Nutrientes'),
-  SupplementSheet(id: 'cobre', title: 'Cobre', group: 'Nutrientes'),
+  SupplementSheet(id: 'zinco', title: 'Zinco', group: 'Minerais'),
+  SupplementSheet(id: 'b6', title: 'Vitamina B6', group: 'Vitaminas'),
+  SupplementSheet(id: 'vit-a', title: 'Vitamina A', group: 'Vitaminas'),
+  SupplementSheet(id: 'vit-d', title: 'Vitamina D', group: 'Vitaminas'),
+  SupplementSheet(id: 'vit-e', title: 'Vitamina E', group: 'Vitaminas'),
+  SupplementSheet(id: 'vit-k', title: 'Vitamina K', group: 'Vitaminas'),
+  SupplementSheet(id: 'vit-c', title: 'Vitamina C', group: 'Vitaminas'),
+  SupplementSheet(id: 'magnesio', title: 'Magnésio', group: 'Minerais'),
+  SupplementSheet(id: 'omega-3', title: 'Ômega-3', group: 'Ácidos graxos'),
+  SupplementSheet(id: 'calcio', title: 'Cálcio', group: 'Minerais'),
+  SupplementSheet(id: 'complexo-b', title: 'Complexo B', group: 'Vitaminas'),
+  SupplementSheet(id: 'selenio', title: 'Selênio', group: 'Minerais'),
+  SupplementSheet(id: 'cobre', title: 'Cobre', group: 'Minerais'),
 ];
+
+// ------------------------------------------------ Decisão por paciente
+
+enum SupplementDecisionKind {
+  notIndicated('Sem indicação no momento'),
+  monitor('Acompanhar e reavaliar'),
+  indicated('Suplementação indicada'),
+  suspended('Suplementação suspensa');
+
+  const SupplementDecisionKind(this.label);
+
+  final String label;
+
+  /// Só a indicação leva o item à calculadora e ao receituário.
+  bool get goesToPrescription => this == SupplementDecisionKind.indicated;
+}
+
+class SupplementDecisionVersion {
+  const SupplementDecisionVersion({
+    required this.kind,
+    required this.note,
+    required this.author,
+    required this.at,
+    required this.sheetStatus,
+    this.labResultIds = const <String>[],
+    this.consultationId,
+  });
+
+  final SupplementDecisionKind kind;
+  final String note;
+  final String author;
+  final DateTime at;
+
+  /// Situação da ficha do tema no momento da decisão.
+  final SheetStatus sheetStatus;
+
+  /// Resultados conferidos considerados na decisão.
+  final List<String> labResultIds;
+  final String? consultationId;
+}
+
+/// Decisão do profissional sobre um tema, para um paciente. Cada edição
+/// cria uma versão nova; as anteriores continuam visíveis.
+class SupplementDecision {
+  const SupplementDecision({
+    required this.id,
+    required this.patientId,
+    required this.topicId,
+    required this.versions,
+    this.prescriptionDocIds = const <String>[],
+  });
+
+  factory SupplementDecision.create({
+    required String id,
+    required String patientId,
+    required String topicId,
+    required SupplementDecisionVersion first,
+  }) {
+    _check(first);
+    return SupplementDecision(
+      id: id,
+      patientId: patientId,
+      topicId: topicId,
+      versions: <SupplementDecisionVersion>[first],
+    );
+  }
+
+  final String id;
+  final String patientId;
+  final String topicId;
+  final List<SupplementDecisionVersion> versions;
+
+  /// Receituários em rascunho gerados a partir desta decisão.
+  final List<String> prescriptionDocIds;
+
+  SupplementDecisionVersion get current => versions.last;
+
+  static void _check(SupplementDecisionVersion v) {
+    if (v.note.trim().isEmpty) {
+      throw StateError('Registre a justificativa da decisão.');
+    }
+  }
+
+  SupplementDecision revise(SupplementDecisionVersion next) {
+    _check(next);
+    return SupplementDecision(
+      id: id,
+      patientId: patientId,
+      topicId: topicId,
+      versions: <SupplementDecisionVersion>[...versions, next],
+      prescriptionDocIds: prescriptionDocIds,
+    );
+  }
+
+  SupplementDecision withPrescription(String docId) {
+    if (!current.kind.goesToPrescription) {
+      throw StateError('Só a suplementação indicada vai ao receituário.');
+    }
+    return SupplementDecision(
+      id: id,
+      patientId: patientId,
+      topicId: topicId,
+      versions: versions,
+      prescriptionDocIds: <String>[...prescriptionDocIds, docId],
+    );
+  }
+}

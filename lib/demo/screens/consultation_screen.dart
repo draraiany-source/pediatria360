@@ -6,6 +6,8 @@ import '../../core/theme/app_tokens.dart';
 import '../../core/widgets/clinical_ui.dart';
 import '../../shared/clinical/clinical_documents.dart';
 import '../../shared/clinical/dose_calculator.dart';
+import '../../shared/clinical/growth.dart';
+import '../../shared/clinical/lab_results.dart';
 import '../demo_clinical.dart';
 import '../demo_data.dart';
 import '../demo_session.dart';
@@ -136,6 +138,7 @@ class _DemoConsultationScreenState extends State<DemoConsultationScreen> {
         p,
         double.parse(w.replaceAll(',', '.')),
         DateTime(now.year, now.month, now.day),
+        consultationId: c.id,
       );
       _weight.clear();
     }
@@ -148,6 +151,13 @@ class _DemoConsultationScreenState extends State<DemoConsultationScreen> {
   }
 
   Future<bool> _canLeave() async => !_dirty || await confirmDiscard(context);
+
+  /// Abre crescimento/exames vinculados; salva o rascunho antes de sair.
+  void _openLinked(String path) {
+    final DemoConsultation? c = _c;
+    if (c != null && c.isDraft && !_save(silent: true)) return;
+    context.go(path);
+  }
 
   Future<void> _back() async {
     if (_step.index > 0) {
@@ -336,6 +346,35 @@ class _DemoConsultationScreenState extends State<DemoConsultationScreen> {
                       ),
                       _field(_exam, 'Exame físico', editable, lines: 4),
                       _field(_assessment, 'Avaliação *', editable, lines: 4),
+                      const DemoSectionTitle('Crescimento e exames'),
+                      Wrap(
+                        spacing: AppSpacing.sm,
+                        runSpacing: AppSpacing.sm,
+                        children: <Widget>[
+                          OutlinedButton.icon(
+                            onPressed: () => _openLinked(
+                              '/pacientes/${p.id}/crescimento/nova?consulta=${c.id}',
+                            ),
+                            icon: const Icon(Icons.straighten_rounded),
+                            label: const Text('Registrar medidas'),
+                          ),
+                          OutlinedButton.icon(
+                            onPressed: () => _openLinked(
+                              '/pacientes/${p.id}/crescimento?consulta=${c.id}',
+                            ),
+                            icon: const Icon(Icons.show_chart_rounded),
+                            label: const Text('Curva de crescimento'),
+                          ),
+                          OutlinedButton.icon(
+                            onPressed: () => _openLinked(
+                              '/pacientes/${p.id}/exames?consulta=${c.id}',
+                            ),
+                            icon: const Icon(Icons.biotech_outlined),
+                            label: const Text('Exames do paciente'),
+                          ),
+                        ],
+                      ),
+                      _LinkedSummary(patientId: p.id, consultationId: c.id),
                     ],
                     ConsultationStep.conduta => <Widget>[
                       _field(_plan, 'Conduta *', editable, lines: 5),
@@ -357,10 +396,12 @@ class _DemoConsultationScreenState extends State<DemoConsultationScreen> {
                           OutlinedButton.icon(
                             onPressed: () {
                               if (c.isDraft && !_save(silent: true)) return;
-                              context.go('/suplementacao');
+                              context.go(
+                                '/pacientes/${p.id}/suplementacao?consulta=${c.id}',
+                              );
                             },
                             icon: const Icon(Icons.medication_liquid_outlined),
-                            label: const Text('Consultar suplementação'),
+                            label: const Text('Suplementação do paciente'),
                           ),
                         ],
                       ),
@@ -522,6 +563,59 @@ class _StepBar extends StatelessWidget {
             ),
           ),
       ],
+    );
+  }
+}
+
+/// Medidas e exames já vinculados a esta consulta.
+class _LinkedSummary extends StatelessWidget {
+  const _LinkedSummary({required this.patientId, required this.consultationId});
+
+  final String patientId;
+  final String consultationId;
+
+  @override
+  Widget build(BuildContext context) {
+    final TextTheme t = Theme.of(context).textTheme;
+    final List<GrowthMeasurement> growth = demoSession
+        .growthFor(patientId)
+        .where(
+          (GrowthMeasurement m) =>
+              m.consultationId == consultationId && !m.voided,
+        )
+        .toList();
+    final List<LabResult> labs = demoSession
+        .labsFor(patientId)
+        .where((LabResult r) => r.consultationId == consultationId)
+        .toList();
+    if (growth.isEmpty && labs.isEmpty) {
+      return Padding(
+        padding: const EdgeInsets.only(top: AppSpacing.sm),
+        child: Text(
+          'Nenhuma medida ou exame vinculado a esta consulta.',
+          style: t.bodySmall,
+        ),
+      );
+    }
+    return Padding(
+      padding: const EdgeInsets.only(top: AppSpacing.sm),
+      child: SurfaceCard(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            for (final GrowthMeasurement m in growth)
+              Text('Medida: ${m.values.summary()}', style: t.bodySmall),
+            for (final LabResult r in labs)
+              Text(
+                r.isPending
+                    ? 'Exame: ${r.attachment?.name ?? 'laudo'} (pendente de conferência)'
+                    : 'Exame: ${r.values.testName} ${r.values.value} ${r.values.unit} '
+                          '(${formatLabDate(r.values.collectedAt!)})',
+                style: t.bodySmall,
+              ),
+          ],
+        ),
+      ),
     );
   }
 }

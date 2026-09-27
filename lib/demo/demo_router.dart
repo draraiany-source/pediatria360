@@ -9,7 +9,10 @@ import 'screens/care_screens.dart';
 import 'screens/consultation_screen.dart';
 import 'screens/documents_screens.dart';
 import 'screens/dose_screens.dart';
+import 'screens/growth_screens.dart';
 import 'screens/home_screen.dart';
+import 'screens/lab_screens.dart';
+import 'screens/patient_supplement_screens.dart';
 import 'screens/patients_screens.dart';
 import 'screens/record_screens.dart';
 import 'screens/restricted_screen.dart';
@@ -28,6 +31,15 @@ Widget _guard(DemoModule module, Widget child) =>
 Widget _clinical(String title, Widget child) => demoSession.canUseClinicalTools
     ? ScaffoldMessenger(child: child)
     : DemoRestrictedScreen(module: DemoModule.pacientes, title: title);
+
+/// Curvas: profissional (detalhe) e responsável (visão simples, só das
+/// crianças vinculadas). Recepção, financeiro e administração não veem.
+Widget _growth(Widget child) => demoSession.canSeeGrowth
+    ? ScaffoldMessenger(child: child)
+    : const DemoRestrictedScreen(
+        module: DemoModule.pacientes,
+        title: 'Crescimento',
+      );
 
 Widget _flow(DemoModule module, Widget child) =>
     _guard(module, ScaffoldMessenger(child: child));
@@ -118,6 +130,133 @@ final GoRouter demoRouter = GoRouter(
                   ],
                 ),
                 GoRoute(
+                  path: 'crescimento',
+                  builder: (BuildContext context, GoRouterState state) =>
+                      _growth(
+                        DemoGrowthScreen(
+                          key: ValueKey<String>(state.uri.toString()),
+                          patientId: state.pathParameters['id']!,
+                          consultationId: state.uri.queryParameters['consulta'],
+                        ),
+                      ),
+                  routes: <RouteBase>[
+                    GoRoute(
+                      path: 'nova',
+                      builder: (BuildContext context, GoRouterState state) =>
+                          _clinical(
+                            'Crescimento',
+                            DemoGrowthEntryScreen(
+                              key: ValueKey<String>(state.uri.toString()),
+                              patientId: state.pathParameters['id']!,
+                              consultationId:
+                                  state.uri.queryParameters['consulta'],
+                            ),
+                          ),
+                    ),
+                    GoRoute(
+                      path: ':mid/corrigir',
+                      builder: (BuildContext context, GoRouterState state) =>
+                          _clinical(
+                            'Crescimento',
+                            DemoGrowthEntryScreen(
+                              key: ValueKey<String>(state.uri.toString()),
+                              patientId: state.pathParameters['id']!,
+                              measurementId: state.pathParameters['mid'],
+                              consultationId:
+                                  state.uri.queryParameters['consulta'],
+                            ),
+                          ),
+                    ),
+                  ],
+                ),
+                GoRoute(
+                  path: 'exames',
+                  builder: (BuildContext context, GoRouterState state) =>
+                      _clinical(
+                        'Exames',
+                        DemoLabScreen(
+                          key: ValueKey<String>(state.uri.toString()),
+                          patientId: state.pathParameters['id']!,
+                          consultationId: state.uri.queryParameters['consulta'],
+                        ),
+                      ),
+                  routes: <RouteBase>[
+                    GoRoute(
+                      path: 'novo',
+                      builder: (BuildContext context, GoRouterState state) =>
+                          _clinical(
+                            'Exames',
+                            DemoLabEntryScreen(
+                              key: ValueKey<String>(state.uri.toString()),
+                              patientId: state.pathParameters['id']!,
+                              consultationId:
+                                  state.uri.queryParameters['consulta'],
+                            ),
+                          ),
+                    ),
+                    GoRoute(
+                      path: ':lid',
+                      builder: (BuildContext context, GoRouterState state) =>
+                          _clinical(
+                            'Exames',
+                            DemoLabDetailScreen(
+                              key: ValueKey<String>(state.uri.toString()),
+                              patientId: state.pathParameters['id']!,
+                              labId: state.pathParameters['lid']!,
+                              consultationId:
+                                  state.uri.queryParameters['consulta'],
+                            ),
+                          ),
+                      routes: <RouteBase>[
+                        GoRoute(
+                          path: 'editar',
+                          builder:
+                              (BuildContext context, GoRouterState state) =>
+                                  _clinical(
+                                    'Exames',
+                                    DemoLabEntryScreen(
+                                      key: ValueKey<String>(
+                                        state.uri.toString(),
+                                      ),
+                                      patientId: state.pathParameters['id']!,
+                                      labId: state.pathParameters['lid'],
+                                      consultationId:
+                                          state.uri.queryParameters['consulta'],
+                                    ),
+                                  ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+                GoRoute(
+                  path: 'suplementacao',
+                  builder: (BuildContext context, GoRouterState state) =>
+                      _clinical(
+                        'Suplementação',
+                        DemoPatientSupplementScreen(
+                          key: ValueKey<String>(state.uri.toString()),
+                          patientId: state.pathParameters['id']!,
+                          consultationId: state.uri.queryParameters['consulta'],
+                        ),
+                      ),
+                  routes: <RouteBase>[
+                    GoRoute(
+                      path: ':sid',
+                      builder: (BuildContext context, GoRouterState state) =>
+                          _clinical(
+                            'Suplementação',
+                            DemoSupplementDecisionScreen(
+                              key: ValueKey<String>(state.uri.toString()),
+                              patientId: state.pathParameters['id']!,
+                              topicId: state.pathParameters['sid']!,
+                              consultationId:
+                                  state.uri.queryParameters['consulta'],
+                            ),
+                          ),
+                    ),
+                  ],
+                ),                GoRoute(
                   path: 'consulta/:cid',
                   builder: (BuildContext context, GoRouterState state) =>
                       _clinical(

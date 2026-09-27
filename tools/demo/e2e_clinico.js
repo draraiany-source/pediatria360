@@ -349,7 +349,7 @@ const DOCS = [
     await fill(page, 'Avaliação *', 'Avaliação fictícia');
     await tap(page, 'Próximo', { wait: 1500 });
     await fill(page, 'Conduta *', 'Conduta fictícia');
-    check('consulta: conduta oferece receituario com calculadora e suplementacao', (await has(page, 'Receituário com calculadora')) && (await has(page, 'Consultar suplementação')), '');
+    check('consulta: conduta oferece receituario com calculadora e suplementacao', (await has(page, 'Receituário com calculadora')) && (await has(page, 'Suplementação do paciente')), '');
     await shot(page, 'd13_consulta_conduta');
     await tap(page, 'Próximo', { wait: 1500 });
     await tap(page, 'Finalizar consulta', { wait: 1500 });
@@ -392,6 +392,167 @@ const DOCS = [
     }
   });
 
+  // ---------- Crescimento, exames e suplementacao do paciente ----------
+  const pad = (n) => String(n).padStart(2, '0');
+  const now = new Date();
+  const TODAY = pad(now.getDate()) + '/' + pad(now.getMonth() + 1) + '/' + now.getFullYear();
+  const LAUDO = path.join(OUT, 'laudo-ficticio-e2e.pdf');
+  fs.writeFileSync(LAUDO, '%PDF-1.4\n1 0 obj<</Type/Catalog/Pages 2 0 R>>endobj\n2 0 obj<</Type/Pages/Kids[3 0 R]/Count 1>>endobj\n3 0 obj<</Type/Page/Parent 2 0 R/MediaBox[0 0 200 200]>>endobj\ntrailer<</Root 1 0 R>>\n%%EOF\n');
+
+  await step('computador: curva de crescimento', async () => {
+    const { ctx, page } = await newPage(browser, DESKTOP);
+    await open(page, '#/pacientes/p1/crescimento?perfil=profissional');
+    await waitText(page, 'Curva de crescimento');
+    const l = await labels(page);
+    check('curva: idade cronologica, corrigida e IG ao nascer', l.includes('Idade cronológica hoje') && l.includes('Idade corrigida hoje') && l.includes('34 semanas e 2 dias'), '');
+    check('curva: referencia OMS identificada', l.includes('OMS 2006'), '');
+    check('curva: escore Z e percentil por ponto', l.includes('Escore Z') && l.includes('percentil'), '');
+    check('curva: grafico com descricao acessivel', l.includes('Gráfico Peso para idade'), '');
+    check('curva: ponto antes do termo corrigido sem escore', l.includes('referência neonatal'), '');
+    await shot(page, 'c01_curva_peso_profissional');
+    await tap(page, 'Comprimento/altura');
+    check('curva: comprimento com medida corrigida marcada', (await waitText(page, 'Gráfico Comprimento/altura')) && (await has(page, 'Corrigida')), '');
+    await shot(page, 'c02_curva_comprimento_corrigida');
+    await tap(page, 'Perímetro cefálico');
+    check('curva: perimetro cefalico', await waitText(page, 'Gráfico Perímetro cefálico'), '');
+    await shot(page, 'c03_curva_perimetro_cefalico');
+    await page.waitForTimeout(3000);
+    const [dl] = await Promise.all([page.waitForEvent('download', { timeout: 20000 }), tap(page, 'Exportar PDF', { wait: 800 })]);
+    const pdf = await pdfFromDownload(dl);
+    check('curva: PDF exportado', pdf.magic === '%PDF-' && pdf.size > 3000 && pdf.name.startsWith('curvas-luna'), pdf.name + ' ' + pdf.size + ' bytes');
+    fs.copyFileSync(await dl.path(), path.join(OUT, pdf.name));
+    await page.waitForTimeout(3500);
+    await tap(page, 'Imprimir', { wait: 2500 });
+    const src = await page.evaluate(() => document.getElementById('p360-print-frame')?.src || null);
+    const pm = src ? await blobMagic(page, src) : null;
+    await page.waitForTimeout(1200);
+    const printed = await page.evaluate(() => window.__printCalled || 0);
+    check('curva: impressao carrega o PDF e chama print()', !!pm && pm.magic === '%PDF-' && printed > 0, src ? 'print() ' + printed + 'x' : 'sem iframe');
+    await reveal(page, 'Retornar ao paciente');
+    check('curva: historico de alteracoes com motivo', (await has(page, 'Histórico de alterações')) && (await has(page, 'Dígitos invertidos')), '');
+    await shot(page, 'c04_historico_alteracoes');
+    await ctx.close();
+  });
+
+  await step('computador: corrigir medida', async () => {
+    const { ctx, page } = await newPage(browser, DESKTOP);
+    await open(page, '#/pacientes/p1/crescimento?perfil=profissional');
+    await tap(page, 'Corrigir medida de', { last: true, wait: 2000 });
+    check('corrigir: abre a tela de correcao', await waitText(page, 'Salvar correção'), hash(page));
+    await fill(page, 'Peso', '10,1');
+    await tap(page, 'Salvar correção', { wait: 1500 });
+    check('corrigir: exige motivo', await waitText(page, 'Informe o motivo da correção.'), '');
+    await fill(page, 'Motivo da correção *', 'Balança sem tara (teste e2e)');
+    await shot(page, 'c05_corrigir_medida');
+    await tap(page, 'Salvar correção', { wait: 2500 });
+    check('corrigir: volta a curva e guarda o motivo no historico', (await waitText(page, 'Curva de crescimento')) && (await waitText(page, 'Balança sem tara (teste e2e)')), hash(page));
+    await ctx.close();
+  });
+
+  await step('computador: exames', async () => {
+    const { ctx, page } = await newPage(browser, DESKTOP);
+    await open(page, '#/pacientes/p1/exames?perfil=profissional');
+    await waitText(page, 'Exames laboratoriais');
+    check('exames: pendente separado da linha do tempo', await has(page, 'Pendentes de conferência (1)'), '');
+    check('exames: regra de intervalo do laudo exibida', await has(page, 'não há intervalo único'), '');
+    await shot(page, 'c06_exames_linha_do_tempo');
+    const [fc] = await Promise.all([page.waitForEvent('filechooser', { timeout: 15000 }), tap(page, 'Importar laudo', { wait: 500 })]);
+    await fc.setFiles(LAUDO);
+    check('exames: laudo importado abre a conferencia', await waitText(page, 'Conferir laudo importado', 10000), hash(page));
+    const editar = hash(page);
+    check('exames: nada lido automaticamente do arquivo', await has(page, 'Nada foi lido automaticamente'), '');
+    await fill(page, 'Exame *', 'Ferritina');
+    await fill(page, 'Resultado *', '22');
+    await fill(page, 'Unidade *', 'ng/mL');
+    await fill(page, 'Data da coleta *', TODAY);
+    await fill(page, 'Laboratório *', 'Laboratório Exemplo C');
+    await fill(page, 'Intervalo como no laudo', '15 a 160 ng/mL (laudo C)');
+    await fill(page, 'Limite inferior', '15');
+    await fill(page, 'Limite superior', '160');
+    await tap(page, 'Salvar rascunho', { wait: 1500 });
+    await shot(page, 'c07_conferencia_laudo');
+    await nav(page, '#/pacientes/p1/prontuario');
+    await waitText(page, 'Exames conferidos');
+    check('exames: pendente NAO entra no prontuario', !(await has(page, '22 ng/mL')) && (await has(page, 'aguardando conferência')), '');
+    await nav(page, editar);
+    await waitText(page, 'Conferir laudo importado');
+    await tap(page, 'Confirmar e liberar', { wait: 1500 });
+    check('exames: confirmar exige marcar a conferencia', await waitText(page, 'Marque que conferiu'), '');
+    await tap(page, 'Conferi os valores com o arquivo original');
+    await tap(page, 'Confirmar e liberar', { wait: 2500 });
+    const l = await labels(page);
+    check('exames: conferido com intervalo do proprio laudo', l.includes('15 a 160 ng/mL (laudo C)') && l.includes('Dentro do intervalo do laudo'), '');
+    await shot(page, 'c08_exame_conferido');
+    const [popup] = await Promise.all([ctx.waitForEvent('page', { timeout: 15000 }), tap(page, 'Abrir arquivo original', { wait: 800 })]);
+    const pu = popup.url();
+    const om = pu.startsWith('blob:') ? await blobMagic(page, pu) : null;
+    check('exames: arquivo original abre em nova aba', !!om && om.magic === '%PDF-', pu.slice(0, 30));
+    await popup.close();
+    await nav(page, '#/pacientes/p1/prontuario');
+    check('exames: apos conferir entra no prontuario', await waitText(page, '22 ng/mL'), '');
+    await nav(page, '#/pacientes/p1/exames');
+    await tap(page, 'Ferritina (3)');
+    const s = await labels(page);
+    check('exames: comparacao no tempo com laudos diferentes', s.includes('laudo A') && s.includes('laudo B') && s.includes('laudo C'), '');
+    await shot(page, 'c09_comparacao_ferritina');
+    await ctx.close();
+  });
+
+  await step('computador: suplementacao do paciente', async () => {
+    const { ctx, page } = await newPage(browser, DESKTOP);
+    await open(page, '#/pacientes/p1/suplementacao?perfil=profissional');
+    await waitText(page, 'Suplementação do paciente');
+    check('supl paciente: temas com ficha em rascunho identificada', await has(page, 'Ficha em rascunho'), '');
+    await shot(page, 'c10_suplementacao_paciente');
+    await nav(page, '#/pacientes/p1/suplementacao/ferro');
+    await waitText(page, 'Ferro - decisão');
+    const l = await labels(page);
+    check('supl paciente: fonte e data da ultima revisao exibidas', l.includes('Fonte:') && l.includes('Última revisão:'), '');
+    check('supl paciente: exames conferidos relacionados', l.includes('Ferritina'), '');
+    await tap(page, 'Suplementação indicada');
+    await fill(page, 'Justificativa e registro da decisão *', 'Decisão fictícia registrada no teste.');
+    await tap(page, 'Salvar nova versão', { wait: 1800 });
+    check('supl paciente: nova versao no historico', await waitText(page, 'Acompanhar e reavaliar'), '');
+    await shot(page, 'c11_decisao_suplementacao');
+    await tap(page, 'Levar à calculadora e ao receituário', { wait: 2000 });
+    check('supl paciente: calculadora mostra a origem da decisao', await waitText(page, 'Origem: decisão de suplementação - Ferro'), '');
+    await choose(page, 'Medicamento *', 'Suplemento Exemplo D');
+    await choose(page, 'Apresentação *', 'Gotas 10 mg/mL');
+    await fill(page, 'Duração *', '30 dias');
+    await tap(page, 'Conferi o resultado');
+    await tap(page, 'Conferi a apresentação');
+    await shot(page, 'c12_calculadora_origem_decisao');
+    await tap(page, 'Inserir na receita', { wait: 2500 });
+    const h = hash(page);
+    check('supl paciente: item vai para receituario em rascunho', h.includes('/documentos/') && h.endsWith('/editar') && (await has(page, 'Suplemento Exemplo D')), h);
+    await shot(page, 'c13_receituario_da_decisao');
+    await ctx.close();
+  });
+
+  await step('computador: permissoes crescimento e exames', async () => {
+    const cases = [
+      ['recepcao', '#/pacientes/p1/crescimento'], ['recepcao', '#/pacientes/p1/exames'],
+      ['financeiro', '#/pacientes/p1/suplementacao'], ['administrador', '#/pacientes/p1/crescimento'],
+      ['responsavel', '#/pacientes/p1/exames'], ['responsavel', '#/pacientes/p1/crescimento/nova'],
+    ];
+    for (const [perfil, route] of cases) {
+      const { ctx, page } = await newPage(browser, DESKTOP);
+      await open(page, route + '?perfil=' + perfil);
+      check('permissao: ' + perfil + ' bloqueado em ' + route, await waitText(page, 'Acesso restrito'), '');
+      if (perfil === 'recepcao' && route.endsWith('crescimento')) await shot(page, 'c14_recepcao_sem_curva');
+      await ctx.close();
+    }
+    const { ctx, page } = await newPage(browser, DESKTOP);
+    await open(page, '#/pacientes/p1/crescimento?perfil=responsavel');
+    await waitText(page, 'Últimas medidas');
+    const l = await labels(page);
+    check('responsavel: visao simples sem escore, sem exportar e sem editar', l.includes('Últimas medidas') && !l.includes('Escore Z') && !l.includes('Exportar PDF') && !l.includes('Corrigir medida'), '');
+    await shot(page, 'c15_responsavel_visao_simples');
+    await nav(page, '#/pacientes/p2/crescimento');
+    check('responsavel: nao ve crianca de outra familia', await waitText(page, 'Paciente não encontrado'), '');
+    await ctx.close();
+  });
+
   // ---------- Celular ----------
   await step('celular: calculadora por toque', async () => {
     const { ctx, page } = await newPage(browser, MOBILE);
@@ -428,6 +589,28 @@ const DOCS = [
     await open(page, '#/inicio?perfil=profissional');
     await shot(page, 'm04_inicio');
     await ctx.close();
+  });
+
+  await step('celular: crescimento, exames e suplementacao', async () => {
+    const { ctx, page } = await newPage(browser, MOBILE);
+    await open(page, '#/pacientes/p1/crescimento?perfil=profissional');
+    check('celular: curva do profissional', (await waitText(page, 'Curva de crescimento')) && (await has(page, 'Escore Z')), '');
+    await shot(page, 'm05_curva_profissional');
+    await nav(page, '#/pacientes/p1/exames');
+    check('celular: exames', await waitText(page, 'Pendentes de conferência'), '');
+    await shot(page, 'm06_exames');
+    await nav(page, '#/pacientes/p1/exames/l6/editar');
+    check('celular: conferencia do laudo', await waitText(page, 'Conferir laudo importado'), '');
+    await shot(page, 'm07_conferencia_laudo');
+    await nav(page, '#/pacientes/p1/suplementacao/ferro');
+    check('celular: decisao de suplementacao', await waitText(page, 'Ferro - decisão'), '');
+    await shot(page, 'm08_decisao_suplementacao');
+    await ctx.close();
+    const r = await newPage(browser, MOBILE);
+    await open(r.page, '#/pacientes/p1/crescimento?perfil=responsavel');
+    check('celular: visao simples do responsavel', (await waitText(r.page, 'Últimas medidas')) && !(await has(r.page, 'Escore Z')), '');
+    await shot(r.page, 'm09_responsavel_curva');
+    await r.ctx.close();
   });
 
   await browser.close();

@@ -154,7 +154,32 @@ class DemoClinicalSeed {
         ),
       ],
     ),
-    const DoseReference(
+    DoseReference(
+      id: 'ref-d',
+      drugName: 'Suplemento Exemplo D (fictício)',
+      indication:
+          'Indicação fictícia D (teste do fluxo decisão de suplementação -> '
+          'calculadora -> receituário)',
+      basis: DoseBasis.perDay,
+      mgPerKg: 2,
+      minMgPerKg: 1,
+      maxMgPerKg: 3,
+      dosesPerDay: 1,
+      maxDailyDoseMg: 60,
+      source: testSource,
+      reviewedAt: DateTime(2026, 9, 1),
+      reviewedBy: 'Equipe de homologação (fictícia)',
+      validated: true,
+      presentations: const <DrugPresentation>[
+        DrugPresentation(
+          id: 'd-gotas',
+          label: 'Gotas 10 mg/mL',
+          form: PresentationForm.liquid,
+          amount: 10,
+          perVolumeMl: 1,
+        ),
+      ],
+    ),    const DoseReference(
       id: 'ref-c',
       drugName: 'Medicamento Exemplo C',
       indication: 'Referência em elaboração (não validada)',

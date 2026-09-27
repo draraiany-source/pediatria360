@@ -7,6 +7,7 @@ import '../../core/theme/app_tokens.dart';
 import '../../core/widgets/child_avatar.dart';
 import '../../core/widgets/clinical_ui.dart';
 import '../../shared/clinical/dose_calculator.dart';
+import '../../shared/clinical/lab_results.dart';
 import '../demo_clinical.dart';
 import '../demo_data.dart';
 import '../demo_session.dart';
@@ -304,6 +305,42 @@ class DemoPatientDetailScreen extends StatelessWidget {
                                   '${demoDate(p.weighedAt!)}',
                         onTap: () =>
                             context.go('/calculadora?paciente=${p.id}'),
+                      ),
+                    ],
+                    if (demoSession.canSeeGrowth)
+                      _ActionTile(
+                        icon: Icons.show_chart_rounded,
+                        title: 'Crescimento',
+                        subtitle: demoSession.canEditGrowth
+                            ? 'Curvas da OMS, escore Z, percentil e PDF'
+                            : 'Curvas de peso e altura (visão simples)',
+                        onTap: () =>
+                            context.go('/pacientes/${p.id}/crescimento'),
+                      ),
+                    if (demoSession.canUseClinicalTools) ...<Widget>[
+                      _ActionTile(
+                        icon: Icons.biotech_outlined,
+                        title: 'Exames laboratoriais',
+                        subtitle: () {
+                          final int pending = demoSession
+                              .labsFor(p.id)
+                              .where((LabResult r) => r.isPending)
+                              .length;
+                          final int total = demoSession
+                              .labsFor(p.id)
+                              .where((LabResult r) => r.inRecord)
+                              .length;
+                          return '$total conferidos'
+                              '${pending == 0 ? '' : ' - $pending pendente(s) de conferência'}';
+                        }(),
+                        onTap: () => context.go('/pacientes/${p.id}/exames'),
+                      ),
+                      _ActionTile(
+                        icon: Icons.medication_liquid_outlined,
+                        title: 'Suplementação do paciente',
+                        subtitle: 'Decisões por nutriente, exames e receituário',
+                        onTap: () =>
+                            context.go('/pacientes/${p.id}/suplementacao'),
                       ),
                     ],
                     if (demoSession.canOpen(DemoModule.vacinacao))

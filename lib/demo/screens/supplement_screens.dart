@@ -5,6 +5,7 @@ import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_tokens.dart';
 import '../../core/widgets/clinical_ui.dart';
 import '../../shared/clinical/clinical_documents.dart';
+import '../../shared/clinical/lab_results.dart';
 import '../../shared/clinical/supplement_library.dart';
 import '../demo_session.dart';
 import '../widgets/demo_widgets.dart';
@@ -24,6 +25,18 @@ class DemoSupplementsScreen extends StatefulWidget {
 
 class _DemoSupplementsScreenState extends State<DemoSupplementsScreen> {
   String _q = '';
+  String? _group;
+  SheetStatus? _status;
+
+  /// Busca por título, conteúdo ou nome de exame relacionado.
+  bool _matches(SupplementSheet s, String q) {
+    if (q.isEmpty) return true;
+    if (s.searchText.contains(q)) return true;
+    return kLabTestSuggestions.any(
+      (LabTestSuggestion t) =>
+          t.topicIds.contains(s.id) && t.name.toLowerCase().contains(q),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -40,7 +53,9 @@ class _DemoSupplementsScreenState extends State<DemoSupplementsScreen> {
           final List<SupplementSheet> list = demoSession.supplementSheets
               .where(
                 (SupplementSheet s) =>
-                    q.isEmpty || s.title.toLowerCase().contains(q),
+                    _matches(s, q) &&
+                    (_group == null || s.group == _group) &&
+                    (_status == null || s.status == _status),
               )
               .toList();
           final int validated = demoSession.supplementSheets
@@ -66,23 +81,62 @@ class _DemoSupplementsScreenState extends State<DemoSupplementsScreen> {
                       style: Theme.of(context).textTheme.labelLarge,
                     ),
                     const SizedBox(height: AppSpacing.sm),
-                    TextField(
-                      onChanged: (String v) => setState(() => _q = v),
-                      decoration: const InputDecoration(
-                        hintText: 'Buscar tema (ex.: ferro, vitamina D)',
-                        prefixIcon: Icon(Icons.search_rounded),
+                    Semantics(
+                      container: true,
+                      child: TextField(
+                        onChanged: (String v) => setState(() => _q = v),
+                        decoration: const InputDecoration(
+                          hintText:
+                              'Buscar tema ou exame (ex.: ferro, ferritina)',
+                          prefixIcon: Icon(Icons.search_rounded),
+                        ),
                       ),
                     ),
-                    for (final String group in <String>[
-                      'Exames',
-                      'Nutrientes',
-                    ]) ...<Widget>[
-                      if (list.any((SupplementSheet s) => s.group == group))
-                        DemoSectionTitle(
-                          group == 'Exames'
-                              ? 'Exames laboratoriais'
-                              : 'Micronutrientes e suplementos',
+                    const SizedBox(height: AppSpacing.sm),
+                    Wrap(
+                      spacing: AppSpacing.sm,
+                      runSpacing: AppSpacing.xs,
+                      children: <Widget>[
+                        ChoiceChip(
+                          label: const Text('Todos os grupos'),
+                          selected: _group == null,
+                          onSelected: (_) => setState(() => _group = null),
                         ),
+                        for (final String g in kSheetGroups)
+                          ChoiceChip(
+                            label: Text(g),
+                            selected: _group == g,
+                            onSelected: (_) => setState(() => _group = g),
+                          ),
+                      ],
+                    ),
+                    const SizedBox(height: AppSpacing.xs),
+                    Wrap(
+                      spacing: AppSpacing.sm,
+                      runSpacing: AppSpacing.xs,
+                      children: <Widget>[
+                        ChoiceChip(
+                          label: const Text('Qualquer situação'),
+                          selected: _status == null,
+                          onSelected: (_) => setState(() => _status = null),
+                        ),
+                        ChoiceChip(
+                          label: const Text('Rascunho'),
+                          selected: _status == SheetStatus.draft,
+                          onSelected: (_) =>
+                              setState(() => _status = SheetStatus.draft),
+                        ),
+                        ChoiceChip(
+                          label: const Text('Validado'),
+                          selected: _status == SheetStatus.validated,
+                          onSelected: (_) =>
+                              setState(() => _status = SheetStatus.validated),
+                        ),
+                      ],
+                    ),
+                    for (final String group in kSheetGroups) ...<Widget>[
+                      if (list.any((SupplementSheet s) => s.group == group))
+                        DemoSectionTitle(group),
                       LayoutBuilder(
                         builder: (BuildContext context, BoxConstraints box) {
                           final int cols = box.maxWidth >= 640 ? 2 : 1;
@@ -146,7 +200,9 @@ class _SheetTile extends StatelessWidget {
                   style: Theme.of(context).textTheme.titleSmall,
                 ),
                 Text(
-                  '${sheet.filledFields}/${kSheetFields.length} campos preenchidos',
+                  '${sheet.filledFields}/${kSheetFields.length} blocos · '
+                  'fonte: ${sheet.source.trim().isEmpty ? 'não informada' : 'informada'} · '
+                  'revisão: ${sheet.reviewedAt == null ? '-' : formatDocDate(sheet.reviewedAt!)}',
                   style: Theme.of(context).textTheme.bodySmall,
                 ),
               ],
@@ -264,12 +320,22 @@ class DemoSupplementDetailScreen extends StatelessWidget {
                           field('Fonte', s.source.trim()),
                           field('Revisado por', s.reviewedBy.trim()),
                           field(
-                            'Data de revisão',
+                            'Data da última revisão',
                             s.reviewedAt == null
                                 ? ''
                                 : formatDocDate(s.reviewedAt!),
                           ),
                           field('Situação', s.status.label),
+                          field(
+                            'Exames que costumam se relacionar (sugestão de vínculo, sem valores)',
+                            kLabTestSuggestions
+                                .where(
+                                  (LabTestSuggestion t) =>
+                                      t.topicIds.contains(s.id),
+                                )
+                                .map((LabTestSuggestion t) => t.name)
+                                .join(', '),
+                          ),
                         ],
                       ),
                     ),

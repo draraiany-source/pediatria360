@@ -59,5 +59,43 @@
     return 'iframe';
   }
 
+  // Anexo de laudo: abre o seletor do navegador e devolve o arquivo lido
+  // na memoria da aba. Nada e enviado para fora do navegador.
+  function pick(accept) {
+    return new Promise(function (resolve) {
+      var input = document.createElement('input');
+      input.type = 'file';
+      input.accept = accept || '';
+      input.style.display = 'none';
+      var done = false;
+      function finish(v) {
+        if (done) return;
+        done = true;
+        input.remove();
+        resolve(v);
+      }
+      input.addEventListener('cancel', function () { finish(null); });
+      input.addEventListener('change', function () {
+        var file = input.files && input.files[0];
+        if (!file) { finish(null); return; }
+        file.arrayBuffer().then(function (buf) {
+          finish({ name: file.name, type: file.type || '', bytes: new Uint8Array(buf) });
+        }, function () { finish(null); });
+      });
+      document.body.appendChild(input);
+      input.click();
+    });
+  }
+
+  function openFile(bytes, type) {
+    var url = URL.createObjectURL(new Blob([bytes], { type: type || 'application/octet-stream' }));
+    var w = window.open(url, '_blank');
+    setTimeout(function () { URL.revokeObjectURL(url); }, 120000);
+    if (!w) return false;
+    try { w.opener = null; } catch (e) { /* ignora */ }
+    return true;
+  }
+
+  window.p360File = { pick: pick, open: openFile };
   window.p360Pdf = { download: download, print: print };
 })();

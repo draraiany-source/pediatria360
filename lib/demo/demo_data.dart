@@ -29,6 +29,9 @@ class DemoPatient {
   double? weightKg;
   DateTime? weighedAt;
 
+  /// Idade gestacional ao nascer, em dias. `null` = não informada.
+  int? gestationalAgeDays;
+
   /// Avatar escolhido pelo responsavel (exemplo). `null` = sem avatar.
   String? avatarAsset;
 

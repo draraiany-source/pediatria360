@@ -5,6 +5,7 @@ import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_tokens.dart';
 import '../../core/widgets/clinical_ui.dart';
 import '../../shared/clinical/clinical_documents.dart';
+import '../../shared/clinical/lab_results.dart';
 import '../demo_clinical.dart';
 import '../demo_data.dart';
 import '../demo_session.dart';
@@ -106,8 +107,28 @@ class DemoRecordScreen extends StatelessWidget {
                             icon: const Icon(Icons.edit_note_rounded),
                             label: const Text('Nova evolução'),
                           ),
+                          OutlinedButton.icon(
+                            onPressed: () =>
+                                context.go('/pacientes/${p.id}/crescimento'),
+                            icon: const Icon(Icons.show_chart_rounded),
+                            label: const Text('Crescimento'),
+                          ),
+                          OutlinedButton.icon(
+                            onPressed: () =>
+                                context.go('/pacientes/${p.id}/exames'),
+                            icon: const Icon(Icons.biotech_outlined),
+                            label: const Text('Exames'),
+                          ),
+                          OutlinedButton.icon(
+                            onPressed: () =>
+                                context.go('/pacientes/${p.id}/suplementacao'),
+                            icon: const Icon(Icons.medication_liquid_outlined),
+                            label: const Text('Suplementação'),
+                          ),
                         ],
                       ),
+                      const DemoSectionTitle('Exames conferidos'),
+                      _RecordLabs(patientId: p.id),
                       const DemoSectionTitle('Consultas'),
                       if (consultations.isEmpty)
                         const Text(
@@ -434,6 +455,49 @@ class _DemoEncounterEditorScreenState extends State<DemoEncounterEditorScreen> {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+/// No prontuário entram só os resultados conferidos.
+class _RecordLabs extends StatelessWidget {
+  const _RecordLabs({required this.patientId});
+
+  final String patientId;
+
+  @override
+  Widget build(BuildContext context) {
+    final TextTheme t = Theme.of(context).textTheme;
+    final List<LabResult> all = demoSession.labsFor(patientId);
+    final List<LabResult> ok = all.where((LabResult r) => r.inRecord).toList()
+      ..sort(
+        (LabResult a, LabResult b) =>
+            b.values.collectedAt!.compareTo(a.values.collectedAt!),
+      );
+    final int pending = all.length - ok.length;
+    return SurfaceCard(
+      onTap: () => context.go('/pacientes/$patientId/exames'),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          if (ok.isEmpty)
+            Text('Nenhum resultado conferido.', style: t.bodySmall),
+          for (final LabResult r in ok.take(5))
+            Text(
+              '${formatLabDate(r.values.collectedAt!)} - ${r.values.testName}: '
+              '${r.values.value} ${r.values.unit} (${r.values.laboratory})',
+              style: t.bodySmall,
+            ),
+          if (pending > 0)
+            Padding(
+              padding: const EdgeInsets.only(top: 4),
+              child: Text(
+                '$pending importado(s) aguardando conferência: fora do prontuário.',
+                style: t.bodySmall?.copyWith(color: AppColors.warning),
+              ),
+            ),
+        ],
       ),
     );
   }
