@@ -107,14 +107,26 @@ service cloud.firestore {
       // centralizado nas Functions registerDevice/unregisterDevice — antes
       // disso o cliente escrevia o array direto, e as duas formas
       // coexistiam sem que nada impedisse divergência entre elas.
-      return ['plan', 'planExpiresAt', 'xp', 'streakDays',
-              'professionalVerified', 'role', 'fcmTokens'];
+      return ['plan', 'planExpiresAt', 'xp', 'streakDays', 'longestStreak',
+              'lastStreakDate', 'professionalVerified', 'role', 'fcmTokens'];
     }
 
     function notTouchingServerFields() {
       return !request.resource.data.diff(resource.data)
                      .affectedKeys()
                      .hasAny(serverOnlyFields());
+    }
+
+    // A conta nasce 'parent'; no onboarding (uma vez) o dono escolhe ser
+    // profissional, sempre como nao verificado.
+    function isOnboardingRoleChoice() {
+      return resource.data.get('onboardingDone', false) != true &&
+             request.resource.data.onboardingDone == true &&
+             request.resource.data.role in ['parent', 'professional'] &&
+             request.resource.data.get('professionalVerified', false) == false &&
+             !request.resource.data.diff(resource.data).affectedKeys()
+                .difference(['role', 'professionalVerified'].toSet())
+                .hasAny(serverOnlyFields());
     }
 
     function isValidString(field, maxLength) {
@@ -146,13 +158,17 @@ service cloud.firestore {
                     && request.resource.data.get('plan', 'free') == 'free'
                     && request.resource.data.get('professionalVerified', false) == false
                     && request.resource.data.get('xp', 0) == 0
+                    && request.resource.data.get('streakDays', 0) == 0
+                    && !request.resource.data.keys().hasAny(
+                         ['longestStreak', 'lastStreakDate', 'planExpiresAt'])
                     && request.resource.data.get('role', 'parent') in ['parent', 'professional'];
 
       // Atualização: o dono pode editar o perfil, mas nunca os campos de
       // servidor. O admin pode tudo (é como o CRM é verificado).
       // Depois de verificado, o CRM impresso nas prescricoes so muda pelo admin.
       allow update: if isAdmin()
-                    || (isOwner(uid) && notTouchingServerFields() &&
+                    || (isOwner(uid) &&
+                        (notTouchingServerFields() || isOnboardingRoleChoice()) &&
                         (resource.data.get('professionalVerified', false) != true ||
                          !request.resource.data.diff(resource.data)
                             .affectedKeys().hasAny(['crm'])));

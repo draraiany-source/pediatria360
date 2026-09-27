@@ -1815,6 +1815,38 @@ describe("clinica, agendamentos e responsaveis vinculados", () => {
     );
   });
 
+  test("onboarding: conta nova escolhe ser profissional (sem verificacao)", async () => {
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      await setDoc(doc(context.firestore(), "users", "uid_cadastro_novo"), {
+        role: "parent",
+        plan: "free",
+        professionalVerified: false,
+        xp: 0,
+        streakDays: 0,
+        onboardingDone: false,
+      });
+    });
+    const eu = doc(as("uid_cadastro_novo"), "users", "uid_cadastro_novo");
+    await assertFails(updateDoc(eu, { role: "admin", onboardingDone: true }));
+    await assertFails(
+      updateDoc(eu, { role: "professional", professionalVerified: true, onboardingDone: true })
+    );
+    await assertSucceeds(
+      updateDoc(eu, {
+        role: "professional",
+        crm: "111111/SP",
+        onboardingDone: true,
+        professionalVerified: false,
+      })
+    );
+    await assertFails(updateDoc(eu, { role: "parent" }));
+  });
+
+  test("campos de sequencia (streak) sao do servidor", async () => {
+    await assertFails(updateDoc(doc(as(ANA), "users", ANA), { longestStreak: 999 }));
+    await assertFails(updateDoc(doc(as(ANA), "users", ANA), { lastStreakDate: new Date() }));
+  });
+
   test("CRM fica travado depois da verificacao", async () => {
     await assertFails(updateDoc(doc(as(DRA), "users", DRA), { crm: "000001/RJ" }));
     await assertSucceeds(updateDoc(doc(as(DRA), "users", DRA), { name: "Dra. Marta S." }));
