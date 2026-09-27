@@ -77,20 +77,23 @@ class _DemoVaccinesScreenState extends State<DemoVaccinesScreen> {
                       ),
                     )
                   else ...<Widget>[
-                    DropdownButtonFormField<String>(
-                      initialValue: _patientId,
-                      isExpanded: true,
-                      decoration:
-                          const InputDecoration(labelText: 'Paciente'),
-                      items: <DropdownMenuItem<String>>[
-                        for (final DemoPatient x in patients)
-                          DropdownMenuItem<String>(
-                            value: x.id,
-                            child: Text(x.name,
-                                overflow: TextOverflow.ellipsis),
-                          ),
-                      ],
-                      onChanged: (String? v) => setState(() => _patientId = v),
+                    Semantics(
+                      container: true,
+                      child: DropdownButtonFormField<String>(
+                        initialValue: _patientId,
+                        isExpanded: true,
+                        decoration:
+                            const InputDecoration(labelText: 'Paciente'),
+                        items: <DropdownMenuItem<String>>[
+                          for (final DemoPatient x in patients)
+                            DropdownMenuItem<String>(
+                              value: x.id,
+                              child: Text(x.name,
+                                  overflow: TextOverflow.ellipsis),
+                            ),
+                        ],
+                        onChanged: (String? v) => setState(() => _patientId = v),
+                      ),
                     ),
                     const SizedBox(height: AppSpacing.lg),
                     if (p != null)

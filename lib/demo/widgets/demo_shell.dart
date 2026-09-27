@@ -31,6 +31,10 @@ class DemoShell extends StatelessWidget {
         final List<DemoModule> modules = demoSession.modules;
         final DemoModule? current = DemoModule.fromLocation(location);
         final bool wide = MediaQuery.sizeOf(context).width >= 840;
+        // Cada rota bloqueia a semântica do que foi pintado antes dela no
+        // mesmo contêiner; sem isto a faixa e o menu lateral somem para
+        // leitores de tela.
+        final Widget page = Semantics(container: true, child: child);
 
         return Scaffold(
           backgroundColor: AppColors.lightBackground,
@@ -42,11 +46,10 @@ class DemoShell extends StatelessWidget {
                     ? Row(
                         children: <Widget>[
                           _Rail(modules: modules, current: current),
-
-                          Expanded(child: child),
+                          Expanded(child: page),
                         ],
                       )
-                    : child,
+                    : page,
               ),
             ],
           ),

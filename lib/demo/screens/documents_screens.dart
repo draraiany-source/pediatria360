@@ -519,23 +519,26 @@ class _DemoDocumentEditorScreenState extends State<DemoDocumentEditorScreen> {
                     Padding(
                       padding: const EdgeInsets.only(bottom: AppSpacing.md),
                       child: f.options != null
-                          ? DropdownButtonFormField<String>(
-                              initialValue: _options[f.key],
-                              decoration: InputDecoration(
-                                labelText:
-                                    '${f.label}${f.required ? ' *' : ''}',
+                          ? Semantics(
+                              container: true,
+                              child: DropdownButtonFormField<String>(
+                                initialValue: _options[f.key],
+                                decoration: InputDecoration(
+                                  labelText:
+                                      '${f.label}${f.required ? ' *' : ''}',
+                                ),
+                                items: <DropdownMenuItem<String>>[
+                                  for (final String o in f.options!)
+                                    DropdownMenuItem<String>(
+                                      value: o,
+                                      child: Text(o),
+                                    ),
+                                ],
+                                onChanged: (String? v) => setState(() {
+                                  _options[f.key] = v ?? f.options!.first;
+                                  _dirty = true;
+                                }),
                               ),
-                              items: <DropdownMenuItem<String>>[
-                                for (final String o in f.options!)
-                                  DropdownMenuItem<String>(
-                                    value: o,
-                                    child: Text(o),
-                                  ),
-                              ],
-                              onChanged: (String? v) => setState(() {
-                                _options[f.key] = v ?? f.options!.first;
-                                _dirty = true;
-                              }),
                             )
                           : TextField(
                               key: ValueKey<String>('campo-${f.key}'),

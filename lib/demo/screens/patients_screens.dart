@@ -626,22 +626,25 @@ class _DemoPatientFormScreenState extends State<DemoPatientFormScreen> {
                       ),
                     ),
                     const SizedBox(height: AppSpacing.md),
-                    DropdownButtonFormField<String>(
-                      initialValue: _sex,
-                      decoration: const InputDecoration(labelText: 'Sexo *'),
-                      items: const <DropdownMenuItem<String>>[
-                        DropdownMenuItem<String>(
-                          value: 'Menina',
-                          child: Text('Feminino'),
-                        ),
-                        DropdownMenuItem<String>(
-                          value: 'Menino',
-                          child: Text('Masculino'),
-                        ),
-                      ],
-                      onChanged: (String? v) => setState(() => _sex = v),
-                      validator: (String? v) =>
-                          v == null ? 'Selecione o sexo.' : null,
+                    Semantics(
+                      container: true,
+                      child: DropdownButtonFormField<String>(
+                        initialValue: _sex,
+                        decoration: const InputDecoration(labelText: 'Sexo *'),
+                        items: const <DropdownMenuItem<String>>[
+                          DropdownMenuItem<String>(
+                            value: 'Menina',
+                            child: Text('Feminino'),
+                          ),
+                          DropdownMenuItem<String>(
+                            value: 'Menino',
+                            child: Text('Masculino'),
+                          ),
+                        ],
+                        onChanged: (String? v) => setState(() => _sex = v),
+                        validator: (String? v) =>
+                            v == null ? 'Selecione o sexo.' : null,
+                      ),
                     ),
                     if (!_isGuardian) ...<Widget>[
                       const SizedBox(height: AppSpacing.md),

@@ -31,8 +31,11 @@
     // Navegadores de celular nao imprimem PDF dentro de iframe: abre o PDF
     // em outra aba, onde o menu do navegador oferece imprimir/compartilhar.
     if (isMobile()) {
-      var w = window.open(url, '_blank', 'noopener');
+      // Com 'noopener' o window.open sempre devolve null; a aba abre sem ele
+      // e o opener e desligado em seguida.
+      var w = window.open(url, '_blank');
       if (!w) return download(bytes, name);
+      try { w.opener = null; } catch (e) { /* ignora */ }
       return 'tab';
     }
     var old = document.getElementById('p360-print-frame');

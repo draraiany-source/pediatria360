@@ -238,23 +238,26 @@ class DemoPatientStrip extends StatelessWidget {
             ),
           ),
           if (patient.allergies.isNotEmpty)
-            Tooltip(
-              message: 'Alergias: ${patient.allergies.join(', ')}',
-              child: Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 4,
-                ),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFFFE1E5),
-                  borderRadius: AppRadius.pillAll,
-                  border: Border.all(color: AppColors.danger),
-                ),
-                child: Text(
-                  'Alergia',
-                  style: t.labelMedium?.copyWith(
-                    color: const Color(0xFF9E1026),
-                    fontWeight: FontWeight.w800,
+            Semantics(
+              container: true,
+              child: Tooltip(
+                message: 'Alergias: ${patient.allergies.join(', ')}',
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 4,
+                  ),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFFE1E5),
+                    borderRadius: AppRadius.pillAll,
+                    border: Border.all(color: AppColors.danger),
+                  ),
+                  child: Text(
+                    'Alergia',
+                    style: t.labelMedium?.copyWith(
+                      color: const Color(0xFF9E1026),
+                      fontWeight: FontWeight.w800,
+                    ),
                   ),
                 ),
               ),

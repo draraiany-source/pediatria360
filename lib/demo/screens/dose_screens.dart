@@ -231,21 +231,24 @@ class _DoseCalculatorPanelState extends State<DoseCalculatorPanel> {
               ),
               const SizedBox(height: AppSpacing.md),
               if (widget.patient == null)
-                DropdownButtonFormField<String>(
-                  initialValue: _patient?.id,
-                  isExpanded: true,
-                  decoration: const InputDecoration(labelText: 'Paciente *'),
-                  items: <DropdownMenuItem<String>>[
-                    for (final DemoPatient p in demoSession.visiblePatients)
-                      DropdownMenuItem<String>(
-                        value: p.id,
-                        child: Text(p.name, overflow: TextOverflow.ellipsis),
-                      ),
-                  ],
-                  onChanged: (String? id) => _changed(
-                    () => _patient = id == null
-                        ? null
-                        : demoSession.patientById(id),
+                Semantics(
+                  container: true,
+                  child: DropdownButtonFormField<String>(
+                    initialValue: _patient?.id,
+                    isExpanded: true,
+                    decoration: const InputDecoration(labelText: 'Paciente *'),
+                    items: <DropdownMenuItem<String>>[
+                      for (final DemoPatient p in demoSession.visiblePatients)
+                        DropdownMenuItem<String>(
+                          value: p.id,
+                          child: Text(p.name, overflow: TextOverflow.ellipsis),
+                        ),
+                    ],
+                    onChanged: (String? id) => _changed(
+                      () => _patient = id == null
+                          ? null
+                          : demoSession.patientById(id),
+                    ),
                   ),
                 ),
               if (_patient != null) ...<Widget>[
@@ -255,29 +258,32 @@ class _DoseCalculatorPanelState extends State<DoseCalculatorPanel> {
                 _PatientFacts(patient: _patient!, now: now),
               ],
               const DemoSectionTitle('Medicamento e referência'),
-              DropdownButtonFormField<String>(
-                initialValue: _ref?.id,
-                isExpanded: true,
-                decoration: const InputDecoration(labelText: 'Medicamento *'),
-                items: <DropdownMenuItem<String>>[
-                  for (final DoseReference r in demoSession.doseReferences)
-                    DropdownMenuItem<String>(
-                      value: r.id,
-                      child: Text(
-                        r.isUsable
-                            ? r.drugName
-                            : '${r.drugName} (não validada)',
-                        overflow: TextOverflow.ellipsis,
+              Semantics(
+                container: true,
+                child: DropdownButtonFormField<String>(
+                  initialValue: _ref?.id,
+                  isExpanded: true,
+                  decoration: const InputDecoration(labelText: 'Medicamento *'),
+                  items: <DropdownMenuItem<String>>[
+                    for (final DoseReference r in demoSession.doseReferences)
+                      DropdownMenuItem<String>(
+                        value: r.id,
+                        child: Text(
+                          r.isUsable
+                              ? r.drugName
+                              : '${r.drugName} (não validada)',
+                          overflow: TextOverflow.ellipsis,
+                        ),
                       ),
-                    ),
-                ],
-                onChanged: (String? id) => _changed(() {
-                  _ref = demoSession.doseReferences.firstWhere(
-                    (DoseReference r) => r.id == id,
-                  );
-                  _pres = null;
-                  _mgPerKg.text = formatDoseNumber(_ref!.mgPerKg);
-                }),
+                  ],
+                  onChanged: (String? id) => _changed(() {
+                    _ref = demoSession.doseReferences.firstWhere(
+                      (DoseReference r) => r.id == id,
+                    );
+                    _pres = null;
+                    _mgPerKg.text = formatDoseNumber(_ref!.mgPerKg);
+                  }),
+                ),
               ),
               if (_ref != null) ...<Widget>[
                 const SizedBox(height: AppSpacing.sm),
@@ -301,26 +307,29 @@ class _DoseCalculatorPanelState extends State<DoseCalculatorPanel> {
                   ),
                 ),
                 const SizedBox(height: AppSpacing.md),
-                DropdownButtonFormField<String>(
-                  key: ValueKey<String>('pres-${_ref!.id}'),
-                  initialValue: _pres?.id,
-                  isExpanded: true,
-                  decoration: const InputDecoration(
-                    labelText: 'Apresentação *',
-                  ),
-                  items: <DropdownMenuItem<String>>[
-                    for (final DrugPresentation p in _ref!.presentations)
-                      DropdownMenuItem<String>(
-                        value: p.id,
-                        child: Text(
-                          '${p.label} (${p.concentrationLabel})',
-                          overflow: TextOverflow.ellipsis,
+                Semantics(
+                  container: true,
+                  child: DropdownButtonFormField<String>(
+                    key: ValueKey<String>('pres-${_ref!.id}'),
+                    initialValue: _pres?.id,
+                    isExpanded: true,
+                    decoration: const InputDecoration(
+                      labelText: 'Apresentação *',
+                    ),
+                    items: <DropdownMenuItem<String>>[
+                      for (final DrugPresentation p in _ref!.presentations)
+                        DropdownMenuItem<String>(
+                          value: p.id,
+                          child: Text(
+                            '${p.label} (${p.concentrationLabel})',
+                            overflow: TextOverflow.ellipsis,
+                          ),
                         ),
+                    ],
+                    onChanged: (String? id) => _changed(
+                      () => _pres = _ref!.presentations.firstWhere(
+                        (DrugPresentation p) => p.id == id,
                       ),
-                  ],
-                  onChanged: (String? id) => _changed(
-                    () => _pres = _ref!.presentations.firstWhere(
-                      (DrugPresentation p) => p.id == id,
                     ),
                   ),
                 ),
