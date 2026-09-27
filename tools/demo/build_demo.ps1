@@ -18,6 +18,8 @@ $out = Join-Path $root 'build\web'
 $html = (Get-Content -Raw -Encoding UTF8 (Join-Path $root 'web_demo\index.html')).Replace('$FLUTTER_BASE_HREF', $BaseHref)
 [IO.File]::WriteAllText((Join-Path $out 'index.html'), $html, (New-Object Text.UTF8Encoding $false))
 Copy-Item (Join-Path $root 'web_demo\demo_loader.js') $out
+Copy-Item (Join-Path $root 'web_demo\README.pages.md') (Join-Path $out 'README.md')
+[IO.File]::WriteAllText((Join-Path $out 'SOURCE_COMMIT.txt'), "$(git rev-parse HEAD)`n")
 Remove-Item (Join-Path $out 'manifest.json') -ErrorAction SilentlyContinue
 [IO.File]::WriteAllText((Join-Path $out '.nojekyll'), '')
 
