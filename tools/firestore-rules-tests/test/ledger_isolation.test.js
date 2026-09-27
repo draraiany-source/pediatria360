@@ -132,6 +132,13 @@ async function resetSeed() {
       status: "draft",
       amountCents: 500,
     });
+    await seedLedger(db, "insurance_authorizations", "auth-a1", {
+      ownerId: "finA",
+      clinicId: CLINIC_A,
+      unitId: UNIT_A1,
+      childId: "childA1",
+      status: "pending",
+    });
     await seedLedger(db, "inventory_lots", "lot-a1", {
       ownerId: "finA",
       clinicId: CLINIC_A,
@@ -267,6 +274,28 @@ test("same-clinic: physician A can read finance ledger (read role)", async (t) =
   await resetSeed();
   const db = authedDb("physA");
   await assertSucceeds(db.doc("finance_receivables/recv-a1").get());
+});
+
+test("same-clinic: receptionist cannot read billing guides (diagnosis)", async (t) => {
+  if (!requireEmulator()) {
+    t.skip("NÃO TESTADO: FIRESTORE_EMULATOR_HOST ausente");
+    return;
+  }
+  await resetSeed();
+  const db = authedDb("recvA");
+  await assertFails(db.doc("billing_guides/guide-a1").get());
+  await assertSucceeds(db.doc("insurance_authorizations/auth-a1").get());
+});
+
+test("same-clinic: physician and finance read billing guides", async (t) => {
+  if (!requireEmulator()) {
+    t.skip("NÃO TESTADO: FIRESTORE_EMULATOR_HOST ausente");
+    return;
+  }
+  await resetSeed();
+  await assertSucceeds(authedDb("physA").doc("billing_guides/guide-a1").get());
+  await assertSucceeds(authedDb("finA").doc("billing_guides/guide-a1").get());
+  await assertSucceeds(authedDb("adminA").doc("billing_guides/guide-a1").get());
 });
 
 test("same-clinic: receptionist cannot WRITE finance receivable", async (t) => {

@@ -150,8 +150,12 @@ service cloud.firestore {
 
       // Atualização: o dono pode editar o perfil, mas nunca os campos de
       // servidor. O admin pode tudo (é como o CRM é verificado).
+      // Depois de verificado, o CRM impresso nas prescricoes so muda pelo admin.
       allow update: if isAdmin()
-                    || (isOwner(uid) && notTouchingServerFields());
+                    || (isOwner(uid) && notTouchingServerFields() &&
+                        (resource.data.get('professionalVerified', false) != true ||
+                         !request.resource.data.diff(resource.data)
+                            .affectedKeys().hasAny(['crm'])));
 
       // Exclusão de conta passa pela Function `onUserDeleted`, que apaga em
       // cascata. Apagar só o documento deixaria as subcollections órfãs.
@@ -869,6 +873,21 @@ service cloud.firestore {
       );
     }
 
+    // Guias, lotes e glosas carregam diagnostico (CID): fora da recepcao/tecnico.
+    function billingClinicalReadRole(clinicId) {
+      return isClinicMember(clinicId) &&
+             clinicRole(clinicId) in
+               ['clinicAdmin', 'finance', 'physician', 'healthProfessional'];
+    }
+
+    function canReadBillingClinicalLedger() {
+      return isVerifiedProfessional() && (
+        isLegacyOwnerLedgerRead() ||
+        (ledgerDocClinicId() != null &&
+         billingClinicalReadRole(ledgerDocClinicId()))
+      );
+    }
+
     function canWriteFinanceLedger() {
       return isVerifiedProfessional() &&
              ledgerClinicIdUnchanged() &&
@@ -1015,22 +1034,22 @@ service cloud.firestore {
       allow delete: if false;
     }
     match /billing_guides/{id} {
-      allow read: if canReadLedger();
+      allow read: if canReadBillingClinicalLedger();
       allow create, update: if canWriteBillingLedger();
       allow delete: if false;
     }
     match /billing_batches/{id} {
-      allow read: if canReadLedger();
+      allow read: if canReadBillingClinicalLedger();
       allow create, update: if canWriteBillingLedger();
       allow delete: if false;
     }
     match /billing_glosas/{id} {
-      allow read: if canReadLedger();
+      allow read: if canReadBillingClinicalLedger();
       allow create, update: if canWriteBillingLedger();
       allow delete: if false;
     }
     match /billing_audit_logs/{id} {
-      allow read: if canReadLedger();
+      allow read: if canReadBillingClinicalLedger();
       allow create: if canCreateFinanceAudit();
       allow update, delete: if false;
     }
@@ -1096,7 +1115,10 @@ service cloud.firestore {
       allow create: if signedIn()
                     && request.resource.data.actorUid == request.auth.uid
                     && request.resource.data.keys().hasAll(['actorUid', 'action', 'module', 'at'])
-                    && (isVerifiedProfessional() || isAdmin());
+                    && (isVerifiedProfessional() || isAdmin())
+                    && (isAdmin()
+                        || request.resource.data.get('clinicId', null) == null
+                        || isClinicMember(request.resource.data.clinicId));
       allow update, delete: if false;
     }
 

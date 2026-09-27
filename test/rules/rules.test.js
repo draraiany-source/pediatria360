@@ -1814,4 +1814,26 @@ describe("clinica, agendamentos e responsaveis vinculados", () => {
       })
     );
   });
+
+  test("CRM fica travado depois da verificacao", async () => {
+    await assertFails(updateDoc(doc(as(DRA), "users", DRA), { crm: "000001/RJ" }));
+    await assertSucceeds(updateDoc(doc(as(DRA), "users", DRA), { name: "Dra. Marta S." }));
+    await assertSucceeds(updateDoc(doc(as(DR_NOVO), "users", DR_NOVO), { crm: "999998/SP" }));
+    await assertSucceeds(updateDoc(doc(as(ADMIN), "users", DRA), { crm: "123457/SP" }));
+  });
+
+  test("evento de auditoria so leva clinicId de clinica da qual o autor e membro", async () => {
+    const evento = (clinicId) => ({
+      actorUid: DRA,
+      action: "export",
+      module: "finance",
+      at: new Date().toISOString(),
+      ...(clinicId ? { clinicId } : {}),
+    });
+    await assertFails(addDoc(collection(as(DRA), "security_audit_logs"), evento(CLIN)));
+    await assertSucceeds(addDoc(collection(as(DRA), "security_audit_logs"), evento(null)));
+    await assertSucceeds(
+      addDoc(collection(as(FIN), "security_audit_logs"), { ...evento(CLIN), actorUid: FIN })
+    );
+  });
 });
