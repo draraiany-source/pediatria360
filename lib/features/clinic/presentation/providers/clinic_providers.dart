@@ -89,6 +89,12 @@ final StreamProviderFamily<TriageRecord?, String> triageByAppointmentProvider =
   return ref.watch(clinicRepositoryProvider).watchTriage(appointmentId);
 });
 
+/// Campos do rascunho de voz que o profissional recusou na revisao.
+final StateProviderFamily<Set<String>, String> voiceIgnoredFieldsProvider =
+    StateProvider.family<Set<String>, String>(
+  (Ref ref, String sessionId) => <String>{},
+);
+
 final StreamProviderFamily<VoiceConsultationSession?, String>
     voiceSessionProvider =
     StreamProvider.family<VoiceConsultationSession?, String>(

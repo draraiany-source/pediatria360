@@ -8,6 +8,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_tokens.dart';
 import '../../../../core/widgets/brand_ui.dart';
 import '../../../../core/widgets/state_views.dart';
+import '../../../emr/presentation/screens/encounter_editor_screen.dart';
 import '../../domain/voice_consultation.dart';
 import '../providers/clinic_providers.dart';
 import '../widgets/ai_medical_disclaimer_banner.dart';
@@ -32,17 +33,26 @@ class _VoiceFinalReviewScreenState
     setState(() => _busy = true);
     final result = await ref
         .read(voiceConsultationRepositoryProvider)
-        .applyDraftToEncounter(widget.sessionId);
+        .applyDraftToEncounter(
+          widget.sessionId,
+          ignoredFields:
+              ref.read(voiceIgnoredFieldsProvider(widget.sessionId)),
+        );
     if (!mounted) return;
     setState(() => _busy = false);
 
     result.fold(
-      (String? encounterId) {
-        setState(() => _appliedEncounterId = encounterId);
+      (({String? encounterId, List<String> keptFields}) applied) {
+        setState(() => _appliedEncounterId = applied.encounterId);
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
+          SnackBar(
             content: Text(
-              'Rascunho confirmado no prontuario. Assinatura permanece manual.',
+              applied.keptFields.isEmpty
+                  ? 'Rascunho confirmado no prontuario. Assinatura permanece '
+                      'manual.'
+                  : 'Rascunho confirmado. ${applied.keptFields.length} '
+                      'campo(s) que voce ja tinha escrito foram mantidos. '
+                      'Assinatura permanece manual.',
             ),
           ),
         );
@@ -87,6 +97,8 @@ class _VoiceFinalReviewScreenState
               ),
               data: (VoiceConsultationSession? session) {
                 final VoiceStructuredDraft? draft = session?.draft;
+                final Set<String> ignored =
+                    ref.watch(voiceIgnoredFieldsProvider(widget.sessionId));
                 final String? encounterId =
                     _appliedEncounterId ?? session?.encounterId;
 
@@ -116,21 +128,13 @@ class _VoiceFinalReviewScreenState
                         ),
                       ),
                       const SizedBox(height: AppSpacing.sm),
-                      Text(
-                        draft.chiefComplaint.isEmpty
-                            ? 'Queixa: Nao informado'
-                            : 'Queixa: ${draft.chiefComplaint}',
-                      ),
-                      Text(
-                        draft.assessment.isEmpty
-                            ? 'Avaliacao: Nao informado'
-                            : 'Avaliacao: ${draft.assessment}',
-                      ),
-                      Text(
-                        draft.plan.isEmpty
-                            ? 'Plano: Nao informado'
-                            : 'Plano: ${draft.plan}',
-                      ),
+                      _summaryLine(ignored, 'chiefComplaint', 'Queixa',
+                          draft.chiefComplaint),
+                      _summaryLine(ignored, 'allergies', 'Alergias',
+                          draft.allergies.join(', ')),
+                      _summaryLine(ignored, 'assessment', 'Avaliacao',
+                          draft.assessment),
+                      _summaryLine(ignored, 'plan', 'Plano', draft.plan),
                     ],
                     const SizedBox(height: AppSpacing.xl),
                     PrimaryButton(
@@ -159,7 +163,13 @@ class _VoiceFinalReviewScreenState
                       PrimaryButton(
                         label: 'Abrir prontuario (rascunho)',
                         icon: Icons.folder_open_rounded,
-                        onPressed: () => context.go(Routes.patientsPath),
+                        onPressed: () => Navigator.of(context).push(
+                          MaterialPageRoute<void>(
+                            builder: (_) => EncounterEditorScreen(
+                              encounterId: encounterId,
+                            ),
+                          ),
+                        ),
                       ),
                     ],
                   ],
@@ -169,6 +179,18 @@ class _VoiceFinalReviewScreenState
           ),
         ],
       ),
+    );
+  }
+
+  Widget _summaryLine(
+    Set<String> ignored,
+    String key,
+    String label,
+    String value,
+  ) {
+    if (ignored.contains(key)) return Text('$label: (ignorado)');
+    return Text(
+      value.trim().isEmpty ? '$label: Nao informado' : '$label: $value',
     );
   }
 }
