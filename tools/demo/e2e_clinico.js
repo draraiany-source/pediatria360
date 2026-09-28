@@ -95,7 +95,7 @@ async function find(page, label, opts = {}) {
     const sel = opts.input ? 'input, textarea' : 'flt-semantics';
     const els = [...document.querySelectorAll(sel)].filter((e) => opts.input || roles.includes(e.getAttribute('role')) || e.hasAttribute('flt-tappable'));
     const text = (e) => (e.getAttribute('aria-label') || e.textContent || '').replace(/\s+/g, ' ').trim();
-    const matches = els.filter((e) => (opts.contains ? text(e).includes(label) : text(e).startsWith(label)));
+    const matches = els.filter((e) => (opts.exact ? text(e) === label : opts.contains ? text(e).includes(label) : text(e).startsWith(label)));
     const el = opts.last ? matches[matches.length - 1] : matches[0];
     if (!el) return null;
     const r = el.getBoundingClientRect();
@@ -106,10 +106,19 @@ async function find(page, label, opts = {}) {
 async function reveal(page, label, opts = {}) {
   const vh = page.viewportSize().height;
   const vw = page.viewportSize().width;
-  for (let i = 0; i < 12; i++) {
+  for (let i = 0; i < 18; i++) {
     const box = await find(page, label, opts);
-    if (box && box.y > 70 && box.y < vh - 90) return box;
-    const dy = box ? box.y - vh / 2 : 500;
+    // No celular a faixa de baixo tem botao flutuante e barra de navegacao.
+    const inY = box && box.y > 70 && box.y < vh - (vw < 600 ? 170 : 90);
+    if (inY && box.x > 8 && box.x < vw - 8) return box;
+    if (inY) {
+      // Fileira de filtros com rolagem horizontal.
+      await page.mouse.move(vw / 2, box.y);
+      await page.mouse.wheel(box.x - vw / 2, 0);
+      await page.waitForTimeout(500);
+      continue;
+    }
+    const dy = box ? box.y - vh / 2 : i < 10 ? 600 : -1500;
     await page.mouse.move(vw / 2 + (vw > 900 ? 110 : 0), vh / 2);
     await page.mouse.wheel(0, dy);
     await page.waitForTimeout(500);
@@ -611,6 +620,220 @@ const DOCS = [
     check('celular: visao simples do responsavel', (await waitText(r.page, 'Últimas medidas')) && !(await has(r.page, 'Escore Z')), '');
     await shot(r.page, 'm09_responsavel_curva');
     await r.ctx.close();
+  });
+
+  // ---------- Rotina da crianca (celular, dados ficticios) ----------
+  const MESES = ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'];
+  const dmy = (d) => pad(d.getDate()) + '/' + pad(d.getMonth() + 1) + '/' + d.getFullYear();
+  const dkey = (d) => d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
+  const hm = (d) => pad(d.getHours()) + ':' + pad(d.getMinutes());
+  const addDays = (d, n) => new Date(d.getFullYear(), d.getMonth(), d.getDate() + n);
+
+  await step('celular: rotina calendario e diario', async () => {
+    const { ctx, page } = await newPage(browser, MOBILE);
+    await open(page, '#/rotina?perfil=responsavel');
+    check('rotina: calendario abre com Calendario/Diario', (await waitText(page, 'Rotina da criança')) && (await has(page, 'Calendário')) && (await has(page, 'Diário')), hash(page));
+    await shot(page, 'r01_calendario_mes');
+    const d1 = addDays(new Date(), -1);
+    await tap(page, d1.getDate() + ' de ' + MESES[d1.getMonth()], { touch: true, wait: 1800 });
+    const dayHash = hash(page);
+    await reveal(page, 'Abrir no diário');
+    check('rotina: toque no dia mostra compromissos e diario do dia', dayHash.includes('dia=' + dkey(d1)) && (await has(page, 'Diário do dia')), dayHash);
+    await shot(page, 'r02_dia_com_diario');
+    await reveal(page, 'Mamão amassado (exemplo)', { contains: true });
+    check('rotina: linha do tempo do dia com autor', (await has(page, 'Mamão amassado (exemplo)')) && (await has(page, 'Informado pela família')), '');
+    await shot(page, 'r02b_linha_do_tempo_do_dia');
+    await tap(page, 'Abrir no diário', { touch: true, wait: 1800 });
+    check('rotina: troca para o diario no mesmo dia', hash(page).includes('vista=diario') && hash(page).includes('dia=' + dkey(d1)) && (await waitText(page, 'Linha do tempo')), hash(page));
+    await shot(page, 'r03_diario_do_dia');
+    await tap(page, 'Fralda (', { touch: true, wait: 1500 });
+    await reveal(page, 'Xixi e cocô', { contains: true });
+    check('rotina: filtro por tipo no diario', (await has(page, 'Xixi e cocô')) && !(await has(page, 'Mamão amassado')), '');
+    await shot(page, 'r04_filtro_fralda');
+    await tap(page, 'Todos (', { touch: true });
+    await tap(page, 'Calendário', { touch: true, wait: 1800 });
+    check('rotina: volta ao calendario', hash(page).includes('vista=calendario'), hash(page));
+    await tap(page, 'Semana', { touch: true, wait: 1800 });
+    check('rotina: visao semanal', (await waitText(page, 'Semana de')) && hash(page).includes('modo=semana'), hash(page));
+    await shot(page, 'r05_semana');
+    await tap(page, 'Dia', { exact: true, touch: true, wait: 1800 });
+    check('rotina: visao diaria', hash(page).includes('modo=dia'), hash(page));
+    await tap(page, 'Alice', { contains: true, touch: true, wait: 1800 });
+    check('rotina: troca de crianca mantem a visao', hash(page).startsWith('#/rotina/p5') && hash(page).includes('modo=dia') && (await waitText(page, 'Alice Exemplo Prado')), hash(page));
+    await ctx.close();
+  });
+
+  await step('celular: rotina registro rapido e correcao', async () => {
+    const { ctx, page } = await newPage(browser, MOBILE);
+    await open(page, '#/rotina/p1?vista=diario&perfil=responsavel');
+    await waitText(page, 'Registrar agora');
+    await shot(page, 'r06_diario_botoes_rapidos');
+    await tap(page, 'Registrar Fralda', { touch: true });
+    await tap(page, 'Xixi', { exact: true, touch: true, wait: 600 });
+    await shot(page, 'r07_registro_fralda');
+    await tap(page, 'Salvar', { exact: true, touch: true, wait: 1500 });
+    const saved = (await labels(page)).match(/Registro salvo: Fralda às (\d\d:\d\d)/);
+    check('diario: fralda registrada em 3 toques com horario', !!saved, saved ? saved[0] : '');
+    check('diario: registro mostra o autor', await has(page, 'Informado pela família'), '');
+    await shot(page, 'r08_fralda_salva');
+    await tap(page, saved[1] + ' ', { contains: true, touch: true, wait: 1800 });
+    check('diario: abre o registro com autor', (await waitText(page, 'Registro do diário')) && (await has(page, 'Autor')), hash(page));
+    await tap(page, 'Corrigir', { exact: true, touch: true });
+    check('diario: correcao abre o formulario', await waitText(page, 'Corrigir: Fralda'), '');
+    await tap(page, 'Xixi e cocô', { touch: true, wait: 600 });
+    await fill(page, 'Motivo da correção (opcional)', 'Toquei errado (teste e2e)', { touch: true });
+    await tap(page, 'Salvar correção', { touch: true, wait: 1800 });
+    const l = await labels(page);
+    check('diario: correcao guarda versao anterior e motivo', l.includes('Corrigido por') && l.includes('Motivo: Toquei errado (teste e2e)') && l.includes('Antes:'), '');
+    await shot(page, 'r09_correcao_historico');
+    await nav(page, '#/rotina/p1?vista=diario');
+    await tap(page, 'Registrar Mamada', { touch: true });
+    await tap(page, 'Mamadeira', { touch: true, wait: 600 });
+    await tap(page, '120 mL', { exact: true, touch: true, wait: 600 });
+    await tap(page, 'Salvar', { exact: true, touch: true, wait: 1500 });
+    check('diario: mamadeira com quantidade e unidade', await waitText(page, 'Registro salvo: Mamada'), '');
+    await tap(page, 'Registrar Temperatura', { touch: true });
+    await fill(page, 'Temperatura (°C)', '37,6', { touch: true });
+    const [fc] = await Promise.all([page.waitForEvent('filechooser', { timeout: 15000 }), tap(page, 'Anexar foto ou arquivo', { touch: true, wait: 500 })]);
+    await fc.setFiles({ name: 'termometro-exemplo.png', mimeType: 'image/png', buffer: Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=', 'base64') });
+    check('diario: foto anexada ao registro', await waitText(page, 'termometro-exemplo.png'), '');
+    await shot(page, 'r10_temperatura_com_foto');
+    await tap(page, 'Salvar', { exact: true, touch: true, wait: 1500 });
+    check('diario: temperatura salva', await waitText(page, 'Registro salvo: Temperatura'), '');
+    await ctx.close();
+  });
+
+  await step('celular: rotina compromisso criar editar concluir', async () => {
+    const { ctx, page } = await newPage(browser, MOBILE);
+    await open(page, '#/rotina/p1?perfil=responsavel');
+    await tap(page, 'Novo compromisso', { touch: true, wait: 1800 });
+    check('compromisso: formulario aberto', await waitText(page, 'Título'), hash(page));
+    await tap(page, 'Salvar', { exact: true, touch: true, wait: 1200 });
+    check('compromisso: validacao visivel junto ao botao', await waitText(page, 'Informe um título.'), '');
+    await shot(page, 'r11_validacao');
+    const tomorrow = addDays(new Date(), 1);
+    await tap(page, 'Consulta', { exact: true, touch: true, wait: 600 });
+    await fill(page, 'Título', 'Dentista (exemplo e2e)', { touch: true });
+    await fill(page, 'Data (dd/mm/aaaa)', dmy(tomorrow), { touch: true });
+    await fill(page, 'Horário', '10:00', { touch: true });
+    await tap(page, '1 hora antes', { touch: true, wait: 600 });
+    await shot(page, 'r12_novo_compromisso');
+    await tap(page, 'Salvar', { exact: true, touch: true, wait: 2000 });
+    check('compromisso: criado e aberto no dia', hash(page).includes('modo=dia') && hash(page).includes('dia=' + dkey(tomorrow)) && (await waitText(page, 'Dentista (exemplo e2e)')), hash(page));
+    check('compromisso: marcado como planejado e com lembrete', (await has(page, 'Planejado')) && (await has(page, 'Com lembrete')), '');
+    await tap(page, 'Dentista (exemplo e2e)', { contains: true, touch: true });
+    await tap(page, 'Editar', { exact: true, touch: true, wait: 1800 });
+    check('compromisso: edicao abre', await waitText(page, 'Editar compromisso'), hash(page));
+    await fill(page, 'Horário', '11:30', { touch: true });
+    await tap(page, 'Salvar', { exact: true, touch: true, wait: 2000 });
+    check('compromisso: horario editado', (await waitText(page, 'Compromisso atualizado.')) && (await has(page, '11:30')), '');
+    await tap(page, 'Dentista (exemplo e2e)', { contains: true, touch: true });
+    await tap(page, 'Lembretes', { exact: true, touch: true });
+    await tap(page, '1 dia antes', { touch: true, wait: 600 });
+    await tap(page, 'Salvar lembretes', { touch: true, wait: 1500 });
+    check('compromisso: lembretes configurados', await waitText(page, 'Lembretes atualizados.'), '');
+    await tap(page, 'Dentista (exemplo e2e)', { contains: true, touch: true });
+    const sheet = await labels(page);
+    check('compromisso: detalhe mostra os lembretes escolhidos', sheet.includes('1 hora antes') && sheet.includes('1 dia antes'), '');
+    await shot(page, 'r13_detalhe_compromisso');
+    await tap(page, 'Concluir', { exact: true, touch: true, wait: 1500 });
+    check('compromisso: concluido aparece como realizado', (await waitText(page, 'Marcado como realizado.')) && (await has(page, 'Realizado')), '');
+    await shot(page, 'r14_concluido');
+    await tap(page, 'Dentista (exemplo e2e)', { contains: true, touch: true });
+    await tap(page, 'Reabrir', { exact: true, touch: true, wait: 1500 });
+    check('compromisso: reaberto', await waitText(page, 'Compromisso reaberto.'), '');
+    await tap(page, 'Dentista (exemplo e2e)', { contains: true, touch: true });
+    await tap(page, 'Cancelar compromisso', { touch: true, wait: 1000 });
+    await fill(page, 'Motivo (opcional)', 'Remarcado (teste e2e)', { touch: true });
+    await tap(page, 'Cancelar compromisso', { last: true, touch: true, wait: 1500 });
+    check('compromisso: cancelado com motivo', (await waitText(page, 'Compromisso cancelado.')) && (await has(page, 'Cancelado')), '');
+    await shot(page, 'r14b_cancelado');
+    await ctx.close();
+  });
+
+  await step('celular: rotina lembrete no app', async () => {
+    const { ctx, page } = await newPage(browser, MOBILE);
+    await open(page, '#/rotina/p1?perfil=responsavel');
+    const at = new Date(Date.now() + 20 * 60000);
+    await tap(page, 'Novo compromisso', { touch: true, wait: 1800 });
+    await fill(page, 'Título', 'Dar vitamina (exemplo e2e)', { touch: true });
+    await fill(page, 'Data (dd/mm/aaaa)', dmy(at), { touch: true });
+    await fill(page, 'Horário', hm(at), { touch: true });
+    await tap(page, 'Salvar', { exact: true, touch: true, wait: 2500 });
+    check('lembrete: aviso aparece no app no horario do lembrete', await waitText(page, 'Lembrete: Dar vitamina (exemplo e2e)', 25000), '');
+    await shot(page, 'r15_lembrete_no_app');
+    await nav(page, '#/rotina/p1?vista=diario&dia=' + dkey(addDays(new Date(), -3)));
+    await tap(page, 'Ver', { exact: true, touch: true, wait: 1800 });
+    check('lembrete: Ver abre o dia do compromisso', hash(page).includes('modo=dia') && hash(page).includes('dia=' + dkey(at)), hash(page));
+    await tap(page, 'Dispensar', { exact: true, touch: true, wait: 1200 });
+    check('lembrete: dispensado some da barra', !(await has(page, 'Lembrete: Dar vitamina (exemplo e2e)')), '');
+    await ctx.close();
+  });
+
+  await step('celular: rotina resumo para o pediatra', async () => {
+    const { ctx, page } = await newPage(browser, MOBILE);
+    await ctx.grantPermissions(['clipboard-read', 'clipboard-write'], { origin: new URL(BASE).origin });
+    await open(page, '#/rotina/p1?perfil=responsavel');
+    await tap(page, 'Resumo para o pediatra', { touch: true, wait: 1800 });
+    check('resumo: abre pelo botao da rotina', hash(page).endsWith('/rotina/p1/resumo') && (await waitText(page, 'Prévia')), hash(page));
+    await shot(page, 'r16_resumo_previa');
+    const copyText = async () => { await tap(page, 'Copiar texto', { touch: true, wait: 1200 }); return page.evaluate(() => navigator.clipboard.readText()).catch((e) => 'ERRO ' + e); };
+    const all = await copyText();
+    check('resumo: identifica a crianca e que foi informado pela familia', all.includes('Resumo da rotina - Luna Exemplo Souza') && all.includes('Informado pela família') && all.includes('Mamadas:'), all.slice(0, 60));
+    await tap(page, 'Limpar', { exact: true, touch: true, wait: 800 });
+    await tap(page, 'Fralda', { exact: true, touch: true, wait: 1200 });
+    const only = await copyText();
+    check('resumo: filtro por tipo muda o resumo', only.includes('Fraldas:') && !only.includes('Mamadas:'), '');
+    await fill(page, 'Mensagem para o pediatra (opcional)', 'Dúvida sobre o sono (exemplo e2e)', { touch: true });
+    await tap(page, 'Enviar ao pediatra', { touch: true, wait: 1500 });
+    check('resumo: enviado ao pediatra', await waitText(page, 'Resumo enviado ao pediatra'), '');
+    await shot(page, 'r17_resumo_enviado');
+    const [dl] = await Promise.all([page.waitForEvent('download', { timeout: 20000 }), tap(page, 'Baixar PDF', { touch: true, wait: 800 })]);
+    const pdf = await pdfFromDownload(dl);
+    check('resumo: PDF baixado', pdf.magic === '%PDF-' && pdf.name.startsWith('resumo-rotina-luna-'), pdf.name + ' ' + pdf.size + ' bytes');
+    await page.waitForTimeout(2500);
+    const copied = await copyText();
+    check('resumo: texto copiado para compartilhar', copied.includes('Resumo da rotina - Luna Exemplo Souza') && copied.includes('Fraldas:'), copied.split('\n')[0]);
+    await tap(page, 'Compartilhar a rotina com a clínica', { touch: true, wait: 1200 });
+    check('resumo: sem consentimento nao envia', await isDisabled(page, 'Enviar ao pediatra'), '');
+    await ctx.close();
+  });
+
+  await step('celular: rotina visao do profissional', async () => {
+    const { ctx, page } = await newPage(browser, MOBILE);
+    await open(page, '#/pacientes/p1?perfil=profissional');
+    await tap(page, 'Resumos enviados pela família', { touch: true, wait: 1800 });
+    check('profissional: lista de resumos enviados pela familia', await waitText(page, 'Enviado por'), hash(page));
+    await tap(page, 'Enviado por', { contains: true, touch: true, wait: 1800 });
+    const l = await labels(page);
+    check('profissional: resumo identificado como informado pela familia', l.includes('Resumo enviado') && l.includes('Informado pela família') && l.includes('Mensagem da família'), '');
+    await shot(page, 'r18_profissional_resumo');
+    await nav(page, '#/rotina/p1?vista=diario');
+    await waitText(page, 'Linha do tempo');
+    const d = await labels(page);
+    check('profissional: diario somente leitura com origem clara', d.includes('Informado pela família. Calendário e diário') && !d.includes('Registrar Mamada') && !d.includes('Novo compromisso'), '');
+    await shot(page, 'r19_profissional_diario');
+    await ctx.close();
+  });
+
+  await step('celular: rotina protecao dos dados', async () => {
+    const cases = [
+      ['profissional', '#/rotina/p5', 'Rotina não compartilhada'],
+      ['profissional', '#/rotina/p1/evento/novo', 'Acesso restrito'],
+      ['profissional', '#/rotina/p1/resumo', 'Acesso restrito'],
+      ['recepcao', '#/rotina/p1', 'Acesso restrito'],
+      ['financeiro', '#/rotina/p1', 'Acesso restrito'],
+      ['administrador', '#/rotina/p1/registro/rs1', 'Acesso restrito'],
+      ['responsavel', '#/rotina/p2', 'Criança não encontrada'],
+    ];
+    for (const [perfil, route, expected] of cases) {
+      const { ctx, page } = await newPage(browser, MOBILE);
+      const sep = route.includes('?') ? '&' : '?';
+      await open(page, route + sep + 'perfil=' + perfil);
+      check('rotina protegida: ' + perfil + ' em ' + route, await waitText(page, expected), expected);
+      if (perfil === 'profissional' && route === '#/rotina/p5') await shot(page, 'r20_nao_compartilhada');
+      await ctx.close();
+    }
   });
 
   await browser.close();
