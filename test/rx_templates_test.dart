@@ -131,6 +131,10 @@ void main() {
     expect(a.items.every((RxItem i) => i.needsCheck), isTrue);
     expect(a.items.first.origin, 'Modelo "Febre (exemplo)" · v1');
     expect(a.items[1].dose, '2 jatos em cada narina');
+    expect(
+      febre().items[1].doseSummary(refs),
+      '2 jatos em cada narina (dose fixa)',
+    );
   });
 
   test('sem peso a dose não é calculada e a receita não pode ser revisada', () {

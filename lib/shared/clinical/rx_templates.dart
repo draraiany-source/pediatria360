@@ -68,7 +68,7 @@ class RxTemplateItem {
           '${_ref(references, referenceId)?.basis.label ?? 'mg/kg'}, '
           'recalculada com o peso de cada paciente',
     RxDoseMode.fixed =>
-      '$fixedDose${fixedVolume.trim().isEmpty ? '' : ' ($fixedVolume)'} '
+      '${<String>[fixedDose.trim(), if (fixedVolume.trim().isNotEmpty && !fixedVolume.trim().startsWith('n\u00e3o se aplica')) fixedVolume.trim()].join(', ')} '
           '(dose fixa)',
     RxDoseMode.atConsultation => 'Dose a definir na consulta',
   };
