@@ -179,7 +179,8 @@ class DemoClinicalSeed {
           perVolumeMl: 1,
         ),
       ],
-    ),    const DoseReference(
+    ),
+    const DoseReference(
       id: 'ref-c',
       drugName: 'Medicamento Exemplo C',
       indication: 'Referência em elaboração (não validada)',
@@ -331,6 +332,36 @@ class DemoClinicalSeed {
         'motivo': 'Motivo fictício do encaminhamento.',
       },
     );
-    return <ClinicalDocRecord>[atestado, encaminhamento];
+    final DateTime rxAt = visit.add(const Duration(minutes: 40));
+    final ClinicalDocRecord receita = ClinicalDocRecord.createDraft(
+      id: 'd3',
+      kind: DocKind.receituario,
+      patientId: 'p1',
+      consultationId: 'c1',
+      author: DemoProfessional.name,
+      context: ctx,
+      now: rxAt,
+      items: const <RxItem>[
+        RxItem(
+          drug: 'Medicamento Exemplo A',
+          presentation: 'Suspensão oral (exemplo)',
+          dose: '5 mL',
+          route: 'via oral',
+          frequency: 'de 8/8h',
+          duration: '5 dias',
+          quantity: '1 frasco',
+        ),
+        RxItem(
+          drug: 'Suplemento Exemplo D',
+          presentation: 'Gotas (exemplo)',
+          dose: '2 gotas',
+          route: 'via oral',
+          frequency: '1 vez ao dia (24/24h)',
+          duration: '30 dias',
+          quantity: '1 frasco',
+        ),
+      ],
+    ).markReviewed(reviewer: DemoProfessional.name, now: rxAt).issue(now: rxAt);
+    return <ClinicalDocRecord>[atestado, encaminhamento, receita];
   }
 }

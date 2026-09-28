@@ -277,6 +277,14 @@ class DemoSeed {
         status: DemoAppointmentStatus.agendado,
         reason: 'Avaliação (exemplo)',
       ),
+      DemoAppointment(
+        id: 'a6',
+        patientId: 'p1',
+        start: DateTime(d.year, d.month, d.day + 20, 9, 30),
+        kind: DemoAppointmentKind.presencial,
+        status: DemoAppointmentStatus.agendado,
+        reason: 'Retorno (exemplo)',
+      ),
     ];
   }
 

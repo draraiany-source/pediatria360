@@ -317,6 +317,42 @@ class DemoPatientDetailScreen extends StatelessWidget {
                         onTap: () =>
                             context.go('/pacientes/${p.id}/crescimento'),
                       ),
+                    if (isGuardian)
+                      _ActionTile(
+                        icon: Icons.event_note_outlined,
+                        title: 'Rotina e diário',
+                        subtitle: 'Calendário, diário e resumo para o pediatra',
+                        highlight: true,
+                        onTap: () => context.go('/rotina/${p.id}'),
+                      ),
+                    if (demoSession.profile == DemoProfile.profissional)
+                      if (demoSession.routineSharedWith(p.id)) ...<Widget>[
+                        _ActionTile(
+                          icon: Icons.summarize_outlined,
+                          title: 'Resumos enviados pela família',
+                          subtitle:
+                              '${demoSession.sharedSummariesFor(p.id).length} '
+                              'resumo(s) - informado pela família',
+                          onTap: () =>
+                              context.go('/rotina/${p.id}/resumos'),
+                        ),
+                        _ActionTile(
+                          icon: Icons.event_note_outlined,
+                          title: 'Rotina e diário da família',
+                          subtitle: 'Calendário e diário, somente leitura',
+                          onTap: () => context.go('/rotina/${p.id}'),
+                        ),
+                      ] else
+                        _ActionTile(
+                          icon: Icons.lock_outline_rounded,
+                          title: 'Rotina e diário da família',
+                          subtitle: 'A família não compartilhou a rotina',
+                          onTap: () => showDemoSnack(
+                            context,
+                            'A família ainda não autorizou o compartilhamento '
+                            'da rotina com a clínica.',
+                          ),
+                        ),
                     if (demoSession.canUseClinicalTools) ...<Widget>[
                       _ActionTile(
                         icon: Icons.biotech_outlined,

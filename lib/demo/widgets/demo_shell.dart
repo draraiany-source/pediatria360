@@ -5,6 +5,7 @@ import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_tokens.dart';
 import '../demo_session.dart';
 import 'demo_widgets.dart';
+import 'routine_widgets.dart';
 
 /// Moldura das telas autenticadas-simuladas: faixa de demonstracao em cima,
 /// navegacao embaixo (celular) ou na lateral (computador).
@@ -21,7 +22,8 @@ class DemoShell extends StatelessWidget {
   bool get _inFlow =>
       location.contains('/consulta/') ||
       location.contains('/documentos/') ||
-      location.endsWith('/editar');
+      location.endsWith('/editar') ||
+      RegExp(r'^/rotina/[^/]+/').hasMatch(location);
 
   @override
   Widget build(BuildContext context) {
@@ -41,6 +43,8 @@ class DemoShell extends StatelessWidget {
           body: Column(
             children: <Widget>[
               const DemoBanner(),
+              if (demoSession.profile == DemoProfile.responsavel)
+                const DemoReminderBar(),
               Expanded(
                 child: wide
                     ? Row(

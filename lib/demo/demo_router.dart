@@ -16,6 +16,9 @@ import 'screens/patient_supplement_screens.dart';
 import 'screens/patients_screens.dart';
 import 'screens/record_screens.dart';
 import 'screens/restricted_screen.dart';
+import 'screens/routine_forms.dart';
+import 'screens/routine_screens.dart';
+import 'screens/routine_summary_screens.dart';
 import 'screens/supplement_screens.dart';
 import 'screens/welcome_screen.dart';
 import 'widgets/demo_shell.dart';
@@ -40,6 +43,26 @@ Widget _growth(Widget child) => demoSession.canSeeGrowth
         module: DemoModule.pacientes,
         title: 'Crescimento',
       );
+
+/// Rotina da criança: o responsável (só as crianças dele) edita; o
+/// profissional só lê, e só se a família autorizou o compartilhamento.
+Widget _routine(
+  String patientId,
+  Widget child, {
+  bool edit = false,
+  bool messenger = true,
+}) {
+  if (!demoSession.canUseRoutine || (edit && !demoSession.canEditRoutine)) {
+    return const DemoRestrictedScreen(
+      module: DemoModule.rotina,
+      title: 'Rotina da criança',
+    );
+  }
+  if (demoSession.routinePatient(patientId) == null) {
+    return DemoRoutineUnavailableScreen(patientId: patientId);
+  }
+  return messenger ? ScaffoldMessenger(child: child) : child;
+}
 
 Widget _flow(DemoModule module, Widget child) =>
     _guard(module, ScaffoldMessenger(child: child));
@@ -256,7 +279,8 @@ final GoRouter demoRouter = GoRouter(
                           ),
                     ),
                   ],
-                ),                GoRoute(
+                ),
+                GoRoute(
                   path: 'consulta/:cid',
                   builder: (BuildContext context, GoRouterState state) =>
                       _clinical(
@@ -325,6 +349,122 @@ final GoRouter demoRouter = GoRouter(
                       ],
                     ),
                   ],
+                ),
+              ],
+            ),
+          ],
+        ),
+        GoRoute(
+          path: '/rotina',
+          pageBuilder: (BuildContext context, GoRouterState state) => _tab(
+            state,
+            DemoModule.rotina,
+            DemoRoutineScreen(
+              key: ValueKey<String>(state.uri.toString()),
+              view: state.uri.queryParameters['vista'],
+              mode: state.uri.queryParameters['modo'],
+              day: state.uri.queryParameters['dia'],
+            ),
+          ),
+        ),
+        GoRoute(
+          path: '/rotina/:pid',
+          pageBuilder: (BuildContext context, GoRouterState state) =>
+              NoTransitionPage<void>(
+                key: state.pageKey,
+                child: _routine(
+                  state.pathParameters['pid']!,
+                  DemoRoutineScreen(
+                    key: ValueKey<String>(state.uri.toString()),
+                    patientId: state.pathParameters['pid'],
+                    view: state.uri.queryParameters['vista'],
+                    mode: state.uri.queryParameters['modo'],
+                    day: state.uri.queryParameters['dia'],
+                  ),
+                  messenger: false,
+                ),
+              ),
+          routes: <RouteBase>[
+            GoRoute(
+              path: 'evento/novo',
+              builder: (BuildContext context, GoRouterState state) => _routine(
+                state.pathParameters['pid']!,
+                DemoRoutineEventFormScreen(
+                  key: ValueKey<String>(state.uri.toString()),
+                  patientId: state.pathParameters['pid']!,
+                  day: state.uri.queryParameters['dia'],
+                  vaccineName: state.uri.queryParameters['vacina'],
+                  vaccineDose: state.uri.queryParameters['dose'],
+                ),
+                edit: true,
+              ),
+            ),
+            GoRoute(
+              path: 'evento/:eid/editar',
+              builder: (BuildContext context, GoRouterState state) => _routine(
+                state.pathParameters['pid']!,
+                DemoRoutineEventFormScreen(
+                  key: ValueKey<String>(state.uri.toString()),
+                  patientId: state.pathParameters['pid']!,
+                  eventId: state.pathParameters['eid'],
+                ),
+                edit: true,
+              ),
+            ),
+            GoRoute(
+              path: 'registro/:rid',
+              builder: (BuildContext context, GoRouterState state) => _routine(
+                state.pathParameters['pid']!,
+                DemoDiaryEntryScreen(
+                  key: ValueKey<String>(state.uri.toString()),
+                  patientId: state.pathParameters['pid']!,
+                  entryId: state.pathParameters['rid']!,
+                ),
+              ),
+            ),
+            GoRoute(
+              path: 'medicamento/:docId/:item',
+              builder: (BuildContext context, GoRouterState state) => _routine(
+                state.pathParameters['pid']!,
+                DemoMedicationPlanScreen(
+                  key: ValueKey<String>(state.uri.toString()),
+                  patientId: state.pathParameters['pid']!,
+                  docId: state.pathParameters['docId']!,
+                  index: int.tryParse(state.pathParameters['item']!) ?? -1,
+                ),
+              ),
+            ),
+            GoRoute(
+              path: 'resumo',
+              builder: (BuildContext context, GoRouterState state) => _routine(
+                state.pathParameters['pid']!,
+                DemoRoutineSummaryScreen(
+                  key: ValueKey<String>(state.uri.toString()),
+                  patientId: state.pathParameters['pid']!,
+                ),
+                edit: true,
+              ),
+            ),
+            GoRoute(
+              path: 'resumos',
+              builder: (BuildContext context, GoRouterState state) => _routine(
+                state.pathParameters['pid']!,
+                DemoSharedSummariesScreen(
+                  patientId: state.pathParameters['pid']!,
+                ),
+              ),
+              routes: <RouteBase>[
+                GoRoute(
+                  path: ':sid',
+                  builder: (BuildContext context, GoRouterState state) =>
+                      _routine(
+                        state.pathParameters['pid']!,
+                        DemoSharedSummaryScreen(
+                          key: ValueKey<String>(state.uri.toString()),
+                          patientId: state.pathParameters['pid']!,
+                          summaryId: state.pathParameters['sid']!,
+                        ),
+                      ),
                 ),
               ],
             ),

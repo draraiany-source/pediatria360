@@ -279,6 +279,7 @@ class DemoHomeScreen extends StatelessWidget {
           const DemoSectionTitle('Atalhos'),
           const _Shortcuts(
             items: <(String, IconData, String)>[
+              ('Rotina e diário', Icons.event_note_outlined, '/rotina'),
               ('Vacinação', Icons.vaccines_outlined, '/vacinacao'),
               ('Biblioteca', Icons.menu_book_outlined, '/biblioteca'),
               ('Telemedicina', Icons.videocam_outlined, '/telemedicina'),

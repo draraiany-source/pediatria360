@@ -7,9 +7,11 @@ import '../shared/clinical/growth.dart';
 import '../shared/clinical/lab_results.dart';
 import '../shared/clinical/orientation_templates.dart';
 import '../shared/clinical/supplement_library.dart';
+import '../shared/routine/child_routine.dart';
 import 'demo_clinical.dart';
 import 'demo_data.dart';
 import 'demo_growth.dart';
+import 'demo_routine.dart';
 
 /// Perfis da demonstracao — espelham as areas de trabalho do app real.
 enum DemoProfile {
@@ -59,6 +61,12 @@ enum DemoProfile {
 /// Modulos navegaveis da demonstracao.
 enum DemoModule {
   inicio('/inicio', 'Início', Icons.home_outlined, Icons.home_rounded),
+  rotina(
+    '/rotina',
+    'Rotina',
+    Icons.event_note_outlined,
+    Icons.event_note_rounded,
+  ),
   pacientes(
     '/pacientes',
     'Pacientes',
@@ -156,6 +164,16 @@ class DemoSession extends ChangeNotifier {
   late List<GestationalAgeChange> gestationalAgeChanges;
   late List<LabResult> labs;
   late List<SupplementDecision> supplementDecisions;
+  late List<RoutineEvent> routineEvents;
+  late List<MedicationPlan> medicationPlans;
+  late List<DiaryEntry> diaryEntries;
+  late List<SharedRoutineSummary> sharedSummaries;
+  late Map<String, bool> routineSharing;
+  late Map<String, List<int>> itemReminders;
+  late Set<String> dismissedReminders;
+  late Set<RoutineKind> routineKindFilter;
+  late Set<DiaryKind> diaryKindFilter;
+  String? lastRoutinePatientId;
   final List<DemoArticle> articles = DemoSeed.articles;
   final List<DoseReference> doseReferences = DemoClinicalSeed.doseReferences;
 
@@ -179,6 +197,20 @@ class DemoSession extends ChangeNotifier {
     gestationalAgeChanges = <GestationalAgeChange>[];
     labs = DemoGrowthSeed.labResults(now);
     supplementDecisions = DemoGrowthSeed.decisions(now);
+    clock = DateTime.now;
+    final DemoRoutineSeed routine = DemoRoutineSeed(now, documents);
+    routineEvents = routine.events();
+    medicationPlans = routine.plans();
+    diaryEntries = routine.diary();
+    routineSharing = <String, bool>{'p1': true, 'p5': false};
+    itemReminders = <String, List<int>>{
+      'appt:a6': const <int>[1440, 60],
+    };
+    dismissedReminders = <String>{};
+    routineKindFilter = <RoutineKind>{};
+    diaryKindFilter = <DiaryKind>{};
+    lastRoutinePatientId = null;
+    sharedSummaries = routine.sharedSummaries(this);
   }
 
   void enter(DemoProfile profile) {
@@ -238,6 +270,7 @@ class DemoSession extends ChangeNotifier {
         ],
         DemoProfile.responsavel: <DemoModule>[
           DemoModule.inicio,
+          DemoModule.rotina,
           DemoModule.pacientes,
           DemoModule.vacinacao,
           DemoModule.telemedicina,
@@ -561,9 +594,243 @@ class DemoSession extends ChangeNotifier {
     ];
     notifyListeners();
   }
+  // ------------------------------------------------ Rotina e diário
+
+  /// Relógio da rotina (lembretes, "agora" dos formulários). Os testes
+  /// adiantam o relógio para ver um lembrete disparar.
+  DateTime Function() clock = DateTime.now;
+
+  DateTime get now => clock();
+
+  /// Responsável: as próprias crianças. Profissional: só as crianças cuja
+  /// família autorizou o compartilhamento, e só para leitura.
+  bool get canUseRoutine =>
+      _profile == DemoProfile.responsavel ||
+      _profile == DemoProfile.profissional;
+
+  bool get canEditRoutine => _profile == DemoProfile.responsavel;
+
+  bool routineSharedWith(String patientId) =>
+      routineSharing[patientId] ?? false;
+
+  DemoPatient? routinePatient(String patientId) {
+    if (_profile == DemoProfile.responsavel) return patientById(patientId);
+    if (_profile == DemoProfile.profissional && routineSharedWith(patientId)) {
+      return patientById(patientId);
+    }
+    return null;
+  }
+
+  List<DemoPatient> get routinePatients => <DemoPatient>[
+    for (final DemoPatient p in visiblePatients)
+      if (routinePatient(p.id) != null) p,
+  ];
+
+  String get routineAuthor =>
+      _profile == DemoProfile.responsavel ? guardianOfDemo : currentAuthor;
+
+  DiaryRole get routineRole => _profile == DemoProfile.responsavel
+      ? DiaryRole.familia
+      : DiaryRole.profissional;
+
+  void setRoutineSharing(String patientId, bool shared) {
+    if (!canEditRoutine || patientById(patientId) == null) return;
+    routineSharing = <String, bool>{...routineSharing, patientId: shared};
+    notifyListeners();
+  }
+
+  RoutineEvent? routineEventById(String id) {
+    for (final RoutineEvent e in routineEvents) {
+      if (e.id == id) return e;
+    }
+    return null;
+  }
+
+  void saveRoutineEvent(RoutineEvent event) {
+    if (!canEditRoutine || routinePatient(event.patientId) == null) return;
+    final bool exists = routineEvents.any((RoutineEvent e) => e.id == event.id);
+    routineEvents = <RoutineEvent>[
+      for (final RoutineEvent e in routineEvents) e.id == event.id ? event : e,
+      if (!exists) event,
+    ];
+    notifyListeners();
+  }
+
+  void setOccurrenceStatus(
+    String eventId,
+    String key,
+    RoutineStatus status, {
+    String note = '',
+  }) {
+    final RoutineEvent? e = routineEventById(eventId);
+    if (e == null) return;
+    saveRoutineEvent(
+      e.withStatus(key, status, author: routineAuthor, at: now, note: note),
+    );
+  }
+
+  MedicationPlan? planById(String id) {
+    for (final MedicationPlan p in medicationPlans) {
+      if (p.id == id) return p;
+    }
+    return null;
+  }
+
+  MedicationPlan? planFor(String docId, int itemIndex) {
+    for (final MedicationPlan p in medicationPlans) {
+      if (p.docId == docId && p.itemIndex == itemIndex) return p;
+    }
+    return null;
+  }
+
+  void savePlan(MedicationPlan plan) {
+    if (!canEditRoutine || routinePatient(plan.patientId) == null) return;
+    final bool exists = medicationPlans.any(
+      (MedicationPlan p) => p.id == plan.id,
+    );
+    medicationPlans = <MedicationPlan>[
+      for (final MedicationPlan p in medicationPlans)
+        p.id == plan.id ? plan : p,
+      if (!exists) plan,
+    ];
+    notifyListeners();
+  }
+
+  void setDoseStatus(
+    String planId,
+    String doseKey,
+    RoutineStatus status, {
+    String note = '',
+    String? diaryEntryId,
+  }) {
+    final MedicationPlan? p = planById(planId);
+    if (p == null) return;
+    savePlan(
+      p.withDose(
+        doseKey,
+        status,
+        author: routineAuthor,
+        at: now,
+        note: note,
+        diaryEntryId: diaryEntryId,
+      ),
+    );
+  }
+
+  /// Antecedências escolhidas pela família para itens da clínica
+  /// (consultas agendadas), guardadas à parte do cadastro da clínica.
+  void setItemReminders(String itemId, List<int> reminders) {
+    if (!canEditRoutine) return;
+    itemReminders = <String, List<int>>{...itemReminders, itemId: reminders};
+    notifyListeners();
+  }
+
+  void dismissReminder(String key) {
+    dismissedReminders = <String>{...dismissedReminders, key};
+    notifyListeners();
+  }
+
+  DiaryEntry? diaryEntryById(String id) {
+    for (final DiaryEntry e in diaryEntries) {
+      if (e.id == id) return e;
+    }
+    return null;
+  }
+
+  /// Novo registro. Se confirma uma dose programada, a dose fica como
+  /// realizada no calendário.
+  DiaryEntry addDiaryEntry({
+    required String patientId,
+    required DiaryKind kind,
+    required DiaryValues values,
+    LabAttachment? attachment,
+    String? planId,
+    String? doseKey,
+  }) {
+    if (!canEditRoutine || routinePatient(patientId) == null) {
+      throw StateError('Só o responsável registra no diário da criança.');
+    }
+    final DiaryEntry entry = DiaryEntry(
+      id: newId('r'),
+      patientId: patientId,
+      kind: kind,
+      values: values,
+      author: routineAuthor,
+      role: routineRole,
+      recordedAt: now,
+      attachment: attachment,
+      planId: planId,
+      doseKey: doseKey,
+    );
+    diaryEntries = <DiaryEntry>[...diaryEntries, entry];
+    if (planId != null && doseKey != null) {
+      setDoseStatus(
+        planId,
+        doseKey,
+        RoutineStatus.done,
+        diaryEntryId: entry.id,
+      );
+    }
+    notifyListeners();
+    return entry;
+  }
+
+  void replaceDiaryEntry(DiaryEntry entry) {
+    if (!canEditRoutine || routinePatient(entry.patientId) == null) return;
+    diaryEntries = <DiaryEntry>[
+      for (final DiaryEntry e in diaryEntries) e.id == entry.id ? entry : e,
+    ];
+    if (entry.voided && entry.planId != null && entry.doseKey != null) {
+      final MedicationPlan? p = planById(entry.planId!);
+      if (p?.doses[entry.doseKey!]?.diaryEntryId == entry.id) {
+        setDoseStatus(entry.planId!, entry.doseKey!, RoutineStatus.planned);
+      }
+    }
+    notifyListeners();
+  }
+
+  SharedRoutineSummary shareSummary({
+    required String patientId,
+    required RoutineSummary summary,
+    required String text,
+    String message = '',
+  }) {
+    if (!canEditRoutine || !routineSharedWith(patientId)) {
+      throw StateError(
+        'Envio exige o responsável e o compartilhamento ligado.',
+      );
+    }
+    final SharedRoutineSummary s = SharedRoutineSummary(
+      id: newId('s'),
+      patientId: patientId,
+      from: summary.from,
+      to: summary.to,
+      kinds: summary.kinds,
+      text: text,
+      entryCount: summary.entries.length,
+      author: routineAuthor,
+      sentAt: now,
+      message: message.trim(),
+    );
+    sharedSummaries = <SharedRoutineSummary>[s, ...sharedSummaries];
+    notifyListeners();
+    return s;
+  }
+
+  List<SharedRoutineSummary> sharedSummariesFor(String patientId) =>
+      sharedSummaries
+          .where((SharedRoutineSummary s) => s.patientId == patientId)
+          .toList();
+
+  SharedRoutineSummary? sharedSummaryById(String id) {
+    for (final SharedRoutineSummary s in sharedSummaries) {
+      if (s.id == id) return s;
+    }
+    return null;
+  }
 }
 
-/// Alteração da idade gestacional ao nascer (fica no histórico).
+/// Altera��o da idade gestacional ao nascer (fica no hist�rico).
 class GestationalAgeChange {
   const GestationalAgeChange({
     required this.patientId,
