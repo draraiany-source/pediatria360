@@ -437,7 +437,7 @@ const DOCS = [
   await step('computador: corrigir medida', async () => {
     const { ctx, page } = await newPage(browser, DESKTOP);
     await open(page, '#/pacientes/p1/crescimento?perfil=profissional');
-    await tap(page, 'Corrigir medida de', { last: true, wait: 2000 });
+    await tap(page, 'Corrigir medida de', { wait: 2000 });
     check('corrigir: abre a tela de correcao', await waitText(page, 'Salvar correção'), hash(page));
     await fill(page, 'Peso', '10,1');
     await tap(page, 'Salvar correção', { wait: 1500 });
