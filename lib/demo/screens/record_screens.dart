@@ -11,6 +11,7 @@ import '../demo_data.dart';
 import '../demo_session.dart';
 import '../widgets/demo_widgets.dart';
 import '../widgets/flow_widgets.dart';
+import 'well_child_screen.dart';
 
 /// Prontuario ficticio: consultas, documentos e evolucoes.
 class DemoRecordScreen extends StatelessWidget {
@@ -88,6 +89,11 @@ class DemoRecordScreen extends StatelessWidget {
                         spacing: AppSpacing.sm,
                         runSpacing: AppSpacing.sm,
                         children: <Widget>[
+                          FilledButton.icon(
+                            onPressed: () => openWellChildFor(context, p.id),
+                            icon: const Icon(Icons.child_care_rounded),
+                            label: const Text('Nova consulta de puericultura'),
+                          ),
                           FilledButton.tonalIcon(
                             onPressed: () =>
                                 context.go('/pacientes/${p.id}/documentos'),
@@ -125,6 +131,14 @@ class DemoRecordScreen extends StatelessWidget {
                             icon: const Icon(Icons.medication_liquid_outlined),
                             label: const Text('Suplementação'),
                           ),
+                          if (demoSession.routineSharedWith(p.id))
+                            OutlinedButton.icon(
+                              onPressed: () => context.go(
+                                '/rotina/${p.id}?vista=sono&de=prontuario',
+                              ),
+                              icon: const Icon(Icons.bedtime_outlined),
+                              label: const Text('Diário do sono (família)'),
+                            ),
                         ],
                       ),
                       const DemoSectionTitle('Exames conferidos'),
@@ -146,7 +160,9 @@ class DemoRecordScreen extends StatelessWidget {
                             child: Row(
                               children: <Widget>[
                                 Icon(
-                                  c.isDraft
+                                  c.isWellChild
+                                      ? Icons.child_care_rounded
+                                      : c.isDraft
                                       ? Icons.pending_actions_rounded
                                       : Icons.task_alt_rounded,
                                   color: c.isDraft

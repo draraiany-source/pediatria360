@@ -56,9 +56,13 @@ String routineUrl(
   String view = 'calendario',
   String mode = 'mes',
   DateTime? day,
+  String? consultation,
+  String? from,
 }) {
   final String d = day == null ? '' : '&dia=${routineDateKey(day)}';
-  return '/rotina/$patientId?vista=$view&modo=$mode$d';
+  final String c = consultation == null ? '' : '&consulta=$consultation';
+  final String f = from == null ? '' : '&de=$from';
+  return '/rotina/$patientId?vista=$view&modo=$mode$d$c$f';
 }
 
 /// Planejado: contorno. Realizado: preenchido com check. Cancelado: cinza
@@ -622,6 +626,55 @@ class ChoiceRow<T> extends StatelessWidget {
             selected: o == selected,
             onSelected: (bool v) => onSelected(v ? o : null),
           ),
+      ],
+    );
+  }
+}
+
+/// Barra de período com anterior, próximo e hoje.
+class RoutinePeriodBar extends StatelessWidget {
+  const RoutinePeriodBar({
+    required this.label,
+    required this.onPrev,
+    required this.onNext,
+    required this.onToday,
+    super.key,
+    this.prevLabel = 'Anterior',
+    this.nextLabel = 'Próximo',
+  });
+
+  final String label;
+  final VoidCallback onPrev;
+  final VoidCallback? onNext;
+  final VoidCallback? onToday;
+  final String prevLabel;
+  final String nextLabel;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: <Widget>[
+        IconButton(
+          tooltip: prevLabel,
+          onPressed: onPrev,
+          icon: const Icon(Icons.chevron_left_rounded),
+        ),
+        Expanded(
+          child: Text(
+            label,
+            textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.titleSmall?.copyWith(
+              color: AppColors.navy,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+        ),
+        IconButton(
+          tooltip: nextLabel,
+          onPressed: onNext,
+          icon: const Icon(Icons.chevron_right_rounded),
+        ),
+        TextButton(onPressed: onToday, child: const Text('Hoje')),
       ],
     );
   }

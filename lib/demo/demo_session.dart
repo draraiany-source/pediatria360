@@ -10,6 +10,9 @@ import '../shared/clinical/orientation_templates.dart';
 import '../shared/clinical/rx_templates.dart';
 import '../shared/clinical/supplement_library.dart';
 import '../shared/routine/child_routine.dart';
+import '../shared/wellchild/age_band.dart';
+import '../shared/wellchild/well_child_templates.dart';
+import '../shared/wellchild/well_child_visit.dart';
 import 'demo_clinical.dart';
 import 'demo_data.dart';
 import 'demo_growth.dart';
@@ -163,6 +166,8 @@ class DemoSession extends ChangeNotifier {
   late List<OrientationTemplate> orientationTemplates;
   late List<RxTemplate> rxTemplates;
   late Map<String, String> _rxTemplateOwner;
+  late List<WellChildTemplate> wellChildTemplates;
+  late Map<String, String> _wcTemplateOwner;
   late BrandLogoStore logos;
   late List<SupplementSheet> supplementSheets;
   late List<GrowthMeasurement> growth;
@@ -197,6 +202,14 @@ class DemoSession extends ChangeNotifier {
     rxTemplates = DemoClinicalSeed.rxTemplates(now);
     _rxTemplateOwner = <String, String>{
       for (final RxTemplate t in rxTemplates) t.id: DemoProfessional.id,
+    };
+    wellChildTemplates = DemoClinicalSeed.wellChildTemplates(
+      author: DemoProfessional.name,
+      now: now,
+    );
+    _wcTemplateOwner = <String, String>{
+      for (final WellChildTemplate t in wellChildTemplates)
+        t.id: DemoProfessional.id,
     };
     logos = BrandLogoStore();
     _account = DemoProfessional.account;
@@ -467,7 +480,9 @@ class DemoSession extends ChangeNotifier {
       DemoEncounter(
         patientId: c.patientId,
         date: c.updatedAt,
-        type: 'Consulta (demonstração)',
+        type: c.isWellChild
+            ? 'Consulta de puericultura (demonstração)'
+            : 'Consulta (demonstração)',
         summary: c.summary,
       ),
       ...encounters,
@@ -535,17 +550,200 @@ class DemoSession extends ChangeNotifier {
     notifyListeners();
   }
 
-  OrientationTemplate addOrientationTemplate(String title, String body) {
+  OrientationTemplate addOrientationTemplate(
+    String title,
+    String body, {
+    OrientationTopic topic = OrientationTopic.geral,
+    ChildAgeBand? band,
+  }) {
     final OrientationTemplate t = OrientationTemplate(
       id: 't${_nextId++}',
       title: title,
       body: body,
       author: currentAuthor,
       updatedAt: DateTime.now(),
+      topic: topic,
+      band: band,
+      ownerId: _account.id,
     );
     orientationTemplates = <OrientationTemplate>[t, ...orientationTemplates];
     notifyListeners();
     return t;
+  }
+
+  /// Exemplos (de todas as contas) e os modelos criados pela conta em uso.
+  List<OrientationTemplate> get myOrientationTemplates => orientationTemplates
+      .where(
+        (OrientationTemplate t) =>
+            t.ownerId == null || t.ownerId == _account.id,
+      )
+      .toList(growable: false);
+
+  OrientationTemplate? orientationTemplateById(String id) {
+    for (final OrientationTemplate t in myOrientationTemplates) {
+      if (t.id == id) return t;
+    }
+    return null;
+  }
+
+  // ------------------------------------------------ Puericultura
+
+  bool get canUseWellChild => canUseClinicalTools;
+
+  DemoConsultation startWellChildVisit(String patientId) {
+    final DateTime now = DateTime.now();
+    final DemoConsultation c = DemoConsultation(
+      id: 'c${_nextId++}',
+      patientId: patientId,
+      startedAt: now,
+      author: currentAuthor,
+      complaint: 'Consulta de puericultura',
+      ownerId: _account.id,
+      wellChild: WellChildVisit(
+        history: <VisitRevision>[
+          VisitRevision(at: now, author: currentAuthor, action: 'Criada'),
+        ],
+      ),
+    );
+    consultations = <DemoConsultation>[c, ...consultations];
+    notifyListeners();
+    return c;
+  }
+
+  /// Grava a consulta com uma linha no histórico. Devolve `false` se nada
+  /// mudou.
+  bool saveWellChild(
+    DemoConsultation c,
+    WellChildVisit next, {
+    String action = 'Editado',
+    String reason = '',
+  }) {
+    final WellChildVisit? cur = c.wellChild;
+    if (cur == null) return false;
+    final WellChildVisit v = cur.revised(
+      next,
+      author: currentAuthor,
+      at: DateTime.now(),
+      action: action,
+      reason: reason,
+    );
+    if (identical(v, cur)) return false;
+    c
+      ..wellChild = v
+      ..assessment = v.field(WellChildSection.avaliacao)
+      ..plan = v.field(WellChildSection.plano)
+      ..updatedAt = DateTime.now();
+    notifyListeners();
+    return true;
+  }
+
+  /// Finaliza gravando a logomarca vigente; o resumo em PDF não muda se a
+  /// logomarca for trocada depois.
+  List<String> finishWellChild(DemoConsultation c) {
+    final WellChildVisit? v = c.wellChild;
+    if (v == null) return <String>['Consulta não é de puericultura.'];
+    final List<String> problems = <String>[
+      ...v.missingToFinish.map((String s) => 'Preencha: $s'),
+      ...v.placeholders.map((String s) => 'Complete os colchetes em: $s'),
+    ];
+    if (problems.isNotEmpty) return problems;
+    c.wellChild = v
+        .copyWith(logoId: () => myLogo?.id)
+        .logged('Finalizada', author: currentAuthor, at: DateTime.now());
+    finishConsultation(c);
+    return const <String>[];
+  }
+
+  BrandLogo? logoForVisit(DemoConsultation c) => logos.forDocument(
+    ownerId: c.ownerId ?? DemoProfessional.id,
+    viewerId: _account.id,
+    issued: !c.isDraft,
+    issuedLogoId: c.wellChild?.logoId,
+  );
+
+  VisitAge visitAge(DemoPatient p, DateTime at) => VisitAge.of(
+    birthDate: p.birthDate,
+    at: at,
+    gestationalAgeDays: p.gestationalAgeDays,
+  );
+
+  String newWellChildTemplateId() => 'wt${_nextId++}';
+
+  bool _myWcTemplate(WellChildTemplate t) =>
+      (_wcTemplateOwner[t.id] ?? DemoProfessional.id) == _account.id;
+
+  List<WellChildTemplate> get myWellChildTemplates =>
+      wellChildTemplates.where(_myWcTemplate).toList()..sort(
+        (WellChildTemplate a, WellChildTemplate b) =>
+            b.updatedAt.compareTo(a.updatedAt),
+      );
+
+  WellChildTemplate? wellChildTemplateById(String id) {
+    for (final WellChildTemplate t in wellChildTemplates) {
+      if (t.id == id) return _myWcTemplate(t) ? t : null;
+    }
+    return null;
+  }
+
+  void saveWellChildTemplate(WellChildTemplate t) {
+    final bool exists = wellChildTemplates.any(
+      (WellChildTemplate x) => x.id == t.id,
+    );
+    if (exists && !_myWcTemplate(t)) return;
+    _wcTemplateOwner.putIfAbsent(t.id, () => _account.id);
+    wellChildTemplates = <WellChildTemplate>[
+      if (!exists) t,
+      for (final WellChildTemplate x in wellChildTemplates)
+        x.id == t.id ? t : x,
+    ];
+    notifyListeners();
+  }
+
+  // ------------------------------------------------ Área da família
+
+  /// Orientações emitidas para as crianças do responsável (a última versão
+  /// emitida; rascunhos posteriores não aparecem).
+  List<ClinicalDocRecord> familyOrientations(String patientId) {
+    if (_profile != DemoProfile.responsavel || patientById(patientId) == null) {
+      return const <ClinicalDocRecord>[];
+    }
+    final List<ClinicalDocRecord> out = <ClinicalDocRecord>[];
+    for (final ClinicalDocRecord d in documents) {
+      if (d.patientId != patientId || d.kind != DocKind.orientacoes) continue;
+      final int i = d.versions.lastIndexWhere(
+        (DocVersion v) => v.status == DocStatus.issued,
+      );
+      if (i >= 0) out.add(d.upTo(i));
+    }
+    out.sort(
+      (ClinicalDocRecord a, ClinicalDocRecord b) =>
+          b.current.issuedAt!.compareTo(a.current.issuedAt!),
+    );
+    return out;
+  }
+
+  ClinicalDocRecord? familyOrientationById(String patientId, String docId) {
+    for (final ClinicalDocRecord d in familyOrientations(patientId)) {
+      if (d.id == docId) return d;
+    }
+    return null;
+  }
+
+  /// Profissional ou clínica que emitiu o documento.
+  DemoAccount documentAccount(ClinicalDocRecord d) =>
+      DemoProfessional.byId(_ownerOf(d));
+
+  /// Logomarca gravada no documento emitido, para o PDF da família.
+  BrandLogo? familyDocumentLogo(ClinicalDocRecord d) {
+    final String? id = d.current.logoId;
+    if (id == null) return null;
+    final String owner = _ownerOf(d);
+    return logos.forDocument(
+      ownerId: owner,
+      viewerId: owner,
+      issued: true,
+      issuedLogoId: id,
+    );
   }
 
   // ------------------------------------------------ Modelos de receita
@@ -919,6 +1117,29 @@ class DemoSession extends ChangeNotifier {
       }
     }
     notifyListeners();
+  }
+
+  /// Despertar anotado no sono em andamento (ou numa noite já registrada).
+  void addWaking(String entryId, SleepWaking waking) {
+    final DiaryEntry? e = diaryEntryById(entryId);
+    if (e == null || e.kind != DiaryKind.sono) return;
+    replaceDiaryEntry(e.withWaking(waking, author: routineAuthor, at: now));
+  }
+
+  /// Avaliação do sono escrita pelo profissional a partir do diário da
+  /// família; entra no prontuário como evolução.
+  void addSleepAssessment(String patientId, String text) {
+    if (!canSeeClinicalRecord || routinePatient(patientId) == null) {
+      throw StateError('Só o profissional, com a rotina compartilhada.');
+    }
+    addEncounter(
+      DemoEncounter(
+        patientId: patientId,
+        date: DateTime.now(),
+        type: 'Avaliação do sono',
+        summary: text.trim(),
+      ),
+    );
   }
 
   SharedRoutineSummary shareSummary({

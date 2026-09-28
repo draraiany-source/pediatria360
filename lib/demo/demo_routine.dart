@@ -3,6 +3,8 @@ import 'dart:convert';
 import '../shared/clinical/clinical_documents.dart';
 import '../shared/clinical/lab_results.dart';
 import '../shared/routine/child_routine.dart';
+import '../shared/routine/sleep_log.dart';
+import '../shared/wellchild/well_child_visit.dart';
 import 'demo_clinical.dart';
 import 'demo_data.dart';
 import 'demo_session.dart';
@@ -272,7 +274,7 @@ class DemoRoutineSeed {
     _e(
       'p1',
       DiaryKind.sono,
-      DiaryValues(at: _at(d, 10, 15), endAt: _at(d, 11, 30)),
+      DiaryValues(at: _at(d, 10, 15), endAt: _at(d, 11, 30), option: kSleepNap),
     ),
     _e(
       'p1',
@@ -293,7 +295,7 @@ class DemoRoutineSeed {
     _e(
       'p1',
       DiaryKind.sono,
-      DiaryValues(at: _at(d, 15, 0), endAt: _at(d, 16, 20)),
+      DiaryValues(at: _at(d, 15, 0), endAt: _at(d, 16, 20), option: kSleepNap),
     ),
     _e('p1', DiaryKind.fralda, DiaryValues(at: _at(d, 17, 0), option: 'Xixi')),
     _e(
@@ -310,16 +312,56 @@ class DemoRoutineSeed {
         durationMinutes: 12,
       ),
     ),
-    if (d > 0)
-      _e(
-        'p1',
-        DiaryKind.sono,
-        DiaryValues(at: _at(d, 20, 30), endAt: _at(d - 1, 6, 0)),
+    if (d > 0) _lunaNight(d),
+  ];
+
+  /// Noite que começa [d] dias atrás; os despertares variam por dia.
+  DiaryEntry _lunaNight(int d) {
+    final int startMin = 20 * 60 + 15 + (d % 3) * 15;
+    return _e(
+      'p1',
+      DiaryKind.sono,
+      DiaryValues(
+        at: _at(d, startMin ~/ 60, startMin % 60),
+        endAt: _at(d - 1, 6, d.isEven ? 0 : 20),
+        option: kSleepNight,
+        wakings: <SleepWaking>[
+          SleepWaking(at: _at(d - 1, 1, 40), minutesAwake: 15),
+          if (d.isOdd) SleepWaking(at: _at(d - 1, 4, 10), minutesAwake: 10),
+        ],
+        note: d == 4
+            ? 'Acordou chorando e voltou a dormir no colo (exemplo).'
+            : '',
       ),
+    );
+  }
+
+  /// Dias anteriores com o sono registrado (a semana fica completa).
+  List<DiaryEntry> _lunaSleepOnly(int d) => <DiaryEntry>[
+    _e(
+      'p1',
+      DiaryKind.sono,
+      DiaryValues(
+        at: _at(d, 9, 50 + d),
+        endAt: _at(d, 11, 5 + d),
+        option: kSleepNap,
+      ),
+    ),
+    _e(
+      'p1',
+      DiaryKind.sono,
+      DiaryValues(
+        at: _at(d, 14, 30),
+        endAt: _at(d, 15, 40 - d),
+        option: kSleepNap,
+      ),
+    ),
+    _lunaNight(d),
   ];
 
   List<DiaryEntry> diary() {
     final List<DiaryEntry> all = <DiaryEntry>[
+      for (final int d in <int>[6, 5, 4, 3]) ..._lunaSleepOnly(d),
       for (final int d in <int>[2, 1, 0]) ..._lunaDay(d),
       _e(
         'p1',
@@ -389,7 +431,11 @@ class DemoRoutineSeed {
       _e(
         'p5',
         DiaryKind.sono,
-        DiaryValues(at: _at(1, 13, 0), endAt: _at(1, 14, 30)),
+        DiaryValues(
+          at: _at(1, 13, 0),
+          endAt: _at(1, 14, 30),
+          option: kSleepNap,
+        ),
       ),
       _e(
         'p5',
@@ -539,13 +585,56 @@ extension DemoRoutineQueries on DemoSession {
           id: 'cons:${c.id}',
           patientId: patientId,
           kind: RoutineKind.consulta,
-          title: 'Consulta realizada',
+          title: c.isWellChild
+              ? 'Consulta de puericultura realizada'
+              : 'Consulta realizada',
           start: c.startedAt,
           status: RoutineStatus.done,
           source: RoutineSource.clinica,
           detail: c.author,
         ),
       );
+    }
+
+    final DemoConsultation? wc = lastWellChild(patientId);
+    if (wc != null) {
+      final WellChildVisit v = wc.wellChild!;
+      final String from =
+          'Combinado na puericultura de ${formatDmy(wc.startedAt)} '
+          'com ${wc.author}';
+      if (v.nextVisit != null && inRange(dayOf(v.nextVisit!))) {
+        out.add(
+          CalendarItem(
+            id: 'wc:${wc.id}:next',
+            patientId: patientId,
+            kind: RoutineKind.retorno,
+            title: 'Próxima consulta de puericultura (data sugerida)',
+            start: dayOf(v.nextVisit!),
+            allDay: true,
+            status: RoutineStatus.planned,
+            source: RoutineSource.clinica,
+            detail: '$from. Confirme o horário com a recepção.',
+            reminders: itemReminders['wc:${wc.id}:next'] ?? const <int>[],
+          ),
+        );
+      }
+      for (final FollowUpItem f in v.followUps) {
+        if (!inRange(dayOf(f.due))) continue;
+        out.add(
+          CalendarItem(
+            id: 'wc:${wc.id}:${f.id}',
+            patientId: patientId,
+            kind: RoutineKind.lembrete,
+            title: 'Acompanhamento: ${f.title}',
+            start: dayOf(f.due),
+            allDay: true,
+            status: RoutineStatus.planned,
+            source: RoutineSource.clinica,
+            detail: from,
+            reminders: itemReminders['wc:${wc.id}:${f.id}'] ?? const <int>[],
+          ),
+        );
+      }
     }
 
     for (final DemoVaccineRecord v in vaccines) {
@@ -719,6 +808,29 @@ extension DemoRoutineQueries on DemoSession {
       ..sort((DiaryEntry a, DiaryEntry b) => a.at.compareTo(b.at));
   }
 
+  /// Puericultura finalizada mais recente: dela vêm a próxima consulta e os
+  /// itens de acompanhamento do calendário.
+  DemoConsultation? lastWellChild(String patientId) {
+    DemoConsultation? best;
+    for (final DemoConsultation c in consultations) {
+      if (c.patientId != patientId ||
+          !c.isWellChild ||
+          c.status != DemoConsultationStatus.finished) {
+        continue;
+      }
+      if (best == null || c.startedAt.isAfter(best.startedAt)) best = c;
+    }
+    return best;
+  }
+
+  /// Sono e observações dos sete dias que terminam em [day].
+  SleepWeek sleepWeek(String patientId, DateTime day) => SleepWeek.build(
+    entries: diaryFor(patientId),
+    from: addDays(dayOf(day), -6),
+    to: dayOf(day),
+  );
+
+  /// Sono em andamento de qualquer tipo.
   DiaryEntry? openSleep(String patientId) {
     for (final DiaryEntry e in diaryFor(patientId).reversed) {
       if (e.isOpenSleep) return e;

@@ -462,7 +462,7 @@ void openConsultationFor(BuildContext context, String patientId) {
   final DemoConsultation c =
       demoSession
           .consultationsFor(patientId)
-          .where((DemoConsultation c) => c.isDraft)
+          .where((DemoConsultation c) => c.isDraft && !c.isWellChild)
           .firstOrNull ??
       demoSession.startConsultation(patientId);
   context.go('/pacientes/$patientId/consulta/${c.id}');

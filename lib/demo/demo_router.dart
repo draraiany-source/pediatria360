@@ -9,6 +9,7 @@ import 'screens/business_screens.dart';
 import 'screens/care_screens.dart';
 import 'screens/consultation_screen.dart';
 import 'screens/documents_screens.dart';
+import 'screens/family_guidance_screens.dart';
 import 'screens/dose_screens.dart';
 import 'screens/growth_screens.dart';
 import 'screens/home_screen.dart';
@@ -23,6 +24,7 @@ import 'screens/routine_summary_screens.dart';
 import 'screens/rx_template_screens.dart';
 import 'screens/supplement_screens.dart';
 import 'screens/welcome_screen.dart';
+import 'screens/well_child_screen.dart';
 import 'widgets/demo_shell.dart';
 import 'widgets/demo_widgets.dart';
 
@@ -287,12 +289,24 @@ final GoRouter demoRouter = GoRouter(
                   builder: (BuildContext context, GoRouterState state) =>
                       _clinical(
                         'Consulta',
-                        DemoConsultationScreen(
-                          key: ValueKey<String>(state.uri.toString()),
-                          patientId: state.pathParameters['id']!,
-                          consultationId: state.pathParameters['cid']!,
-                          initialStep: state.uri.queryParameters['etapa'],
-                        ),
+                        demoSession
+                                    .consultationById(
+                                      state.pathParameters['cid']!,
+                                    )
+                                    ?.isWellChild ==
+                                true
+                            ? DemoWellChildScreen(
+                                key: ValueKey<String>(state.uri.toString()),
+                                patientId: state.pathParameters['id']!,
+                                consultationId: state.pathParameters['cid']!,
+                                initialStep: state.uri.queryParameters['etapa'],
+                              )
+                            : DemoConsultationScreen(
+                                key: ValueKey<String>(state.uri.toString()),
+                                patientId: state.pathParameters['id']!,
+                                consultationId: state.pathParameters['cid']!,
+                                initialStep: state.uri.queryParameters['etapa'],
+                              ),
                       ),
                 ),
                 GoRoute(
@@ -382,6 +396,8 @@ final GoRouter demoRouter = GoRouter(
                     view: state.uri.queryParameters['vista'],
                     mode: state.uri.queryParameters['modo'],
                     day: state.uri.queryParameters['dia'],
+                    consultationId: state.uri.queryParameters['consulta'],
+                    from: state.uri.queryParameters['de'],
                   ),
                   messenger: false,
                 ),
@@ -421,6 +437,8 @@ final GoRouter demoRouter = GoRouter(
                   key: ValueKey<String>(state.uri.toString()),
                   patientId: state.pathParameters['pid']!,
                   entryId: state.pathParameters['rid']!,
+                  from: state.uri.queryParameters['de'],
+                  consultationId: state.uri.queryParameters['consulta'],
                 ),
               ),
             ),
@@ -446,6 +464,33 @@ final GoRouter demoRouter = GoRouter(
                 ),
                 edit: true,
               ),
+            ),
+            GoRoute(
+              path: 'orientacoes',
+              builder: (BuildContext context, GoRouterState state) => _routine(
+                state.pathParameters['pid']!,
+                DemoFamilyOrientationsScreen(
+                  patientId: state.pathParameters['pid']!,
+                  from: state.uri.queryParameters['de'],
+                ),
+                edit: true,
+              ),
+              routes: <RouteBase>[
+                GoRoute(
+                  path: ':docId',
+                  builder: (BuildContext context, GoRouterState state) =>
+                      _routine(
+                        state.pathParameters['pid']!,
+                        DemoFamilyOrientationScreen(
+                          key: ValueKey<String>(state.uri.toString()),
+                          patientId: state.pathParameters['pid']!,
+                          docId: state.pathParameters['docId']!,
+                          from: state.uri.queryParameters['de'],
+                        ),
+                        edit: true,
+                      ),
+                ),
+              ],
             ),
             GoRoute(
               path: 'resumos',

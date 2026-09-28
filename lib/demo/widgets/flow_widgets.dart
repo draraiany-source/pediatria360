@@ -19,6 +19,7 @@ class DemoFlowActions extends StatelessWidget {
     this.onPrimary,
     this.primaryIcon,
     this.backLabel = 'Voltar',
+    this.saveLabel = 'Salvar rascunho',
   });
 
   final VoidCallback? onBack;
@@ -28,6 +29,7 @@ class DemoFlowActions extends StatelessWidget {
   final VoidCallback? onPrimary;
   final IconData? primaryIcon;
   final String backLabel;
+  final String saveLabel;
 
   @override
   Widget build(BuildContext context) {
@@ -45,7 +47,7 @@ class DemoFlowActions extends StatelessWidget {
     final Widget save = OutlinedButton.icon(
       onPressed: onSaveDraft,
       icon: const Icon(Icons.save_outlined, size: 18),
-      label: const Text('Salvar rascunho'),
+      label: Text(saveLabel),
     );
     final Widget? primary = primaryLabel == null
         ? null

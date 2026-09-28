@@ -423,6 +423,8 @@ void main() {
       (WidgetTester tester) async {
         await pumpDemo(tester);
         await goTo(tester, '/pacientes/p1/documentos/novo?tipo=orientacoes');
+        await tester.ensureVisible(find.text('Aplicar').first);
+        await tester.pumpAndSettle();
         await tester.tap(find.text('Aplicar').first);
         await settle(tester);
         final TextField texto = tester.widget<TextField>(

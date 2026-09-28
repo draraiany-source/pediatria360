@@ -5,8 +5,19 @@
 /// antes de emitir.
 library;
 
+import '../wellchild/age_band.dart';
 import 'clinical_documents.dart';
 import 'dose_calculator.dart';
+
+enum OrientationTopic {
+  geral('Geral'),
+  sonoSeguro('Sono seguro'),
+  rotina('Rotina e sono'),
+  puericultura('Puericultura');
+
+  const OrientationTopic(this.label);
+  final String label;
+}
 
 class OrientationTemplate {
   const OrientationTemplate({
@@ -16,6 +27,9 @@ class OrientationTemplate {
     required this.author,
     required this.updatedAt,
     this.isExample = false,
+    this.topic = OrientationTopic.geral,
+    this.band,
+    this.ownerId,
   });
 
   final String id;
@@ -26,6 +40,14 @@ class OrientationTemplate {
 
   /// Modelo de exemplo, ainda não revisado por quem vai usar.
   final bool isExample;
+
+  final OrientationTopic topic;
+
+  /// Faixa etária a que o texto se destina; `null` = qualquer idade.
+  final ChildAgeBand? band;
+
+  /// Conta que criou o modelo; `null` = exemplo visível a todas.
+  final String? ownerId;
 
   static const List<String> markers = <String>[
     '{{crianca}}',
@@ -60,4 +82,8 @@ class OrientationTemplate {
     }
     return out;
   }
+
+  /// Rótulo curto de tema e faixa para listas.
+  String get tagLabel =>
+      <String>[topic.label, if (band != null) band!.label].join(' · ');
 }

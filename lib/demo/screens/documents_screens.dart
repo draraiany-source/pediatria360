@@ -12,6 +12,7 @@ import '../../shared/clinical/dose_calculator.dart';
 import '../../shared/clinical/orientation_templates.dart';
 import '../../shared/clinical/pdf_output.dart';
 import '../../shared/clinical/rx_templates.dart';
+import '../../shared/wellchild/age_band.dart';
 import '../demo_clinical.dart';
 import '../demo_data.dart';
 import '../demo_session.dart';
@@ -529,17 +530,21 @@ class _DemoDocumentEditorScreenState extends State<DemoDocumentEditorScreen> {
       );
       return;
     }
-    final String? title = await showDialog<String>(
+    final _TemplateMeta? meta = await showDialog<_TemplateMeta>(
       context: context,
-      builder: (BuildContext c) =>
-          _TemplateNameDialog(initial: _c['titulo']!.text.trim()),
+      builder: (BuildContext c) => _TemplateNameDialog(
+        initial: _c['titulo']!.text.trim(),
+        band: demoSession.visitAge(p, DateTime.now()).band,
+      ),
     );
-    if (title == null || title.isEmpty || !mounted) return;
+    if (meta == null || meta.title.isEmpty || !mounted) return;
     demoSession.addOrientationTemplate(
-      title,
+      meta.title,
       OrientationTemplate.generalize(text, _ctx(p)),
+      topic: meta.topic,
+      band: meta.band,
     );
-    showDemoSnack(context, 'Modelo "$title" salvo nesta demonstração.');
+    showDemoSnack(context, 'Modelo "${meta.title}" salvo nesta demonstração.');
   }
 
   @override
@@ -632,6 +637,7 @@ class _DemoDocumentEditorScreenState extends State<DemoDocumentEditorScreen> {
                   if (_kind == DocKind.orientacoes) ...<Widget>[
                     const DemoSectionTitle('Modelos de orientação'),
                     _TemplatePicker(
+                      age: demoSession.visitAge(p, DateTime.now()),
                       onApply: (OrientationTemplate tpl) =>
                           _applyTemplate(tpl, p),
                       onSaveAsTemplate: () => _saveAsTemplate(p),
@@ -753,10 +759,21 @@ class _DemoDocumentEditorScreenState extends State<DemoDocumentEditorScreen> {
   }
 }
 
+class _TemplateMeta {
+  const _TemplateMeta(this.title, this.topic, this.band);
+
+  final String title;
+  final OrientationTopic topic;
+  final ChildAgeBand? band;
+}
+
 class _TemplateNameDialog extends StatefulWidget {
-  const _TemplateNameDialog({required this.initial});
+  const _TemplateNameDialog({required this.initial, required this.band});
 
   final String initial;
+
+  /// Faixa da criança atual, sugerida para o novo modelo.
+  final ChildAgeBand band;
 
   @override
   State<_TemplateNameDialog> createState() => _TemplateNameDialogState();
@@ -766,6 +783,8 @@ class _TemplateNameDialogState extends State<_TemplateNameDialog> {
   late final TextEditingController _name = TextEditingController(
     text: widget.initial,
   );
+  OrientationTopic _topic = OrientationTopic.geral;
+  late ChildAgeBand? _band = widget.band;
 
   @override
   void dispose() {
@@ -775,23 +794,57 @@ class _TemplateNameDialogState extends State<_TemplateNameDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final TextTheme t = Theme.of(context).textTheme;
     return AlertDialog(
       title: const Text('Salvar como modelo'),
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: <Widget>[
-          const Text(
-            'O nome da criança e do responsável viram marcadores '
-            '({{crianca}}, {{responsavel}}) para o modelo servir a outros pacientes.',
-          ),
-          const SizedBox(height: AppSpacing.md),
-          TextField(
-            controller: _name,
-            autofocus: true,
-            decoration: const InputDecoration(labelText: 'Nome do modelo'),
-          ),
-        ],
+      content: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            const Text(
+              'O nome da criança e do responsável viram marcadores '
+              '({{crianca}}, {{responsavel}}) para o modelo servir a outros pacientes.',
+            ),
+            const SizedBox(height: AppSpacing.md),
+            TextField(
+              controller: _name,
+              autofocus: true,
+              decoration: const InputDecoration(labelText: 'Nome do modelo'),
+            ),
+            const SizedBox(height: AppSpacing.md),
+            Text('Tema', style: t.labelLarge),
+            Wrap(
+              spacing: AppSpacing.xs,
+              children: <Widget>[
+                for (final OrientationTopic o in OrientationTopic.values)
+                  ChoiceChip(
+                    label: Text(o.label),
+                    selected: _topic == o,
+                    onSelected: (_) => setState(() => _topic = o),
+                  ),
+              ],
+            ),
+            const SizedBox(height: AppSpacing.sm),
+            Text('Faixa etária', style: t.labelLarge),
+            Wrap(
+              spacing: AppSpacing.xs,
+              children: <Widget>[
+                ChoiceChip(
+                  label: const Text('Qualquer idade'),
+                  selected: _band == null,
+                  onSelected: (_) => setState(() => _band = null),
+                ),
+                for (final ChildAgeBand b in ChildAgeBand.values)
+                  ChoiceChip(
+                    label: Text(b.label),
+                    selected: _band == b,
+                    onSelected: (_) => setState(() => _band = b),
+                  ),
+              ],
+            ),
+          ],
+        ),
       ),
       actions: <Widget>[
         TextButton(
@@ -799,7 +852,9 @@ class _TemplateNameDialogState extends State<_TemplateNameDialog> {
           child: const Text('Cancelar'),
         ),
         FilledButton(
-          onPressed: () => Navigator.of(context).pop(_name.text.trim()),
+          onPressed: () => Navigator.of(
+            context,
+          ).pop(_TemplateMeta(_name.text.trim(), _topic, _band)),
           child: const Text('Salvar modelo'),
         ),
       ],
@@ -807,69 +862,152 @@ class _TemplateNameDialogState extends State<_TemplateNameDialog> {
   }
 }
 
-class _TemplatePicker extends StatelessWidget {
+class _TemplatePicker extends StatefulWidget {
   const _TemplatePicker({
+    required this.age,
     required this.onApply,
     required this.onSaveAsTemplate,
   });
 
+  final VisitAge age;
   final ValueChanged<OrientationTemplate> onApply;
   final VoidCallback onSaveAsTemplate;
 
   @override
+  State<_TemplatePicker> createState() => _TemplatePickerState();
+}
+
+class _TemplatePickerState extends State<_TemplatePicker> {
+  OrientationTopic? _topic;
+  late ChildAgeBand? _band = widget.age.band;
+
+  bool _matches(OrientationTemplate t) =>
+      (_topic == null || t.topic == _topic) &&
+      (_band == null || t.band == null || t.band == _band);
+
+  @override
   Widget build(BuildContext context) {
+    final TextTheme tt = Theme.of(context).textTheme;
+    final ChildAgeBand suggested = widget.age.band;
     return ListenableBuilder(
       listenable: demoSession,
-      builder: (BuildContext context, _) => Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: <Widget>[
-          for (final OrientationTemplate tpl
-              in demoSession.orientationTemplates)
-            Padding(
-              padding: const EdgeInsets.only(bottom: AppSpacing.xs),
-              child: PremiumCard(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: AppSpacing.md,
-                  vertical: AppSpacing.sm,
+      builder: (BuildContext context, _) {
+        final List<OrientationTemplate> shown = demoSession
+            .myOrientationTemplates
+            .where(_matches)
+            .toList(growable: false);
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: <Widget>[
+            Text(
+              'Faixa sugerida: ${suggested.label} '
+              '(${widget.age.usesCorrected ? 'pela idade corrigida' : 'pela idade'}). '
+              'Os modelos são pontos de partida: revise e adapte o texto '
+              'antes de entregar à família.',
+              style: tt.bodySmall,
+            ),
+            const SizedBox(height: AppSpacing.xs),
+            Wrap(
+              spacing: AppSpacing.xs,
+              runSpacing: AppSpacing.xs,
+              children: <Widget>[
+                ChoiceChip(
+                  label: const Text('Todos os temas'),
+                  selected: _topic == null,
+                  onSelected: (_) => setState(() => _topic = null),
                 ),
-                child: Row(
-                  children: <Widget>[
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: <Widget>[
-                          Text(
-                            tpl.title,
-                            style: Theme.of(context).textTheme.titleSmall,
-                          ),
-                          Text(
-                            '${tpl.isExample ? 'Exemplo a revisar · ' : ''}'
-                            '${tpl.author} · ${formatDocDate(tpl.updatedAt)}',
-                            style: Theme.of(context).textTheme.bodySmall,
-                          ),
-                        ],
-                      ),
+                for (final OrientationTopic o in OrientationTopic.values)
+                  ChoiceChip(
+                    label: Text(o.label),
+                    selected: _topic == o,
+                    onSelected: (_) => setState(() => _topic = o),
+                  ),
+              ],
+            ),
+            const SizedBox(height: AppSpacing.xs),
+            Wrap(
+              spacing: AppSpacing.xs,
+              runSpacing: AppSpacing.xs,
+              children: <Widget>[
+                ChoiceChip(
+                  label: const Text('Todas as idades'),
+                  selected: _band == null,
+                  onSelected: (_) => setState(() => _band = null),
+                ),
+                for (final ChildAgeBand b in ChildAgeBand.values)
+                  ChoiceChip(
+                    label: Text(
+                      b == suggested ? '${b.label} (sugerida)' : b.label,
                     ),
-                    TextButton(
-                      onPressed: () => onApply(tpl),
-                      child: const Text('Aplicar'),
+                    selected: _band == b,
+                    onSelected: (_) => setState(() => _band = b),
+                  ),
+              ],
+            ),
+            const SizedBox(height: AppSpacing.sm),
+            if (shown.isEmpty)
+              Padding(
+                padding: const EdgeInsets.only(bottom: AppSpacing.xs),
+                child: Text(
+                  'Nenhum modelo para este filtro.',
+                  style: tt.bodySmall,
+                ),
+              ),
+            for (final OrientationTemplate tpl in shown)
+              _templateTile(context, tpl),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: TextButton.icon(
+                onPressed: widget.onSaveAsTemplate,
+                icon: const Icon(Icons.bookmark_add_outlined),
+                label: const Text('Salvar texto atual como modelo'),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _templateTile(BuildContext context, OrientationTemplate tpl) =>
+      Padding(
+        padding: const EdgeInsets.only(bottom: AppSpacing.xs),
+        child: PremiumCard(
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.md,
+            vertical: AppSpacing.sm,
+          ),
+          child: Row(
+            children: <Widget>[
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    Text(
+                      tpl.title,
+                      style: Theme.of(context).textTheme.titleSmall,
+                    ),
+                    Text(
+                      '${tpl.tagLabel} · '
+                      '${tpl.isExample ? 'Exemplo a revisar · ' : ''}'
+                      '${tpl.author} · ${formatDocDate(tpl.updatedAt)}',
+                      style: Theme.of(context).textTheme.bodySmall,
                     ),
                   ],
                 ),
               ),
-            ),
-          Align(
-            alignment: Alignment.centerLeft,
-            child: TextButton.icon(
-              onPressed: onSaveAsTemplate,
-              icon: const Icon(Icons.bookmark_add_outlined),
-              label: const Text('Salvar texto atual como modelo'),
-            ),
+              Tooltip(
+                message: 'Aplicar modelo ${tpl.title}',
+                excludeFromSemantics: true,
+                child: TextButton(
+                  onPressed: () => widget.onApply(tpl),
+                  child: const Text('Aplicar'),
+                ),
+              ),
+            ],
           ),
-        ],
-      ),
-    );
-  }
+        ),
+      );
 }
 
 class _RxItemCard extends StatelessWidget {

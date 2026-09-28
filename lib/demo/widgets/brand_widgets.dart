@@ -194,6 +194,7 @@ class DemoDocHeader extends StatelessWidget {
     );
     final Widget kind = Text(
       kindLabel.toUpperCase(),
+      textAlign: TextAlign.end,
       style: t.labelMedium?.copyWith(
         color: AppColors.navy,
         fontWeight: FontWeight.w800,
@@ -225,7 +226,7 @@ class DemoDocHeader extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(width: AppSpacing.sm),
-                      kind,
+                      Flexible(child: kind),
                     ],
                   ),
                   const SizedBox(height: AppSpacing.sm),

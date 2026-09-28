@@ -632,6 +632,7 @@ Future<void> showDiarySheet(
   DateTime? day,
   DiaryEntry? editing,
   DoseSlot? dose,
+  String? option,
 }) {
   return showModalBottomSheet<void>(
     context: context,
@@ -646,6 +647,7 @@ Future<void> showDiarySheet(
         day: day,
         editing: editing,
         dose: dose,
+        option: option,
         host: context,
       ),
     ),
@@ -660,11 +662,13 @@ class _DiarySheet extends StatefulWidget {
     this.day,
     this.editing,
     this.dose,
+    this.option,
   });
 
   final String patientId;
   final DiaryKind kind;
   final BuildContext host;
+  final String? option;
   final DateTime? day;
   final DiaryEntry? editing;
   final DoseSlot? dose;
@@ -682,6 +686,9 @@ class _DiarySheetState extends State<_DiarySheet> {
   final TextEditingController _text = TextEditingController();
   final TextEditingController _note = TextEditingController();
   final TextEditingController _reason = TextEditingController();
+  final TextEditingController _wakeAt = TextEditingController();
+  final TextEditingController _wakeMin = TextEditingController();
+  List<SleepWaking> _wakings = <SleepWaking>[];
   String? _option;
   String _unit = '';
   LabAttachment? _attachment;
@@ -708,6 +715,7 @@ class _DiarySheetState extends State<_DiarySheet> {
           : formatDecimal(v.quantity!, digits: 2);
       if (v.unit.isNotEmpty) _unit = v.unit;
       _option = v.option.isEmpty ? null : v.option;
+      _wakings = List<SleepWaking>.of(v.wakings);
       _text.text = v.text;
       _note.text = v.note;
       _attachment = e.attachment;
@@ -717,6 +725,7 @@ class _DiarySheetState extends State<_DiarySheet> {
       _date.text = formatDmy(today ? now : d);
       _time.text = today ? formatHm(now) : '12:00';
       if (kind == DiaryKind.temperatura) _option = 'Axilar';
+      if (widget.option != null) _option = widget.option;
       _candidates = kind == DiaryKind.medicamento
           ? demoSession.dosesNear(widget.patientId, now)
           : const <DoseSlot>[];
@@ -735,6 +744,8 @@ class _DiarySheetState extends State<_DiarySheet> {
       _text,
       _note,
       _reason,
+      _wakeAt,
+      _wakeMin,
     ]) {
       c.dispose();
     }
@@ -758,6 +769,33 @@ class _DiarySheetState extends State<_DiarySheet> {
     setState(() {
       _date.text = formatDmy(now);
       _time.text = formatHm(now);
+    });
+  }
+
+  void _addWaking() {
+    final ({int hour, int minute})? hm = parseHm(_wakeAt.text);
+    final String m = _wakeMin.text.trim();
+    final int? minutes = m.isEmpty ? null : int.tryParse(m);
+    if (hm == null || (m.isNotEmpty && minutes == null)) {
+      setState(
+        () => _errors = <String>[
+          'Despertar: informe o horário (HH:MM) e, se quiser, os minutos.',
+        ],
+      );
+      return;
+    }
+    final DateTime base = parseDmy(_date.text) ?? demoSession.now;
+    setState(() {
+      _errors = const <String>[];
+      _wakings = <SleepWaking>[
+        ..._wakings,
+        SleepWaking(
+          at: DateTime(base.year, base.month, base.day, hm.hour, hm.minute),
+          minutesAwake: minutes,
+        ),
+      ];
+      _wakeAt.clear();
+      _wakeMin.clear();
     });
   }
 
@@ -808,9 +846,20 @@ class _DiarySheetState extends State<_DiarySheet> {
       DiaryKind.mamada => 'mL',
       _ => _unit,
     };
+    DateTime place(DateTime w) {
+      final DateTime d = DateTime(at.year, at.month, at.day, w.hour, w.minute);
+      return d.isBefore(at) ? addDays(d, 1) : d;
+    }
+
     return DiaryValues(
       at: at,
       endAt: endAt,
+      wakings: kind == DiaryKind.sono
+          ? <SleepWaking>[
+              for (final SleepWaking w in _wakings)
+                SleepWaking(at: place(w.at), minutesAwake: w.minutesAwake),
+            ]
+          : const <SleepWaking>[],
       durationMinutes: duration,
       quantity: qty,
       unit: qty == null ? '' : unit,
@@ -963,6 +1012,18 @@ class _DiarySheetState extends State<_DiarySheet> {
         ];
       case DiaryKind.sono:
         return <Widget>[
+          _label(context, 'Tipo'),
+          ChoiceRow<String>(
+            options: kSleepTypes,
+            selected: _option,
+            label: (String s) => s,
+            onSelected: (String? s) => setState(() => _option = s),
+          ),
+          Text(
+            'Sem escolha, o app considera noturno o sono que começa à noite '
+            'e dura 3 horas ou mais.',
+            style: Theme.of(context).textTheme.bodySmall,
+          ),
           const SizedBox(height: AppSpacing.sm),
           _field(
             _end,
@@ -987,6 +1048,40 @@ class _DiarySheetState extends State<_DiarySheet> {
                 onPressed: () =>
                     setState(() => _end.text = formatHm(demoSession.now)),
               ),
+            ],
+          ),
+          _label(context, 'Despertares (opcional)'),
+          for (final SleepWaking w in _wakings)
+            Row(
+              children: <Widget>[
+                const Icon(Icons.visibility_outlined, size: 18),
+                const SizedBox(width: AppSpacing.xs),
+                Expanded(child: Text('Despertou às ${w.describe()}')),
+                IconButton(
+                  tooltip: 'Remover despertar das ${formatHm(w.at)}',
+                  onPressed: () => setState(() => _wakings.remove(w)),
+                  icon: const Icon(Icons.close_rounded, size: 18),
+                ),
+              ],
+            ),
+          Row(
+            children: <Widget>[
+              Expanded(
+                child: _field(
+                  _wakeAt,
+                  'Despertou às (HH:MM)',
+                  keyboard: TextInputType.datetime,
+                ),
+              ),
+              const SizedBox(width: AppSpacing.sm),
+              Expanded(
+                child: _field(
+                  _wakeMin,
+                  'Minutos acordado',
+                  keyboard: TextInputType.number,
+                ),
+              ),
+              TextButton(onPressed: _addWaking, child: const Text('Incluir')),
             ],
           ),
         ];
@@ -1222,10 +1317,16 @@ class DemoDiaryEntryScreen extends StatelessWidget {
     required this.patientId,
     required this.entryId,
     super.key,
+    this.from,
+    this.consultationId,
   });
 
   final String patientId;
   final String entryId;
+
+  /// Vista de origem (`sono` volta para o diário do sono).
+  final String? from;
+  final String? consultationId;
 
   @override
   Widget build(BuildContext context) {
@@ -1235,7 +1336,12 @@ class DemoDiaryEntryScreen extends StatelessWidget {
         final DiaryEntry? e = demoSession.diaryEntryById(entryId);
         final TextTheme t = Theme.of(context).textTheme;
         void back() => context.go(
-          routineUrl(patientId, view: 'diario', day: e?.at ?? demoSession.now),
+          routineUrl(
+            patientId,
+            view: from == 'sono' ? 'sono' : 'diario',
+            day: e?.at ?? demoSession.now,
+            consultation: consultationId,
+          ),
         );
         if (e == null || e.patientId != patientId) {
           return Scaffold(

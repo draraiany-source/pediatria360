@@ -793,6 +793,7 @@ enum DiaryKind {
     fralda => kDiaperOptions,
     temperatura => kTemperatureMethods,
     alimentacao => kFoodAcceptance,
+    sono => kSleepTypes,
     _ => const <String>[],
   };
 
@@ -827,6 +828,26 @@ const List<String> kFoodAcceptance = <String>[
   'Recusou',
 ];
 const List<String> kFoodUnits = <String>['colheres', 'g', 'mL', 'porção'];
+const String kSleepNight = 'Sono noturno';
+const String kSleepNap = 'Cochilo';
+const List<String> kSleepTypes = <String>[kSleepNight, kSleepNap];
+
+/// Despertar durante um período de sono.
+class SleepWaking {
+  const SleepWaking({required this.at, this.minutesAwake});
+
+  final DateTime at;
+
+  /// Quanto tempo ficou sem dormir, quando a família informa.
+  final int? minutesAwake;
+
+  String describe() =>
+      '${formatHm(at)}'
+      '${minutesAwake == null ? '' : ' (${formatMinutes(minutesAwake!)})'}';
+
+  bool sameAs(SleepWaking o) => at == o.at && minutesAwake == o.minutesAwake;
+}
+
 const List<String> kMedicationUnits = <String>[
   'mL',
   'gotas',
@@ -853,6 +874,7 @@ class DiaryValues {
     this.option = '',
     this.text = '',
     this.note = '',
+    this.wakings = const <SleepWaking>[],
   });
 
   final DateTime at;
@@ -868,6 +890,9 @@ class DiaryValues {
   final String text;
   final String note;
 
+  /// Despertares do sono, em ordem.
+  final List<SleepWaking> wakings;
+
   int? get minutes {
     if (endAt != null) return endAt!.difference(at).inMinutes;
     return durationMinutes;
@@ -882,6 +907,7 @@ class DiaryValues {
     String? option,
     String? text,
     String? note,
+    List<SleepWaking>? wakings,
   }) {
     return DiaryValues(
       at: at ?? this.at,
@@ -894,6 +920,7 @@ class DiaryValues {
       option: option ?? this.option,
       text: text ?? this.text,
       note: note ?? this.note,
+      wakings: wakings ?? this.wakings,
     );
   }
 
@@ -905,7 +932,12 @@ class DiaryValues {
       unit == o.unit &&
       option == o.option &&
       text.trim() == o.text.trim() &&
-      note.trim() == o.note.trim();
+      note.trim() == o.note.trim() &&
+      wakings.length == o.wakings.length &&
+      <bool>[
+        for (int i = 0; i < wakings.length; i++)
+          wakings[i].sameAs(o.wakings[i]),
+      ].every((bool b) => b);
 
   String quantityLabel() {
     if (quantity == null) return '';
@@ -931,6 +963,7 @@ class DiaryValues {
       case DiaryKind.fralda:
         if (option.isNotEmpty) p.add(option);
       case DiaryKind.sono:
+        if (option.isNotEmpty) p.add(option);
         if (endAt != null) {
           p.add('${formatHm(at)} às ${formatHm(endAt!)}');
           p.add(formatMinutes(mins!));
@@ -938,6 +971,12 @@ class DiaryValues {
           p.add(formatMinutes(mins));
         } else {
           p.add('dormindo desde ${formatHm(at)}');
+        }
+        if (wakings.isNotEmpty) {
+          p.add(
+            '${wakings.length} ${wakings.length == 1 ? 'despertar' : 'despertares'}'
+            ' (${wakings.map((SleepWaking w) => w.describe()).join(', ')})',
+          );
         }
       case DiaryKind.banho:
         if (mins != null) p.add(formatMinutes(mins));
@@ -1006,6 +1045,19 @@ class DiaryValues {
       case DiaryKind.observacao:
         if (text.trim().isEmpty) e.add('Escreva a observação.');
       case DiaryKind.sono:
+        for (final SleepWaking w in wakings) {
+          if (w.at.isBefore(at) ||
+              (endAt != null && w.at.isAfter(endAt!)) ||
+              w.at.isAfter(now.add(const Duration(minutes: 5)))) {
+            e.add(
+              'O despertar das ${formatHm(w.at)} fica fora do período de sono.',
+            );
+          }
+          if (w.minutesAwake != null &&
+              (w.minutesAwake! <= 0 || w.minutesAwake! > 600)) {
+            e.add('Tempo sem dormir no despertar: use de 1 a 600 minutos.');
+          }
+        }
       case DiaryKind.banho:
         break;
     }
@@ -1138,6 +1190,29 @@ class DiaryEntry {
           at: at,
           author: author,
           action: 'Fim do sono',
+          before: values,
+        ),
+      ],
+    );
+  }
+
+  /// Despertar anotado durante o sono em andamento (ou já encerrado).
+  DiaryEntry withWaking(
+    SleepWaking waking, {
+    required String author,
+    required DateTime at,
+  }) {
+    final List<SleepWaking> list = <SleepWaking>[...values.wakings, waking]
+      ..sort((SleepWaking a, SleepWaking b) => a.at.compareTo(b.at));
+    return _copy(
+      values: values.copyWith(wakings: list),
+      revisions: <DiaryRevision>[
+        ...revisions,
+        DiaryRevision(
+          at: at,
+          author: author,
+          action: 'Despertar registrado',
+          reason: waking.describe(),
           before: values,
         ),
       ],

@@ -10,6 +10,7 @@ import '../demo_session.dart';
 import '../widgets/demo_widgets.dart';
 import '../widgets/routine_widgets.dart';
 import 'routine_forms.dart';
+import 'sleep_screens.dart';
 
 String _cap(String s) => s.isEmpty ? s : s[0].toUpperCase() + s.substring(1);
 
@@ -22,12 +23,20 @@ class DemoRoutineScreen extends StatefulWidget {
     this.view,
     this.mode,
     this.day,
+    this.consultationId,
+    this.from,
   });
 
   final String? patientId;
   final String? view;
   final String? mode;
   final String? day;
+
+  /// Aberta de dentro de uma consulta: o voltar retorna a ela.
+  final String? consultationId;
+
+  /// `prontuario`: o voltar do profissional retorna ao prontuário.
+  final String? from;
 
   @override
   State<DemoRoutineScreen> createState() => _DemoRoutineScreenState();
@@ -63,7 +72,10 @@ class _DemoRoutineScreenState extends State<DemoRoutineScreen> {
           );
         }
         if (demoSession.canEditRoutine) demoSession.lastRoutinePatientId = p.id;
-        final String view = widget.view == 'diario' ? 'diario' : 'calendario';
+        final String view =
+            const <String>['diario', 'sono'].contains(widget.view)
+            ? widget.view!
+            : 'calendario';
         final String mode =
             const <String>['dia', 'semana', 'mes'].contains(widget.mode)
             ? widget.mode!
@@ -73,7 +85,14 @@ class _DemoRoutineScreenState extends State<DemoRoutineScreen> {
         final bool canEdit = demoSession.canEditRoutine;
 
         void go({String? v, String? m, DateTime? d}) => context.go(
-          routineUrl(p.id, view: v ?? view, mode: m ?? mode, day: d ?? day),
+          routineUrl(
+            p.id,
+            view: v ?? view,
+            mode: m ?? mode,
+            day: d ?? day,
+            consultation: widget.consultationId,
+            from: widget.from,
+          ),
         );
 
         return Scaffold(
@@ -82,7 +101,15 @@ class _DemoRoutineScreenState extends State<DemoRoutineScreen> {
             automaticallyImplyLeading: false,
             leading: canEdit
                 ? null
-                : BackButton(onPressed: () => context.go('/pacientes/${p.id}')),
+                : BackButton(
+                    onPressed: () => context.go(
+                      widget.consultationId != null
+                          ? '/pacientes/${p.id}/consulta/${widget.consultationId}'
+                          : widget.from == 'prontuario'
+                          ? '/pacientes/${p.id}/prontuario'
+                          : '/pacientes/${p.id}',
+                    ),
+                  ),
             title: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
@@ -184,6 +211,11 @@ class _DemoRoutineScreenState extends State<DemoRoutineScreen> {
                                 label: Text('Diário'),
                                 icon: Icon(Icons.menu_book_outlined),
                               ),
+                              ButtonSegment<String>(
+                                value: 'sono',
+                                label: Text('Sono'),
+                                icon: Icon(Icons.bedtime_outlined),
+                              ),
                             ],
                             selected: <String>{view},
                             onSelectionChanged: (Set<String> s) =>
@@ -223,6 +255,14 @@ class _DemoRoutineScreenState extends State<DemoRoutineScreen> {
                           canEdit: canEdit,
                           go: go,
                           onFilter: () => setState(() {}),
+                        )
+                      else if (view == 'sono')
+                        DemoSleepView(
+                          patient: p,
+                          day: day,
+                          canEdit: canEdit,
+                          consultationId: widget.consultationId,
+                          onDay: (DateTime d) => go(d: d),
                         )
                       else
                         _DiaryView(
@@ -278,53 +318,6 @@ class DemoRoutineUnavailableScreen extends StatelessWidget {
 }
 
 typedef _Go = void Function({String? v, String? m, DateTime? d});
-
-class _PeriodBar extends StatelessWidget {
-  const _PeriodBar({
-    required this.label,
-    required this.onPrev,
-    required this.onNext,
-    required this.onToday,
-    this.prevLabel = 'Anterior',
-    this.nextLabel = 'Próximo',
-  });
-
-  final String label;
-  final VoidCallback onPrev;
-  final VoidCallback? onNext;
-  final VoidCallback? onToday;
-  final String prevLabel;
-  final String nextLabel;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: <Widget>[
-        IconButton(
-          tooltip: prevLabel,
-          onPressed: onPrev,
-          icon: const Icon(Icons.chevron_left_rounded),
-        ),
-        Expanded(
-          child: Text(
-            label,
-            textAlign: TextAlign.center,
-            style: Theme.of(context).textTheme.titleSmall?.copyWith(
-              color: AppColors.navy,
-              fontWeight: FontWeight.w800,
-            ),
-          ),
-        ),
-        IconButton(
-          tooltip: nextLabel,
-          onPressed: onNext,
-          icon: const Icon(Icons.chevron_right_rounded),
-        ),
-        TextButton(onPressed: onToday, child: const Text('Hoje')),
-      ],
-    );
-  }
-}
 
 // ---------------------------------------------------------------------------
 // Calendário
@@ -391,7 +384,7 @@ class _CalendarView extends StatelessWidget {
           ),
         ),
         const SizedBox(height: AppSpacing.xs),
-        _PeriodBar(
+        RoutinePeriodBar(
           label: label,
           onPrev: () => go(d: prev),
           onNext: () => go(d: next),
@@ -1059,7 +1052,7 @@ class _DiaryView extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: <Widget>[
-        _PeriodBar(
+        RoutinePeriodBar(
           label: '${isToday ? 'Hoje, ' : ''}${_cap(formatDayLong(day))}',
           prevLabel: 'Dia anterior',
           nextLabel: 'Próximo dia',

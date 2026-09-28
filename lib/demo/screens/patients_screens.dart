@@ -12,6 +12,7 @@ import '../demo_clinical.dart';
 import '../demo_data.dart';
 import '../demo_session.dart';
 import '../widgets/demo_widgets.dart';
+import 'well_child_screen.dart';
 
 String? _avatarUrl(DemoPatient p) =>
     p.avatarAsset == null ? null : ChildAvatarRef.encode(p.avatarAsset!);
@@ -279,6 +280,15 @@ class DemoPatientDetailScreen extends StatelessWidget {
                           context.go('/pacientes/${p.id}/consulta/${c.id}');
                         },
                       ),
+                    if (demoSession.canUseWellChild)
+                      _ActionTile(
+                        icon: Icons.child_care_rounded,
+                        title: 'Consulta de puericultura',
+                        subtitle:
+                            'Modelo com crescimento, marcos, dúvidas, plano '
+                            'e resumo em PDF',
+                        onTap: () => openWellChildFor(context, p.id),
+                      ),
                     if (demoSession.canSeeClinicalRecord)
                       _ActionTile(
                         icon: Icons.description_outlined,
@@ -325,6 +335,22 @@ class DemoPatientDetailScreen extends StatelessWidget {
                         highlight: true,
                         onTap: () => context.go('/rotina/${p.id}'),
                       ),
+                    if (isGuardian) ...<Widget>[
+                      _ActionTile(
+                        icon: Icons.bedtime_outlined,
+                        title: 'Sono',
+                        subtitle: 'Noite, cochilos, despertares e resumo',
+                        onTap: () => context.go('/rotina/${p.id}?vista=sono'),
+                      ),
+                      _ActionTile(
+                        icon: Icons.menu_book_outlined,
+                        title: 'Orientações da clínica',
+                        subtitle:
+                            '${demoSession.familyOrientations(p.id).length} '
+                            'orientação(ões) emitida(s)',
+                        onTap: () => context.go('/rotina/${p.id}/orientacoes'),
+                      ),
+                    ],
                     if (demoSession.profile == DemoProfile.profissional)
                       if (demoSession.routineSharedWith(p.id)) ...<Widget>[
                         _ActionTile(
@@ -333,14 +359,20 @@ class DemoPatientDetailScreen extends StatelessWidget {
                           subtitle:
                               '${demoSession.sharedSummariesFor(p.id).length} '
                               'resumo(s) - informado pela família',
-                          onTap: () =>
-                              context.go('/rotina/${p.id}/resumos'),
+                          onTap: () => context.go('/rotina/${p.id}/resumos'),
                         ),
                         _ActionTile(
                           icon: Icons.event_note_outlined,
                           title: 'Rotina e diário da família',
                           subtitle: 'Calendário e diário, somente leitura',
                           onTap: () => context.go('/rotina/${p.id}'),
+                        ),
+                        _ActionTile(
+                          icon: Icons.bedtime_outlined,
+                          title: 'Diário do sono da família',
+                          subtitle:
+                              'Linha do tempo e resumo; registrar avaliação',
+                          onTap: () => context.go('/rotina/${p.id}?vista=sono'),
                         ),
                       ] else
                         _ActionTile(
@@ -374,7 +406,8 @@ class DemoPatientDetailScreen extends StatelessWidget {
                       _ActionTile(
                         icon: Icons.medication_liquid_outlined,
                         title: 'Suplementação do paciente',
-                        subtitle: 'Decisões por nutriente, exames e receituário',
+                        subtitle:
+                            'Decisões por nutriente, exames e receituário',
                         onTap: () =>
                             context.go('/pacientes/${p.id}/suplementacao'),
                       ),

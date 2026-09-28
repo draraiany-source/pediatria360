@@ -2,6 +2,10 @@ import '../shared/clinical/clinical_documents.dart';
 import '../shared/clinical/dose_calculator.dart';
 import '../shared/clinical/orientation_templates.dart';
 import '../shared/clinical/rx_templates.dart';
+import '../shared/wellchild/guidance_examples.dart';
+import '../shared/wellchild/milestones.dart';
+import '../shared/wellchild/well_child_templates.dart';
+import '../shared/wellchild/well_child_visit.dart';
 import 'demo_data.dart';
 
 /// Dados clínicos fictícios da demonstração: profissional, referências de
@@ -95,6 +99,8 @@ class DemoConsultation {
     this.assessment = '',
     this.plan = '',
     this.status = DemoConsultationStatus.draft,
+    this.ownerId,
+    this.wellChild,
     DateTime? updatedAt,
   }) : updatedAt = updatedAt ?? startedAt;
 
@@ -110,19 +116,33 @@ class DemoConsultation {
   DemoConsultationStatus status;
   DateTime updatedAt;
 
+  /// Conta que iniciou a consulta; `null` = conta principal.
+  final String? ownerId;
+
+  /// Preenchido nas consultas de puericultura.
+  WellChildVisit? wellChild;
+
   bool get isDraft => status == DemoConsultationStatus.draft;
+  bool get isWellChild => wellChild != null;
 
-  List<String> get missingToFinish => <String>[
-    if (complaint.trim().isEmpty) 'Motivo da consulta',
-    if (assessment.trim().isEmpty) 'Avaliação',
-    if (plan.trim().isEmpty) 'Conduta',
-  ];
+  List<String> get missingToFinish => wellChild != null
+      ? wellChild!.missingToFinish
+      : <String>[
+          if (complaint.trim().isEmpty) 'Motivo da consulta',
+          if (assessment.trim().isEmpty) 'Avaliação',
+          if (plan.trim().isEmpty) 'Conduta',
+        ];
 
-  String get summary => <String>[
-    if (complaint.trim().isNotEmpty) 'Motivo: ${complaint.trim()}',
-    if (assessment.trim().isNotEmpty) 'Avaliação: ${assessment.trim()}',
-    if (plan.trim().isNotEmpty) 'Conduta: ${plan.trim()}',
-  ].join('\n');
+  String get summary => wellChild != null
+      ? <String>[
+          'Consulta de puericultura',
+          if (wellChild!.summary.isNotEmpty) wellChild!.summary,
+        ].join('\n')
+      : <String>[
+          if (complaint.trim().isNotEmpty) 'Motivo: ${complaint.trim()}',
+          if (assessment.trim().isNotEmpty) 'Avaliação: ${assessment.trim()}',
+          if (plan.trim().isNotEmpty) 'Conduta: ${plan.trim()}',
+        ].join('\n');
 }
 
 class DemoClinicalSeed {
@@ -283,7 +303,14 @@ class DemoClinicalSeed {
           updatedAt: now.subtract(const Duration(days: 5)),
           isExample: true,
         ),
+        ...guidanceExamples(author: DemoProfessional.name, now: now),
       ];
+
+  /// Modelos de evolução de puericultura de exemplo (a revisar).
+  static List<WellChildTemplate> wellChildTemplates({
+    required String author,
+    required DateTime now,
+  }) => wellChildTemplateExamples(author: author, now: now);
 
   /// Modelos de receita de exemplo, só com medicamentos fictícios.
   static List<RxTemplate> rxTemplates(DateTime now) => <RxTemplate>[
@@ -393,7 +420,105 @@ class DemoClinicalSeed {
           author: DemoProfessional.name,
           complaint: 'Motivo fictício em andamento.',
         ),
+        _wellChildSeed(now),
       ];
+
+  /// Puericultura finalizada de Luna, com próxima consulta e itens de
+  /// acompanhamento que aparecem no calendário da família.
+  static DemoConsultation _wellChildSeed(DateTime now) {
+    final DateTime d = now.subtract(const Duration(days: 40));
+    final DateTime at = DateTime(d.year, d.month, d.day, 9);
+    final DateTime today = DateTime(now.year, now.month, now.day);
+    final WellChildVisit v = WellChildVisit(
+      fields: const <WellChildSection, String>{
+        WellChildSection.historia:
+            'Sem intercorrências desde a última consulta (texto fictício).',
+        WellChildSection.alimentacao:
+            'Aleitamento e alimentação da família conforme combinado '
+            '(exemplo).',
+        WellChildSection.sono:
+            'Família relata despertares noturnos; combinado registrar no '
+            'diário do app (exemplo).',
+        WellChildSection.eliminacoes: 'Sem queixas (exemplo).',
+        WellChildSection.vacinacao: 'Carteira conferida na consulta (exemplo).',
+        WellChildSection.exameFisico:
+            'Exame de exemplo para demonstração, sem alterações descritas.',
+        WellChildSection.crescimento:
+            'Medidas registradas na curva (comentário fictício).',
+        WellChildSection.desenvolvimento:
+            'Marcos observados registrados abaixo (exemplo).',
+        WellChildSection.avaliacao:
+            'Avaliação fictícia de puericultura para testar o fluxo.',
+        WellChildSection.plano:
+            'Retorno na data sugerida; trazer o diário do sono (exemplo).',
+      },
+      milestones: const <MilestoneObservation>[
+        MilestoneObservation(
+          code: 'b2-anda',
+          title: 'Anda sem apoio',
+          area: MilestoneArea.motorGrosso,
+          state: MilestoneState.emAquisicao,
+        ),
+        MilestoneObservation(
+          code: 'b2-palavras',
+          title: 'Fala palavras com significado',
+          area: MilestoneArea.linguagem,
+          state: MilestoneState.adquirido,
+        ),
+        MilestoneObservation(
+          code: 'b2-aponta',
+          title: 'Aponta para mostrar o que quer',
+          area: MilestoneArea.social,
+          state: MilestoneState.adquirido,
+        ),
+      ],
+      questions: const <GuardianQuestion>[
+        GuardianQuestion(
+          question: 'Como organizar a rotina da noite? (exemplo)',
+          answer:
+              'Conversado sobre horário regular e ritual curto '
+              '(exemplo).',
+        ),
+      ],
+      guidance:
+          'Rotina e sono conversados; orientação por escrito emitida '
+          '(exemplo).',
+      nextVisit: today.add(const Duration(days: 20)),
+      followUps: <FollowUpItem>[
+        FollowUpItem(
+          id: 'fu1',
+          title: 'Trazer o diário do sono da última semana (exemplo)',
+          due: today.add(const Duration(days: 18)),
+        ),
+        FollowUpItem(
+          id: 'fu2',
+          title: 'Retomar a conversa sobre a alimentação (exemplo)',
+          due: today.add(const Duration(days: 20)),
+        ),
+      ],
+      history: <VisitRevision>[
+        VisitRevision(at: at, author: DemoProfessional.name, action: 'Criada'),
+        VisitRevision(
+          at: at.add(const Duration(minutes: 40)),
+          author: DemoProfessional.name,
+          action: 'Finalizada',
+        ),
+      ],
+    );
+    return DemoConsultation(
+      id: 'c3',
+      patientId: 'p1',
+      startedAt: at,
+      author: DemoProfessional.name,
+      complaint: 'Consulta de puericultura',
+      assessment: v.field(WellChildSection.avaliacao),
+      plan: v.field(WellChildSection.plano),
+      status: DemoConsultationStatus.finished,
+      ownerId: DemoProfessional.id,
+      wellChild: v,
+      updatedAt: at.add(const Duration(minutes: 40)),
+    );
+  }
 
   /// Um documento emitido e editado (v2 em rascunho) e um rascunho simples,
   /// para o histórico já mostrar versões e estados.
@@ -485,6 +610,37 @@ class DemoClinicalSeed {
         ),
       ],
     ).markReviewed(reviewer: DemoProfessional.name, now: rxAt).issue(now: rxAt);
-    return <ClinicalDocRecord>[atestado, encaminhamento, receita];
+
+    final DateTime wcDay = now.subtract(const Duration(days: 40));
+    final DateTime wcAt = DateTime(wcDay.year, wcDay.month, wcDay.day, 9, 30);
+    final DocContext wcCtx = contextFor(
+      luna,
+      date: DateTime(wcDay.year, wcDay.month, wcDay.day),
+    );
+    final ClinicalDocRecord sleepGuide = ClinicalDocRecord.createDraft(
+      id: 'd4',
+      kind: DocKind.orientacoes,
+      patientId: 'p1',
+      consultationId: 'c3',
+      ownerId: DemoProfessional.id,
+      author: DemoProfessional.name,
+      context: wcCtx,
+      now: wcAt,
+      fields: <String, String>{
+        'titulo': 'Rotina e sono',
+        'texto':
+            'Rotina de Luna Exemplo Souza, combinada com Responsável '
+            'Exemplo A (texto de exemplo, revisado pela profissional '
+            'fictícia).\n\n'
+            '1. Mantenha horário regular para dormir, também nos fins de '
+            'semana.\n'
+            '2. Ritual curto antes de dormir, com luz baixa e sem telas.\n'
+            '3. Registre no diário do app o sono da noite, os cochilos e os '
+            'despertares até a próxima consulta.\n'
+            '4. Ruído branco, aplicativos ou aparelhos para ninar não '
+            'substituem as orientações de sono seguro.',
+      },
+    ).markReviewed(reviewer: DemoProfessional.name, now: wcAt).issue(now: wcAt);
+    return <ClinicalDocRecord>[atestado, encaminhamento, receita, sleepGuide];
   }
 }
