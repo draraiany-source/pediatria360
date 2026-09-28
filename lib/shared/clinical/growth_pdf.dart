@@ -10,6 +10,7 @@ import 'dart:typed_data';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 
+import '../branding/brand_pdf.dart';
 import 'clinical_pdf.dart';
 import 'growth.dart';
 
@@ -52,6 +53,7 @@ class GrowthPdf {
     int? gestationalAgeDays,
     String? guardianName,
     String? clinicName,
+    Uint8List? logo,
     bool demo = false,
   }) async {
     String s(String t) => ClinicalPdf.sanitize(t);
@@ -317,6 +319,8 @@ class GrowthPdf {
           ),
           child: pw.Row(
             children: <pw.Widget>[
+              BrandPdf.mark(logo, height: 30),
+              pw.SizedBox(width: 10),
               pw.Expanded(
                 child: pw.Text(
                   s(

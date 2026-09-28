@@ -409,6 +409,7 @@ class DocVersion {
     this.reviewedBy,
     this.issuedAt,
     this.changeNote,
+    this.logoId,
   });
 
   final int number;
@@ -424,6 +425,9 @@ class DocVersion {
   final DateTime? issuedAt;
   final String? changeNote;
 
+  /// Logomarca gravada na emissão; `null` é a identidade padrão.
+  final String? logoId;
+
   DocVersion copyWith({
     DateTime? updatedAt,
     Map<String, String>? fields,
@@ -433,6 +437,7 @@ class DocVersion {
     DateTime? reviewedAt,
     String? reviewedBy,
     DateTime? issuedAt,
+    String? logoId,
     bool clearReview = false,
   }) => DocVersion(
     number: number,
@@ -447,6 +452,7 @@ class DocVersion {
     reviewedBy: clearReview ? null : reviewedBy ?? this.reviewedBy,
     issuedAt: issuedAt ?? this.issuedAt,
     changeNote: changeNote,
+    logoId: logoId ?? this.logoId,
   );
 }
 
@@ -466,6 +472,7 @@ class ClinicalDocRecord {
     required this.patientId,
     required this.versions,
     this.consultationId,
+    this.ownerId,
     this.signature = const SignatureInfo.notSigned(),
   });
 
@@ -473,6 +480,9 @@ class ClinicalDocRecord {
   final DocKind kind;
   final String patientId;
   final String? consultationId;
+
+  /// Conta que criou o documento (define a logomarca do cabeçalho).
+  final String? ownerId;
   final List<DocVersion> versions;
   final SignatureInfo signature;
 
@@ -494,9 +504,13 @@ class ClinicalDocRecord {
     kind: kind,
     patientId: patientId,
     consultationId: consultationId,
+    ownerId: ownerId,
     versions: versions,
     signature: signature,
   );
+
+  /// Cópia só até a versão [index], para ver uma versão anterior.
+  ClinicalDocRecord upTo(int index) => _with(versions.sublist(0, index + 1));
 
   static ClinicalDocRecord createDraft({
     required String id,
@@ -506,6 +520,7 @@ class ClinicalDocRecord {
     required DocContext context,
     required DateTime now,
     String? consultationId,
+    String? ownerId,
     Map<String, String>? fields,
     List<RxItem> items = const <RxItem>[],
   }) {
@@ -516,6 +531,7 @@ class ClinicalDocRecord {
       kind: kind,
       patientId: patientId,
       consultationId: consultationId,
+      ownerId: ownerId,
       versions: <DocVersion>[
         DocVersion(
           number: 1,
@@ -617,7 +633,9 @@ class ClinicalDocRecord {
     ]);
   }
 
-  ClinicalDocRecord issue({required DateTime now}) {
+  /// Emite a versão revisada. [logoId] é a logomarca vigente do dono no
+  /// momento da emissão e fica gravada na versão.
+  ClinicalDocRecord issue({required DateTime now, String? logoId}) {
     if (current.status != DocStatus.reviewed) {
       throw const DocumentFlowException(
         'O documento precisa ser revisado antes da emissão.',
@@ -625,7 +643,12 @@ class ClinicalDocRecord {
     }
     return _with(<DocVersion>[
       ...versions.sublist(0, versions.length - 1),
-      current.copyWith(status: DocStatus.issued, issuedAt: now, updatedAt: now),
+      current.copyWith(
+        status: DocStatus.issued,
+        issuedAt: now,
+        updatedAt: now,
+        logoId: logoId,
+      ),
     ]);
   }
 }

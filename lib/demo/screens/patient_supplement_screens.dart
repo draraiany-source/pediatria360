@@ -375,6 +375,7 @@ class _DemoSupplementDecisionScreenState
       context: DemoClinicalSeed.contextFor(
         p,
         date: DateTime(now.year, now.month, now.day),
+        account: demoSession.account,
       ),
       now: now,
       items: <RxItem>[item],

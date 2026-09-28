@@ -9,6 +9,7 @@ import 'dart:typed_data';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 
+import '../branding/brand_pdf.dart';
 import 'clinical_documents.dart';
 import 'dose_calculator.dart';
 
@@ -66,6 +67,7 @@ class ClinicalPdf {
     required ClinicalDocRecord doc,
     required DocContext context,
     required DateTime now,
+    Uint8List? logo,
     bool demo = false,
   }) async {
     final DocVersion v = doc.current;
@@ -135,8 +137,10 @@ class ClinicalPdf {
             border: pw.Border(bottom: pw.BorderSide(color: _line)),
           ),
           child: pw.Row(
-            crossAxisAlignment: pw.CrossAxisAlignment.start,
+            crossAxisAlignment: pw.CrossAxisAlignment.center,
             children: <pw.Widget>[
+              BrandPdf.mark(logo),
+              pw.SizedBox(width: 12),
               pw.Expanded(
                 child: pw.Column(
                   crossAxisAlignment: pw.CrossAxisAlignment.start,
@@ -285,7 +289,10 @@ class ClinicalPdf {
           pw.SizedBox(height: 4),
           pw.Text(
             s(context.professionalName),
-            style: const pw.TextStyle(fontSize: 11, fontWeight: pw.FontWeight.bold),
+            style: const pw.TextStyle(
+              fontSize: 11,
+              fontWeight: pw.FontWeight.bold,
+            ),
           ),
           pw.Text(s(context.professionalRegistry), style: small),
           pw.SizedBox(height: 10),
@@ -313,7 +320,10 @@ class ClinicalPdf {
         children: <pw.TextSpan>[
           pw.TextSpan(
             text: '$k: ',
-            style: const pw.TextStyle(fontSize: 10, fontWeight: pw.FontWeight.bold),
+            style: const pw.TextStyle(
+              fontSize: 10,
+              fontWeight: pw.FontWeight.bold,
+            ),
           ),
           pw.TextSpan(text: v, style: const pw.TextStyle(fontSize: 10)),
         ],

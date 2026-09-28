@@ -12,12 +12,65 @@ import 'demo_data.dart';
 class DemoProfessional {
   const DemoProfessional._();
 
+  static const String id = 'prof-a';
   static const String name = 'Dra. Exemplo Demonstração';
   static const String registry = 'CRM 00000-UF (fictício)';
   static const String specialty = 'Pediatria';
   static const String clinic = 'Consultório Exemplo (fictício)';
   static const String address = 'Rua Exemplo, 100 - Centro - Cidade Exemplo';
   static const String city = 'Cidade Exemplo';
+
+  static const DemoAccount account = DemoAccount(
+    id: id,
+    name: name,
+    registry: registry,
+    specialty: specialty,
+    clinic: clinic,
+    address: address,
+    city: city,
+    email: 'dra.exemplo@exemplo.invalid',
+  );
+
+  /// Segunda conta fictícia, para conferir que a logomarca de uma conta não
+  /// aparece para outra.
+  static const DemoAccount colleague = DemoAccount(
+    id: 'prof-b',
+    name: 'Dr. Exemplo Colega',
+    registry: 'CRM 11111-UF (fictício)',
+    specialty: 'Pediatria',
+    clinic: 'Clínica Exemplo Dois (fictícia)',
+    address: 'Avenida Exemplo, 200 - Bairro Exemplo - Cidade Exemplo',
+    city: 'Cidade Exemplo',
+    email: 'dr.colega@exemplo.invalid',
+  );
+
+  static const List<DemoAccount> accounts = <DemoAccount>[account, colleague];
+
+  static DemoAccount byId(String? id) =>
+      accounts.firstWhere((DemoAccount a) => a.id == id, orElse: () => account);
+}
+
+/// Conta de profissional ou clínica na demonstração.
+class DemoAccount {
+  const DemoAccount({
+    required this.id,
+    required this.name,
+    required this.registry,
+    required this.specialty,
+    required this.clinic,
+    required this.address,
+    required this.city,
+    required this.email,
+  });
+
+  final String id;
+  final String name;
+  final String registry;
+  final String specialty;
+  final String clinic;
+  final String address;
+  final String city;
+  final String email;
 }
 
 enum DemoConsultationStatus {
@@ -301,6 +354,7 @@ class DemoClinicalSeed {
     DemoPatient p, {
     required DateTime date,
     String? clinicalSummary,
+    DemoAccount account = DemoProfessional.account,
   }) => DocContext(
     patientName: p.name,
     patientBirthDate: p.birthDate,
@@ -308,12 +362,12 @@ class DemoClinicalSeed {
     allergies: p.allergies,
     weightKg: p.weightKg,
     weighedAt: p.weighedAt,
-    professionalName: DemoProfessional.name,
-    professionalRegistry: DemoProfessional.registry,
-    professionalSpecialty: DemoProfessional.specialty,
-    clinicName: DemoProfessional.clinic,
-    clinicAddress: DemoProfessional.address,
-    city: DemoProfessional.city,
+    professionalName: account.name,
+    professionalRegistry: account.registry,
+    professionalSpecialty: account.specialty,
+    clinicName: account.clinic,
+    clinicAddress: account.address,
+    city: account.city,
     date: date,
     clinicalSummary: clinicalSummary,
   );
@@ -362,6 +416,7 @@ class DemoClinicalSeed {
       kind: DocKind.atestado,
       patientId: 'p1',
       consultationId: 'c1',
+      ownerId: DemoProfessional.id,
       author: DemoProfessional.name,
       context: ctx,
       now: visit,
@@ -389,6 +444,7 @@ class DemoClinicalSeed {
       kind: DocKind.encaminhamento,
       patientId: 'p1',
       consultationId: 'c1',
+      ownerId: DemoProfessional.id,
       author: DemoProfessional.name,
       context: ctx,
       now: visit,
@@ -404,6 +460,7 @@ class DemoClinicalSeed {
       kind: DocKind.receituario,
       patientId: 'p1',
       consultationId: 'c1',
+      ownerId: DemoProfessional.id,
       author: DemoProfessional.name,
       context: ctx,
       now: rxAt,

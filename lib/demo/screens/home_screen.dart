@@ -11,6 +11,7 @@ import '../../shared/clinical/dose_calculator.dart';
 import '../demo_clinical.dart';
 import '../demo_data.dart';
 import '../demo_session.dart';
+import '../widgets/brand_widgets.dart';
 import '../widgets/demo_widgets.dart';
 
 /// Inicio por perfil — cada area ve atalhos e resumo proprios.
@@ -77,6 +78,7 @@ class DemoHomeScreen extends StatelessWidget {
     switch (profile) {
       case DemoProfile.profissional:
         return <Widget>[
+          DemoClinicPanelCard(account: s.account, logo: s.myLogo),
           _MetricsRow(
             items: <(String, String, IconData, Color)>[
               (

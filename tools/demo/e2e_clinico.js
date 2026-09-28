@@ -187,6 +187,52 @@ async function blobMagic(page, url) {
   }, url);
 }
 
+function pdfImageInfo(buf) {
+  const t = buf.toString('latin1');
+  return { magic: t.slice(0, 5), image: /\/Subtype\s*\/Image/.test(t), widths: [...t.matchAll(/\/Width\s*(\d+)/g)].map((m) => +m[1]) };
+}
+
+async function blobImageInfo(page, url) {
+  return page.evaluate(async (u) => {
+    const blob = window.__blobs[u];
+    if (!blob) return null;
+    const b = new Uint8Array(await blob.arrayBuffer());
+    let t = '';
+    for (let i = 0; i < b.length; i += 8192) t += String.fromCharCode.apply(null, b.subarray(i, i + 8192));
+    return { magic: t.slice(0, 5), image: /\/Subtype\s*\/Image/.test(t), widths: [...t.matchAll(/\/Width\s*(\d+)/g)].map((m) => +m[1]) };
+  }, url);
+}
+
+// Logomarca ficticia desenhada num canvas da propria pagina.
+async function makeLogo(page, { w = 600, h = 200, text = 'Clinica Exemplo', color = '#14676B', type = 'image/png' } = {}) {
+  const b64 = await page.evaluate(({ w, h, text, color, type }) => {
+    const c = document.createElement('canvas');
+    c.width = w;
+    c.height = h;
+    const g = c.getContext('2d');
+    g.fillStyle = '#ffffff';
+    g.fillRect(0, 0, w, h);
+    g.fillStyle = color;
+    g.beginPath();
+    g.arc(h / 2, h / 2, h * 0.38, 0, Math.PI * 2);
+    g.fill();
+    g.fillStyle = '#ffffff';
+    g.font = 'bold ' + Math.round(h * 0.3) + 'px sans-serif';
+    g.textAlign = 'center';
+    g.textBaseline = 'middle';
+    g.fillText('CE', h / 2, h / 2);
+    g.textAlign = 'left';
+    g.fillStyle = color;
+    g.font = 'bold ' + Math.round(h * 0.2) + 'px sans-serif';
+    g.fillText(text, h * 0.95, h * 0.42);
+    g.fillStyle = '#4A5B7A';
+    g.font = Math.round(h * 0.11) + 'px sans-serif';
+    g.fillText('logomarca ficticia de teste', h * 0.95, h * 0.7);
+    return c.toDataURL(type, 0.92).split(',')[1];
+  }, { w, h, text, color, type });
+  return Buffer.from(b64, 'base64');
+}
+
 const DOCS = [
   { slug: 'atestado', label: 'Atestado médico', fields: [] },
   { slug: 'declaracao', label: 'Declaração de comparecimento', fields: [['Das *', '08:00'], ['Às *', '09:00']] },
@@ -1014,6 +1060,210 @@ const DOCS = [
     await open(r.page, '#/modelos-receita?perfil=recepcao');
     check('modelos protegidos: recepcao nao acessa', await waitText(r.page, 'Acesso restrito'), '');
     await r.ctx.close();
+  });
+
+  // ------------------------------------------------ Logomarca por conta
+  const LOGO_A = 'logo-clinica-exemplo.png';
+  const LOGO_A2 = 'logo-clinica-exemplo-v2.jpg';
+  const DEFAULT_HEADER = 'Cabe\u00e7alho do documento: Identidade padr\u00e3o do Pediatria360';
+  const headerWith = (file) => 'Cabe\u00e7alho do documento: Logomarca da conta (' + file;
+
+  async function sendLogo(page, button, file, opts = {}) {
+    const [fc] = await Promise.all([page.waitForEvent('filechooser', { timeout: 15000 }), tap(page, button, { wait: 500, touch: opts.touch })]);
+    await fc.setFiles(file);
+    await page.waitForTimeout(2500);
+  }
+
+  async function shotPdf(ctx, page, button, name, opts = {}) {
+    const [popup] = await Promise.all([ctx.waitForEvent('page', { timeout: 15000 }), tap(page, button, { wait: 800, touch: opts.touch })]);
+    const url = popup.url();
+    const info = url.startsWith('blob:') ? await blobImageInfo(page, url) : null;
+    await popup.waitForTimeout(3000);
+    await popup.screenshot({ path: path.join(OUT, name + '.png') }).catch(() => {});
+    await popup.close();
+    await page.waitForTimeout(1500);
+    return info;
+  }
+
+  await step('computador: logomarca enviar visualizar trocar remover', async () => {
+    const { ctx, page } = await newPage(browser, DESKTOP);
+    await open(page, '#/inicio?perfil=profissional');
+    const pngA = await makeLogo(page, { text: 'Cl\u00ednica Exemplo A' });
+    check('logomarca: sem cadastro o painel usa a identidade padrao', await waitText(page, 'Sem logomarca: painel e documentos usam a identidade padr\u00e3o do Pediatria360.'), '');
+    await shot(page, 'lg01_painel_padrao');
+    await tap(page, 'Cadastrar logomarca', { wait: 2000 });
+    check('logomarca: configuracao no perfil', (hash(page) === '#/perfil/logomarca') && (await waitText(page, 'Nenhuma logomarca cadastrada')), hash(page));
+    await shot(page, 'lg02_sem_logomarca');
+
+    await sendLogo(page, 'Enviar logomarca', { name: 'logo-disfarcado.png', mimeType: 'image/png', buffer: Buffer.from('<svg xmlns="http://www.w3.org/2000/svg"><script>alert(1)</script></svg>') });
+    check('logomarca: arquivo que nao e imagem e recusado pelo conteudo', (await waitText(page, 'Formato n\u00e3o aceito')) && (await has(page, 'Nenhuma logomarca cadastrada')), '');
+    await shot(page, 'lg03_arquivo_recusado');
+
+    await sendLogo(page, 'Enviar logomarca', { name: LOGO_A, mimeType: 'image/png', buffer: pngA });
+    check('logomarca: previa antes de salvar', (await waitText(page, 'Usar esta logomarca?')) && (await has(page, 'Como fica no cabe\u00e7alho')), '');
+    await shot(page, 'lg04_confirmar_envio');
+    await tap(page, 'Salvar logomarca', { wait: 1500 });
+    const l1 = await labels(page);
+    check('logomarca: enviada e salva', l1.includes('Logomarca salva') && l1.includes(LOGO_A) && l1.includes('600 x 200 px'), '');
+    await shot(page, 'lg05_logomarca_salva');
+    await tap(page, 'Visualizar', { exact: true, wait: 1200 });
+    check('logomarca: visualizar ampliada', await waitText(page, 'Logomarca da conta em tamanho ampliado'), '');
+    await shot(page, 'lg06_visualizar');
+    await tap(page, 'Fechar', { wait: 800 });
+    await page.waitForTimeout(3000);
+    const ex = await shotPdf(ctx, page, 'Ver PDF de exemplo', 'lg07_pdf_exemplo');
+    check('logomarca: PDF de exemplo com a imagem', !!ex && ex.magic === '%PDF-' && ex.image && ex.widths.includes(600), ex ? 'larguras ' + ex.widths.join(',') : 'sem PDF');
+
+    await nav(page, '#/inicio');
+    check('logomarca: aparece no painel', await waitText(page, 'Painel de Consult\u00f3rio Exemplo (fict\u00edcio): Logomarca da conta (' + LOGO_A), '');
+    check('logomarca: telas gerais mantem a identidade do app', await has(page, 'Pedi360'), '');
+    await shot(page, 'lg08_painel_com_logomarca');
+
+    // Todos os tipos de documento, com a imagem no PDF e na impressao.
+    let emitted = null;
+    for (const d of DOCS) {
+      await nav(page, '#/pacientes/p2/documentos/novo?tipo=' + d.slug);
+      await waitText(page, 'Novo: ' + d.label);
+      for (const [f, v] of d.fields) await fill(page, f, v);
+      if (d.slug === 'receituario') {
+        await tap(page, 'Adicionar item manualmente');
+        const vals = [['Medicamento *', 'Medicamento Exemplo A'], ['Apresenta\u00e7\u00e3o e concentra\u00e7\u00e3o *', 'Suspens\u00e3o 100 mg/5 mL'], ['Dose por administra\u00e7\u00e3o *', '5 mL'], ['Intervalo *', 'de 8/8h'], ['Dura\u00e7\u00e3o *', '3 dias']];
+        for (const [f, v] of vals) await fill(page, f, v, { last: true });
+        await tap(page, 'Salvar item');
+      }
+      await tap(page, 'Salvar e revisar', { wait: 1500 });
+      await waitText(page, 'Marcar como revisado', 8000);
+      const draftHeader = await has(page, headerWith(LOGO_A));
+      await tap(page, 'Revisei o conte\u00fado');
+      await tap(page, 'Marcar como revisado');
+      await tap(page, 'Emitir documento', { wait: 1800 });
+      const issuedHeader = await has(page, headerWith(LOGO_A));
+      if (d.slug === 'receituario') { emitted = hash(page); await shot(page, 'lg09_receita_emitida_com_logomarca'); }
+      await page.waitForTimeout(4000);
+      const [dl] = await Promise.all([page.waitForEvent('download', { timeout: 15000 }), tap(page, 'Gerar PDF', { wait: 800 })]);
+      const info = pdfImageInfo(fs.readFileSync(await dl.path()));
+      fs.copyFileSync(await dl.path(), path.join(OUT, 'logo_' + dl.suggestedFilename()));
+      await page.waitForTimeout(3500);
+      await tap(page, 'Imprimir', { wait: 1500 });
+      const src = await page.evaluate(() => document.getElementById('p360-print-frame')?.src || null);
+      const pi = src ? await blobImageInfo(page, src) : null;
+      check('logomarca: ' + d.label + ' - cabecalho na tela, no PDF e na impressao', draftHeader && issuedHeader && info.image && info.widths.includes(600) && !!pi && pi.image && pi.widths.includes(600), 'pdf ' + info.widths.join(',') + ' / impressao ' + (pi ? pi.widths.join(',') : '-'));
+    }
+    const rxPdf = await shotPdf(ctx, page, 'Visualizar PDF', 'lg10_pdf_receita_com_logomarca');
+    check('logomarca: visualizar PDF da receita', !!rxPdf && rxPdf.image, '');
+
+    await nav(page, '#/pacientes/p1/crescimento');
+    await waitText(page, 'Exportar PDF', 15000);
+    await page.waitForTimeout(3000);
+    const [gdl] = await Promise.all([page.waitForEvent('download', { timeout: 20000 }), tap(page, 'Exportar PDF', { wait: 800 })]);
+    const gi = pdfImageInfo(fs.readFileSync(await gdl.path()));
+    fs.copyFileSync(await gdl.path(), path.join(OUT, 'logo_' + gdl.suggestedFilename()));
+    check('logomarca: relatorio de curvas com a imagem', gi.image && gi.widths.includes(600), gi.widths.join(','));
+    await page.waitForTimeout(3000);
+
+    await nav(page, '#/perfil/logomarca');
+    const jpgA2 = await makeLogo(page, { w: 500, h: 250, text: 'Exemplo A (nova)', color: '#8A3FFC', type: 'image/jpeg' });
+    await sendLogo(page, 'Trocar logomarca', { name: LOGO_A2, mimeType: 'image/jpeg', buffer: jpgA2 });
+    check('logomarca: trocar pede confirmacao', await waitText(page, 'Trocar a logomarca?'), '');
+    await tap(page, 'Salvar logomarca', { wait: 1500 });
+    const l2 = await labels(page);
+    check('logomarca: trocada (JPG)', l2.includes('Logomarca trocada') && l2.includes(LOGO_A2) && l2.includes('500 x 250 px'), '');
+    await shot(page, 'lg11_logomarca_trocada');
+
+    await nav(page, '#' + emitted);
+    await waitText(page, 'Cabe\u00e7alho gravado na emiss\u00e3o');
+    const l3 = await labels(page);
+    await page.waitForTimeout(3000);
+    const [edl] = await Promise.all([page.waitForEvent('download', { timeout: 15000 }), tap(page, 'Gerar PDF', { wait: 800 })]);
+    const ei = pdfImageInfo(fs.readFileSync(await edl.path()));
+    check('logomarca: emitido mantem a logomarca da emissao (tela e PDF)', l3.includes(headerWith(LOGO_A)) && !l3.includes(headerWith(LOGO_A2)) && ei.widths.includes(600) && !ei.widths.includes(500), ei.widths.join(','));
+    await shot(page, 'lg12_emitido_mantem_logomarca');
+    await page.waitForTimeout(3000);
+
+    await nav(page, '#/pacientes/p2/documentos/novo?tipo=orientacoes');
+    await fill(page, 'T\u00edtulo *', 'Depois da troca');
+    await fill(page, 'Orienta\u00e7\u00f5es *', 'Texto fict\u00edcio.');
+    await tap(page, 'Salvar e revisar', { wait: 1500 });
+    check('logomarca: novo documento usa a logomarca nova', await waitText(page, headerWith(LOGO_A2)), '');
+
+    await nav(page, '#/perfil/logomarca');
+    await tap(page, 'Remover', { exact: true, wait: 1000 });
+    check('logomarca: remover pede confirmacao', await waitText(page, 'Remover logomarca?'), '');
+    await shot(page, 'lg13_remover_confirmacao');
+    await tap(page, 'Remover', { exact: true, last: true, wait: 1500 });
+    check('logomarca: removida volta a identidade padrao', (await waitText(page, 'Logomarca removida')) && (await has(page, 'Nenhuma logomarca cadastrada')), '');
+    await nav(page, '#/inicio');
+    check('logomarca: painel volta ao padrao', await waitText(page, 'Sem logomarca: painel e documentos usam'), '');
+    await nav(page, '#' + emitted);
+    check('logomarca: emitido continua com a logomarca da emissao apos remover', await waitText(page, headerWith(LOGO_A)), '');
+    await nav(page, '#/pacientes/p2/documentos/novo?tipo=atestado');
+    await tap(page, 'Salvar e revisar', { wait: 1500 });
+    await waitText(page, 'Marcar como revisado', 8000);
+    await page.waitForTimeout(3000);
+    const [ndl] = await Promise.all([page.waitForEvent('download', { timeout: 15000 }), tap(page, 'Gerar PDF', { wait: 800 })]);
+    const ni = pdfImageInfo(fs.readFileSync(await ndl.path()));
+    check('logomarca: sem logomarca o PDF usa a identidade padrao', (await has(page, DEFAULT_HEADER)) && !ni.image, '');
+    await shot(page, 'lg14_documento_identidade_padrao');
+    await ctx.close();
+  });
+
+  await step('computador: logomarca so da propria conta', async () => {
+    const { ctx, page } = await newPage(browser, DESKTOP);
+    await open(page, '#/perfil/logomarca?perfil=profissional');
+    await sendLogo(page, 'Enviar logomarca', { name: LOGO_A, mimeType: 'image/png', buffer: await makeLogo(page, { text: 'Cl\u00ednica Exemplo A' }) });
+    await tap(page, 'Salvar logomarca', { wait: 1500 });
+    await nav(page, '#/perfil');
+    await tap(page, 'Trocar de conta', { wait: 1000 });
+    await tap(page, 'Dr. Exemplo Colega', { wait: 1500 });
+    check('conta: troca para a segunda conta ficticia', await waitText(page, 'Conta em uso: Dr. Exemplo Colega.'), '');
+    await nav(page, '#/inicio');
+    const l1 = await labels(page);
+    check('conta: painel da outra conta sem a logomarca da primeira', l1.includes('Cl\u00ednica Exemplo Dois (fict\u00edcia)') && l1.includes('Sem logomarca') && !l1.includes(LOGO_A), '');
+    await shot(page, 'lg15_outra_conta_painel');
+    await nav(page, '#/perfil/logomarca');
+    check('conta: configuracao da outra conta vazia', (await waitText(page, 'Nenhuma logomarca cadastrada')) && !(await has(page, LOGO_A)), '');
+    await nav(page, '#/pacientes/p1/documentos/d1');
+    check('conta: documento da primeira conta nao abre', await waitText(page, 'Registro n\u00e3o encontrado'), '');
+    await shot(page, 'lg16_outra_conta_documento');
+    await nav(page, '#/pacientes/p1/documentos/novo?tipo=orientacoes');
+    await fill(page, 'T\u00edtulo *', 'Da segunda conta');
+    await fill(page, 'Orienta\u00e7\u00f5es *', 'Texto fict\u00edcio.');
+    await tap(page, 'Salvar e revisar', { wait: 1500 });
+    await waitText(page, 'Marcar como revisado', 8000);
+    const l2 = await labels(page);
+    await page.waitForTimeout(3000);
+    const [dl] = await Promise.all([page.waitForEvent('download', { timeout: 15000 }), tap(page, 'Gerar PDF', { wait: 800 })]);
+    const i2 = pdfImageInfo(fs.readFileSync(await dl.path()));
+    check('conta: documento da segunda conta sem a logomarca da primeira', l2.includes(DEFAULT_HEADER) && l2.includes('Cl\u00ednica Exemplo Dois') && !i2.image, '');
+    await ctx.close();
+
+    for (const perfil of ['recepcao', 'financeiro', 'responsavel']) {
+      const r = await newPage(browser, DESKTOP);
+      await open(r.page, '#/perfil/logomarca?perfil=' + perfil);
+      check('conta: ' + perfil + ' nao cadastra logomarca', await waitText(r.page, 'Acesso restrito'), '');
+      await r.ctx.close();
+    }
+  });
+
+  await step('celular: logomarca no painel e nos documentos', async () => {
+    const { ctx, page } = await newPage(browser, MOBILE);
+    await open(page, '#/perfil/logomarca?perfil=profissional');
+    await sendLogo(page, 'Enviar logomarca', { name: LOGO_A, mimeType: 'image/png', buffer: await makeLogo(page, { text: 'Cl\u00ednica Exemplo A' }) }, { touch: true });
+    await shot(page, 'lg17_celular_confirmar');
+    await tap(page, 'Salvar logomarca', { touch: true, wait: 1500 });
+    check('celular: logomarca enviada pelo toque', await waitText(page, 'Logomarca salva'), '');
+    await shot(page, 'lg18_celular_logomarca');
+    await nav(page, '#/inicio');
+    check('celular: logomarca no painel', await waitText(page, 'Logomarca da conta (' + LOGO_A), '');
+    await shot(page, 'lg19_celular_painel');
+    await nav(page, '#/pacientes/p1/documentos/d2');
+    check('celular: cabecalho do documento com a logomarca', await waitText(page, headerWith(LOGO_A)), '');
+    await shot(page, 'lg20_celular_documento');
+    await page.waitForTimeout(3000);
+    const [dl] = await Promise.all([page.waitForEvent('download', { timeout: 15000 }), tap(page, 'Gerar PDF', { touch: true, wait: 800 })]);
+    const i = pdfImageInfo(fs.readFileSync(await dl.path()));
+    check('celular: PDF com a logomarca', i.image && i.widths.includes(600), i.widths.join(','));
+    await ctx.close();
   });
 
   await browser.close();

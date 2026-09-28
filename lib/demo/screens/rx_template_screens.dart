@@ -240,7 +240,7 @@ class _DemoRxTemplatesScreenState extends State<DemoRxTemplatesScreen> {
                     ),
                     const SizedBox(height: AppSpacing.md),
                     Text(
-                      '${list.length} de ${demoSession.rxTemplates.length} modelos',
+                      '${list.length} de ${demoSession.myRxTemplates.length} modelos',
                       style: Theme.of(context).textTheme.bodySmall,
                     ),
                     const SizedBox(height: AppSpacing.sm),

@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
+import '../shared/branding/brand_logo.dart';
 import '../shared/clinical/clinical_documents.dart';
 import '../shared/clinical/dose_calculator.dart';
 import '../shared/clinical/growth.dart';
@@ -161,6 +162,8 @@ class DemoSession extends ChangeNotifier {
   late List<ClinicalDocRecord> documents;
   late List<OrientationTemplate> orientationTemplates;
   late List<RxTemplate> rxTemplates;
+  late Map<String, String> _rxTemplateOwner;
+  late BrandLogoStore logos;
   late List<SupplementSheet> supplementSheets;
   late List<GrowthMeasurement> growth;
   late List<GestationalAgeChange> gestationalAgeChanges;
@@ -192,6 +195,11 @@ class DemoSession extends ChangeNotifier {
     documents = DemoClinicalSeed.documents(patients, now);
     orientationTemplates = DemoClinicalSeed.orientationTemplates(now);
     rxTemplates = DemoClinicalSeed.rxTemplates(now);
+    _rxTemplateOwner = <String, String>{
+      for (final RxTemplate t in rxTemplates) t.id: DemoProfessional.id,
+    };
+    logos = BrandLogoStore();
+    _account = DemoProfessional.account;
     supplementSheets = List<SupplementSheet>.of(kSupplementSheets);
     for (final DemoPatient p in patients) {
       p.gestationalAgeDays = DemoGrowthSeed.gestationalAgeDays[p.id];
@@ -351,7 +359,72 @@ class DemoSession extends ChangeNotifier {
   /// Consultas, documentos, calculadora e suplementação: só o profissional.
   bool get canUseClinicalTools => _profile == DemoProfile.profissional;
 
-  String get currentAuthor => DemoProfessional.name;
+  String get currentAuthor => _account.name;
+
+  // ------------------------------------------------ Conta e logomarca
+
+  DemoAccount _account = DemoProfessional.account;
+
+  /// Conta do profissional ou clínica em uso (a demonstração tem duas).
+  DemoAccount get account => _account;
+
+  void switchAccount(String accountId) {
+    final DemoAccount next = DemoProfessional.byId(accountId);
+    if (next.id == _account.id) return;
+    _account = next;
+    notifyListeners();
+  }
+
+  /// Só profissional e clínica têm logomarca própria.
+  bool get canBrand => _profile == DemoProfile.profissional;
+
+  /// Logomarca vigente da conta em uso; `null` usa a identidade padrão.
+  BrandLogo? get myLogo => canBrand
+      ? logos.currentFor(ownerId: _account.id, viewerId: _account.id)
+      : null;
+
+  /// Envia ou troca a logomarca da conta em uso.
+  BrandLogo uploadLogo({required Uint8List bytes, required String fileName}) {
+    if (!canBrand) {
+      throw const BrandingException(
+        'Logomarca disponível só para profissional ou clínica.',
+      );
+    }
+    final BrandLogo logo = logos.upload(
+      actorId: _account.id,
+      ownerId: _account.id,
+      logoId: 'logo${_nextId++}',
+      bytes: bytes,
+      fileName: fileName,
+      uploadedBy: _account.name,
+      now: DateTime.now(),
+    );
+    notifyListeners();
+    return logo;
+  }
+
+  void removeLogo() {
+    if (!canBrand) return;
+    logos.remove(actorId: _account.id, ownerId: _account.id);
+    notifyListeners();
+  }
+
+  /// Logomarca do cabeçalho de uma versão de documento.
+  BrandLogo? logoForDocument(ClinicalDocRecord doc, DocVersion version) =>
+      logos.forDocument(
+        ownerId: _ownerOf(doc),
+        viewerId: _account.id,
+        issued: version.status == DocStatus.issued,
+        issuedLogoId: version.logoId,
+      );
+
+  /// Emite gravando a logomarca vigente de quem emite.
+  ClinicalDocRecord issueDocument(ClinicalDocRecord doc) =>
+      doc.issue(now: DateTime.now(), logoId: myLogo?.id);
+
+  String _ownerOf(ClinicalDocRecord d) => d.ownerId ?? DemoProfessional.id;
+
+  bool _mine(ClinicalDocRecord d) => _ownerOf(d) == _account.id;
 
   DemoConsultation? consultationById(String id) {
     for (final DemoConsultation c in consultations) {
@@ -422,9 +495,10 @@ class DemoSession extends ChangeNotifier {
     );
   }
 
+  /// Documentos do paciente criados pela conta em uso.
   List<ClinicalDocRecord> documentsFor(String patientId) =>
       documents
-          .where((ClinicalDocRecord d) => d.patientId == patientId)
+          .where((ClinicalDocRecord d) => d.patientId == patientId && _mine(d))
           .toList()
         ..sort(
           (ClinicalDocRecord a, ClinicalDocRecord b) =>
@@ -433,15 +507,27 @@ class DemoSession extends ChangeNotifier {
 
   ClinicalDocRecord? documentById(String id) {
     for (final ClinicalDocRecord d in documents) {
-      if (d.id == id) return d;
+      if (d.id == id) return _mine(d) ? d : null;
     }
     return null;
   }
 
   String newDocumentId() => 'd${_nextId++}';
 
-  void saveDocument(ClinicalDocRecord doc) {
+  void saveDocument(ClinicalDocRecord input) {
+    final ClinicalDocRecord doc = input.ownerId != null
+        ? input
+        : ClinicalDocRecord(
+            id: input.id,
+            kind: input.kind,
+            patientId: input.patientId,
+            consultationId: input.consultationId,
+            ownerId: _account.id,
+            versions: input.versions,
+            signature: input.signature,
+          );
     final int i = documents.indexWhere((ClinicalDocRecord d) => d.id == doc.id);
+    if (i >= 0 && !_mine(documents[i])) return;
     documents = <ClinicalDocRecord>[
       if (i < 0) doc,
       for (final ClinicalDocRecord d in documents) d.id == doc.id ? doc : d,
@@ -466,21 +552,30 @@ class DemoSession extends ChangeNotifier {
 
   String newRxTemplateId() => 'm${_nextId++}';
 
+  bool _myTemplate(RxTemplate t) =>
+      (_rxTemplateOwner[t.id] ?? DemoProfessional.id) == _account.id;
+
+  /// Modelos da conta em uso.
+  List<RxTemplate> get myRxTemplates =>
+      rxTemplates.where(_myTemplate).toList(growable: false);
+
   RxTemplate? rxTemplateById(String id) {
     for (final RxTemplate t in rxTemplates) {
-      if (t.id == id) return t;
+      if (t.id == id) return _myTemplate(t) ? t : null;
     }
     return null;
   }
 
   /// Modelos que casam com a busca, do mais recente ao mais antigo.
   List<RxTemplate> searchRxTemplates(String query) =>
-      rxTemplates.where((RxTemplate t) => t.matches(query)).toList()..sort(
+      myRxTemplates.where((RxTemplate t) => t.matches(query)).toList()..sort(
         (RxTemplate a, RxTemplate b) => b.updatedAt.compareTo(a.updatedAt),
       );
 
   void saveRxTemplate(RxTemplate t) {
     final bool exists = rxTemplates.any((RxTemplate x) => x.id == t.id);
+    if (exists && !_myTemplate(t)) return;
+    _rxTemplateOwner.putIfAbsent(t.id, () => _account.id);
     rxTemplates = <RxTemplate>[
       if (!exists) t,
       for (final RxTemplate x in rxTemplates) x.id == t.id ? t : x,

@@ -10,7 +10,6 @@ import '../../shared/clinical/clinical_documents.dart';
 import '../../shared/clinical/growth.dart';
 import '../../shared/clinical/growth_pdf.dart';
 import '../../shared/clinical/pdf_output.dart';
-import '../demo_clinical.dart';
 import '../demo_data.dart';
 import '../demo_growth.dart';
 import '../demo_session.dart';
@@ -79,9 +78,10 @@ class _DemoGrowthScreenState extends State<DemoGrowthScreen> {
         birthDate: p.birthDate,
         gestationalAgeDays: p.gestationalAgeDays,
         guardianName: p.guardianName,
-        professionalName: DemoProfessional.name,
-        professionalRegistry: DemoProfessional.registry,
-        clinicName: DemoProfessional.clinic,
+        professionalName: demoSession.account.name,
+        professionalRegistry: demoSession.account.registry,
+        clinicName: demoSession.account.clinic,
+        logo: demoSession.myLogo?.bytes,
         now: now,
         demo: true,
       );

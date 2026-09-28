@@ -17,6 +17,7 @@ import '../demo_data.dart';
 import '../demo_session.dart';
 import '../widgets/demo_widgets.dart';
 import '../widgets/flow_widgets.dart';
+import '../widgets/brand_widgets.dart';
 import 'dose_screens.dart';
 import 'rx_template_screens.dart';
 
@@ -36,6 +37,7 @@ DocContext demoDocContext(
     clinicalSummary: c == null || c.assessment.trim().isEmpty
         ? null
         : c.assessment.trim(),
+    account: demoSession.account,
   );
 }
 
@@ -1238,6 +1240,7 @@ class _DemoDocumentViewerScreenState extends State<DemoDocumentViewerScreen> {
         doc: shown,
         context: ctx,
         now: DateTime.now(),
+        logo: demoSession.logoForDocument(shown, shown.current)?.bytes,
         demo: true,
       );
       final String name = ClinicalPdf.fileName(shown, p.name);
@@ -1277,16 +1280,7 @@ class _DemoDocumentViewerScreenState extends State<DemoDocumentViewerScreen> {
           doc.versions.length - 1,
         );
         final bool isCurrent = idx == doc.versions.length - 1;
-        final ClinicalDocRecord shown = isCurrent
-            ? doc
-            : ClinicalDocRecord(
-                id: doc.id,
-                kind: doc.kind,
-                patientId: doc.patientId,
-                consultationId: doc.consultationId,
-                versions: doc.versions.sublist(0, idx + 1),
-                signature: doc.signature,
-              );
+        final ClinicalDocRecord shown = isCurrent ? doc : doc.upTo(idx);
         final DocVersion v = shown.current;
         final DocContext ctx = demoDocContext(
           p,
@@ -1382,6 +1376,21 @@ class _DemoDocumentViewerScreenState extends State<DemoDocumentViewerScreen> {
                     const DemoSectionTitle('Assinatura e emissão'),
                     _SignatureCard(doc: doc),
                     const DemoSectionTitle('Conteúdo'),
+                    DemoDocHeader(
+                      account: demoSession.account,
+                      logo: demoSession.logoForDocument(doc, v),
+                      kindLabel: doc.kind.label,
+                    ),
+                    if (v.status == DocStatus.issued)
+                      Padding(
+                        padding: const EdgeInsets.only(top: AppSpacing.xs),
+                        child: Text(
+                          'Cabeçalho gravado na emissão: trocar ou remover a '
+                          'logomarca depois não altera este documento.',
+                          style: t.bodySmall,
+                        ),
+                      ),
+                    const SizedBox(height: AppSpacing.sm),
                     _Paper(text: v.body),
                     const SizedBox(height: AppSpacing.md),
                     Wrap(
@@ -1485,7 +1494,7 @@ class _DemoDocumentViewerScreenState extends State<DemoDocumentViewerScreen> {
                         FilledButton.icon(
                           onPressed: () {
                             demoSession.saveDocument(
-                              doc.issue(now: DateTime.now()),
+                              demoSession.issueDocument(doc),
                             );
                             showDemoSnack(
                               context,
@@ -1557,6 +1566,10 @@ class _MetaCard extends StatelessWidget {
             v.issuedAt == null ? 'não emitido' : formatDocDateTime(v.issuedAt!),
           ),
           if (v.changeNote != null) row('Alteração', v.changeNote!),
+          row(
+            'Cabeçalho',
+            brandHeaderLabel(demoSession.logoForDocument(doc, v)),
+          ),
           if (v.items.any((RxItem i) => i.origin != null))
             row(
               'Modelo de origem',

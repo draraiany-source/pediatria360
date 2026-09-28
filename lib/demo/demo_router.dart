@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../shared/clinical/clinical_documents.dart';
 import 'demo_session.dart';
 import 'screens/agenda_screens.dart';
+import 'screens/brand_screens.dart';
 import 'screens/business_screens.dart';
 import 'screens/care_screens.dart';
 import 'screens/consultation_screen.dart';
@@ -606,6 +607,18 @@ final GoRouter demoRouter = GoRouter(
           path: '/perfil',
           pageBuilder: (BuildContext context, GoRouterState state) =>
               _tab(state, DemoModule.perfil, const DemoProfileScreen()),
+          routes: <RouteBase>[
+            GoRoute(
+              path: 'logomarca',
+              builder: (BuildContext context, GoRouterState state) =>
+                  demoSession.canBrand
+                  ? const ScaffoldMessenger(child: DemoLogoScreen())
+                  : const DemoRestrictedScreen(
+                      module: DemoModule.perfil,
+                      title: 'Logomarca',
+                    ),
+            ),
+          ],
         ),
       ],
     ),

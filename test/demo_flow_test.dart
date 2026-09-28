@@ -177,6 +177,7 @@ void main() {
     demoSession.enter(DemoProfile.profissional);
     await goTo(tester, '/perfil');
     await tester.ensureVisible(find.text('Sair da demonstração'));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('Sair da demonstração'));
     await tester.pumpAndSettle();
     await tester.tap(find.widgetWithText(FilledButton, 'Sair'));
