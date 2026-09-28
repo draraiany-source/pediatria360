@@ -28,11 +28,14 @@ Remove-Item (Join-Path $out 'manifest.json') -ErrorAction SilentlyContinue
 # O codigo de registro dos plugins do Firebase entra no JS porque o Flutter Web
 # registra todos os plugins do pubspec; sem configuracao, SDK carregado ou
 # initializeApp, ele fica inerte. Por isso a lista mira identificadores reais.
+# "agora" sozinho e palavra comum em portugues; o SDK de video e procurado
+# pelos identificadores dele.
 $forbidden = @(
   'pediatria360-app', 'AIza', 'firebaseio.com', 'firebaseapp.com', 'appspot.com',
   'identitytoolkit', 'securetoken', 'firestore.googleapis', 'cloudfunctions.net',
   'gstatic.com/firebasejs', 'googleapis.com', 'stripe', 'mercadopago',
-  'openai', 'generativelanguage', 'gemini', 'agora', 'twilio'
+  'openai', 'generativelanguage', 'gemini', 'agora.io', 'agora_rtc',
+  'agora-rtc', 'AgoraRTC', 'twilio'
 )
 $hits = @()
 Get-ChildItem $out -Recurse -File | Where-Object { $_.Extension -in '.js', '.html', '.json', '.mjs' } | ForEach-Object {
