@@ -59,6 +59,19 @@
     return 'iframe';
   }
 
+  // Visualizar: abre o PDF numa aba nova, com o leitor do navegador.
+  function view(bytes, name) {
+    var url = blobUrl(bytes);
+    var w = window.open(url, '_blank');
+    if (!w) {
+      URL.revokeObjectURL(url);
+      return download(bytes, name);
+    }
+    try { w.opener = null; } catch (e) { /* ignora */ }
+    setTimeout(function () { URL.revokeObjectURL(url); }, 120000);
+    return 'tab';
+  }
+
   // Anexo de laudo: abre o seletor do navegador e devolve o arquivo lido
   // na memoria da aba. Nada e enviado para fora do navegador.
   function pick(accept) {
@@ -97,5 +110,5 @@
   }
 
   window.p360File = { pick: pick, open: openFile };
-  window.p360Pdf = { download: download, print: print };
+  window.p360Pdf = { download: download, print: print, view: view };
 })();

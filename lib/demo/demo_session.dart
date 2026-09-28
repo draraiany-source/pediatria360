@@ -6,6 +6,7 @@ import '../shared/clinical/dose_calculator.dart';
 import '../shared/clinical/growth.dart';
 import '../shared/clinical/lab_results.dart';
 import '../shared/clinical/orientation_templates.dart';
+import '../shared/clinical/rx_templates.dart';
 import '../shared/clinical/supplement_library.dart';
 import '../shared/routine/child_routine.dart';
 import 'demo_clinical.dart';
@@ -159,6 +160,7 @@ class DemoSession extends ChangeNotifier {
   late List<DemoConsultation> consultations;
   late List<ClinicalDocRecord> documents;
   late List<OrientationTemplate> orientationTemplates;
+  late List<RxTemplate> rxTemplates;
   late List<SupplementSheet> supplementSheets;
   late List<GrowthMeasurement> growth;
   late List<GestationalAgeChange> gestationalAgeChanges;
@@ -189,6 +191,7 @@ class DemoSession extends ChangeNotifier {
     consultations = DemoClinicalSeed.consultations(now);
     documents = DemoClinicalSeed.documents(patients, now);
     orientationTemplates = DemoClinicalSeed.orientationTemplates(now);
+    rxTemplates = DemoClinicalSeed.rxTemplates(now);
     supplementSheets = List<SupplementSheet>.of(kSupplementSheets);
     for (final DemoPatient p in patients) {
       p.gestationalAgeDays = DemoGrowthSeed.gestationalAgeDays[p.id];
@@ -457,6 +460,40 @@ class DemoSession extends ChangeNotifier {
     orientationTemplates = <OrientationTemplate>[t, ...orientationTemplates];
     notifyListeners();
     return t;
+  }
+
+  // ------------------------------------------------ Modelos de receita
+
+  String newRxTemplateId() => 'm${_nextId++}';
+
+  RxTemplate? rxTemplateById(String id) {
+    for (final RxTemplate t in rxTemplates) {
+      if (t.id == id) return t;
+    }
+    return null;
+  }
+
+  /// Modelos que casam com a busca, do mais recente ao mais antigo.
+  List<RxTemplate> searchRxTemplates(String query) =>
+      rxTemplates.where((RxTemplate t) => t.matches(query)).toList()..sort(
+        (RxTemplate a, RxTemplate b) => b.updatedAt.compareTo(a.updatedAt),
+      );
+
+  void saveRxTemplate(RxTemplate t) {
+    final bool exists = rxTemplates.any((RxTemplate x) => x.id == t.id);
+    rxTemplates = <RxTemplate>[
+      if (!exists) t,
+      for (final RxTemplate x in rxTemplates) x.id == t.id ? t : x,
+    ];
+    notifyListeners();
+  }
+
+  /// Consulta em andamento do paciente, se houver.
+  DemoConsultation? draftConsultationFor(String patientId) {
+    for (final DemoConsultation c in consultations) {
+      if (c.patientId == patientId && c.isDraft) return c;
+    }
+    return null;
   }
 
   SupplementSheet? sheetById(String id) {

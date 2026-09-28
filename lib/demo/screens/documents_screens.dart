@@ -8,14 +8,17 @@ import '../../core/theme/app_tokens.dart';
 import '../../core/widgets/clinical_ui.dart';
 import '../../shared/clinical/clinical_documents.dart';
 import '../../shared/clinical/clinical_pdf.dart';
+import '../../shared/clinical/dose_calculator.dart';
 import '../../shared/clinical/orientation_templates.dart';
 import '../../shared/clinical/pdf_output.dart';
+import '../../shared/clinical/rx_templates.dart';
 import '../demo_clinical.dart';
 import '../demo_data.dart';
 import '../demo_session.dart';
 import '../widgets/demo_widgets.dart';
 import '../widgets/flow_widgets.dart';
 import 'dose_screens.dart';
+import 'rx_template_screens.dart';
 
 /// Contexto de preenchimento: dados atuais do paciente e da consulta ligada.
 DocContext demoDocContext(
@@ -299,14 +302,21 @@ class _DemoDocumentEditorScreenState extends State<DemoDocumentEditorScreen> {
       }
     }
     _ready = true;
+    demoSession.addListener(_onSession);
   }
 
   @override
   void dispose() {
+    demoSession.removeListener(_onSession);
     for (final TextEditingController c in _c.values) {
       c.dispose();
     }
     super.dispose();
+  }
+
+  /// Peso registrado em outra tela muda a conta mostrada aqui.
+  void _onSession() {
+    if (mounted) setState(() {});
   }
 
   void _markDirty() {
@@ -381,11 +391,18 @@ class _DemoDocumentEditorScreenState extends State<DemoDocumentEditorScreen> {
     context.go('${_docsPath(p.id)}/${r.id}');
   }
 
+  /// Receita gerada de modelo: todo item, inclusive os acrescentados depois,
+  /// passa pela conferência campo a campo.
+  bool get _needsCheck => _items.any((RxItem i) => i.needsCheck);
+
   Future<void> _addFromCalculator(DemoPatient p) async {
     final RxItem? item = await openDoseCalculator(context, p);
     if (item == null || !mounted) return;
     setState(() {
-      _items = <RxItem>[..._items, item];
+      _items = <RxItem>[
+        ..._items,
+        _needsCheck ? item.copyWith(needsCheck: true) : item,
+      ];
       _dirty = true;
     });
     showDemoSnack(
@@ -400,13 +417,96 @@ class _DemoDocumentEditorScreenState extends State<DemoDocumentEditorScreen> {
       builder: (BuildContext c) => _ManualItemDialog(initial: existing),
     );
     if (item == null || !mounted) return;
+    final RxItem merged = existing == null
+        ? item.copyWith(needsCheck: _needsCheck)
+        : existing.copyWith(
+            drug: item.drug,
+            presentation: item.presentation,
+            concentration: item.concentration,
+            dose: item.dose,
+            volume: item.volume,
+            route: item.route,
+            frequency: item.frequency,
+            duration: item.duration,
+            quantity: item.quantity,
+            checked: const <RxCheck>{},
+          );
     setState(() {
       _items = <RxItem>[
-        for (int i = 0; i < _items.length; i++) i == index ? item : _items[i],
-        if (index == null) item,
+        for (int i = 0; i < _items.length; i++) i == index ? merged : _items[i],
+        if (index == null) merged,
       ];
       _dirty = true;
     });
+  }
+
+  void _recalculate(int index, DemoPatient p) {
+    final RxItem it = RxTemplates.recalculate(
+      _items[index],
+      patient: DosePatientData(
+        name: p.name,
+        weightKg: p.weightKg,
+        weighedAt: p.weighedAt,
+        birthDate: p.birthDate,
+        allergies: p.allergies,
+      ),
+      references: demoSession.doseReferences,
+      now: DateTime.now(),
+    );
+    setState(() {
+      _items = List<RxItem>.of(_items)..[index] = it;
+      _dirty = true;
+    });
+    showDemoSnack(
+      context,
+      it.blockers.isEmpty
+          ? 'Dose recalculada com ${formatDoseNumber(p.weightKg!)} kg. Confira de novo.'
+          : 'Não foi possível calcular: ${it.blockers.join(' ')}',
+    );
+  }
+
+  void _toggleCheck(int index, RxCheck c, bool on) => setState(() {
+    final RxItem it = _items[index];
+    _items = List<RxItem>.of(_items)
+      ..[index] = it.copyWith(
+        checked: on
+            ? <RxCheck>{...it.checked, c}
+            : (it.checked.toSet()..remove(c)),
+      );
+    _dirty = true;
+  });
+
+  Future<void> _useRxTemplate(DemoPatient p) async {
+    final RxTemplate? t = await pickRxTemplate(
+      context,
+      subtitle:
+          'Os itens entram nesta receita com a dose refeita para ${p.name}.',
+    );
+    if (t == null || !mounted) return;
+    final RxTemplateDraft d = RxTemplates.instantiate(
+      t,
+      context: _ctx(p),
+      references: demoSession.doseReferences,
+      now: DateTime.now(),
+    );
+    setState(() {
+      _items = <RxItem>[
+        for (final RxItem it in _items) it.copyWith(needsCheck: true),
+        ...d.items,
+      ];
+      final TextEditingController o = _c['orientacoes']!;
+      if (d.orientations.isNotEmpty) {
+        o.text = o.text.trim().isEmpty
+            ? d.orientations
+            : '${o.text.trim()}\n${d.orientations}';
+      }
+      _dirty = true;
+    });
+    showDemoSnack(
+      context,
+      'Modelo "${t.name}" aplicado: ${d.items.length} item(ns). '
+      'Confira cada item antes de emitir.',
+    );
   }
 
   void _applyTemplate(OrientationTemplate t, DemoPatient p) {
@@ -452,13 +552,19 @@ class _DemoDocumentEditorScreenState extends State<DemoDocumentEditorScreen> {
       ctx,
       _items,
     );
-    final List<String> issues = DocumentTemplates.missing(
-      _kind,
-      _fields,
-      _items,
-      preview,
-    );
+    final List<String> issues = <String>[
+      ...DocumentTemplates.missing(_kind, _fields, _items, preview),
+      ...rxWeightIssues(
+        _items,
+        weightKg: ctx.weightKg,
+        weighedAt: ctx.weighedAt,
+      ),
+    ];
     final bool newVersion = _record?.status == DocStatus.issued;
+    final Set<String> origins = <String>{
+      for (final RxItem i in _items)
+        if (i.origin != null) i.origin!,
+    };
 
     return PopScope(
       canPop: !_dirty,
@@ -506,6 +612,21 @@ class _DemoDocumentEditorScreenState extends State<DemoDocumentEditorScreen> {
                               'automaticamente. Revise tudo: a emissão só é liberada '
                               'depois da revisão.',
                   ),
+                  if (_kind == DocKind.receituario && _needsCheck) ...<Widget>[
+                    const SizedBox(height: AppSpacing.sm),
+                    DemoNotice(
+                      icon: Icons.fact_check_outlined,
+                      color: AppColors.warning,
+                      text:
+                          '${origins.isEmpty ? 'Receita gerada de modelo' : 'Receita gerada de ${origins.join(', ')}'} '
+                          'com os dados de ${p.name} '
+                          '(${ctx.weightKg == null ? 'sem peso registrado' : 'peso atual ${formatDoseNumber(ctx.weightKg!)} kg em ${formatDocDate(ctx.weighedAt!)}'}). '
+                          'Confira medicamento, apresentação, concentração, dose, '
+                          'volume, via, frequência, duração e quantidade de cada '
+                          'item: a revisão e a emissão só são liberadas com tudo '
+                          'conferido.',
+                    ),
+                  ],
                   if (_kind == DocKind.orientacoes) ...<Widget>[
                     const DemoSectionTitle('Modelos de orientação'),
                     _TemplatePicker(
@@ -560,12 +681,15 @@ class _DemoDocumentEditorScreenState extends State<DemoDocumentEditorScreen> {
                       _RxItemCard(
                         index: i,
                         item: _items[i],
+                        docContext: ctx,
                         onRemove: () => setState(() {
                           _items = List<RxItem>.of(_items)..removeAt(i);
                           _dirty = true;
                         }),
                         onEdit: () =>
                             _editManual(existing: _items[i], index: i),
+                        onRecalculate: () => _recalculate(i, p),
+                        onCheck: (RxCheck c, bool on) => _toggleCheck(i, c, on),
                       ),
                     Wrap(
                       spacing: AppSpacing.sm,
@@ -580,6 +704,21 @@ class _DemoDocumentEditorScreenState extends State<DemoDocumentEditorScreen> {
                           onPressed: () => _editManual(),
                           icon: const Icon(Icons.edit_outlined),
                           label: const Text('Adicionar item manualmente'),
+                        ),
+                        OutlinedButton.icon(
+                          onPressed: () => _useRxTemplate(p),
+                          icon: const Icon(Icons.bookmarks_outlined),
+                          label: const Text('Usar modelo de receita'),
+                        ),
+                        TextButton.icon(
+                          onPressed: () => saveRxAsTemplate(
+                            context,
+                            items: _items,
+                            orientations: _c['orientacoes']!.text,
+                            docContext: ctx,
+                          ),
+                          icon: const Icon(Icons.bookmark_add_outlined),
+                          label: const Text('Salvar como modelo'),
                         ),
                       ],
                     ),
@@ -735,18 +874,31 @@ class _RxItemCard extends StatelessWidget {
   const _RxItemCard({
     required this.index,
     required this.item,
+    required this.docContext,
     required this.onRemove,
     required this.onEdit,
+    required this.onRecalculate,
+    required this.onCheck,
   });
 
   final int index;
   final RxItem item;
+  final DocContext docContext;
   final VoidCallback onRemove;
   final VoidCallback onEdit;
+  final VoidCallback onRecalculate;
+  final void Function(RxCheck check, bool on) onCheck;
 
   @override
   Widget build(BuildContext context) {
     final TextTheme t = Theme.of(context).textTheme;
+    final RxWeightDosing? w = item.weightDosing;
+    final bool staleWeight =
+        w != null &&
+        docContext.weightKg != null &&
+        !w.usedWeight(docContext.weightKg, docContext.weighedAt);
+    final List<RxCheck> required = item.requiredChecks;
+    final int done = required.where(item.checked.contains).length;
     return Padding(
       padding: const EdgeInsets.only(bottom: AppSpacing.sm),
       child: PremiumCard(
@@ -758,7 +910,7 @@ class _RxItemCard extends StatelessWidget {
               children: <Widget>[
                 Expanded(
                   child: Text(
-                    '${index + 1}. ${item.drug} - ${item.presentation}',
+                    '${index + 1}. ${item.drug} - ${item.presentationLine}',
                     style: t.titleSmall,
                   ),
                 ),
@@ -787,9 +939,48 @@ class _RxItemCard extends StatelessWidget {
                 ),
               ],
             ),
-            Text(item.posology),
+            if (item.origin != null)
+              Text('Do ${item.origin}', style: t.bodySmall),
+            Text(item.posology.isEmpty ? 'Dose a definir' : item.posology),
             if (item.quantity.isNotEmpty)
               Text('Quantidade: ${item.quantity}', style: t.bodySmall),
+            if (item.blockers.isNotEmpty) ...<Widget>[
+              const SizedBox(height: AppSpacing.xs),
+              DemoNotice(
+                icon: Icons.block_rounded,
+                color: AppColors.danger,
+                text: 'Dose não calculada: ${item.blockers.join(' ')}',
+              ),
+            ],
+            if (staleWeight) ...<Widget>[
+              const SizedBox(height: AppSpacing.xs),
+              DemoNotice(
+                icon: Icons.monitor_weight_outlined,
+                color: AppColors.warning,
+                text:
+                    'O peso mudou: a conta usou '
+                    '${w.weightKg == null ? 'nenhum peso' : '${formatDoseNumber(w.weightKg!)} kg'}; '
+                    'peso atual ${formatDoseNumber(docContext.weightKg!)} kg. Recalcule.',
+              ),
+            ],
+            if (w != null && (staleWeight || item.blockers.isNotEmpty))
+              Align(
+                alignment: Alignment.centerLeft,
+                child: TextButton.icon(
+                  key: ValueKey<String>('recalc-$index'),
+                  onPressed: onRecalculate,
+                  icon: const Icon(Icons.refresh_rounded),
+                  label: const Text('Recalcular com o peso atual'),
+                ),
+              ),
+            if (item.alerts.isNotEmpty) ...<Widget>[
+              const SizedBox(height: AppSpacing.xs),
+              DemoNotice(
+                icon: Icons.warning_amber_rounded,
+                color: AppColors.warning,
+                text: 'Alertas: ${item.alerts.join(' ')}',
+              ),
+            ],
             if (item.calculation != null)
               Theme(
                 data: Theme.of(
@@ -797,7 +988,13 @@ class _RxItemCard extends StatelessWidget {
                 ).copyWith(dividerColor: Colors.transparent),
                 child: ExpansionTile(
                   tilePadding: EdgeInsets.zero,
-                  title: Text('Conta conferida', style: t.labelLarge),
+                  initiallyExpanded: item.needsCheck,
+                  title: Text(
+                    item.needsCheck
+                        ? 'Conta com o peso deste paciente'
+                        : 'Conta conferida',
+                    style: t.labelLarge,
+                  ),
                   children: <Widget>[
                     Align(
                       alignment: Alignment.centerLeft,
@@ -806,6 +1003,38 @@ class _RxItemCard extends StatelessWidget {
                   ],
                 ),
               ),
+            if (item.needsCheck) ...<Widget>[
+              const SizedBox(height: AppSpacing.xs),
+              Text(
+                'Conferência do item ($done de ${required.length})',
+                style: t.labelLarge?.copyWith(
+                  color: done == required.length
+                      ? AppColors.success
+                      : AppColors.warning,
+                ),
+              ),
+              for (final RxCheck c in required)
+                CheckboxListTile(
+                  key: ValueKey<String>('conf-$index-${c.name}'),
+                  dense: true,
+                  visualDensity: VisualDensity.compact,
+                  contentPadding: EdgeInsets.zero,
+                  controlAffinity: ListTileControlAffinity.leading,
+                  value: item.checked.contains(c),
+                  onChanged:
+                      c != RxCheck.alerts && item.valueFor(c).trim().isEmpty
+                      ? null
+                      : (bool? v) => onCheck(c, v ?? false),
+                  title: Text(
+                    item.valueFor(c).trim().isEmpty
+                        ? '${c.label}: não informado'
+                        : '${c.label}: ${item.valueFor(c)}',
+                    style: item.valueFor(c).trim().isEmpty
+                        ? t.bodyMedium?.copyWith(color: AppColors.danger)
+                        : t.bodyMedium,
+                  ),
+                ),
+            ],
           ],
         ),
       ),
@@ -827,7 +1056,9 @@ class _ManualItemDialogState extends State<_ManualItemDialog> {
   _c = <String, TextEditingController>{
     'drug': TextEditingController(text: widget.initial?.drug),
     'presentation': TextEditingController(text: widget.initial?.presentation),
+    'concentration': TextEditingController(text: widget.initial?.concentration),
     'dose': TextEditingController(text: widget.initial?.dose),
+    'volume': TextEditingController(text: widget.initial?.volume),
     'route': TextEditingController(text: widget.initial?.route ?? 'via oral'),
     'frequency': TextEditingController(text: widget.initial?.frequency),
     'duration': TextEditingController(text: widget.initial?.duration),
@@ -838,12 +1069,26 @@ class _ManualItemDialogState extends State<_ManualItemDialog> {
   static const Map<String, String> _labels = <String, String>{
     'drug': 'Medicamento *',
     'presentation': 'Apresentação e concentração *',
+    'concentration': 'Concentração',
     'dose': 'Dose por administração *',
+    'volume': 'Volume por dose',
     'route': 'Via',
     'frequency': 'Intervalo *',
     'duration': 'Duração *',
     'quantity': 'Quantidade',
   };
+
+  /// Campos que vêm da conta pelo peso e só mudam recalculando.
+  static const Set<String> _calculated = <String>{
+    'drug',
+    'presentation',
+    'concentration',
+    'dose',
+    'volume',
+    'frequency',
+  };
+
+  bool get _byWeight => widget.initial?.weightDosing != null;
 
   @override
   void dispose() {
@@ -856,7 +1101,9 @@ class _ManualItemDialogState extends State<_ManualItemDialog> {
   RxItem get _item => RxItem(
     drug: _c['drug']!.text.trim(),
     presentation: _c['presentation']!.text.trim(),
+    concentration: _c['concentration']!.text.trim(),
     dose: _c['dose']!.text.trim(),
+    volume: _c['volume']!.text.trim(),
     route: _c['route']!.text.trim(),
     frequency: _c['frequency']!.text.trim(),
     duration: _c['duration']!.text.trim(),
@@ -873,11 +1120,22 @@ class _ManualItemDialogState extends State<_ManualItemDialog> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: <Widget>[
+              if (_byWeight)
+                const Padding(
+                  padding: EdgeInsets.only(bottom: AppSpacing.sm),
+                  child: DemoNotice(
+                    text:
+                        'Dose calculada pelo peso: medicamento, apresentação, '
+                        'dose, volume e intervalo só mudam recalculando ou '
+                        'pela calculadora.',
+                  ),
+                ),
               for (final String k in _labels.keys)
                 Padding(
                   padding: const EdgeInsets.only(bottom: AppSpacing.sm),
                   child: TextField(
                     controller: _c[k],
+                    readOnly: _byWeight && _calculated.contains(k),
                     decoration: InputDecoration(
                       labelText: _labels[k],
                       errorText:
@@ -927,9 +1185,16 @@ class _Paper extends StatelessWidget {
         borderRadius: AppRadius.mdAll,
         border: Border.all(color: AppColors.line),
       ),
-      child: SelectableText(
-        text,
-        style: Theme.of(context).textTheme.bodyMedium,
+      // No navegador o texto selecionável não chega ao leitor de tela.
+      child: Semantics(
+        container: true,
+        label: text,
+        child: ExcludeSemantics(
+          child: SelectableText(
+            text,
+            style: Theme.of(context).textTheme.bodyMedium,
+          ),
+        ),
       ),
     );
   }
@@ -981,16 +1246,14 @@ class _DemoDocumentViewerScreenState extends State<DemoDocumentViewerScreen> {
         fileName: name,
         delivery: delivery,
       );
-      demoSession.recordPdf(
-        name,
-        bytes,
-        delivery == PdfDelivery.print ? 'print' : 'download',
-      );
+      demoSession.recordPdf(name, bytes, delivery.name);
       if (!mounted) return;
       final String kb = (bytes.length / 1024).toStringAsFixed(0);
       showDemoSnack(context, switch (how) {
         'download' => 'PDF gerado ($kb KB): $name',
         'iframe' => 'Abrindo a impressão do PDF ($kb KB)...',
+        'tab' when delivery == PdfDelivery.view =>
+          'PDF aberto em outra aba para visualizar ($kb KB).',
         'tab' => 'PDF aberto em outra aba para imprimir ou compartilhar.',
         _ => 'PDF gerado ($kb KB). Saída disponível na versão web.',
       });
@@ -1025,8 +1288,13 @@ class _DemoDocumentViewerScreenState extends State<DemoDocumentViewerScreen> {
                 signature: doc.signature,
               );
         final DocVersion v = shown.current;
+        final DocContext ctx = demoDocContext(
+          p,
+          consultationId: doc.consultationId,
+          fallbackDate: doc.versions.first.createdAt,
+        );
         final List<String> issues = isCurrent
-            ? doc.pendingIssues
+            ? doc.issuesFor(ctx)
             : const <String>[];
         final TextTheme t = Theme.of(context).textTheme;
         final String back =
@@ -1123,6 +1391,13 @@ class _DemoDocumentViewerScreenState extends State<DemoDocumentViewerScreen> {
                         OutlinedButton.icon(
                           onPressed: _busy
                               ? null
+                              : () => _pdf(p, shown, PdfDelivery.view),
+                          icon: const Icon(Icons.visibility_outlined),
+                          label: const Text('Visualizar PDF'),
+                        ),
+                        OutlinedButton.icon(
+                          onPressed: _busy
+                              ? null
                               : () => _pdf(p, shown, PdfDelivery.download),
                           icon: const Icon(Icons.picture_as_pdf_outlined),
                           label: const Text('Gerar PDF'),
@@ -1134,6 +1409,17 @@ class _DemoDocumentViewerScreenState extends State<DemoDocumentViewerScreen> {
                           icon: const Icon(Icons.print_outlined),
                           label: const Text('Imprimir'),
                         ),
+                        if (doc.kind == DocKind.receituario)
+                          TextButton.icon(
+                            onPressed: () => saveRxAsTemplate(
+                              context,
+                              items: v.items,
+                              orientations: v.fields['orientacoes'] ?? '',
+                              docContext: ctx,
+                            ),
+                            icon: const Icon(Icons.bookmark_add_outlined),
+                            label: const Text('Salvar como modelo'),
+                          ),
                       ],
                     ),
                     if (v.status != DocStatus.issued)
@@ -1176,6 +1462,7 @@ class _DemoDocumentViewerScreenState extends State<DemoDocumentViewerScreen> {
                                     doc.markReviewed(
                                       reviewer: demoSession.currentAuthor,
                                       now: DateTime.now(),
+                                      context: ctx,
                                     ),
                                   );
                                   setState(() => _reviewChecked = false);
@@ -1202,7 +1489,8 @@ class _DemoDocumentViewerScreenState extends State<DemoDocumentViewerScreen> {
                             );
                             showDemoSnack(
                               context,
-                              'Documento emitido (versão ${v.number}). Continua NÃO assinado.',
+                              'Documento emitido (versão ${v.number}). Continua NÃO assinado.'
+                              '${doc.consultationId == null ? '' : ' Salvo no histórico da consulta.'}',
                             );
                           },
                           icon: const Icon(Icons.send_outlined),
@@ -1269,8 +1557,19 @@ class _MetaCard extends StatelessWidget {
             v.issuedAt == null ? 'não emitido' : formatDocDateTime(v.issuedAt!),
           ),
           if (v.changeNote != null) row('Alteração', v.changeNote!),
+          if (v.items.any((RxItem i) => i.origin != null))
+            row(
+              'Modelo de origem',
+              '${<String>{for (final RxItem i in v.items)
+                    if (i.origin != null) i.origin!}.join(', ')} '
+                  '(cópia própria: editar o modelo não altera esta receita)',
+            ),
           if (doc.consultationId != null)
-            row('Consulta', 'vinculada (${doc.consultationId})'),
+            row(
+              'Consulta',
+              'vinculada (${doc.consultationId})'
+                  '${demoSession.consultationById(doc.consultationId!) == null ? '' : ' de ${formatDocDate(demoSession.consultationById(doc.consultationId!)!.startedAt)}'}',
+            ),
         ],
       ),
     );

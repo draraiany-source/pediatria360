@@ -4,9 +4,10 @@ import 'pdf_output_stub.dart'
     if (dart.library.js_interop) 'pdf_output_web.dart'
     as impl;
 
-enum PdfDelivery { download, print }
+enum PdfDelivery { download, print, view }
 
-/// Entrega o PDF ao navegador: baixar ou abrir a impressão.
+/// Entrega o PDF ao navegador: baixar, abrir a impressão ou visualizar em
+/// outra aba.
 ///
 /// Devolve como foi entregue ('download', 'iframe', 'tab') ou `null` quando
 /// a plataforma não oferece a saída.
@@ -14,4 +15,4 @@ Future<String?> deliverPdf(
   Uint8List bytes, {
   required String fileName,
   required PdfDelivery delivery,
-}) => impl.deliverPdf(bytes, fileName, delivery == PdfDelivery.print);
+}) => impl.deliverPdf(bytes, fileName, delivery.name);

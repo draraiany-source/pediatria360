@@ -836,6 +836,183 @@ const DOCS = [
     }
   });
 
+  // ---------- Meus modelos de receita ----------
+  const fmtBr = (v, d) => {
+    let s = v.toFixed(d);
+    if (s.includes('.')) s = s.replace(/0+$/, '').replace(/\.$/, '');
+    return s.replace('.', ',');
+  };
+  const weightOf = async (page) => {
+    const m = (await labels(page)).match(/(\d+(?:,\d+)?) kg em \d\d\/\d\d\/\d{4}/);
+    return m ? m[1] : null;
+  };
+  const doseA = (w) => {
+    const kg = parseFloat(w.replace(',', '.'));
+    const mg = 15 * kg;
+    return fmtBr(mg / 20, 1) + ' mL (' + fmtBr(mg, 2) + ' mg) por dose';
+  };
+  const CHECKS = ['Medicamento: ', 'Apresenta\u00e7\u00e3o: ', 'Concentra\u00e7\u00e3o: ', 'Dose: ', 'Volume: ', 'Via: ', 'Frequ\u00eancia: ', 'Dura\u00e7\u00e3o: ', 'Quantidade: '];
+  let emittedDoc = null;
+
+  await step('computador: modelos lista busca duplicar editar', async () => {
+    const { ctx, page } = await newPage(browser, DESKTOP);
+    await open(page, '#/modelos-receita?perfil=profissional');
+    const l0 = [await waitText(page, 'Meus modelos de receita'), await has(page, 'Febre - Medicamento Exemplo A'), await has(page, 'Suplemento D + lavagem nasal')];
+    check('modelos: lista com os modelos de exemplo', l0.every(Boolean), l0.join('/'));
+    await shot(page, 'mr01_lista');
+    await fill(page, 'Buscar modelo', 'solucao nasal');
+    await page.waitForTimeout(800);
+    const b1 = [await has(page, 'Suplemento D + lavagem nasal'), !(await has(page, 'Febre - Medicamento Exemplo A'))];
+    check('modelos: busca sem acento acha pelo medicamento', b1.every(Boolean), b1.join('/'));
+    await shot(page, 'mr02_busca');
+    await fill(page, 'Buscar modelo', 'tosse');
+    check('modelos: busca sem resultado', await waitText(page, 'Nenhum modelo encontrado.'), '');
+    await fill(page, 'Buscar modelo', 'febre');
+    await tap(page, 'Duplicar', { wait: 2200 });
+    const e1 = [await waitText(page, 'Editar modelo de receita'), await has(page, 'C\u00f3pia de Febre - Medicamento Exemplo A')];
+    check('modelos: duplicar abre a copia para editar', e1.every(Boolean), e1.join('/'));
+    await fill(page, 'Nome do modelo *', 'Febre - revisado (e2e)');
+    await fill(page, 'O que mudou', 'Nome ajustado no teste');
+    await shot(page, 'mr03_editor_copia');
+    await tap(page, 'Salvar modelo', { wait: 2200 });
+    await fill(page, 'Buscar modelo', 'revisado');
+    const s1 = [await waitText(page, 'Febre - revisado (e2e)'), await has(page, 'v2 \u00b7 1 item')];
+    check('modelos: edicao salva como versao 2', s1.every(Boolean), s1.join('/'));
+
+    await nav(page, '#/modelos-receita/novo');
+    await fill(page, 'Nome do modelo *', 'Modelo novo (e2e)');
+    await tap(page, 'Adicionar item');
+    await choose(page, 'Refer\u00eancia de dose *', 'Medicamento Exemplo B');
+    await choose(page, 'Apresenta\u00e7\u00e3o *', 'Suspens\u00e3o 250 mg/5 mL');
+    check('modelos: item pelo peso usa a frequencia da referencia', await waitText(page, 'Frequ\u00eancia da refer\u00eancia: de 12/12h'), '');
+    await fill(page, 'Dura\u00e7\u00e3o *', '7 dias');
+    await fill(page, 'Quantidade', '1 frasco');
+    await shot(page, 'mr04_item_pelo_peso');
+    await tap(page, 'Salvar item', { wait: 1500 });
+    check('modelos: item guarda so mg/kg, recalculado por paciente', await waitText(page, '40 mg/kg/dia, recalculada com o peso de cada paciente'), '');
+    await tap(page, 'Salvar modelo', { wait: 2200 });
+    check('modelos: novo modelo aparece na lista', await waitText(page, 'Modelo novo (e2e)'), '');
+    await ctx.close();
+  });
+
+  await step('computador: modelo na consulta ate a emissao', async () => {
+    const { ctx, page } = await newPage(browser, DESKTOP);
+    await open(page, '#/pacientes/p5/consulta/c2?etapa=documentos&perfil=profissional');
+    await tap(page, 'Receita a partir de modelo', { wait: 1500 });
+    check('consulta: escolha de modelo abre durante a consulta', await waitText(page, 'Escolher modelo de receita'), '');
+    await shot(page, 'mr05_escolher_modelo');
+    await tap(page, 'Febre - Medicamento Exemplo A', { wait: 2500 });
+    await waitText(page, 'Editar: Receitu\u00e1rio');
+    const w = await weightOf(page);
+    const l1 = await labels(page);
+    const dose = w ? doseA(w) : '?';
+    check('consulta: rascunho novo com o paciente atual', l1.includes('Alice Exemplo Prado') && hash(page).includes('/pacientes/p5/documentos/'), hash(page));
+    check('consulta: dose refeita com o peso atual (' + w + ' kg)', !!w && l1.includes(dose) && l1.includes('15 mg/kg/dose \u00d7 ' + w + ' kg'), dose);
+    check('consulta: exige conferencia dos nove campos', l1.includes('Confer\u00eancia do item (0 de 9)'), '');
+    await shot(page, 'mr06_rascunho_conferencia');
+    await tap(page, 'Salvar e revisar', { wait: 2000 });
+    const l2 = await labels(page);
+    const reviewOff = await isDisabled(page, 'Revisei o conte\u00fado');
+    check('consulta: sem conferencia nao revisa nem emite', l2.includes('confira medicamento, apresenta\u00e7\u00e3o') && reviewOff === true && !l2.includes('Emitir documento'), 'revisaoDesabilitada=' + reviewOff);
+    await shot(page, 'mr07_bloqueado_sem_conferencia');
+    const docPath = hash(page).replace(/^#/, '').split('?')[0];
+    emittedDoc = docPath;
+    await tap(page, 'Editar', { exact: true, wait: 2200 });
+    for (const c of CHECKS) await tap(page, c, { wait: 500 });
+    check('consulta: item conferido (9 de 9)', await waitText(page, 'Confer\u00eancia do item (9 de 9)'), '');
+    await shot(page, 'mr08_item_conferido');
+
+    await tap(page, 'Adicionar item manualmente');
+    const vals = [['Medicamento *', 'Solu\u00e7\u00e3o Exemplo G (fict\u00edcia)'], ['Apresenta\u00e7\u00e3o e concentra\u00e7\u00e3o *', 'Solu\u00e7\u00e3o oral'], ['Concentra\u00e7\u00e3o', '1 mg/mL'], ['Dose por administra\u00e7\u00e3o *', '2 mL'], ['Volume por dose', '2 mL'], ['Intervalo *', '1 vez ao dia'], ['Dura\u00e7\u00e3o *', '5 dias'], ['Quantidade', '1 frasco']];
+    for (const [f, v] of vals) await fill(page, f, v, { last: true });
+    await tap(page, 'Salvar item', { wait: 1500 });
+    check('consulta: segundo item tambem exige conferencia', await waitText(page, 'Confer\u00eancia do item (0 de 9)'), '');
+    const item2 = ['Medicamento: Solu\u00e7\u00e3o Exemplo G', 'Apresenta\u00e7\u00e3o: Solu\u00e7\u00e3o oral', 'Concentra\u00e7\u00e3o: 1 mg/mL', 'Dose: 2 mL', 'Volume: 2 mL', 'Via: via oral', 'Frequ\u00eancia: 1 vez ao dia', 'Dura\u00e7\u00e3o: 5 dias', 'Quantidade: 1 frasco'];
+    for (const c of item2) await tap(page, c, { last: true, wait: 500 });
+    await fill(page, 'Orienta\u00e7\u00f5es gerais', 'Oferecer l\u00edquidos. Retorno em 7 dias (e2e).');
+    const l3 = await labels(page);
+    check('consulta: dois itens conferidos e orientacoes editadas', (l3.match(/Confer\u00eancia do item \(9 de 9\)/g) || []).length === 2 && !l3.includes('Pend\u00eancias para revisar'), '');
+    await shot(page, 'mr09_dois_itens_conferidos');
+    await tap(page, 'Salvar e revisar', { wait: 2000 });
+    await tap(page, 'Revisei o conte\u00fado');
+    await tap(page, 'Marcar como revisado');
+    await tap(page, 'Emitir documento', { wait: 1800 });
+    const l4 = await labels(page);
+    check('consulta: receita emitida com origem no modelo v1', l4.includes('Emitido') && l4.includes('Modelo "Febre - Medicamento Exemplo A" \u00b7 v1') && l4.includes(dose) && l4.includes('Retorno em 7 dias (e2e)'), '');
+    await shot(page, 'mr10_receita_emitida');
+
+    await page.waitForTimeout(4500);
+    const [popup] = await Promise.all([ctx.waitForEvent('page', { timeout: 15000 }), tap(page, 'Visualizar PDF', { wait: 800 })]);
+    const vu = popup.url();
+    const vm = vu.startsWith('blob:') ? await blobMagic(page, vu) : null;
+    check('consulta: visualizar abre o PDF em outra aba', !!vm && vm.magic === '%PDF-', vu.slice(0, 40) + ' ' + (vm && vm.size));
+    await popup.close();
+    await page.waitForTimeout(3500);
+    const [dl] = await Promise.all([page.waitForEvent('download', { timeout: 15000 }), tap(page, 'Gerar PDF', { wait: 800 })]);
+    const pdf = await pdfFromDownload(dl);
+    check('consulta: PDF da receita baixado', pdf.magic === '%PDF-' && pdf.name.startsWith('receituario-alice-v1'), pdf.name + ' ' + pdf.size + ' bytes');
+    fs.copyFileSync(await dl.path(), path.join(OUT, pdf.name));
+    await page.waitForTimeout(3500);
+    await tap(page, 'Imprimir', { wait: 1500 });
+    const src = await page.evaluate(() => document.getElementById('p360-print-frame')?.src || null);
+    const pm = src ? await blobMagic(page, src) : null;
+    await page.waitForTimeout(1200);
+    const printed = await page.evaluate(() => window.__printCalled || 0);
+    check('consulta: imprimir carrega o PDF e chama print()', !!pm && pm.magic === '%PDF-' && printed > 0, 'print() ' + printed + 'x');
+
+    await tap(page, 'Voltar \u00e0 consulta', { wait: 2200 });
+    const l5 = await labels(page);
+    check('consulta: receita emitida no historico da consulta', l5.includes('Documentos desta consulta') && l5.includes('Receitu\u00e1rio') && l5.includes('Emitido'), '');
+    await shot(page, 'mr11_historico_consulta');
+
+    await nav(page, '#/modelos-receita/m1/editar');
+    await fill(page, 'Orienta\u00e7\u00f5es gerais', 'Orienta\u00e7\u00e3o alterada depois (e2e).');
+    await tap(page, 'Salvar modelo', { wait: 2200 });
+    await nav(page, '#' + emittedDoc);
+    await waitText(page, 'Modelo de origem');
+    const l6 = await labels(page);
+    check('modelo editado depois nao muda a receita emitida', l6.includes('Retorno em 7 dias (e2e)') && !l6.includes('Orienta\u00e7\u00e3o alterada depois') && l6.includes('\u00b7 v1') && l6.includes(dose), '');
+    await shot(page, 'mr12_emitida_intacta');
+    await ctx.close();
+  });
+
+  await step('celular: modelos para outras criancas', async () => {
+    const { ctx, page } = await newPage(browser, MOBILE);
+    await open(page, '#/modelos-receita?paciente=p4&perfil=profissional');
+    await fill(page, 'Buscar modelo', 'febre', { touch: true });
+    await tap(page, 'Usar para Davi', { touch: true, wait: 2500 });
+    await waitText(page, 'Editar: Receitu\u00e1rio');
+    const w = await weightOf(page);
+    const l1 = await labels(page);
+    check('celular: outra crianca, dose com o peso dela (' + w + ' kg)', !!w && l1.includes(doseA(w)) && l1.includes('Davi Exemplo Nunes'), w ? doseA(w) : '');
+    check('celular: alerta de volume exige ciencia', l1.includes('Alertas:') && l1.includes('Confer\u00eancia do item (0 de 10)'), '');
+    await shot(page, 'mr13_celular_outra_crianca');
+
+    await open(page, '#/modelos-receita?paciente=p3&perfil=profissional');
+    await fill(page, 'Buscar modelo', 'febre', { touch: true });
+    await tap(page, 'Usar para Maya', { touch: true, wait: 2500 });
+    await waitText(page, 'Editar: Receitu\u00e1rio');
+    const l2 = await labels(page);
+    check('celular: sem peso, nenhuma dose copiada e calculo bloqueado', l2.includes('Dose n\u00e3o calculada') && l2.includes('Peso n\u00e3o registrado') && l2.includes('Dose: n\u00e3o informado'), '');
+    await shot(page, 'mr14_celular_sem_peso');
+
+    await open(page, '#/pacientes/p1/documentos/d3?perfil=profissional');
+    await tap(page, 'Salvar como modelo', { touch: true });
+    await fill(page, 'Nome do modelo *', 'Da receita da Luna (e2e)', { touch: true });
+    await tap(page, 'Salvar modelo', { last: true, touch: true, wait: 1500 });
+    await nav(page, '#/modelos-receita');
+    await fill(page, 'Buscar modelo', 'Luna', { touch: true });
+    const l3 = await labels(page);
+    check('celular: receita salva como modelo sem a dose da crianca', l3.includes('Da receita da Luna (e2e)') && l3.includes('Dose a definir na consulta') && !l3.includes('5 mL') && !l3.includes('2 gotas'), '');
+    await shot(page, 'mr15_celular_modelo_da_receita');
+    await ctx.close();
+
+    const r = await newPage(browser, MOBILE);
+    await open(r.page, '#/modelos-receita?perfil=recepcao');
+    check('modelos protegidos: recepcao nao acessa', await waitText(r.page, 'Acesso restrito'), '');
+    await r.ctx.close();
+  });
+
   await browser.close();
   const failed = report.checks.filter((c) => !c.ok);
   fs.writeFileSync(path.join(OUT, 'report.json'), JSON.stringify(report, null, 2));

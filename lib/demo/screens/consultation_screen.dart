@@ -8,12 +8,14 @@ import '../../shared/clinical/clinical_documents.dart';
 import '../../shared/clinical/dose_calculator.dart';
 import '../../shared/clinical/growth.dart';
 import '../../shared/clinical/lab_results.dart';
+import '../../shared/clinical/rx_templates.dart';
 import '../demo_clinical.dart';
 import '../demo_data.dart';
 import '../demo_session.dart';
 import '../widgets/demo_widgets.dart';
 import '../widgets/flow_widgets.dart';
 import 'documents_screens.dart';
+import 'rx_template_screens.dart';
 
 enum ConsultationStep {
   consulta('consulta', 'Consulta'),
@@ -224,6 +226,18 @@ class _DemoConsultationScreenState extends State<DemoConsultationScreen> {
     context.go(_recordPath);
   }
 
+  Future<void> _fromRxTemplate(DemoPatient p) async {
+    final DemoConsultation c = _c!;
+    if (c.isDraft && !_save(silent: true)) return;
+    final RxTemplate? t = await pickRxTemplate(
+      context,
+      subtitle:
+          'Gera uma receita nova, em rascunho, com os dados atuais de ${p.name}.',
+    );
+    if (t == null || !mounted) return;
+    useRxTemplate(context, t, p, consultationId: c.id);
+  }
+
   void _newDoc(DocKind kind) {
     final DemoConsultation c = _c!;
     if (c.isDraft && !_save(silent: true)) return;
@@ -389,6 +403,11 @@ class _DemoConsultationScreenState extends State<DemoConsultationScreen> {
                             label: const Text('Receituário com calculadora'),
                           ),
                           OutlinedButton.icon(
+                            onPressed: () => _fromRxTemplate(p),
+                            icon: const Icon(Icons.bookmarks_outlined),
+                            label: const Text('Receita de modelo'),
+                          ),
+                          OutlinedButton.icon(
                             onPressed: () => _newDoc(DocKind.exames),
                             icon: const Icon(Icons.biotech_outlined),
                             label: const Text('Solicitar exames'),
@@ -473,6 +492,32 @@ class _DemoConsultationScreenState extends State<DemoConsultationScreen> {
             ],
           );
         },
+      ),
+      const DemoSectionTitle('Meus modelos de receita'),
+      Wrap(
+        spacing: AppSpacing.sm,
+        runSpacing: AppSpacing.sm,
+        children: <Widget>[
+          FilledButton.tonalIcon(
+            onPressed: () => _fromRxTemplate(p),
+            icon: const Icon(Icons.bookmarks_outlined),
+            label: const Text('Receita a partir de modelo'),
+          ),
+          TextButton.icon(
+            onPressed: () {
+              if (c.isDraft && !_save(silent: true)) return;
+              context.go('$rxTemplatesPath?paciente=${p.id}&consulta=${c.id}');
+            },
+            icon: const Icon(Icons.manage_search_rounded),
+            label: const Text('Ver e buscar modelos'),
+          ),
+        ],
+      ),
+      const SizedBox(height: AppSpacing.xs),
+      Text(
+        'A receita nasce em rascunho com o peso atual do paciente; doses pelo '
+        'peso são refeitas e cada item precisa ser conferido antes da emissão.',
+        style: Theme.of(context).textTheme.bodySmall,
       ),
     ];
   }

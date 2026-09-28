@@ -19,6 +19,7 @@ import 'screens/restricted_screen.dart';
 import 'screens/routine_forms.dart';
 import 'screens/routine_screens.dart';
 import 'screens/routine_summary_screens.dart';
+import 'screens/rx_template_screens.dart';
 import 'screens/supplement_screens.dart';
 import 'screens/welcome_screen.dart';
 import 'widgets/demo_shell.dart';
@@ -467,6 +468,36 @@ final GoRouter demoRouter = GoRouter(
                       ),
                 ),
               ],
+            ),
+          ],
+        ),
+        GoRoute(
+          path: rxTemplatesPath,
+          builder: (BuildContext context, GoRouterState state) => _clinical(
+            'Modelos de receita',
+            DemoRxTemplatesScreen(
+              key: ValueKey<String>(state.uri.toString()),
+              patientId: state.uri.queryParameters['paciente'],
+              consultationId: state.uri.queryParameters['consulta'],
+            ),
+          ),
+          routes: <RouteBase>[
+            GoRoute(
+              path: 'novo',
+              builder: (BuildContext context, GoRouterState state) => _clinical(
+                'Modelos de receita',
+                const DemoRxTemplateEditorScreen(),
+              ),
+            ),
+            GoRoute(
+              path: ':tid/editar',
+              builder: (BuildContext context, GoRouterState state) => _clinical(
+                'Modelos de receita',
+                DemoRxTemplateEditorScreen(
+                  key: ValueKey<String>(state.uri.toString()),
+                  templateId: state.pathParameters['tid'],
+                ),
+              ),
             ),
           ],
         ),

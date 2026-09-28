@@ -153,6 +153,56 @@ class DocContext {
   final String? clinicalSummary;
 }
 
+/// Pontos que o prescritor confere, um a um, antes de emitir uma receita
+/// gerada a partir de modelo.
+enum RxCheck {
+  drug('Medicamento'),
+  presentation('Apresentação'),
+  concentration('Concentração'),
+  dose('Dose'),
+  volume('Volume'),
+  route('Via'),
+  frequency('Frequência'),
+  duration('Duração'),
+  quantity('Quantidade'),
+
+  /// Só exigido quando o item tem alertas.
+  alerts('Alertas');
+
+  const RxCheck(this.label);
+
+  final String label;
+}
+
+/// Parâmetros de uma dose calculada pelo peso. Ficam no item para refazer a
+/// conta quando o peso do paciente muda; a dose em si nunca é reaproveitada.
+class RxWeightDosing {
+  const RxWeightDosing({
+    required this.referenceId,
+    required this.presentationId,
+    required this.mgPerKg,
+    this.limitToMax = false,
+    this.weightKg,
+    this.weighedAt,
+  });
+
+  final String referenceId;
+  final String presentationId;
+  final double mgPerKg;
+  final bool limitToMax;
+
+  /// Peso e data usados na conta; `null` quando não havia peso.
+  final double? weightKg;
+  final DateTime? weighedAt;
+
+  bool usedWeight(double? kg, DateTime? at) =>
+      kg != null &&
+      at != null &&
+      weightKg != null &&
+      (kg - weightKg!).abs() < 1e-9 &&
+      at == weighedAt;
+}
+
 class RxItem {
   const RxItem({
     required this.drug,
@@ -164,6 +214,14 @@ class RxItem {
     this.quantity = '',
     this.notes = '',
     this.calculation,
+    this.concentration = '',
+    this.volume = '',
+    this.weightDosing,
+    this.origin,
+    this.needsCheck = false,
+    this.checked = const <RxCheck>{},
+    this.alerts = const <String>[],
+    this.blockers = const <String>[],
   });
 
   final String drug;
@@ -178,6 +236,25 @@ class RxItem {
   /// Conta conferida na calculadora, quando o item veio dela.
   final String? calculation;
 
+  final String concentration;
+
+  /// Volume por administração (líquidos) ou "não se aplica".
+  final String volume;
+  final RxWeightDosing? weightDosing;
+
+  /// Modelo de receita de onde o item saiu, com a versão usada.
+  final String? origin;
+
+  /// Item que só pode ser emitido depois de conferido campo a campo.
+  final bool needsCheck;
+  final Set<RxCheck> checked;
+
+  /// Alertas que exigem ciência do prescritor.
+  final List<String> alerts;
+
+  /// Motivos que impediram calcular a dose para este paciente.
+  final List<String> blockers;
+
   bool get isComplete =>
       drug.trim().isNotEmpty &&
       presentation.trim().isNotEmpty &&
@@ -191,6 +268,113 @@ class RxItem {
     frequency,
     if (duration.trim().isNotEmpty) 'por $duration',
   ].where((String s) => s.trim().isNotEmpty).join(', ');
+
+  String get presentationLine {
+    final String c = concentration.trim();
+    return c.isEmpty || presentation.contains(c)
+        ? presentation
+        : '$presentation ($c)';
+  }
+
+  String valueFor(RxCheck c) => switch (c) {
+    RxCheck.drug => drug,
+    RxCheck.presentation => presentation,
+    RxCheck.concentration => concentration,
+    RxCheck.dose => dose,
+    RxCheck.volume => volume,
+    RxCheck.route => route,
+    RxCheck.frequency => frequency,
+    RxCheck.duration => duration,
+    RxCheck.quantity => quantity,
+    RxCheck.alerts => alerts.join(' '),
+  };
+
+  List<RxCheck> get requiredChecks => needsCheck
+      ? RxCheck.values
+            .where((RxCheck c) => c != RxCheck.alerts || alerts.isNotEmpty)
+            .toList()
+      : const <RxCheck>[];
+
+  List<RxCheck> get pendingChecks =>
+      requiredChecks.where((RxCheck c) => !checked.contains(c)).toList();
+
+  /// Campos da conferência ainda vazios.
+  List<RxCheck> get emptyFields => needsCheck
+      ? RxCheck.values
+            .where(
+              (RxCheck c) => c != RxCheck.alerts && valueFor(c).trim().isEmpty,
+            )
+            .toList()
+      : const <RxCheck>[];
+
+  RxItem copyWith({
+    String? drug,
+    String? presentation,
+    String? dose,
+    String? route,
+    String? frequency,
+    String? duration,
+    String? quantity,
+    String? notes,
+    String? calculation,
+    String? concentration,
+    String? volume,
+    RxWeightDosing? weightDosing,
+    String? origin,
+    bool? needsCheck,
+    Set<RxCheck>? checked,
+    List<String>? alerts,
+    List<String>? blockers,
+    bool clearCalculation = false,
+    bool clearWeightDosing = false,
+  }) => RxItem(
+    drug: drug ?? this.drug,
+    presentation: presentation ?? this.presentation,
+    dose: dose ?? this.dose,
+    route: route ?? this.route,
+    frequency: frequency ?? this.frequency,
+    duration: duration ?? this.duration,
+    quantity: quantity ?? this.quantity,
+    notes: notes ?? this.notes,
+    calculation: clearCalculation ? null : calculation ?? this.calculation,
+    concentration: concentration ?? this.concentration,
+    volume: volume ?? this.volume,
+    weightDosing: clearWeightDosing ? null : weightDosing ?? this.weightDosing,
+    origin: origin ?? this.origin,
+    needsCheck: needsCheck ?? this.needsCheck,
+    checked: checked ?? this.checked,
+    alerts: alerts ?? this.alerts,
+    blockers: blockers ?? this.blockers,
+  );
+}
+
+/// Itens calculados pelo peso cuja conta não usou o peso atual do paciente.
+List<String> rxWeightIssues(
+  List<RxItem> items, {
+  double? weightKg,
+  DateTime? weighedAt,
+}) {
+  final List<String> out = <String>[];
+  for (int i = 0; i < items.length; i++) {
+    final RxWeightDosing? d = items[i].weightDosing;
+    if (d == null || d.usedWeight(weightKg, weighedAt)) continue;
+    if (weightKg == null) continue;
+    final String used = d.weightKg == null
+        ? 'sem peso'
+        : 'com ${_kg(d.weightKg!)} kg';
+    out.add(
+      'Item ${i + 1} (${items[i].drug}): conta feita $used; peso atual '
+      '${_kg(weightKg)} kg${weighedAt == null ? '' : ' em ${formatDocDate(weighedAt)}'}. '
+      'Recalcule',
+    );
+  }
+  return out;
+}
+
+String _kg(double v) {
+  String s = v.toStringAsFixed(2);
+  s = s.replaceFirst(RegExp(r'0+$'), '').replaceFirst(RegExp(r'\.$'), '');
+  return s.replaceAll('.', ',');
 }
 
 class DocFieldSpec {
@@ -396,14 +580,27 @@ class ClinicalDocRecord {
     current.body,
   );
 
+  /// Pendências considerando também o peso atual do paciente.
+  List<String> issuesFor(DocContext context) => <String>[
+    ...pendingIssues,
+    ...rxWeightIssues(
+      current.items,
+      weightKg: context.weightKg,
+      weighedAt: context.weighedAt,
+    ),
+  ];
+
   ClinicalDocRecord markReviewed({
     required String reviewer,
     required DateTime now,
+    DocContext? context,
   }) {
     if (current.status != DocStatus.draft) {
       throw const DocumentFlowException('Só um rascunho pode ser revisado.');
     }
-    final List<String> issues = pendingIssues;
+    final List<String> issues = context == null
+        ? pendingIssues
+        : issuesFor(context);
     if (issues.isNotEmpty) {
       throw DocumentFlowException(
         'Resolva antes de revisar: ${issues.join('; ')}.',
@@ -654,7 +851,7 @@ class DocumentTemplates {
           final RxItem it = items[i];
           b
             ..writeln(
-              '${i + 1}. ${it.drug} - ${it.presentation}'
+              '${i + 1}. ${it.drug} - ${it.presentationLine}'
               '${it.quantity.trim().isEmpty ? '' : ' (${it.quantity})'}',
             )
             ..writeln('   ${it.posology}');
@@ -712,8 +909,26 @@ class DocumentTemplates {
         }
       case DocKind.receituario:
         if (items.isEmpty) out.add('Inclua ao menos um medicamento');
-        for (final RxItem it in items) {
+        for (int i = 0; i < items.length; i++) {
+          final RxItem it = items[i];
           if (!it.isComplete) out.add('Item "${it.drug}" incompleto');
+          final String n =
+              'Item ${i + 1} (${it.drug.trim().isEmpty ? 'sem nome' : it.drug})';
+          if (it.blockers.isNotEmpty) {
+            out.add('$n: dose não calculada (${it.blockers.join(' ')})');
+          }
+          final List<RxCheck> empty = it.emptyFields;
+          if (empty.isNotEmpty) {
+            out.add(
+              '$n: preencha ${empty.map((RxCheck c) => c.label.toLowerCase()).join(', ')}',
+            );
+          }
+          final List<RxCheck> pending = it.pendingChecks;
+          if (pending.isNotEmpty) {
+            out.add(
+              '$n: confira ${pending.map((RxCheck c) => c.label.toLowerCase()).join(', ')}',
+            );
+          }
         }
       case DocKind.encaminhamento:
       case DocKind.orientacoes:

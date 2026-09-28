@@ -314,7 +314,9 @@ void main() {
             final List<String> values = <String>[
               'Medicamento Exemplo A',
               'Suspensão 100 mg/5 mL',
+              '',
               '5 mL',
+              '',
               'via oral',
               'de 8/8h',
               '3 dias',

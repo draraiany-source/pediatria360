@@ -429,10 +429,12 @@ void main() {
       expect(find.text('Lembrete: Medicamento Exemplo A'), findsOneWidget);
       await tapFinder(
         tester,
-        find.descendant(
-          of: find.byType(RoutineItemTile),
-          matching: find.text('Medicamento Exemplo A'),
-        ),
+        find
+            .descendant(
+              of: find.byType(RoutineItemTile),
+              matching: find.text('Medicamento Exemplo A'),
+            )
+            .first,
       );
       await tapText(tester, 'Registrar dose dada');
       expect(find.widgetWithText(TextField, 'Medicamento'), findsOneWidget);

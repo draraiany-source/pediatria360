@@ -1,6 +1,7 @@
 import '../shared/clinical/clinical_documents.dart';
 import '../shared/clinical/dose_calculator.dart';
 import '../shared/clinical/orientation_templates.dart';
+import '../shared/clinical/rx_templates.dart';
 import 'demo_data.dart';
 
 /// Dados clínicos fictícios da demonstração: profissional, referências de
@@ -230,6 +231,71 @@ class DemoClinicalSeed {
           isExample: true,
         ),
       ];
+
+  /// Modelos de receita de exemplo, só com medicamentos fictícios.
+  static List<RxTemplate> rxTemplates(DateTime now) => <RxTemplate>[
+    RxTemplate.create(
+      id: 'm1',
+      name: 'Febre - Medicamento Exemplo A',
+      author: DemoProfessional.name,
+      now: now.subtract(const Duration(days: 12)),
+      isExample: true,
+      orientations:
+          'Oferecer líquidos a {{crianca}} e retornar se a febre durar mais '
+          'de 48 horas ou se houver piora. (Texto de exemplo.)',
+      items: const <RxTemplateItem>[
+        RxTemplateItem(
+          drug: 'Medicamento Exemplo A',
+          presentation: 'Suspensão 100 mg/5 mL',
+          concentration: '100 mg/5 mL',
+          mode: RxDoseMode.weight,
+          referenceId: 'ref-a',
+          presentationId: 'a-susp',
+          mgPerKg: 15,
+          frequency: 'de 6/6h',
+          duration: 'até 3 dias, se febre',
+          quantity: '1 frasco',
+          notes: 'Agitar antes de usar.',
+        ),
+      ],
+    ),
+    RxTemplate.create(
+      id: 'm2',
+      name: 'Suplemento D + lavagem nasal',
+      author: DemoProfessional.name,
+      now: now.subtract(const Duration(days: 4)),
+      isExample: true,
+      orientations:
+          'Usar o dosador que acompanha o frasco. Guardar fora do alcance '
+          'de {{crianca}}. (Texto de exemplo.)',
+      items: const <RxTemplateItem>[
+        RxTemplateItem(
+          drug: 'Suplemento Exemplo D (fictício)',
+          presentation: 'Gotas 10 mg/mL',
+          concentration: '10 mg/1 mL',
+          mode: RxDoseMode.weight,
+          referenceId: 'ref-d',
+          presentationId: 'd-gotas',
+          mgPerKg: 2,
+          frequency: '1 vez ao dia (24/24h)',
+          duration: '30 dias',
+          quantity: '1 frasco',
+        ),
+        RxTemplateItem(
+          drug: 'Solução Exemplo E (fictícia)',
+          presentation: 'Solução nasal',
+          concentration: '0,9%',
+          mode: RxDoseMode.fixed,
+          fixedDose: '2 jatos em cada narina',
+          fixedVolume: 'não se aplica (jato)',
+          route: 'via nasal',
+          frequency: 'até 4 vezes ao dia',
+          duration: '5 dias',
+          quantity: '1 frasco',
+        ),
+      ],
+    ),
+  ];
 
   static DocContext contextFor(
     DemoPatient p, {

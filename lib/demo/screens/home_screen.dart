@@ -133,6 +133,11 @@ class DemoHomeScreen extends StatelessWidget {
                 '/calculadora',
               ),
               (
+                'Meus modelos de receita',
+                Icons.bookmarks_outlined,
+                '/modelos-receita',
+              ),
+              (
                 'Suplementação',
                 Icons.medication_liquid_outlined,
                 '/suplementacao',

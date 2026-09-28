@@ -17,29 +17,28 @@ Future<RxItem?> openDoseCalculator(
   BuildContext context,
   DemoPatient patient, {
   String? contextNote,
-}) =>
-    Navigator.of(context).push<RxItem>(
-      MaterialPageRoute<RxItem>(
-        fullscreenDialog: true,
-        builder: (BuildContext c) => Scaffold(
-          backgroundColor: AppColors.lightBackground,
-          appBar: AppBar(
-            leading: IconButton(
-              tooltip: 'Cancelar',
-              icon: const Icon(Icons.close_rounded),
-              onPressed: () => Navigator.of(c).pop(),
-            ),
-            title: const Text('Calculadora de doses'),
-          ),
-          body: DoseCalculatorPanel(
-            patient: patient,
-            contextNote: contextNote,
-            insertLabel: 'Inserir na receita',
-            onInsert: (RxItem item) => Navigator.of(c).pop(item),
-          ),
+}) => Navigator.of(context).push<RxItem>(
+  MaterialPageRoute<RxItem>(
+    fullscreenDialog: true,
+    builder: (BuildContext c) => Scaffold(
+      backgroundColor: AppColors.lightBackground,
+      appBar: AppBar(
+        leading: IconButton(
+          tooltip: 'Cancelar',
+          icon: const Icon(Icons.close_rounded),
+          onPressed: () => Navigator.of(c).pop(),
         ),
+        title: const Text('Calculadora de doses'),
       ),
-    );
+      body: DoseCalculatorPanel(
+        patient: patient,
+        contextNote: contextNote,
+        insertLabel: 'Inserir na receita',
+        onInsert: (RxItem item) => Navigator.of(c).pop(item),
+      ),
+    ),
+  ),
+);
 
 /// Módulo "Calculadora": escolhe o paciente e leva o item para um
 /// receituário novo, onde ainda passa por revisão antes da emissão.
@@ -196,7 +195,19 @@ class _DoseCalculatorPanelState extends State<DoseCalculatorPanel> {
     final RxItem item = RxItem(
       drug: ref.drugName,
       presentation: pres.label,
+      concentration: pres.concentrationLabel,
       dose: c.perAdministrationLabel,
+      volume: c.mlPerDose != null
+          ? '${formatDoseNumber(c.mlPerDose!, decimals: 1)} mL por dose'
+          : 'não se aplica (${pres.unitName})',
+      weightDosing: RxWeightDosing(
+        referenceId: ref.id,
+        presentationId: pres.id,
+        mgPerKg: c.mgPerKgUsed!,
+        limitToMax: _limit,
+        weightKg: c.weightKg,
+        weighedAt: c.weighedAt,
+      ),
       route: _route.text.trim(),
       frequency: ref.intervalLabel,
       duration: _duration.text.trim(),
@@ -240,10 +251,7 @@ class _DoseCalculatorPanelState extends State<DoseCalculatorPanel> {
               ),
               if (widget.contextNote != null) ...<Widget>[
                 const SizedBox(height: AppSpacing.sm),
-                DemoNotice(
-                  icon: Icons.link_rounded,
-                  text: widget.contextNote!,
-                ),
+                DemoNotice(icon: Icons.link_rounded, text: widget.contextNote!),
               ],
               const SizedBox(height: AppSpacing.md),
               if (widget.patient == null)
