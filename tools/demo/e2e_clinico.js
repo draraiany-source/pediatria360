@@ -869,7 +869,7 @@ const DOCS = [
     check('modelos: busca sem resultado', await waitText(page, 'Nenhum modelo encontrado.'), '');
     await fill(page, 'Buscar modelo', 'febre');
     await tap(page, 'Duplicar', { wait: 2200 });
-    const e1 = [await waitText(page, 'Editar modelo de receita'), await has(page, 'C\u00f3pia de Febre - Medicamento Exemplo A')];
+    const e1 = [await waitText(page, 'Editar modelo de receita'), /\/modelos-receita\/m\d+\/editar/.test(hash(page)) && !hash(page).includes('/m1/')];
     check('modelos: duplicar abre a copia para editar', e1.every(Boolean), e1.join('/'));
     await fill(page, 'Nome do modelo *', 'Febre - revisado (e2e)');
     await fill(page, 'O que mudou', 'Nome ajustado no teste');
@@ -878,6 +878,9 @@ const DOCS = [
     await fill(page, 'Buscar modelo', 'revisado');
     const s1 = [await waitText(page, 'Febre - revisado (e2e)'), await has(page, 'v2 \u00b7 1 item')];
     check('modelos: edicao salva como versao 2', s1.every(Boolean), s1.join('/'));
+    await fill(page, 'Buscar modelo', 'febre');
+    const s2 = [await waitText(page, 'Febre - revisado (e2e)'), await has(page, 'Febre - Medicamento Exemplo A'), await has(page, 'v1 \u00b7 1 item')];
+    check('modelos: original continua na v1 ao lado da copia', s2.every(Boolean), s2.join('/'));
 
     await nav(page, '#/modelos-receita/novo');
     await fill(page, 'Nome do modelo *', 'Modelo novo (e2e)');
