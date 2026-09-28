@@ -99,11 +99,14 @@ class _DemoSleepViewState extends State<DemoSleepView> {
               if (sleeping == null)
                 FilledButton.icon(
                   onPressed: () {
+                    final DateTime n = demoSession.now;
+                    // Despertares são digitados em HH:MM; sem segundos no
+                    // início, um despertar no mesmo minuto não fica "antes".
                     demoSession.addDiaryEntry(
                       patientId: p.id,
                       kind: DiaryKind.sono,
                       values: DiaryValues(
-                        at: demoSession.now,
+                        at: DateTime(n.year, n.month, n.day, n.hour, n.minute),
                         option: kSleepNight,
                       ),
                     );

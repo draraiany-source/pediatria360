@@ -1266,6 +1266,281 @@ const DOCS = [
     await ctx.close();
   });
 
+  // ------------------------------------------------ Sono e puericultura
+  const two = (n) => String(n).padStart(2, '0');
+  const dm = (d) => two(d.getDate()) + '/' + two(d.getMonth() + 1);
+  const ymd = (d) => d.getFullYear() + '-' + two(d.getMonth() + 1) + '-' + two(d.getDate());
+  const daysFrom = (n) => { const d = new Date(); d.setHours(12, 0, 0, 0); d.setDate(d.getDate() + n); return d; };
+  const monthsFrom = (m) => { const t = new Date(); return new Date(t.getFullYear(), t.getMonth() + m, t.getDate(), 12); };
+
+  // Toca na primeira opcao presente (rotulo com ou sem dica acessivel).
+  async function tapAny(page, options, opts = {}) {
+    for (const [label, o] of options) {
+      if (await find(page, label, { ...opts, ...o })) { await tap(page, label, { ...opts, ...o }); return label; }
+    }
+    throw new Error('nenhuma opcao: ' + options.map((x) => x[0]).join(' / '));
+  }
+
+  async function downloadPdf(page, button, opts = {}) {
+    await page.waitForTimeout(3000);
+    const [dl] = await Promise.all([page.waitForEvent('download', { timeout: 20000 }), tap(page, button, { wait: 800, touch: opts.touch })]);
+    const buf = fs.readFileSync(await dl.path());
+    if (opts.keep) fs.copyFileSync(await dl.path(), path.join(OUT, opts.keep + '_' + dl.suggestedFilename()));
+    return { ...pdfImageInfo(buf), name: dl.suggestedFilename() };
+  }
+
+  await step('celular: sono familia registra, corrige e resume', async () => {
+    const { ctx, page } = await newPage(browser, MOBILE);
+    await open(page, '#/rotina/p5?vista=sono&perfil=responsavel');
+    const l0 = await labels(page);
+    check('sono familia: registrar, resumo da semana e linha do tempo', ['Registrar sono', 'Resumo da semana', 'Linha do tempo', 'Dormiu agora (noite)'].every((x) => l0.includes(x)), '');
+    await shot(page, 'sp01_sono_familia');
+
+    const d2 = daysFrom(-2);
+    await tap(page, dm(d2) + ': ', { contains: true, touch: true });
+    await tap(page, 'Cochilo', { touch: true, wait: 1500 });
+    await fill(page, 'Início', '14:00');
+    await fill(page, 'Fim (HH:MM)', '15:10');
+    await fill(page, 'Despertou às', '14:30');
+    await fill(page, 'Minutos acordado', '5');
+    await tap(page, 'Incluir', { exact: true, touch: true });
+    check('sono familia: despertar incluido no cochilo', await waitText(page, 'Despertou às 14:30 (5 min)'), '');
+    await shot(page, 'sp02_cochilo_com_despertar');
+    await tap(page, 'Salvar', { exact: true, last: true, touch: true, wait: 1800 });
+
+    await tap(page, 'Noite com horários', { touch: true, wait: 1500 });
+    await fill(page, 'Início', '20:30');
+    await fill(page, 'Fim (HH:MM)', '06:10');
+    await fill(page, 'Despertou às', '01:40');
+    await fill(page, 'Minutos acordado', '15');
+    await tap(page, 'Incluir', { exact: true, touch: true });
+    await tap(page, 'Salvar', { exact: true, last: true, touch: true, wait: 1800 });
+    const row = dm(d2) + ': noite 9h40 com 1 despertar - 1 cochilo (1h10) - total 10h50';
+    check('sono familia: noite com despertar e cochilo no resumo do dia', await waitText(page, row), '');
+    const l1 = await labels(page);
+    check('sono familia: resumo da semana com as medias', l1.includes('Resumo da semana') && /m[eé]dia/i.test(l1), '');
+    await shot(page, 'sp03_linha_do_tempo_resumo');
+
+    await tap(page, 'Dormiu agora (noite)', { touch: true, wait: 1500 });
+    check('sono familia: sono em andamento', await waitText(page, 'Sono noturno desde'), '');
+    await tap(page, 'Despertar', { exact: true, touch: true, wait: 1200 });
+    await tap(page, '10 min', { exact: true, touch: true, wait: 600 });
+    await tap(page, 'Salvar despertar', { touch: true, wait: 1500 });
+    check('sono familia: despertar durante o sono', await waitText(page, 'Sono noturno desde') && await has(page, '- 1 despertar'), '');
+    await shot(page, 'sp04_sono_em_andamento');
+    await tap(page, 'Acordou', { exact: true, touch: true, wait: 1500 });
+    check('sono familia: acordou encerra o sono', (await waitText(page, 'Sono registrado até')) && !(await has(page, 'Sono noturno desde')), '');
+
+    await tap(page, dm(d2) + ': ', { contains: true, touch: true });
+    await tap(page, '14:00 às 15:10', { contains: true, touch: true, wait: 2000 });
+    check('sono familia: registro abre a partir do sono', hash(page).includes('de=sono'), hash(page));
+    await tap(page, 'Corrigir', { exact: true, touch: true, wait: 1500 });
+    await tapAny(page, [['Remover despertar das 14:30', {}], ['Remover despertar', {}]], { touch: true });
+    await fill(page, 'Fim (HH:MM)', '15:30');
+    await fill(page, 'Motivo da correção', 'Acordou mais tarde (teste e2e)');
+    await tap(page, 'Salvar correção', { touch: true, wait: 1800 });
+    check('sono familia: correcao com motivo no historico', await waitText(page, 'Motivo: Acordou mais tarde (teste e2e)'), '');
+    await shot(page, 'sp05_correcao_historico');
+    await tap(page, 'Voltar', { touch: true, wait: 2000 });
+    check('sono familia: voltar retorna ao sono', hash(page).includes('vista=sono') && (await waitText(page, dm(d2) + ': noite 9h40 com 1 despertar - 1 cochilo (1h30) - total 11h10')), hash(page));
+    await ctx.close();
+  });
+
+  await step('celular: sono profissional so leitura e avaliacao no prontuario', async () => {
+    const { ctx, page } = await newPage(browser, MOBILE);
+    await open(page, '#/pacientes/p1/prontuario?perfil=profissional');
+    await tap(page, 'Diário do sono (família)', { touch: true, wait: 2200 });
+    const l = await labels(page);
+    check('sono profissional: abre do prontuario sem botoes de registro', hash(page).startsWith('#/rotina/p1?vista=sono') && hash(page).includes('de=prontuario') && l.includes('Resumo da semana') && !l.includes('Dormiu agora (noite)') && !l.includes('Registrar sono'), hash(page));
+    await shot(page, 'sp06_sono_profissional');
+    await tap(page, 'Registrar avaliação do sono no prontuário', { touch: true, wait: 1500 });
+    await tap(page, 'Salvar no prontuário', { touch: true, wait: 1000 });
+    check('sono profissional: exige avaliacao escrita', await waitText(page, 'Escreva a sua avaliação.'), '');
+    await fill(page, 'Sua avaliação', 'Padrão compatível com a rotina relatada (teste e2e).');
+    await tap(page, 'Salvar no prontuário', { touch: true, wait: 1000 });
+    check('sono profissional: exige revisao dos dados da familia', await waitText(page, 'Confirme que revisou os dados informados pela família.'), '');
+    await tap(page, 'Revisei os dados informados pela família', { touch: true, wait: 600 });
+    await shot(page, 'sp07_avaliacao_sono');
+    await tap(page, 'Salvar no prontuário', { touch: true, wait: 1800 });
+    await tap(page, 'Voltar', { touch: true, wait: 2200 });
+    check('sono profissional: voltar ao prontuario com a avaliacao', hash(page) === '#/pacientes/p1/prontuario' && (await waitText(page, 'Avaliação do sono')), hash(page));
+    await shot(page, 'sp08_prontuario_avaliacao_sono');
+    await ctx.close();
+  });
+
+  await step('computador: puericultura consulta completa, PDF, calendario e correcao', async () => {
+    const { ctx, page } = await newPage(browser, DESKTOP);
+    await open(page, '#/perfil/logomarca?perfil=profissional');
+    await sendLogo(page, 'Enviar logomarca', { name: LOGO_A, mimeType: 'image/png', buffer: await makeLogo(page, { text: 'Cl\u00ednica Exemplo A' }) });
+    await tap(page, 'Salvar logomarca', { wait: 1500 });
+
+    await nav(page, '#/pacientes/p1/prontuario');
+    await tap(page, 'Nova consulta de puericultura', { wait: 2500 });
+    const cid = (hash(page).match(/consulta\/(c\d+)/) || [])[1];
+    check('puericultura: nova consulta a partir do prontuario', !!cid && (await waitText(page, 'Idade corrigida')), hash(page));
+    await tap(page, 'Aplicar modelo', { wait: 1500 });
+    await tap(page, 'Puericultura 1 a 2 anos (exemplo)', { wait: 1500 });
+    check('puericultura: modelo por faixa etaria aplicado', await waitText(page, 'Modelo usado: Puericultura 1 a 2 anos (exemplo) (v1)'), '');
+    await shot(page, 'sp09_puericultura_modelo');
+    for (const [f, v] of [['História', 'Sem intercorrências (teste e2e).'], ['Alimentação', 'Refeições da família (teste e2e).'], ['Sono', 'Dorme no berço (teste e2e).'], ['Eliminações', 'Sem alterações (teste e2e).'], ['Vacinação', 'Carteira conferida (teste e2e).']]) await fill(page, f, v);
+
+    await tap(page, 'Incorporar diário do sono', { wait: 1500 });
+    check('puericultura: incorporar so apos revisao', (await find(page, 'Incorporar', { exact: true, last: true }))?.disabled === true, '');
+    await tap(page, 'Revisei os dados informados pela família', { wait: 600 });
+    await tap(page, 'Incorporar', { exact: true, last: true, wait: 1500 });
+    check('puericultura: diario do sono incorporado ao campo Sono', await waitText(page, 'Diário do sono incorporado'), '');
+    await tap(page, 'Salvar rascunho', { wait: 1500 });
+
+    await tap(page, 'Ver diário do sono', { wait: 2200 });
+    check('puericultura: ver diario a partir da consulta', hash(page).includes('vista=sono') && hash(page).includes('consulta=' + cid), hash(page));
+    await tap(page, 'Voltar', { wait: 2200 });
+    check('puericultura: voltar do diario retorna a consulta', hash(page) === '#/pacientes/p1/consulta/' + cid, hash(page));
+
+    await tap(page, 'Próximo', { wait: 1500 });
+    await fill(page, 'Exame físico', 'Bom estado geral (teste e2e).');
+    await tap(page, 'Registrar peso, comprimento e PC', { wait: 2500 });
+    await fill(page, 'Data da medida *', dmy(new Date()));
+    await fill(page, 'Peso', '10,4');
+    await fill(page, 'Comprimento', '76,5');
+    await fill(page, 'Perímetro cefálico', '45,2');
+    await tap(page, 'Salvar medida', { wait: 2500 });
+    await tap(page, 'Voltar à consulta', { wait: 2500 });
+    check('puericultura: medida da consulta volta ao exame', hash(page).includes('/consulta/' + cid) && hash(page).includes('etapa=avaliacao') && (await waitText(page, 'nesta consulta')), hash(page));
+    await shot(page, 'sp10_exame_medidas');
+    await fill(page, 'Crescimento', 'Segue a curva (teste e2e).');
+
+    await tap(page, 'Próximo', { wait: 1500 });
+    check('puericultura: marcos pela idade corrigida', await waitText(page, 'Faixa: 1 a 2 anos (pela idade corrigida)'), '');
+    await tapAny(page, [['Anda sem apoio: Adquirido', { contains: true }], ['Adquirido', { exact: true }]]);
+    await tap(page, 'Outro marco', { wait: 1200 });
+    await fill(page, 'Marco', 'Empilha dois cubos (teste e2e)');
+    await tap(page, 'Incluir marco', { wait: 1200 });
+    check('puericultura: outro marco registrado', await waitText(page, 'Empilha dois cubos (teste e2e)'), '');
+    await fill(page, 'Desenvolvimento', 'Adequado (teste e2e).');
+    await shot(page, 'sp11_marcos');
+
+    await tap(page, 'Próximo', { wait: 1500 });
+    await fill(page, 'Avaliação', 'Criança saudável (teste e2e).');
+    await fill(page, 'Plano de acompanhamento', 'Manter acompanhamento (teste e2e).');
+    await tap(page, 'Dúvida', { exact: true, wait: 1200 });
+    await fill(page, 'Dúvida', 'Pode usar travesseiro? (teste e2e)');
+    await fill(page, 'Orientação dada', 'Orientado com o texto revisado (teste e2e).');
+    await tap(page, 'Salvar dúvida', { wait: 1200 });
+    check('puericultura: duvida dos responsaveis com a orientacao dada', (await waitText(page, 'Pode usar travesseiro? (teste e2e)')) && (await has(page, 'Orientação: Orientado com o texto revisado')), '');
+    await fill(page, 'Orientações dadas nesta consulta', 'Rotina de sono conversada (teste e2e).');
+    await tap(page, 'em 2 meses', { wait: 800 });
+    await tap(page, 'Item', { exact: true, wait: 1200 });
+    await fill(page, 'O que acompanhar', 'Reavaliar fala (teste e2e)');
+    await tap(page, 'Incluir item', { wait: 1200 });
+    check('puericultura: item de acompanhamento', await waitText(page, 'Reavaliar fala (teste e2e)'), '');
+    await shot(page, 'sp12_conduta');
+
+    await tap(page, 'Próximo', { wait: 1500 });
+    check('puericultura: resumo com os marcos', await waitText(page, 'Anda sem apoio (Motor grosso): Adquirido'), '');
+    await reveal(page, 'Resumo em PDF');
+    check('puericultura: resumo com a proxima consulta sugerida', await waitText(page, 'Próxima consulta: ' + dmy(monthsFrom(2))), dmy(monthsFrom(2)));
+    const draft = await downloadPdf(page, 'Resumo em PDF', { keep: 'rascunho' });
+    check('puericultura: PDF do rascunho baixado', draft.magic === '%PDF-', draft.name);
+    await tap(page, 'Finalizar puericultura', { wait: 1200 });
+    await tap(page, 'Finalizar', { exact: true, last: true, wait: 2000 });
+    check('puericultura: finalizada fica somente leitura', await waitText(page, 'Puericultura finalizada: somente leitura'), '');
+    await shot(page, 'sp13_resumo_finalizado');
+    const fin = await downloadPdf(page, 'Resumo em PDF', { keep: 'final' });
+    check('puericultura: PDF final com a logomarca da conta', fin.magic === '%PDF-' && fin.image && fin.widths.includes(600), 'larguras ' + fin.widths.join(','));
+    await page.waitForTimeout(3000);
+    await page.evaluate(() => { window.__printCalled = 0; });
+    await tap(page, 'Imprimir', { wait: 2500 });
+    const printed = await page.evaluate(() => window.__printCalled || 0);
+    const src = await page.evaluate(() => document.getElementById('p360-print-frame')?.src || null);
+    const pi = src ? await blobImageInfo(page, src) : null;
+    check('puericultura: imprimir com a logomarca', printed > 0 && !!pi && pi.image, 'print ' + printed);
+
+    await nav(page, '#/pacientes/p1/prontuario');
+    check('puericultura: consulta no prontuario', await waitText(page, 'Consulta de puericultura (demonstração)'), '');
+
+    await nav(page, '#/pacientes/p1/consulta/' + cid + '?etapa=conduta');
+    await tap(page, 'Corrigir', { exact: true, wait: 1500 });
+    await fill(page, 'Avaliação', 'Criança saudável; ok (teste e2e).');
+    await tap(page, 'Salvar correção', { wait: 1200 });
+    check('puericultura: correcao pede motivo', await waitText(page, 'Motivo da correção'), '');
+    await fill(page, 'Motivo (fica no histórico)', 'Complemento (teste e2e)');
+    await tap(page, 'Salvar correção', { last: true, wait: 1800 });
+    await tap(page, 'Etapa 5', { wait: 1500 });
+    await reveal(page, 'Versão anterior');
+    check('puericultura: historico da correcao com motivo', (await waitText(page, 'Corrigido após finalizar')) && (await has(page, 'motivo: Complemento (teste e2e)')), '');
+    await tap(page, 'Versão anterior', { wait: 1200 });
+    check('puericultura: versao anterior preservada', (await waitText(page, 'Antes de: Corrigido após finalizar')) && (await has(page, 'Criança saudável (teste e2e).')), '');
+    await shot(page, 'sp14_versao_anterior');
+    await tap(page, 'Fechar', { wait: 800 });
+    for (let i = 0; i < 5; i++) await tap(page, 'Voltar', { exact: true, wait: 1500 });
+    check('puericultura: voltar percorre as etapas e sai ao prontuario', hash(page) === '#/pacientes/p1/prontuario', hash(page));
+
+    await open(page, '#/rotina/p1?vista=calendario&modo=dia&dia=' + ymd(monthsFrom(2)) + '&perfil=responsavel');
+    check('calendario familia: proxima consulta de puericultura', await waitText(page, 'Próxima consulta de puericultura (data sugerida)'), '');
+    await shot(page, 'sp15_calendario_proxima_consulta');
+    await nav(page, '#/rotina/p1?vista=calendario&modo=dia&dia=' + ymd(daysFrom(30)));
+    check('calendario familia: item de acompanhamento', await waitText(page, 'Acompanhamento: Reavaliar fala (teste e2e)'), '');
+    await ctx.close();
+  });
+
+  await step('computador: puericultura anterior mantem PDF sem logomarca', async () => {
+    const { ctx, page } = await newPage(browser, DESKTOP);
+    await open(page, '#/perfil/logomarca?perfil=profissional');
+    await sendLogo(page, 'Enviar logomarca', { name: LOGO_A, mimeType: 'image/png', buffer: await makeLogo(page, { text: 'Cl\u00ednica Exemplo A' }) });
+    await tap(page, 'Salvar logomarca', { wait: 1500 });
+    await nav(page, '#/pacientes/p1/consulta/c3?etapa=resumo');
+    await waitText(page, 'Resumo em PDF', 10000);
+    const old = await downloadPdf(page, 'Resumo em PDF');
+    check('puericultura: consulta finalizada antes da logomarca sai sem imagem', old.magic === '%PDF-' && !old.image, old.name);
+    await ctx.close();
+  });
+
+  await step('celular: orientacoes da familia so emitidas', async () => {
+    const { ctx, page } = await newPage(browser, MOBILE);
+    await open(page, '#/rotina/p1/orientacoes?perfil=responsavel');
+    const l = await labels(page);
+    check('orientacoes familia: so as emitidas', l.includes('Rotina e sono') && !l.includes('Orientação em revisão (teste)'), '');
+    await shot(page, 'sp16_orientacoes_familia');
+    await tap(page, 'Rotina e sono', { touch: true, wait: 2000 });
+    check('orientacoes familia: abre com data de emissao', await waitText(page, 'Emitida em'), '');
+    await shot(page, 'sp17_orientacao_aberta');
+    const pdf = await downloadPdf(page, 'Baixar PDF', { touch: true, keep: 'orientacao' });
+    check('orientacoes familia: PDF baixado', pdf.magic === '%PDF-', pdf.name);
+    await tap(page, 'Voltar', { touch: true, wait: 1800 });
+    check('orientacoes familia: voltar a lista', hash(page).startsWith('#/rotina/p1/orientacoes'), hash(page));
+    await nav(page, '#/rotina/p1/orientacoes/d1');
+    check('orientacoes familia: documento interno nao abre', await waitText(page, 'Orientação não encontrada'), '');
+    await nav(page, '#/rotina/p2/orientacoes');
+    check('orientacoes familia: outra familia nao abre', !(await has(page, 'Rotina e sono')), '');
+    await ctx.close();
+  });
+
+  await step('computador: permissoes sono e puericultura', async () => {
+    for (const perfil of ['recepcao', 'financeiro', 'administrador']) {
+      const { ctx, page } = await newPage(browser, DESKTOP);
+      await open(page, '#/pacientes/p1/consulta/c3?perfil=' + perfil);
+      const a = await waitText(page, 'Acesso restrito');
+      await nav(page, '#/rotina/p1?vista=sono');
+      const b = await waitText(page, 'Acesso restrito');
+      await nav(page, '#/rotina/p1/orientacoes');
+      const c = await waitText(page, 'Acesso restrito');
+      check('permissoes: ' + perfil + ' nao abre puericultura, sono nem orientacoes', a && b && c, [a, b, c].join('/'));
+      if (perfil === 'recepcao') await shot(page, 'sp18_recepcao_acesso_restrito');
+      await ctx.close();
+    }
+    const r = await newPage(browser, DESKTOP);
+    await open(r.page, '#/pacientes/p1/consulta/c3?perfil=responsavel');
+    check('permissoes: responsavel nao abre a consulta de puericultura', await waitText(r.page, 'Acesso restrito'), '');
+    await r.ctx.close();
+    const p = await newPage(browser, DESKTOP);
+    await open(p.page, '#/rotina/p1/orientacoes?perfil=profissional');
+    const pa = await waitText(p.page, 'Acesso restrito');
+    await nav(p.page, '#/rotina/p5?vista=sono');
+    const pb = await waitText(p.page, 'Rotina não compartilhada');
+    check('permissoes: profissional nao usa a area da familia e nao ve rotina nao compartilhada', pa && pb, [pa, pb].join('/'));
+    await p.ctx.close();
+  });
+
   await browser.close();
   const failed = report.checks.filter((c) => !c.ok);
   fs.writeFileSync(path.join(OUT, 'report.json'), JSON.stringify(report, null, 2));

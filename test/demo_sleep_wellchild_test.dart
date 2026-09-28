@@ -260,6 +260,27 @@ void main() {
       );
     });
 
+    testWidgets('fam\u00edlia: despertar no mesmo minuto em que dormiu \u00e9 '
+        'aceito', (WidgetTester tester) async {
+      await pumpDemo(tester, profile: DemoProfile.responsavel);
+      final DateTime d = today();
+      final DateTime night = DateTime(d.year, d.month, d.day, 20, 30, 45);
+      demoSession.clock = () => night;
+
+      await goTo(tester, '/rotina/p5?vista=sono');
+      await tapFinder(tester, button('Dormiu agora (noite)'));
+      final DiaryEntry open = demoSession.openSleep('p5')!;
+      expect(open.values.at, DateTime(d.year, d.month, d.day, 20, 30));
+
+      await tapFinder(tester, button('Despertar'));
+      final TextField hour = tester.widget<TextField>(
+        find.widgetWithText(TextField, 'Hor\u00e1rio (HH:MM)'),
+      );
+      expect(hour.controller!.text, '20:30');
+      await tapText(tester, 'Salvar despertar');
+      expect(find.textContaining('fica fora do per\u00edodo'), findsNothing);
+      expect(demoSession.diaryEntryById(open.id)!.values.wakings, hasLength(1));
+    });
     testWidgets('profissional: diário compartilhado só para leitura, '
         'avaliação revisada no prontuário e volta ao prontuário', (
       WidgetTester tester,
