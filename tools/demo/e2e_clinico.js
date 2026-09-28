@@ -1170,7 +1170,7 @@ const DOCS = [
     check('logomarca: trocada (JPG)', l2.includes('Logomarca trocada') && l2.includes(LOGO_A2) && l2.includes('500 x 250 px'), '');
     await shot(page, 'lg11_logomarca_trocada');
 
-    await nav(page, '#' + emitted);
+    await nav(page, emitted);
     await waitText(page, 'Cabe\u00e7alho gravado na emiss\u00e3o');
     const l3 = await labels(page);
     await page.waitForTimeout(3000);
@@ -1194,7 +1194,7 @@ const DOCS = [
     check('logomarca: removida volta a identidade padrao', (await waitText(page, 'Logomarca removida')) && (await has(page, 'Nenhuma logomarca cadastrada')), '');
     await nav(page, '#/inicio');
     check('logomarca: painel volta ao padrao', await waitText(page, 'Sem logomarca: painel e documentos usam'), '');
-    await nav(page, '#' + emitted);
+    await nav(page, emitted);
     check('logomarca: emitido continua com a logomarca da emissao apos remover', await waitText(page, headerWith(LOGO_A)), '');
     await nav(page, '#/pacientes/p2/documentos/novo?tipo=atestado');
     await tap(page, 'Salvar e revisar', { wait: 1500 });

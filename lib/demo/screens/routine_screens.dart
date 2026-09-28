@@ -45,6 +45,7 @@ class DemoRoutineScreen extends StatefulWidget {
 class _DemoRoutineScreenState extends State<DemoRoutineScreen> {
   @override
   Widget build(BuildContext context) {
+    final bool compactTabs = MediaQuery.sizeOf(context).width < 440;
     return ListenableBuilder(
       listenable: demoSession,
       builder: (BuildContext context, _) {
@@ -200,21 +201,32 @@ class _DemoRoutineScreenState extends State<DemoRoutineScreen> {
                           container: true,
                           child: SegmentedButton<String>(
                             showSelectedIcon: false,
-                            segments: const <ButtonSegment<String>>[
+                            // Três rótulos com ícone quebram "Calendário" no
+                            // celular; sem ícone cabem numa linha.
+                            segments: <ButtonSegment<String>>[
                               ButtonSegment<String>(
                                 value: 'calendario',
-                                label: Text('Calendário'),
-                                icon: Icon(Icons.calendar_month_outlined),
+                                label: const Text(
+                                  'Calendário',
+                                  softWrap: false,
+                                ),
+                                icon: compactTabs
+                                    ? null
+                                    : const Icon(Icons.calendar_month_outlined),
                               ),
                               ButtonSegment<String>(
                                 value: 'diario',
-                                label: Text('Diário'),
-                                icon: Icon(Icons.menu_book_outlined),
+                                label: const Text('Diário', softWrap: false),
+                                icon: compactTabs
+                                    ? null
+                                    : const Icon(Icons.menu_book_outlined),
                               ),
                               ButtonSegment<String>(
                                 value: 'sono',
-                                label: Text('Sono'),
-                                icon: Icon(Icons.bedtime_outlined),
+                                label: const Text('Sono', softWrap: false),
+                                icon: compactTabs
+                                    ? null
+                                    : const Icon(Icons.bedtime_outlined),
                               ),
                             ],
                             selected: <String>{view},
