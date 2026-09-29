@@ -550,7 +550,11 @@ extension DemoRoutineQueries on DemoSession {
     final List<CalendarItem> out = <CalendarItem>[];
 
     for (final DemoAppointment a in appointments) {
-      if (a.patientId != patientId || !inRange(a.start)) continue;
+      if (a.patientId != patientId ||
+          !inRange(a.start) ||
+          !a.status.holdsSlot) {
+        continue;
+      }
       final String id = 'appt:${a.id}';
       out.add(
         CalendarItem(
@@ -561,13 +565,13 @@ extension DemoRoutineQueries on DemoSession {
               : RoutineKind.consulta,
           title: a.reason,
           start: a.start,
-          durationMinutes: 30,
+          durationMinutes: a.durationMinutes,
           status: a.status == DemoAppointmentStatus.concluido
               ? RoutineStatus.done
               : RoutineStatus.planned,
           source: RoutineSource.clinica,
           detail:
-              '${a.kind == DemoAppointmentKind.teleconsulta ? 'Teleconsulta' : 'Presencial'} - ${DemoProfessional.name}',
+              '${a.kind == DemoAppointmentKind.teleconsulta ? 'Teleconsulta' : 'Presencial'} - ${DemoProfessional.byId(a.professionalId).name}',
           reminders: itemReminders[id] ?? const <int>[],
           appointmentId: a.id,
         ),

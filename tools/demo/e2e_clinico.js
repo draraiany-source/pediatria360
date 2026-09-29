@@ -1750,6 +1750,273 @@ const DOCS = [
     await p.ctx.close();
   });
 
+  // ---------------------------------------------- Acompanhamento, lembretes e agendamento
+  const AG_DRA = 'Dra. Exemplo Demonstra\u00e7\u00e3o';
+  const AG_NEXT = 'Pr\u00f3xima semana';
+  const AG_REASON = 'Tosse leve h\u00e1 dois dias (teste e2e)';
+  const agSlots = (page) => page.evaluate(() => [...document.querySelectorAll('flt-semantics')]
+    .filter((e) => e.getAttribute('role') === 'button' || e.hasAttribute('flt-tappable'))
+    .map((e) => (e.getAttribute('aria-label') || e.textContent || '').replace(/\s+/g, ' ').trim())
+    .filter((t) => /^[a-z\u00e0-\u00fa]{3}, \d{2}\/\d{2} \u00e0s \d{2}:\d{2}$/.test(t)));
+  // A conversa fica no rodape; clica direto no botao visivel, sem rolar a tela.
+  async function agClick(page, label, opts = {}) {
+    const b = await find(page, label, opts);
+    if (!b || b.y < 0 || b.y > page.viewportSize().height) return tap(page, label, opts);
+    await page.mouse.click(b.x, b.y);
+    await page.waitForTimeout(opts.wait || 1400);
+  }
+  async function agType(page, text) {
+    const b = await find(page, 'Mensagem para o assistente', { input: true });
+    if (!b) throw new Error('campo da conversa nao encontrado');
+    await page.mouse.click(b.x, b.y);
+    await page.waitForTimeout(600);
+    await page.keyboard.type(text, { delay: 20 });
+    await page.keyboard.press('Enter');
+    await page.waitForTimeout(1500);
+  }
+  // Responde tipo, modalidade, profissional e periodo ate aparecerem horarios.
+  async function agUntilSlots(page, answers) {
+    for (let i = 0; i < 6 && !(await agSlots(page)).length; i++) {
+      let hit = false;
+      for (const o of answers) {
+        if (await find(page, o, { exact: true })) { await agClick(page, o, { exact: true }); hit = true; break; }
+      }
+      if (!hit) break;
+    }
+    return agSlots(page);
+  }
+  const agSee = async (page, text) => (await waitText(page, text, 4000)) || (await seek(page, text));
+
+  await step('computador: fluxo agendar, lembrar, confirmar, reagendar e cancelar', async () => {
+    const { ctx, page } = await newPage(browser, DESKTOP);
+    // Administracao: troca o lembrete de 2 horas pelo de 7 dias (a consulta nova cai na proxima semana).
+    await open(page, '#/lembretes?perfil=administrador');
+    await waitText(page, 'Quando enviar');
+    await tap(page, '2 horas antes', { wait: 700 });
+    await tap(page, '7 dias antes', { wait: 700 });
+    await tap(page, 'Salvar intervalos', { wait: 600 });
+    check('lembretes: administracao configura os intervalos', await waitText(page, 'Intervalos salvos.'), '7 dias, 2 dias e 1 dia antes');
+    await shot(page, 'ag01_admin_intervalos');
+
+    // Responsavel agenda pelo assistente.
+    await nav(page, '#/inicio?perfil=responsavel');
+    await tap(page, 'Agendar consulta', { wait: 2200 });
+    check('agendar: cartao da familia abre o assistente', hash(page).startsWith('#/agendar'), hash(page));
+    await waitText(page, 'Para qual crian\u00e7a');
+    await agClick(page, 'Luna Exemplo Souza', { exact: true });
+    await agType(page, AG_REASON);
+    const slots = await agUntilSlots(page, ['Consulta por queixa', 'Presencial', AG_DRA, AG_NEXT]);
+    check('agendar: assistente mostra so horarios livres', slots.length > 0, slots.join(' / '));
+    await shot(page, 'ag02_assistente_horarios');
+    const when1 = slots[0];
+    await agClick(page, when1, { exact: true });
+    const sum = (await waitText(page, 'Resumo do agendamento')) && (await has(page, 'Quando: ' + when1)) && !!(await find(page, 'Confirmar agendamento', { exact: true }));
+    check('agendar: resumo pede confirmacao explicita antes de gravar', sum, when1);
+    await shot(page, 'ag03_resumo_confirmacao');
+    await agClick(page, 'Confirmar agendamento', { exact: true });
+    check('agendar: consulta gravada apos confirmar', (await waitText(page, 'Consulta agendada')) && (await has(page, 'Luna Exemplo Souza - ' + when1)), when1);
+    await shot(page, 'ag04_consulta_agendada');
+    await agClick(page, 'Preencher pr\u00e9-consulta', { wait: 2200 });
+    const m = /pre-consulta\/([^?]+)\?de=agendar/.exec(hash(page));
+    const id = m && m[1];
+    check('agendar: pre-consulta abre com o motivo preenchido', !!id && (await agSee(page, AG_REASON)), hash(page));
+    await shot(page, 'ag05_pre_consulta_apos_agendar');
+    await tap(page, 'Voltar', { wait: 1800 });
+    check('agendar: voltar da pre-consulta retorna ao assistente', hash(page) === '#/agendar', hash(page));
+    if (!id) throw new Error('agendamento sem identificador');
+
+    await nav(page, '#/agenda/' + id + '?perfil=recepcao');
+    check('agendar: recepcao ve o horario marcado pela familia', (await agSee(page, 'Luna Exemplo Souza')) && (await agSee(page, 'Agendado pela fam\u00edlia (assistente)')), id);
+    await shot(page, 'ag06_recepcao_agendamento_familia');
+
+    // Lembrete: recepcao dispara a rodada, familia confirma.
+    await nav(page, '#/lembretes');
+    await tap(page, 'Enviar lembretes pendentes agora', { wait: 500 });
+    check('lembrar: rodada de envio pela recepcao', await waitText(page, 'Rodada conclu\u00edda'), '');
+    const sent = await agSee(page, 'Luna Exemplo Souza - 7 dias antes');
+    const masked = await agSee(page, 'Para: Respons\u00e1vel Exemplo A (\u2022\u2022\u2022\u2022 0001) - WhatsApp');
+    check('lembrar: registro com destinatario mascarado e status', sent && masked, [sent, masked].join('/'));
+    await shot(page, 'ag07_registro_envios');
+    const fail = await agSee(page, 'Falha no envio do lembrete');
+    const pref = await agSee(page, 'Prefere outro canal de contato');
+    check('lembrar: falha e preferencia viram contato manual', fail && pref, [fail, pref].join('/'));
+
+    await nav(page, '#/mensagens?perfil=responsavel');
+    const txt = 'Luna tem hor\u00e1rio marcado ' + when1;
+    const got = await agSee(page, txt);
+    check('lembrar: familia recebe mensagem discreta', got && !(await has(page, 'Tosse')), txt);
+    await shot(page, 'ag08_familia_lembrete');
+    await tap(page, 'Confirmar', { exact: true, last: true, wait: 1500 });
+    check('confirmar: resposta da familia', await waitText(page, 'Presen\u00e7a confirmada. Obrigado!'), '');
+    await shot(page, 'ag09_familia_confirmou');
+    await nav(page, '#/agenda/' + id + '?perfil=recepcao');
+    const c1 = await agSee(page, 'Confirmado pela fam\u00edlia (WhatsApp)');
+    const c2 = await agSee(page, 'Resposta: Confirmar');
+    check('confirmar: agenda da recepcao atualizada', c1 && c2, [c1, c2].join('/'));
+    await nav(page, '#/inicio?perfil=profissional');
+    await nav(page, '#/agenda/' + id);
+    const p1 = await agSee(page, 'Confirmado pela fam\u00edlia (WhatsApp)');
+    const p2 = await agSee(page, 'Lembretes enviados');
+    const p3 = !(await find(page, 'Remarcar', { exact: true }));
+    check('confirmar: profissional ve confirmacao e lembretes, sem remarcar', p1 && p2 && p3, [p1, p2, p3].join('/'));
+    await shot(page, 'ag10_profissional_confirmado');
+
+    // Familia remarca pelo assistente.
+    await nav(page, '#/agendar?acao=remarcar&consulta=' + id + '&perfil=responsavel');
+    await waitText(page, 'Vamos remarcar a consulta de Luna');
+    await agClick(page, AG_NEXT, { exact: true });
+    const when2 = (await agSlots(page)).filter((x) => x !== when1)[0];
+    if (!when2) throw new Error('sem horario para remarcar');
+    await agClick(page, when2, { exact: true });
+    await agClick(page, 'Confirmar remarca\u00e7\u00e3o', { exact: true });
+    check('reagendar: familia remarca pelo assistente', await waitText(page, 'Consulta remarcada'), when1 + ' -> ' + when2);
+    await shot(page, 'ag11_familia_remarcou');
+    await nav(page, '#/agenda/' + id + '?perfil=recepcao');
+    check('reagendar: agenda registra a remarcacao', await agSee(page, 'Remarcado por fam\u00edlia (assistente): ' + when1 + ' para ' + when2), '');
+
+    // Novo lembrete; familia pede reagendamento pelo botao.
+    await nav(page, '#/lembretes');
+    await tap(page, 'Enviar lembretes pendentes agora', { wait: 1500 });
+    await nav(page, '#/mensagens?perfil=responsavel');
+    await agSee(page, 'Luna tem hor\u00e1rio marcado ' + when2);
+    await tap(page, 'Reagendar', { exact: true, last: true, wait: 1500 });
+    check('reagendar: pedido pelo lembrete registrado', await waitText(page, 'Pedido registrado. Escolha um novo hor\u00e1rio'), '');
+    await shot(page, 'ag12_familia_pede_reagendamento');
+    await nav(page, '#/lembretes?perfil=recepcao');
+    check('reagendar: recepcao recebe pendencia', await agSee(page, 'Pediu reagendamento'), '');
+    await shot(page, 'ag13_recepcao_pendencias');
+    await nav(page, '#/agenda/' + id);
+    check('reagendar: agenda sinaliza o pedido', await agSee(page, 'A fam\u00edlia pediu outro hor\u00e1rio'), '');
+    await tap(page, 'Remarcar', { exact: true, wait: 1500 });
+    const opts = await agSlots(page);
+    await shot(page, 'ag14_recepcao_horarios_livres');
+    const when3 = opts[opts.length - 1];
+    await tap(page, when3, { exact: true, wait: 1200 });
+    await tap(page, 'Confirmar remarca\u00e7\u00e3o', { exact: true, last: true, wait: 600 });
+    check('reagendar: recepcao remarca pela agenda', await waitText(page, 'Consulta remarcada para ' + when3), when3);
+    check('reagendar: historico da recepcao', await agSee(page, 'Remarcado por recep\u00e7\u00e3o: ' + when2 + ' para ' + when3), '');
+
+    // Cancelamentos: recepcao pela agenda, familia pelo assistente e pelo lembrete fora do prazo.
+    await tap(page, 'Cancelar consulta', { exact: true, wait: 1200 });
+    await tap(page, 'Cancelar consulta', { exact: true, last: true, wait: 600 });
+    check('cancelar: recepcao cancela pela agenda', await waitText(page, 'Consulta cancelada. Hor\u00e1rio liberado.'), id);
+    check('cancelar: historico mostra quem cancelou', await agSee(page, 'Cancelado por recep\u00e7\u00e3o'), '');
+    await shot(page, 'ag15_recepcao_cancelou');
+    await nav(page, '#/inicio?perfil=profissional');
+    await nav(page, '#/agenda/' + id);
+    check('cancelar: profissional ve o cancelamento', await agSee(page, 'Cancelado por recep\u00e7\u00e3o'), '');
+
+    await nav(page, '#/agendar?acao=cancelar&consulta=a6&perfil=responsavel');
+    await waitText(page, 'Confirma o cancelamento');
+    await agClick(page, 'Sim, cancelar a consulta', { exact: true });
+    check('cancelar: familia cancela pelo assistente dentro do prazo', await waitText(page, 'Consulta cancelada'), 'a6');
+    await shot(page, 'ag16_familia_cancelou');
+    await nav(page, '#/mensagens');
+    await tap(page, 'Cancelar', { exact: true, wait: 1500 });
+    check('cancelar: pedido fora do prazo vai para a recepcao', await waitText(page, 'Como falta pouco para a consulta'), 'a4');
+    await nav(page, '#/lembretes?perfil=recepcao');
+    const k1 = await agSee(page, 'Cancelou - hor\u00e1rio liberado');
+    const k2 = await agSee(page, 'Pediu cancelamento fora do prazo');
+    check('cancelar: recepcao recebe os avisos', k1 && k2, [k1, k2].join('/'));
+    await ctx.close();
+  });
+
+  await step('computador: painel de acompanhamento e criterios', async () => {
+    const { ctx, page } = await newPage(browser, DESKTOP);
+    await open(page, '#/acompanhamento?perfil=recepcao');
+    const base = (await waitText(page, 'Indicador Frequentes: 2')) && (await has(page, 'Indicador Inativos: 2')) && (await has(page, 'Indicador Retorno pr\u00f3ximo: 3'));
+    check('acompanhamento: indicadores iniciais', base, (await labels(page)).match(/Indicador [^|]+/g)?.join(' / ') || '');
+    await tap(page, 'Indicador Inativos', { wait: 1500 });
+    const protectedNote = await agSee(page, 'mas j\u00e1 t\u00eam consulta marcada e n\u00e3o contam como inativos');
+    const list = (await agSee(page, 'Bento Exemplo Alves')) && (await agSee(page, 'Tentativas de contato: 2'));
+    check('acompanhamento: lista de inativos com contato e sem quem ja tem consulta', protectedNote && list, [protectedNote, list].join('/'));
+    await shot(page, 'ag20_acompanhamento_inativos');
+    await tap(page, 'Dr. Exemplo Colega', { wait: 1500 });
+    const f1 = (await agSee(page, 'Heitor Exemplo Melo')) && !(await has(page, 'Bento Exemplo Alves'));
+    check('acompanhamento: filtro por profissional', f1, '');
+    await tap(page, 'Registrar contato com Heitor Exemplo Melo', { wait: 1200 });
+    await tap(page, 'Salvar contato', { wait: 600 });
+    check('acompanhamento: tentativa de contato registrada', (await waitText(page, 'Tentativa de contato registrada.')) && (await agSee(page, 'Tentativas de contato: 2')), '');
+    await shot(page, 'ag21_filtro_profissional_contato');
+    await tap(page, 'Todos', { exact: true, wait: 1000 });
+    await tap(page, '3 meses', { wait: 1500 });
+    check('acompanhamento: filtro por periodo', await waitText(page, 'Indicador Frequentes: 0'), (await labels(page)).match(/Indicador [^|]+/g)?.join(' / ') || '');
+
+    // Recepcao agenda por telefone quem estava inativo.
+    await nav(page, '#/agendar?acao=agendar');
+    await waitText(page, 'Para qual crian\u00e7a');
+    await agClick(page, 'Bento Exemplo Alves', { exact: true });
+    await agType(page, 'Retorno de acompanhamento (teste e2e)');
+    const s = await agUntilSlots(page, ['Retorno', 'Presencial', AG_DRA, AG_NEXT]);
+    await agClick(page, s[0], { exact: true });
+    await agClick(page, 'Confirmar agendamento', { exact: true });
+    const booked = (await waitText(page, 'Consulta agendada')) && !(await find(page, 'Preencher pr\u00e9-consulta'));
+    check('agendar: recepcao marca pelo mesmo assistente', booked, s[0] || '');
+    await shot(page, 'ag22_recepcao_agendou');
+    await nav(page, '#/acompanhamento');
+    check('acompanhamento: quem marcou consulta deixa de ser inativo', await waitText(page, 'Indicador Inativos: 1'), '');
+
+    await nav(page, '#/acompanhamento/criterios?perfil=administrador');
+    await waitText(page, 'Crit\u00e9rios de acompanhamento');
+    for (let i = 0; i < 6; i++) await tap(page, 'Aumentar: Retorno pr\u00f3ximo', { wait: 350 });
+    await tap(page, 'Salvar crit\u00e9rios', { wait: 600 });
+    check('criterios: administracao altera e salva', await waitText(page, 'Crit\u00e9rios salvos.'), 'retorno proximo 21 dias');
+    await shot(page, 'ag23_criterios');
+    await nav(page, '#/acompanhamento');
+    check('criterios: indicador recalculado', await waitText(page, 'Indicador Retorno pr\u00f3ximo: 4'), (await labels(page)).match(/Indicador [^|]+/g)?.join(' / ') || '');
+    await nav(page, '#/acompanhamento/criterios?perfil=recepcao');
+    check('criterios: recepcao so consulta', (await waitText(page, 'S\u00f3 a administra\u00e7\u00e3o da cl\u00ednica altera os crit\u00e9rios')) && !(await find(page, 'Salvar crit\u00e9rios')), '');
+    await nav(page, '#/acompanhamento?perfil=profissional');
+    const own = (await waitText(page, 'Seus pacientes - ' + AG_DRA)) && !(await find(page, 'Registrar contato com'));
+    check('acompanhamento: profissional ve so os proprios pacientes', own, '');
+    await shot(page, 'ag24_profissional_acompanhamento');
+    await ctx.close();
+  });
+
+  await step('celular: assistente da familia, urgencia e recepcao', async () => {
+    const { ctx, page } = await newPage(browser, MOBILE);
+    await open(page, '#/inicio?perfil=responsavel');
+    check('familia: cartao de consultas na tela inicial', (await agSee(page, 'Mensagens da cl\u00ednica (')) && !!(await find(page, 'Agendar consulta')), '');
+    await shot(page, 'ag30_celular_inicio_familia');
+    await nav(page, '#/mensagens');
+    const pref = (await agSee(page, 'Receber lembretes de consulta')) && (await agSee(page, 'Alice tem hor\u00e1rio marcado'));
+    check('familia: preferencia de contato e lembrete no celular', pref, '');
+    await shot(page, 'ag31_celular_mensagens');
+    await nav(page, '#/agendar?acao=agendar');
+    await agClick(page, 'Alice Exemplo Prado', { exact: true });
+    await agType(page, 'Ela est\u00e1 com falta de ar e os l\u00e1bios roxos');
+    const urg = (await waitText(page, 'Poss\u00edvel urg\u00eancia')) && (await has(page, 'ligue 192')) && !(await agSlots(page)).length;
+    check('urgencia: orienta pronto-socorro sem diagnostico nem horarios', urg, '');
+    await shot(page, 'ag32_celular_urgencia');
+    await tap(page, 'Recome\u00e7ar conversa', { wait: 1500 });
+    await agClick(page, 'Falar com a recep\u00e7\u00e3o', { exact: true });
+    check('recepcao: assistente encaminha o que nao resolve', await waitText(page, 'Encaminhado \u00e0 recep\u00e7\u00e3o'), '');
+    await shot(page, 'ag33_celular_encaminhado');
+    await nav(page, '#/lembretes?perfil=recepcao');
+    check('recepcao: pendencia do assistente', await agSee(page, 'Encaminhado pelo assistente'), '');
+    await ctx.close();
+  });
+
+  await step('computador: permissoes acompanhamento, lembretes e agendamento', async () => {
+    const rules = [
+      ['financeiro', ['#/acompanhamento', '#/lembretes', '#/agendar', '#/mensagens']],
+      ['responsavel', ['#/acompanhamento', '#/lembretes']],
+      ['profissional', ['#/agendar', '#/mensagens']],
+      ['recepcao', ['#/mensagens']],
+    ];
+    for (const [perfil, routes] of rules) {
+      const { ctx, page } = await newPage(browser, DESKTOP);
+      await open(page, '#/inicio?perfil=' + perfil);
+      const res = [];
+      for (const r of routes) {
+        await nav(page, r);
+        res.push(await waitText(page, 'Acesso restrito', 5000));
+      }
+      check('permissoes: ' + perfil + ' bloqueado em ' + routes.join(' '), res.every(Boolean), res.join('/'));
+      await ctx.close();
+    }
+  });
+
   await browser.close();
   const failed = report.checks.filter((c) => !c.ok);
   fs.writeFileSync(path.join(OUT, 'report.json'), JSON.stringify(report, null, 2));

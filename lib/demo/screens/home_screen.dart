@@ -13,6 +13,8 @@ import '../demo_data.dart';
 import '../demo_session.dart';
 import '../widgets/brand_widgets.dart';
 import '../widgets/demo_widgets.dart';
+import 'booking_assistant_screens.dart';
+import 'followup_screens.dart';
 import 'pre_visit_screens.dart';
 
 /// Inicio por perfil — cada area ve atalhos e resumo proprios.
@@ -68,6 +70,7 @@ class DemoHomeScreen extends StatelessWidget {
         s.appointments
             .where(
               (DemoAppointment a) =>
+                  a.status.holdsSlot &&
                   DateUtils.isSameDay(a.start, DateTime.now()),
             )
             .toList()
@@ -150,6 +153,7 @@ class DemoHomeScreen extends StatelessWidget {
               ('Biblioteca', Icons.menu_book_outlined, '/biblioteca'),
             ],
           ),
+          const DemoSchedulingHomeCard(),
         ];
       case DemoProfile.recepcao:
         return <Widget>[
@@ -172,6 +176,7 @@ class DemoHomeScreen extends StatelessWidget {
           const DemoSectionTitle('Agenda do dia'),
           for (final DemoAppointment a in today)
             _AppointmentTile(appointment: a),
+          const DemoSchedulingHomeCard(),
           const SizedBox(height: AppSpacing.md),
           const DemoNotice(
             icon: Icons.shield_outlined,
@@ -237,6 +242,7 @@ class DemoHomeScreen extends StatelessWidget {
               ('Biblioteca', Icons.menu_book_outlined, '/biblioteca'),
             ],
           ),
+          const DemoSchedulingHomeCard(),
           const SizedBox(height: AppSpacing.md),
           const DemoNotice(
             text:
@@ -284,6 +290,7 @@ class DemoHomeScreen extends StatelessWidget {
                 ),
               ),
             ),
+          const DemoFamilySchedulingCard(),
           const DemoSectionTitle('Próximas consultas'),
           const DemoFamilyUpcomingVisits(),
           const DemoSectionTitle('Atalhos'),
@@ -669,6 +676,8 @@ class DemoStatusChip extends StatelessWidget {
       DemoAppointmentStatus.confirmado => ('Confirmado', AppColors.brand),
       DemoAppointmentStatus.chegou => ('Chegou', AppColors.warning),
       DemoAppointmentStatus.concluido => ('Concluído', AppColors.tealDeep),
+      DemoAppointmentStatus.reagendar => ('Reagendar', AppColors.raspberry),
+      DemoAppointmentStatus.cancelado => ('Cancelado', AppColors.danger),
     };
     return ClinicalBadge(label: label, color: color);
   }

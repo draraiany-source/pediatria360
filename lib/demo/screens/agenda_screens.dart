@@ -7,8 +7,11 @@ import '../../core/theme/app_tokens.dart';
 import '../../core/widgets/child_avatar.dart';
 import '../../core/widgets/clinical_ui.dart';
 import '../demo_data.dart';
+import '../demo_scheduling.dart';
 import '../demo_session.dart';
 import '../widgets/demo_widgets.dart';
+import 'booking_assistant_screens.dart' show bookingPath;
+import 'followup_screens.dart';
 import 'home_screen.dart' show DemoStatusChip;
 import 'pre_visit_screens.dart';
 
@@ -40,8 +43,10 @@ class _DemoAgendaScreenState extends State<DemoAgendaScreen> {
         automaticallyImplyLeading: false,
       ),
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => showDemoSnack(context,
-            'Novo agendamento só pode ser testado na versão autenticada.'),
+        onPressed: () => demoSession.scheduling.canManageAgenda
+            ? context.go(bookingPath)
+            : showDemoSnack(context,
+                'Novos agendamentos são feitos pela recepção ou pela família.'),
         icon: const Icon(Icons.add_rounded),
         label: const Text('Agendar'),
       ),
@@ -50,8 +55,11 @@ class _DemoAgendaScreenState extends State<DemoAgendaScreen> {
         builder: (BuildContext context) => ListenableBuilder(
           listenable: demoSession,
           builder: (BuildContext context, _) {
+            final bool own = demoSession.profile == DemoProfile.profissional;
             final List<DemoAppointment> list = demoSession.appointments
-                .where((DemoAppointment a) => DateUtils.isSameDay(a.start, _day))
+                .where((DemoAppointment a) =>
+                    DateUtils.isSameDay(a.start, _day) &&
+                    (!own || a.professionalId == demoSession.account.id))
                 .toList()
               ..sort((DemoAppointment a, DemoAppointment b) =>
                   a.start.compareTo(b.start));
@@ -263,32 +271,53 @@ class DemoAppointmentDetailScreen extends StatelessWidget {
                                 : 'Presencial',
                           ),
                           _Info(Icons.notes_rounded, a.reason),
+                          _Info(
+                            Icons.person_outline,
+                            '${DemoScheduling.professionalName(a.professionalId)} '
+                            '- ${a.durationMinutes} min',
+                          ),
                         ],
                       ),
                     ),
-                    const DemoSectionTitle('Atualizar status'),
-                    Wrap(
-                      spacing: AppSpacing.sm,
-                      runSpacing: AppSpacing.sm,
-                      children: <Widget>[
-                        for (final DemoAppointmentStatus s
-                            in DemoAppointmentStatus.values)
-                          ChoiceChip(
-                            label: Text(switch (s) {
-                              DemoAppointmentStatus.agendado => 'Agendado',
-                              DemoAppointmentStatus.confirmado => 'Confirmado',
-                              DemoAppointmentStatus.chegou => 'Chegou',
-                              DemoAppointmentStatus.concluido => 'Concluído',
-                            }),
-                            selected: a.status == s,
-                            onSelected: (_) {
-                              demoSession.setAppointmentStatus(a, s);
-                              showDemoSnack(context,
-                                  'Status alterado só nesta demonstração.');
-                            },
-                          ),
-                      ],
-                    ),
+                    if (a.status == DemoAppointmentStatus.reagendar)
+                      const Padding(
+                        padding: EdgeInsets.only(top: AppSpacing.md),
+                        child: DemoNotice(
+                          icon: Icons.event_repeat_rounded,
+                          color: AppColors.raspberry,
+                          text: 'A família pediu outro horário. O horário '
+                              'atual continua reservado até a remarcação.',
+                        ),
+                      ),
+                    if (a.status.holdsSlot) ...<Widget>[
+                      const DemoSectionTitle('Atualizar status'),
+                      Wrap(
+                        spacing: AppSpacing.sm,
+                        runSpacing: AppSpacing.sm,
+                        children: <Widget>[
+                          for (final DemoAppointmentStatus s
+                              in DemoAppointmentStatus.manual)
+                            ChoiceChip(
+                              label: Text(switch (s) {
+                                DemoAppointmentStatus.agendado => 'Agendado',
+                                DemoAppointmentStatus.confirmado =>
+                                  'Confirmado',
+                                DemoAppointmentStatus.chegou => 'Chegou',
+                                DemoAppointmentStatus.concluido => 'Concluído',
+                                DemoAppointmentStatus.reagendar => 'Reagendar',
+                                DemoAppointmentStatus.cancelado => 'Cancelado',
+                              }),
+                              selected: a.status == s,
+                              onSelected: (_) {
+                                demoSession.setAppointmentStatus(a, s);
+                                showDemoSnack(context,
+                                    'Status alterado só nesta demonstração.');
+                              },
+                            ),
+                        ],
+                      ),
+                    ],
+                    DemoAppointmentActions(appointment: a),
                     const SizedBox(height: AppSpacing.lg),
                     DemoPreVisitAppointmentInfo(appointment: a),
                     if (!isReception &&
@@ -306,6 +335,7 @@ class DemoAppointmentDetailScreen extends StatelessWidget {
                         text: 'A recepção registra chegada, mas não abre o '
                             'prontuario.',
                       ),
+                    DemoAppointmentReminders(appointment: a),
                   ],
                 ),
               ),

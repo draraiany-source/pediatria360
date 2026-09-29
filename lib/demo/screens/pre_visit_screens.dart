@@ -100,6 +100,7 @@ class _DemoPreVisitScreenState extends State<DemoPreVisitScreen> {
     if (widget.from == 'paciente' && a != null) {
       return '/pacientes/${a.patientId}';
     }
+    if (widget.from == 'agendar') return '/agendar';
     return '/inicio';
   }
 

@@ -51,17 +51,39 @@ class DemoEncounter {
     required this.date,
     required this.type,
     required this.summary,
+    this.professionalId = 'prof-a',
   });
 
   final String patientId;
   final DateTime date;
   final String type;
   final String summary;
+  final String professionalId;
 }
 
 enum DemoAppointmentKind { presencial, teleconsulta }
 
-enum DemoAppointmentStatus { agendado, confirmado, chegou, concluido }
+enum DemoAppointmentStatus {
+  agendado,
+  confirmado,
+  chegou,
+  concluido,
+
+  /// A família pediu outro horário (lembrete ou assistente).
+  reagendar,
+  cancelado;
+
+  /// Ainda ocupa o horário na agenda.
+  bool get holdsSlot => this != DemoAppointmentStatus.cancelado;
+
+  /// Status que a recepção escolhe à mão no detalhe.
+  static const List<DemoAppointmentStatus> manual = <DemoAppointmentStatus>[
+    agendado,
+    confirmado,
+    chegou,
+    concluido,
+  ];
+}
 
 class DemoAppointment {
   DemoAppointment({
@@ -71,14 +93,24 @@ class DemoAppointment {
     required this.kind,
     required this.status,
     required this.reason,
+    this.professionalId = 'prof-a',
+    this.durationMinutes = 30,
+    this.typeLabel,
   });
 
   final String id;
   final String patientId;
-  final DateTime start;
+
+  /// Muda no reagendamento; o id (e a pré-consulta) continua o mesmo.
+  DateTime start;
   final DemoAppointmentKind kind;
   DemoAppointmentStatus status;
   final String reason;
+  final String professionalId;
+  final int durationMinutes;
+  final String? typeLabel;
+
+  DateTime get end => start.add(Duration(minutes: durationMinutes));
 }
 
 enum DemoVaccineStatus { registrada, pendente }
@@ -201,6 +233,27 @@ class DemoSeed {
       weightKg: 12.8,
       weighedAt: _daysAgo(30),
     ),
+    DemoPatient(
+      id: 'p6',
+      name: 'Bento Exemplo Alves',
+      birthDate: _monthsAgo(62, day: 5),
+      sexLabel: 'Menino',
+      guardianName: 'Responsável Exemplo E',
+    ),
+    DemoPatient(
+      id: 'p7',
+      name: 'Clara Exemplo Dias',
+      birthDate: _monthsAgo(20, day: 11),
+      sexLabel: 'Menina',
+      guardianName: 'Responsável Exemplo F',
+    ),
+    DemoPatient(
+      id: 'p8',
+      name: 'Heitor Exemplo Melo',
+      birthDate: _monthsAgo(44, day: 18),
+      sexLabel: 'Menino',
+      guardianName: 'Responsável Exemplo G',
+    ),
   ];
 
   static List<DemoEncounter> encounters() => <DemoEncounter>[
@@ -232,6 +285,45 @@ class DemoSeed {
       type: 'Primeira consulta',
       summary: 'Exemplo de primeira consulta. Conteúdo ilustrativo.',
     ),
+    DemoEncounter(
+      patientId: 'p1',
+      date: _monthsAgo(7),
+      type: 'Consulta de rotina',
+      summary: 'Registro fictício mais antigo, usado no acompanhamento.',
+    ),
+    DemoEncounter(
+      patientId: 'p4',
+      date: _monthsAgo(10),
+      type: 'Consulta de rotina',
+      summary: 'Registro fictício. Não representa conduta clínica.',
+    ),
+    DemoEncounter(
+      patientId: 'p5',
+      date: _monthsAgo(8),
+      type: 'Consulta de rotina',
+      summary: 'Registro fictício. Não representa conduta clínica.',
+    ),
+    DemoEncounter(
+      patientId: 'p6',
+      date: _monthsAgo(9),
+      type: 'Consulta de rotina',
+      summary: 'Registro fictício. Não representa conduta clínica.',
+    ),
+    for (final int m in const <int>[1, 4, 6, 9])
+      DemoEncounter(
+        patientId: 'p7',
+        date: _monthsAgo(m, day: 8),
+        type: 'Consulta de rotina',
+        summary: 'Registro fictício da Clínica Exemplo Dois.',
+        professionalId: 'prof-b',
+      ),
+    DemoEncounter(
+      patientId: 'p8',
+      date: _monthsAgo(7, day: 3),
+      type: 'Consulta por queixa',
+      summary: 'Registro fictício da Clínica Exemplo Dois.',
+      professionalId: 'prof-b',
+    ),
   ];
 
   static List<DemoAppointment> appointments() {
@@ -244,6 +336,7 @@ class DemoSeed {
         kind: DemoAppointmentKind.presencial,
         status: DemoAppointmentStatus.chegou,
         reason: 'Consulta de rotina (exemplo)',
+        durationMinutes: 40,
       ),
       DemoAppointment(
         id: 'a2',
@@ -252,6 +345,7 @@ class DemoSeed {
         kind: DemoAppointmentKind.presencial,
         status: DemoAppointmentStatus.confirmado,
         reason: 'Retorno (exemplo)',
+        durationMinutes: 20,
       ),
       DemoAppointment(
         id: 'a3',
@@ -268,14 +362,16 @@ class DemoSeed {
         kind: DemoAppointmentKind.presencial,
         status: DemoAppointmentStatus.agendado,
         reason: 'Consulta de rotina (exemplo)',
+        durationMinutes: 40,
       ),
       DemoAppointment(
         id: 'a5',
         patientId: 'p4',
-        start: d.add(const Duration(days: 1, hours: 11)),
+        start: DateTime(d.year, d.month, d.day + 1, 11),
         kind: DemoAppointmentKind.presencial,
         status: DemoAppointmentStatus.agendado,
         reason: 'Avaliação (exemplo)',
+        durationMinutes: 40,
       ),
       DemoAppointment(
         id: 'a6',
@@ -284,6 +380,17 @@ class DemoSeed {
         kind: DemoAppointmentKind.presencial,
         status: DemoAppointmentStatus.agendado,
         reason: 'Retorno (exemplo)',
+        durationMinutes: 20,
+      ),
+      DemoAppointment(
+        id: 'a7',
+        patientId: 'p7',
+        start: DateTime(d.year, d.month, d.day + 3, 15),
+        kind: DemoAppointmentKind.presencial,
+        status: DemoAppointmentStatus.agendado,
+        reason: 'Consulta de rotina (exemplo)',
+        professionalId: 'prof-b',
+        durationMinutes: 40,
       ),
     ];
   }

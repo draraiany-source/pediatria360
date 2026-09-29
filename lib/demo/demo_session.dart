@@ -19,6 +19,7 @@ import 'demo_data.dart';
 import 'demo_growth.dart';
 import 'demo_previsit_seed.dart';
 import 'demo_routine.dart';
+import 'demo_scheduling.dart';
 
 /// Perfis da demonstracao — espelham as areas de trabalho do app real.
 enum DemoProfile {
@@ -239,7 +240,14 @@ class DemoSession extends ChangeNotifier {
     lastRoutinePatientId = null;
     sharedSummaries = routine.sharedSummaries(this);
     preVisits = DemoPreVisitSeed.seed(now);
+    scheduling = DemoScheduling(this);
   }
+
+  /// Acompanhamento, lembretes e agendamento assistido.
+  late DemoScheduling scheduling;
+
+  /// Para os módulos auxiliares avisarem as telas.
+  void changed() => notifyListeners();
 
   void enter(DemoProfile profile) {
     if (_profile == profile) return;
@@ -1206,6 +1214,7 @@ class DemoSession extends ChangeNotifier {
           (DemoAppointment a) =>
               a.patientId == patientId &&
               a.status != DemoAppointmentStatus.concluido &&
+              a.status.holdsSlot &&
               !a.start.isBefore(today),
         )
         .toList()
@@ -1220,7 +1229,9 @@ class DemoSession extends ChangeNotifier {
 
   /// Depois de concluída a consulta, a pré-consulta fica só para leitura.
   bool canEditPreVisit(DemoAppointment a) =>
-      canOpenFamilyPreVisit(a) && a.status != DemoAppointmentStatus.concluido;
+      canOpenFamilyPreVisit(a) &&
+      a.status != DemoAppointmentStatus.concluido &&
+      a.status.holdsSlot;
 
   /// Profissional da clínica que atende. Outra clínica, recepção,
   /// financeiro e administração não abrem respostas nem anexos.

@@ -2,8 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../shared/clinical/clinical_documents.dart';
+import '../shared/scheduling/follow_up.dart';
 import 'demo_session.dart';
 import 'screens/agenda_screens.dart';
+import 'screens/booking_assistant_screens.dart';
+import 'screens/followup_screens.dart';
 import 'screens/brand_screens.dart';
 import 'screens/business_screens.dart';
 import 'screens/care_screens.dart';
@@ -91,6 +94,23 @@ Widget _preVisitReview(Widget child) {
         : null,
   );
 }
+
+/// Acompanhamento e lembretes: profissional (só os próprios pacientes),
+/// recepção e administração.
+Widget _followUp(String title, Widget child) =>
+    demoSession.scheduling.canSeeFollowUp
+    ? ScaffoldMessenger(child: child)
+    : DemoRestrictedScreen(module: DemoModule.agenda, title: title);
+
+/// Agendamento assistido: responsável (só as crianças dele) e recepção.
+Widget _booking(Widget child) =>
+    demoSession.profile == DemoProfile.responsavel ||
+        demoSession.profile == DemoProfile.recepcao
+    ? ScaffoldMessenger(child: child)
+    : const DemoRestrictedScreen(
+        module: DemoModule.agenda,
+        title: 'Agendar consulta',
+      );
 
 Widget _flow(DemoModule module, Widget child) =>
     _guard(module, ScaffoldMessenger(child: child));
@@ -562,6 +582,55 @@ final GoRouter demoRouter = GoRouter(
                   from: state.uri.queryParameters['de'],
                 ),
               ),
+        ),
+        GoRoute(
+          path: followUpPath,
+          builder: (BuildContext context, GoRouterState state) => _followUp(
+            'Acompanhamento de pacientes',
+            DemoFollowUpScreen(
+              key: ValueKey<String>(state.uri.toString()),
+              initial: FollowUpCategory.fromSlug(
+                state.uri.queryParameters['indicador'],
+              ),
+            ),
+          ),
+          routes: <RouteBase>[
+            GoRoute(
+              path: 'criterios',
+              builder: (BuildContext context, GoRouterState state) =>
+                  _followUp(
+                    'Critérios de acompanhamento',
+                    const DemoFollowUpCriteriaScreen(),
+                  ),
+            ),
+          ],
+        ),
+        GoRoute(
+          path: remindersPath,
+          builder: (BuildContext context, GoRouterState state) => _followUp(
+            'Lembretes de consulta',
+            const DemoRemindersScreen(),
+          ),
+        ),
+        GoRoute(
+          path: bookingPath,
+          builder: (BuildContext context, GoRouterState state) => _booking(
+            DemoBookingAssistantScreen(
+              key: ValueKey<String>(state.uri.toString()),
+              intent: intentFromSlug(state.uri.queryParameters['acao']),
+              appointmentId: state.uri.queryParameters['consulta'],
+            ),
+          ),
+        ),
+        GoRoute(
+          path: familyMessagesPath,
+          builder: (BuildContext context, GoRouterState state) =>
+              demoSession.profile == DemoProfile.responsavel
+              ? const ScaffoldMessenger(child: DemoFamilyMessagesScreen())
+              : const DemoRestrictedScreen(
+                  module: DemoModule.agenda,
+                  title: 'Mensagens da clínica',
+                ),
         ),
         GoRoute(
           path: rxTemplatesPath,

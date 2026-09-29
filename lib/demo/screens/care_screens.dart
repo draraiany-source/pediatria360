@@ -203,6 +203,7 @@ class DemoTelemedicineScreen extends StatelessWidget {
     final List<DemoAppointment> tele = demoSession.appointments
         .where((DemoAppointment a) =>
             a.kind == DemoAppointmentKind.teleconsulta &&
+            a.status.holdsSlot &&
             demoSession.visiblePatients
                 .any((DemoPatient p) => p.id == a.patientId))
         .toList();
