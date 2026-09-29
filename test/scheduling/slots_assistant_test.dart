@@ -8,10 +8,22 @@ import 'package:pediatria360/shared/scheduling/slots.dart';
 final DateTime kNow = DateTime(2026, 9, 29, 10);
 
 const WorkingHours kHours = WorkingHours(<int, List<WorkingRange>>{
-  1: <WorkingRange>[WorkingRange(8 * 60, 12 * 60), WorkingRange(14 * 60, 18 * 60)],
-  2: <WorkingRange>[WorkingRange(8 * 60, 12 * 60), WorkingRange(14 * 60, 18 * 60)],
-  3: <WorkingRange>[WorkingRange(8 * 60, 12 * 60), WorkingRange(14 * 60, 18 * 60)],
-  4: <WorkingRange>[WorkingRange(8 * 60, 12 * 60), WorkingRange(14 * 60, 18 * 60)],
+  1: <WorkingRange>[
+    WorkingRange(8 * 60, 12 * 60),
+    WorkingRange(14 * 60, 18 * 60),
+  ],
+  2: <WorkingRange>[
+    WorkingRange(8 * 60, 12 * 60),
+    WorkingRange(14 * 60, 18 * 60),
+  ],
+  3: <WorkingRange>[
+    WorkingRange(8 * 60, 12 * 60),
+    WorkingRange(14 * 60, 18 * 60),
+  ],
+  4: <WorkingRange>[
+    WorkingRange(8 * 60, 12 * 60),
+    WorkingRange(14 * 60, 18 * 60),
+  ],
   5: <WorkingRange>[WorkingRange(8 * 60, 12 * 60)],
 });
 
@@ -54,7 +66,11 @@ class FakeBackend implements SchedulingBackend {
 
   @override
   List<AssistantProfessional> professionals() => const <AssistantProfessional>[
-    AssistantProfessional(id: 'pa', name: 'Dra. Exemplo A', clinic: 'Clínica A'),
+    AssistantProfessional(
+      id: 'pa',
+      name: 'Dra. Exemplo A',
+      clinic: 'Clínica A',
+    ),
     AssistantProfessional(id: 'pb', name: 'Dr. Exemplo B', clinic: 'Clínica B'),
   ];
 
@@ -189,10 +205,7 @@ void main() {
 
     test('bloqueio de agenda (congresso na quarta de manhã)', () {
       final List<DateTime> s = slots(part: DayPart.manha, weekdays: <int>{3});
-      expect(
-        s.where((DateTime t) => t.day == 30),
-        isEmpty,
-      );
+      expect(s.where((DateTime t) => t.day == 30), isEmpty);
       expect(s.first, DateTime(2026, 10, 7, 8));
     });
 
@@ -238,7 +251,10 @@ void main() {
 
   group('urgência e texto livre', () {
     test('sinais de alerta', () {
-      expect(checkUrgency('Ela está com dificuldade para respirar').urgent, isTrue);
+      expect(
+        checkUrgency('Ela está com dificuldade para respirar').urgent,
+        isTrue,
+      );
       expect(checkUrgency('teve uma CONVULSÃO agora').urgent, isTrue);
       expect(checkUrgency('lábios roxos').urgent, isTrue);
       expect(checkUrgency('tosse há 3 dias').urgent, isFalse);
@@ -260,8 +276,10 @@ void main() {
       expect(detectDayPart('à tarde'), DayPart.tarde);
       expect(detectWeekdays('terça ou quinta'), <int>{2, 4});
       expect(detectTele('pode ser online'), isTrue);
-      expect(matchOption('é para a luna', <String>['Luna Exemplo', 'Alice Exemplo']),
-          'Luna Exemplo');
+      expect(
+        matchOption('é para a luna', <String>['Luna Exemplo', 'Alice Exemplo']),
+        'Luna Exemplo',
+      );
     });
   });
 
@@ -294,10 +312,39 @@ void main() {
       expect(a.bookedAppointmentId, isNotNull);
     });
 
+    test('próxima semana busca a partir da segunda seguinte', () {
+      final FakeBackend b = FakeBackend();
+      final BookingAssistant a = BookingAssistant(b);
+      a.send(BookingAssistant.optBook);
+      a.send('Luna Exemplo');
+      a.send('Consulta');
+      a.send(VisitType.queixa.label);
+      a.send(BookingAssistant.optPresencial);
+      a.send('Dra. Exemplo A');
+      final List<String> thisWeek = <String>[
+        for (final int d in <int>[29, 30]) '/09',
+        for (final int d in <int>[1, 2, 3, 4]) '0/10',
+      ];
+      bool offersThisWeek() => a.options.any(
+        (String o) => thisWeek.any((String d) => o.contains(d)),
+      );
+      a.send(BookingAssistant.optNextWeek);
+      expect(a.options, contains(BookingAssistant.optMoreSlots));
+      expect(offersThisWeek(), isFalse, reason: a.options.join(' | '));
+      a.send(BookingAssistant.optChangePeriod);
+      a.send(DayPart.qualquer.label);
+      expect(offersThisWeek(), isTrue);
+      a.send('prefiro na próxima semana');
+      expect(a.options, contains(BookingAssistant.optMoreSlots));
+      expect(offersThisWeek(), isFalse, reason: a.options.join(' | '));
+    });
+
     test('frase completa preenche vários dados de uma vez', () {
       final FakeBackend b = FakeBackend();
       final BookingAssistant a = BookingAssistant(b);
-      a.send('Quero marcar um retorno online para a Alice com o Dr. Exemplo B de manhã');
+      a.send(
+        'Quero marcar um retorno online para a Alice com o Dr. Exemplo B de manhã',
+      );
       // Falta só o motivo.
       expect(a.messages.last.text, contains('motivo'));
       a.send('Rever resultado');
@@ -314,7 +361,9 @@ void main() {
       a.send('Agendar consulta de puericultura online para a Luna');
       a.send('Rotina');
       expect(
-        a.messages.any((AssistantMessage m) => m.text.contains('só presencial')),
+        a.messages.any(
+          (AssistantMessage m) => m.text.contains('só presencial'),
+        ),
         isTrue,
       );
     });
@@ -367,8 +416,11 @@ void main() {
       r.send('quinta à tarde');
       expect(r.options.first, 'qui, 01/10 às 14:00');
       r.send(r.options.first);
-      expect(b.booked.firstWhere((BookedInterval x) => x.id == 'm1').startsAt,
-          DateTime(2026, 10, 5, 9), reason: 'só grava após confirmar');
+      expect(
+        b.booked.firstWhere((BookedInterval x) => x.id == 'm1').startsAt,
+        DateTime(2026, 10, 5, 9),
+        reason: 'só grava após confirmar',
+      );
       r.send(BookingAssistant.optConfirmReschedule);
       expect(r.messages.last.card?.kind, AssistantCardKind.rescheduled);
       final BookedInterval moved = b.booked.firstWhere(
@@ -380,12 +432,16 @@ void main() {
       final BookingAssistant c = BookingAssistant(b);
       c.send(BookingAssistant.optCancel);
       c.send(BookingAssistant.optKeep);
-      expect(b.booked.firstWhere((BookedInterval x) => x.id == 'm1').isBlocking,
-          isTrue);
+      expect(
+        b.booked.firstWhere((BookedInterval x) => x.id == 'm1').isBlocking,
+        isTrue,
+      );
       c.send(BookingAssistant.optCancel);
       c.send(BookingAssistant.optConfirmCancel);
-      expect(b.booked.firstWhere((BookedInterval x) => x.id == 'm1').isBlocking,
-          isFalse);
+      expect(
+        b.booked.firstWhere((BookedInterval x) => x.id == 'm1').isBlocking,
+        isFalse,
+      );
     });
 
     test('fora do prazo vai para a recepção', () {
@@ -406,8 +462,10 @@ void main() {
       );
       expect(a.messages.last.card?.kind, AssistantCardKind.handoff);
       expect(b.handoffs.single, contains('Cancelamento'));
-      expect(b.booked.firstWhere((BookedInterval x) => x.id == 'm2').isBlocking,
-          isTrue);
+      expect(
+        b.booked.firstWhere((BookedInterval x) => x.id == 'm2').isBlocking,
+        isTrue,
+      );
     });
 
     test('não entendeu duas vezes: oferece a recepção', () {

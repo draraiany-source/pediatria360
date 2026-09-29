@@ -57,8 +57,7 @@ class AssistantAppointment {
   final int durationMinutes;
   final bool teleconsulta;
 
-  String get label =>
-      '${childName.split(' ').first} - ${reminderWhen(start)}';
+  String get label => '${childName.split(' ').first} - ${reminderWhen(start)}';
 }
 
 class BookingDraft {
@@ -111,7 +110,14 @@ abstract class SchedulingBackend {
   void handoff(String summary);
 }
 
-enum AssistantCardKind { urgency, summary, booked, rescheduled, cancelled, handoff }
+enum AssistantCardKind {
+  urgency,
+  summary,
+  booked,
+  rescheduled,
+  cancelled,
+  handoff,
+}
 
 class AssistantCard {
   const AssistantCard({
@@ -229,8 +235,7 @@ class BookingAssistant {
   /// Id gravado por último (para abrir a pré-consulta).
   String? bookedAppointmentId;
 
-  List<String> get options =>
-      messages.isEmpty || messages.last.fromUser
+  List<String> get options => messages.isEmpty || messages.last.fromUser
       ? const <String>[]
       : messages.last.options;
 
@@ -308,17 +313,19 @@ class BookingAssistant {
             ? false
             : detectTele(text);
         if (tele == null) {
-          _miss(
-            'Prefere presencial ou teleconsulta?',
-            const <String>[optPresencial, optTele],
-          );
+          _miss('Prefere presencial ou teleconsulta?', const <String>[
+            optPresencial,
+            optTele,
+          ]);
         } else {
           _tele = tele;
           _next();
         }
       case _Step.professional:
         if (text == optAnyProfessional ||
-            RegExp(r'qualquer|tanto faz|sem prefer').hasMatch(normalizeText(text))) {
+            RegExp(
+              r'qualquer|tanto faz|sem prefer',
+            ).hasMatch(normalizeText(text))) {
           _anyProfessional = true;
           _next();
           return;
@@ -331,13 +338,13 @@ class BookingAssistant {
           _next();
         }
       case _Step.availability:
+        _searchFrom = null;
         if (!_absorbAvailability(text)) {
           _miss(
             'Qual período fica melhor? Pode dizer também o dia da semana.',
             _availabilityOptions,
           );
         } else {
-          _searchFrom = null;
           _showSlots();
         }
       case _Step.slot:
@@ -570,9 +577,12 @@ class BookingAssistant {
     _offered.clear();
     final DateTime from = _searchFrom ?? backend.now;
     final List<AssistantProfessional> pros = _changing != null
-        ? backend.professionals().where(
-            (AssistantProfessional p) => p.id == _changing!.professionalId,
-          ).toList()
+        ? backend
+              .professionals()
+              .where(
+                (AssistantProfessional p) => p.id == _changing!.professionalId,
+              )
+              .toList()
         : _anyProfessional
         ? backend.professionals()
         : <AssistantProfessional>[_professional!];
@@ -595,8 +605,10 @@ class BookingAssistant {
       }
     }
     found.sort(
-      ((AssistantProfessional, DateTime) a, (AssistantProfessional, DateTime) b) =>
-          a.$2.compareTo(b.$2),
+      (
+        (AssistantProfessional, DateTime) a,
+        (AssistantProfessional, DateTime) b,
+      ) => a.$2.compareTo(b.$2),
     );
     final List<(AssistantProfessional, DateTime)> top = found.take(4).toList();
     if (top.isEmpty) {
@@ -641,11 +653,13 @@ class BookingAssistant {
         ? text
         : matchOption(text, _offered.keys.toList());
     if (label == null) {
+      final DateTime? previous = _searchFrom;
+      _searchFrom = null;
       if (_absorbAvailability(text)) {
-        _searchFrom = null;
         _showSlots();
         return;
       }
+      _searchFrom = previous;
       _miss('Escolha um dos horários.', <String>[
         ..._offered.keys,
         optMoreSlots,
@@ -662,7 +676,8 @@ class BookingAssistant {
         'Confira a remarcação:',
         card: AssistantCard(
           kind: AssistantCardKind.summary,
-          title: 'Remarcar consulta de ${_changing!.childName.split(' ').first}',
+          title:
+              'Remarcar consulta de ${_changing!.childName.split(' ').first}',
           lines: <String>[
             'De: ${reminderWhen(_changing!.start)}',
             'Para: ${reminderWhen(t)}',

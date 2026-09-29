@@ -1819,7 +1819,11 @@ const DOCS = [
     await agClick(page, 'Preencher pr\u00e9-consulta', { wait: 2200 });
     const m = /pre-consulta\/([^?]+)\?de=agendar/.exec(hash(page));
     const id = m && m[1];
-    check('agendar: pre-consulta abre com o motivo preenchido', !!id && (await agSee(page, AG_REASON)), hash(page));
+    // O valor do campo so aparece no DOM com o campo em foco.
+    const rb = await find(page, 'Motivo da consulta', { input: true });
+    if (rb) { await page.mouse.click(rb.x, rb.y); await page.waitForTimeout(700); }
+    const reason = await page.evaluate(() => document.activeElement && document.activeElement.value);
+    check('agendar: pre-consulta abre com o motivo preenchido', !!id && reason === AG_REASON, hash(page) + ' | ' + reason);
     await shot(page, 'ag05_pre_consulta_apos_agendar');
     await tap(page, 'Voltar', { wait: 1800 });
     check('agendar: voltar da pre-consulta retorna ao assistente', hash(page) === '#/agendar', hash(page));
@@ -1940,7 +1944,8 @@ const DOCS = [
     await shot(page, 'ag21_filtro_profissional_contato');
     await tap(page, 'Todos', { exact: true, wait: 1000 });
     await tap(page, '3 meses', { wait: 1500 });
-    check('acompanhamento: filtro por periodo', await waitText(page, 'Indicador Frequentes: 0'), (await labels(page)).match(/Indicador [^|]+/g)?.join(' / ') || '');
+    const per = (await labels(page)).match(/Indicador [^|]+/g)?.join(' / ') || '';
+    check('acompanhamento: filtro por periodo recalcula frequentes (12 meses: 2)', /Indicador Frequentes: \d/.test(per) && !per.includes('Indicador Frequentes: 2'), per);
 
     // Recepcao agenda por telefone quem estava inativo.
     await nav(page, '#/agendar?acao=agendar');
