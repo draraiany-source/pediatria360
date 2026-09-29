@@ -196,18 +196,22 @@ class _DemoAgendaScreenState extends State<DemoAgendaScreen> {
                 ),
                 children: <Widget>[
                   Center(
-                    child: SegmentedButton<AgendaView>(
-                      segments: <ButtonSegment<AgendaView>>[
-                        for (final AgendaView v in AgendaView.values)
-                          ButtonSegment<AgendaView>(
-                            value: v,
-                            label: Text(v.label),
-                          ),
-                      ],
-                      selected: <AgendaView>{_view},
-                      showSelectedIcon: false,
-                      onSelectionChanged: (Set<AgendaView> s) =>
-                          _show(s.first, _anchor),
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 360),
+                      child: SegmentedButton<AgendaView>(
+                        expandedInsets: EdgeInsets.zero,
+                        segments: <ButtonSegment<AgendaView>>[
+                          for (final AgendaView v in AgendaView.values)
+                            ButtonSegment<AgendaView>(
+                              value: v,
+                              label: Text(v.label, maxLines: 1),
+                            ),
+                        ],
+                        selected: <AgendaView>{_view},
+                        showSelectedIcon: false,
+                        onSelectionChanged: (Set<AgendaView> s) =>
+                            _show(s.first, _anchor),
+                      ),
                     ),
                   ),
                   const SizedBox(height: AppSpacing.sm),
