@@ -1,6 +1,6 @@
 # Agenda e acompanhamento clínico do profissional: relatório de homologação
 
-Código: commits `467d10e` e `bd281dc` na branch `feat/area-profissional`.
+Código: commits `467d10e`, `bd281dc` e `c2b9c66` na branch `feat/area-profissional`.
 Todos os pacientes, consultas e anotações usados são fictícios. O app real, o Firebase e as lojas não foram alterados.
 
 ## O que existia
@@ -132,12 +132,17 @@ Na demonstração tudo fica na memória da aba e some ao recarregar a página.
 | Regras (`test/clinical/workspace_logic_test.dart`): agenda, diário, tarefas, observações, organizador, linha do tempo, crescimento e alterações | 16/16 aprovados |
 | Demonstração (`test/demo_workspace_test.dart`): permissões, diário, agenda, resumo, observações, histórico e telas a 1280 × 900 | 15/15 aprovados |
 | Fluxo clínico existente (`test/demo_clinical_flow_test.dart`), ajustado para abrir o resumo ao finalizar | aprovado |
-| Suíte completa `flutter test` | 741/741 aprovados |
+| Suíte completa `flutter test` | 743/743 aprovados |
 | `flutter analyze` | 132 avisos informativos, os mesmos de antes; nenhum nos arquivos novos |
 | Navegador automatizado, servidor local com a versão compilada `bd281dc` (etapas deste módulo) | 30/30 aprovados. Na versão anterior (`467d10e`), 1 falha: o campo de transcrição não era encontrado pelo leitor de acessibilidade; corrigido em `bd281dc` |
 | Regressão completa no mesmo servidor local (todos os módulos) | 398/398 aprovados |
+| Regressão completa no link público, fonte `bd281dc` | 395/398. As 3 falhas eram do painel de acompanhamento (módulo anterior), não deste; ver o relatório `acompanhamento-agendamento` |
+| Regressão completa no link público, fonte `cbeed24` | 398/398 aprovados (30/30 neste módulo) |
+| Etapas de agenda no link público, fonte `c2b9c66` | 60/60 aprovados |
 
-O teste no link público e as capturas desta pasta dependem da publicação da nova versão na demonstração.
+Versão publicada na demonstração: fonte `c2b9c66`, Pages `ca30ca6`.
+
+Nas capturas da rodada `cbeed24`, o botão "Semana" do seletor da agenda quebrava em duas linhas ("Seman / a"), no computador e no celular. O seletor passou a ter largura fixa (até 360 px, dividida entre os três botões) em `c2b9c66`, e as etapas de agenda foram repetidas no link público.
 
 ### O que o navegador automatizado verifica
 
@@ -166,6 +171,10 @@ O teste no link público e as capturas desta pasta dependem da publicação da n
 - **Permissões:**
   - recepção, financeiro e responsável bloqueados no diário, histórico, resumo, observações e comparação;
   - profissional bloqueado no horário de outro profissional.
+
+Capturas nesta pasta:
+- `cl01` a `cl08` e `m_cl01`, `m_di01`: agenda, horário, resumo, histórico, registro de alterações e comparação (fonte `c2b9c66`);
+- `di01`, `di02`, `ob01` e `ob02`: diário e observações (fonte `cbeed24`).
 
 ### O que não foi testado
 

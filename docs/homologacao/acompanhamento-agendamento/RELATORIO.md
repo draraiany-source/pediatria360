@@ -1,6 +1,6 @@
 # Acompanhamento de pacientes, lembretes e agendamento assistido: relatório de homologação
 
-Código: commits `eeb5239`, `0b422bc` e `c907986` na branch `feat/area-profissional`.
+Código: commits `eeb5239`, `0b422bc`, `c907986` e `cbeed24` na branch `feat/area-profissional`.
 Todos os nomes, telefones e consultas usados são fictícios. O app real, o Firebase e as lojas não foram alterados. Nenhuma mensagem de WhatsApp foi enviada.
 
 ## O que existia
@@ -125,17 +125,24 @@ A função `bookAppointment` só recusa um agendamento com **exatamente o mesmo 
 
 | Teste | Resultado |
 |---|---|
-| Regras de acompanhamento (`test/scheduling/follow_up_test.dart`) | 14/14 aprovados |
+| Regras de acompanhamento (`test/scheduling/follow_up_test.dart`) | 15/15 aprovados |
 | Regras de lembretes (`test/scheduling/reminders_test.dart`) | 11/11 aprovados |
 | Horários livres e assistente (`test/scheduling/slots_assistant_test.dart`) | 19/19 aprovados |
-| Fluxo da demonstração (`test/demo_scheduling_test.dart`) | 28/28 aprovados |
+| Fluxo da demonstração (`test/demo_scheduling_test.dart`) | 29/29 aprovados |
 | WhatsApp e agendamento nas funções (`functions`: `whatsapp.test.ts` e `booking.test.ts`, `jest`) | 20/20 aprovados |
-| Suíte completa `flutter test` (inclui o módulo seguinte) | 741/741 aprovados |
+| Suíte completa `flutter test` (inclui o módulo seguinte) | 743/743 aprovados |
 | `flutter analyze` | 132 avisos informativos, os mesmos de antes |
 | Navegador automatizado, servidor local com a versão compilada `bd281dc` (etapas deste módulo) | 48/48 aprovados |
 | Regressão completa no mesmo servidor local (todos os módulos) | 398/398 aprovados |
+| Regressão completa no link público, fonte `bd281dc` | 395/398. As 3 falhas eram deste módulo e estão explicadas abaixo; corrigidas em `cbeed24` |
+| Regressão completa no link público, fonte `cbeed24` | 398/398 aprovados (48/48 neste módulo) |
+| Etapas de agenda no link público, fonte `c2b9c66` (ajuste visual do seletor da agenda) | 60/60 aprovados |
 
-O teste no link público e as capturas desta pasta dependem da publicação da nova versão na demonstração.
+Versão publicada na demonstração: fonte `c2b9c66`, Pages `ca30ca6`.
+
+### Falha encontrada no link público e corrigida
+
+Na primeira rodada pública, o painel mostrou 3 inativos em vez de 2. O teste local tinha passado de manhã; no público, essa etapa rodou depois das 14h30. A regra só considerava "com consulta marcada" quem tinha consulta **depois do horário atual**. Assim, uma criança sem consultas havia mais de 6 meses, mas com consulta hoje às 14h30, passava a contar como inativa a partir desse horário, mesmo estando na clínica. Agora qualquer consulta de hoje ainda não concluída conta como marcada (`follow_up.dart` e `demo_scheduling.dart`). Foram incluídos dois testes que falham sem a correção: um das regras e outro do painel às 18h. Os testes da demonstração fixavam o relógio às 7h, por isso não pegaram o problema.
 
 ### O que o navegador automatizado verificou
 
@@ -166,6 +173,11 @@ O teste no link público e as capturas desta pasta dependem da publicação da n
   - orientação de urgência sem horários;
   - encaminhamento à recepção.
 - **Permissões:** os bloqueios da tabela acima.
+
+Capturas nesta pasta:
+- `ag01` a `ag16`: agendar, lembrar, confirmar, reagendar e cancelar (fonte `c2b9c66`);
+- `ag20` a `ag24`: painel e critérios (fonte `cbeed24`);
+- `ag30` a `ag33`: celular (fonte `cbeed24`).
 
 ### O que não foi testado
 
