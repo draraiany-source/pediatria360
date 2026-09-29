@@ -13,6 +13,7 @@ import '../demo_data.dart';
 import '../demo_session.dart';
 import '../widgets/brand_widgets.dart';
 import '../widgets/demo_widgets.dart';
+import 'pre_visit_screens.dart';
 
 /// Inicio por perfil — cada area ve atalhos e resumo proprios.
 class DemoHomeScreen extends StatelessWidget {
@@ -283,6 +284,8 @@ class DemoHomeScreen extends StatelessWidget {
                 ),
               ),
             ),
+          const DemoSectionTitle('Próximas consultas'),
+          const DemoFamilyUpcomingVisits(),
           const DemoSectionTitle('Atalhos'),
           const _Shortcuts(
             items: <(String, IconData, String)>[

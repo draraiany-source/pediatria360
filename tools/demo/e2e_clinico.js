@@ -1541,6 +1541,215 @@ const DOCS = [
     await p.ctx.close();
   });
 
+  // ------------------------------------------------ Anexos da pre-consulta
+  function makePdf(title) {
+    const stream = 'BT /F1 18 Tf 56 770 Td (' + title + ') Tj ET';
+    const objs = [
+      '<< /Type /Catalog /Pages 2 0 R >>',
+      '<< /Type /Pages /Kids [3 0 R] /Count 1 >>',
+      '<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 4 0 R >> >> /Contents 5 0 R >>',
+      '<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>',
+      '<< /Length ' + stream.length + ' >>\nstream\n' + stream + '\nendstream',
+    ];
+    let out = '%PDF-1.4\n';
+    const offs = [];
+    objs.forEach((o, i) => { offs.push(Buffer.byteLength(out, 'latin1')); out += (i + 1) + ' 0 obj\n' + o + '\nendobj\n'; });
+    const xref = Buffer.byteLength(out, 'latin1');
+    out += 'xref\n0 ' + (objs.length + 1) + '\n0000000000 65535 f \n' + offs.map((o) => String(o).padStart(10, '0') + ' 00000 n \n').join('');
+    out += 'trailer\n<< /Size ' + (objs.length + 1) + ' /Root 1 0 R >>\nstartxref\n' + xref + '\n%%EOF\n';
+    return Buffer.from(out, 'latin1');
+  }
+
+  // Textos fora da area visivel saem da arvore de acessibilidade.
+  async function seek(page, text, steps = 12) {
+    if (await has(page, text)) return true;
+    const vh = page.viewportSize().height;
+    const vw = page.viewportSize().width;
+    for (const dir of [1, -1]) {
+      for (let i = 0; i < steps; i++) {
+        await page.mouse.move(vw / 2 + (vw > 900 ? 110 : 0), vh / 2);
+        await page.mouse.wheel(0, dir * 350);
+        await page.waitForTimeout(450);
+        if (await has(page, text)) return true;
+      }
+    }
+    return false;
+  }
+
+  const PV = 'Pr\u00e9-consulta';
+  const ADD_PHOTO = 'Adicionar foto da queixa';
+  const ADD_DOC = 'Adicionar exame, laudo ou relat\u00f3rio';
+  const REVIEW = 'Conferir anexo antes de incluir';
+  const PHOTOS = (n) => 'Fotos da queixa (' + n + ')';
+  const DOCS = (n) => 'Exames, laudos e relat\u00f3rios (' + n + ')';
+  const REFUSED = 'Arquivo n\u00e3o anexado';
+  const PNG_SIG = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
+
+  async function refusedFile(page, file, part, touch) {
+    await sendLogo(page, ADD_DOC, file, { touch });
+    const ok = (await waitText(page, REFUSED)) && (await has(page, part));
+    return ok;
+  }
+
+  await step('celular: pre-consulta familia anexa, confere, remove e envia', async () => {
+    const { ctx, page } = await newPage(browser, MOBILE);
+    const t = { touch: true };
+    const next = dmy(addDays(new Date(), 20));
+    await open(page, '#/inicio?perfil=responsavel');
+    const found = await seek(page, 'Preencher ' + PV.toLowerCase() + ' de ' + next);
+    check('pre-consulta: proximas consultas no inicio da familia', found && (await has(page, 'Pr\u00f3ximas consultas')) && (await has(page, PV + ': N\u00e3o preenchida')), '');
+    await shot(page, 'pc01_inicio_proximas_consultas');
+    await tap(page, 'Preencher ' + PV.toLowerCase() + ' de ' + next, { ...t, wait: 2000 });
+    check('pre-consulta: abre a tela da consulta', hash(page) === '#/pre-consulta/a6?de=inicio' && (await waitText(page, 'N\u00e3o preenchida')), hash(page));
+    check('pre-consulta: aviso de que anexo nao e diagnostico', await has(page, 'Os anexos ajudam a preparar a consulta. N\u00e3o s\u00e3o diagn\u00f3stico nem resultado validado'), '');
+    await fill(page, 'Motivo da consulta', 'Mancha avermelhada na perna (teste)', t);
+    await shot(page, 'pc02_formulario');
+
+    const photo = await makeLogo(page, { w: 800, h: 600, text: 'Foto ficticia', color: '#C2570C' });
+    await sendLogo(page, ADD_PHOTO, { name: 'mancha-perna.png', mimeType: 'image/png', buffer: photo }, t);
+    check('pre-consulta: previa da foto antes de incluir', (await waitText(page, REVIEW)) && (await has(page, 'Pr\u00e9via de mancha-perna.png')) && (await has(page, 'Data da foto (opcional)')), '');
+    await shot(page, 'pc03_conferir_foto');
+    await fill(page, 'Descri\u00e7\u00e3o (opcional)', 'Mancha na perna (teste)', t);
+    await tap(page, 'Incluir anexo', { ...t, wait: 1800 });
+    check('pre-consulta: foto incluida como rascunho', (await seek(page, PHOTOS(1))) && (await seek(page, 'Ainda n\u00e3o enviado')), '');
+    await shot(page, 'pc04_foto_incluida');
+
+    await sendLogo(page, ADD_DOC, { name: 'laudo-teste.pdf', mimeType: 'application/pdf', buffer: makePdf('Laudo ficticio de teste') }, t);
+    check('pre-consulta: PDF conferido antes de incluir', (await waitText(page, REVIEW)) && (await has(page, 'PDF com 1 p\u00e1gina')), '');
+    const pdfInfo = await shotPdf(ctx, page, 'Abrir PDF para conferir', 'pc05_pdf_aberto_para_conferir', t);
+    check('pre-consulta: PDF abre para conferir', !!pdfInfo && pdfInfo.magic === '%PDF-', pdfInfo ? pdfInfo.magic : 'sem aba');
+    await shot(page, 'pc06_conferir_pdf');
+    await tap(page, 'Incluir anexo', { ...t, wait: 1200 });
+    const noType = await waitText(page, 'Escolha o tipo do documento.');
+    await tap(page, 'Laudo', { ...t, exact: true, wait: 900 });
+    await tap(page, 'Incluir anexo', { ...t, wait: 1200 });
+    const noDate = await waitText(page, 'Informe a data do exame (dd/mm/aaaa).');
+    check('pre-consulta: tipo e data do exame obrigatorios', noType && noDate, [noType, noDate].join('/'));
+    await fill(page, 'Data do exame', dmy(addDays(new Date(), 3)), t);
+    await tap(page, 'Incluir anexo', { ...t, wait: 1200 });
+    check('pre-consulta: data futura recusada', await waitText(page, 'A data n\u00e3o pode ser futura.'), '');
+    await shot(page, 'pc07_data_futura');
+    const examDay = dmy(addDays(new Date(), -7));
+    await fill(page, 'Data do exame', examDay, t);
+    await tap(page, 'Incluir anexo', { ...t, wait: 1800 });
+    check('pre-consulta: laudo incluido com a data do exame', (await seek(page, DOCS(1))) && (await seek(page, 'Laudo - Data do exame: ' + examDay)), '');
+
+    await sendLogo(page, ADD_PHOTO, { name: 'foto-errada.png', mimeType: 'image/png', buffer: await makeLogo(page, { w: 400, h: 300, text: 'Errada' }) }, t);
+    await tap(page, 'Incluir anexo', { ...t, wait: 1800 });
+    check('pre-consulta: terceiro anexo incluido', await seek(page, PHOTOS(2)), '');
+    await shot(page, 'pc08_anexo_por_engano');
+    await tap(page, 'Remover foto-errada.png', { ...t, wait: 1200 });
+    check('pre-consulta: confirma antes de remover', await waitText(page, 'Remover anexo?'), '');
+    await shot(page, 'pc09_confirmar_remocao');
+    await tap(page, 'Remover', { ...t, exact: true, last: true, wait: 1800 });
+    check('pre-consulta: anexo removido', (await seek(page, PHOTOS(1))) && !(await has(page, 'foto-errada.png')), '');
+
+    const r1 = await refusedFile(page, { name: 'exame.pdf', mimeType: 'application/pdf', buffer: Buffer.from('nao e um PDF de verdade') }, 'embora o nome termine como um deles', true);
+    await shot(page, 'pc10_arquivo_recusado');
+    await tap(page, 'Entendi', { ...t, wait: 900 });
+    const big = Buffer.concat([PNG_SIG, Buffer.alloc(11 * 1024 * 1024)]);
+    const r2 = await refusedFile(page, { name: 'foto-enorme.png', mimeType: 'image/png', buffer: big }, 'O limite \u00e9 10 MB por arquivo', true);
+    await tap(page, 'Entendi', { ...t, wait: 900 });
+    const heic = Buffer.concat([Buffer.from([0, 0, 0, 24]), Buffer.from('ftypheic'), Buffer.alloc(16)]);
+    const r3 = await refusedFile(page, { name: 'IMG_0001.HEIC', mimeType: 'image/heic', buffer: heic }, 'formato HEIC', true);
+    await tap(page, 'Entendi', { ...t, wait: 900 });
+    check('pre-consulta: mensagens claras para formato, tamanho e HEIC', r1 && r2 && r3, [r1, r2, r3].join('/'));
+
+    await tap(page, 'Ver mancha-perna.png', { ...t, wait: 1500 });
+    check('pre-consulta: visualizar antes do envio', await waitText(page, 'Arquivo enviado pela fam\u00edlia. N\u00e3o \u00e9 diagn\u00f3stico nem resultado validado.'), '');
+    await shot(page, 'pc11_visualizar_foto');
+    await tap(page, 'Fechar', { ...t, wait: 900 });
+
+    await tap(page, 'Enviar \u00e0 cl\u00ednica', { ...t, wait: 1200 });
+    check('pre-consulta: envio exige autorizacao', await waitText(page, 'Confirme que as informa\u00e7\u00f5es e os anexos'), '');
+    await tap(page, 'Autorizo o envio', { ...t, wait: 900 });
+    await tap(page, 'Enviar \u00e0 cl\u00ednica', { ...t, wait: 900 });
+    check('pre-consulta: enviada com 2 anexos', await waitText(page, PV + ' enviada \u00e0 cl\u00ednica com 2 anexos.'), '');
+    await shot(page, 'pc12_enviada');
+
+    await nav(page, '#/pacientes/p1/pre-consulta?perfil=profissional');
+    const l = await labels(page);
+    check('pre-consulta: profissional ve a consulta e o motivo', l.includes('Consulta de ' + next + ' \u00e0s 09:30') && l.includes('Mancha avermelhada na perna (teste)'), '');
+    check('pre-consulta: profissional ve os anexos organizados', (await seek(page, 'Mancha na perna (teste)')) && (await seek(page, 'laudo-teste.pdf')) && !(await has(page, 'Remover')), '');
+    await shot(page, 'pc13_profissional_organizado');
+    await tap(page, 'Ver laudo-teste.pdf', { ...t, wait: 1500 });
+    check('pre-consulta: profissional abre o PDF enviado', await waitText(page, 'Abrir PDF para conferir'), '');
+    await shot(page, 'pc14_profissional_ver_pdf');
+    await tap(page, 'Fechar', { ...t, wait: 900 });
+    await ctx.close();
+  });
+
+  await step('computador: pre-consulta na consulta e na agenda do profissional', async () => {
+    const { ctx, page } = await newPage(browser, DESKTOP);
+    await open(page, '#/pacientes/p1/consulta/c1?perfil=profissional');
+    check('pre-consulta: cartao na consulta da crianca', (await waitText(page, PV + ' enviada pela fam\u00edlia')) && (await has(page, '1 foto(s) da queixa e 1 exame(s)')), '');
+    await shot(page, 'pc15_consulta_com_pre_consulta');
+    await tap(page, 'Ver ' + PV.toLowerCase(), { wait: 2000 });
+    check('pre-consulta: abre a partir da consulta', hash(page) === '#/pacientes/p1/pre-consulta?consulta=c1', hash(page));
+    const l = await labels(page);
+    check('pre-consulta: fotos e documentos em grupos', [PHOTOS(1), DOCS(1), 'Mancha no bra\u00e7o (fict\u00edcia)', 'Hemograma (fict\u00edcio)'].every((x) => l.includes(x)), '');
+    await shot(page, 'pc16_pre_consulta_organizada');
+    await tap(page, 'Ver foto_braco.png', { wait: 1500 });
+    check('pre-consulta: foto ampliada para o profissional', await waitText(page, 'Pr\u00e9via de foto_braco.png'), '');
+    await shot(page, 'pc17_foto_ampliada');
+    await tap(page, 'Fechar', { wait: 900 });
+    await tap(page, 'Voltar', { wait: 1800 });
+    check('pre-consulta: voltar leva a consulta', hash(page) === '#/pacientes/p1/consulta/c1', hash(page));
+    await nav(page, '#/agenda/a1');
+    check('pre-consulta: situacao no agendamento', (await waitText(page, PV + ' enviada em')) && (await has(page, 'Ver ' + PV.toLowerCase())), '');
+    await ctx.close();
+  });
+
+  await step('computador: pre-consulta familia no computador', async () => {
+    const { ctx, page } = await newPage(browser, DESKTOP);
+    await open(page, '#/pre-consulta/a4?perfil=responsavel');
+    check('pre-consulta: computador abre a consulta da Alice', await waitText(page, 'N\u00e3o preenchida'), '');
+    await sendLogo(page, ADD_DOC, { name: 'relatorio-teste.pdf', mimeType: 'application/pdf', buffer: makePdf('Relatorio ficticio') });
+    await tap(page, 'Relat\u00f3rio m\u00e9dico', { exact: true, wait: 900 });
+    await fill(page, 'Data do relat\u00f3rio', dmy(addDays(new Date(), -30)));
+    await tap(page, 'Incluir anexo', { wait: 1800 });
+    await tap(page, 'Autorizo o envio', { wait: 900 });
+    await tap(page, 'Enviar \u00e0 cl\u00ednica', { wait: 900 });
+    check('pre-consulta: computador envia relatorio sem texto', await waitText(page, PV + ' enviada \u00e0 cl\u00ednica com 1 anexo.'), '');
+    await shot(page, 'pc18_familia_computador');
+    await nav(page, '#/pre-consulta/a2');
+    check('pre-consulta: crianca de outra familia nao abre', await waitText(page, PV + ' indispon\u00edvel'), '');
+    await ctx.close();
+  });
+
+  await step('computador: permissoes pre-consulta', async () => {
+    const r = await newPage(browser, DESKTOP);
+    await open(r.page, '#/agenda/a1?perfil=recepcao');
+    const ra = (await waitText(r.page, PV + ' enviada em')) && (await has(r.page, 'Respostas e anexos s\u00f3 o profissional abre.')) && !(await has(r.page, 'Ver ' + PV.toLowerCase()));
+    await shot(r.page, 'pc19_recepcao_so_situacao');
+    await nav(r.page, '#/pacientes/p1/pre-consulta');
+    const rb = await waitText(r.page, 'Acesso restrito');
+    check('permissoes: recepcao ve so a situacao, sem anexos', ra && rb, [ra, rb].join('/'));
+    await r.ctx.close();
+    for (const perfil of ['financeiro', 'administrador']) {
+      const { ctx, page } = await newPage(browser, DESKTOP);
+      await open(page, '#/pacientes/p1/pre-consulta?perfil=' + perfil);
+      const a = await waitText(page, 'Acesso restrito');
+      await nav(page, '#/pre-consulta/a1');
+      const b = await waitText(page, 'Acesso restrito');
+      check('permissoes: ' + perfil + ' nao abre pre-consulta', a && b, [a, b].join('/'));
+      await ctx.close();
+    }
+    const p = await newPage(browser, DESKTOP);
+    await open(p.page, '#/pre-consulta/a1?perfil=profissional');
+    const pa = await waitText(p.page, 'Acesso restrito');
+    await nav(p.page, '#/perfil');
+    await tap(p.page, 'Trocar de conta', { wait: 1000 });
+    await tap(p.page, 'Dr. Exemplo Colega', { wait: 1500 });
+    await nav(p.page, '#/pacientes/p1/pre-consulta');
+    const pb = await waitText(p.page, 'Esta conta \u00e9 de outra cl\u00ednica');
+    await shot(p.page, 'pc20_outra_clinica');
+    await nav(p.page, '#/pacientes/p1/consulta/c1');
+    const pc = (await waitText(p.page, 'Motivo da consulta')) && !(await has(p.page, PV + ' enviada pela fam\u00edlia'));
+    check('permissoes: profissional nao usa a tela da familia e outra clinica nao ve anexos', pa && pb && pc, [pa, pb, pc].join('/'));
+    await p.ctx.close();
+  });
+
   await browser.close();
   const failed = report.checks.filter((c) => !c.ok);
   fs.writeFileSync(path.join(OUT, 'report.json'), JSON.stringify(report, null, 2));

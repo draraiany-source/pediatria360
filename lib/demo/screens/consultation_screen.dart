@@ -15,6 +15,7 @@ import '../demo_session.dart';
 import '../widgets/demo_widgets.dart';
 import '../widgets/flow_widgets.dart';
 import 'documents_screens.dart';
+import 'pre_visit_screens.dart';
 import 'rx_template_screens.dart';
 
 enum ConsultationStep {
@@ -324,6 +325,10 @@ class _DemoConsultationScreenState extends State<DemoConsultationScreen> {
                     ),
                   ...switch (_step) {
                     ConsultationStep.consulta => <Widget>[
+                      DemoPreVisitCard(
+                        patientId: widget.patientId,
+                        consultationId: widget.consultationId,
+                      ),
                       _field(
                         _complaint,
                         'Motivo da consulta *',

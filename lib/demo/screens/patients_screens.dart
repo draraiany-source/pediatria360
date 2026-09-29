@@ -11,7 +11,9 @@ import '../../shared/clinical/lab_results.dart';
 import '../demo_clinical.dart';
 import '../demo_data.dart';
 import '../demo_session.dart';
+import '../../shared/previsit/pre_visit.dart';
 import '../widgets/demo_widgets.dart';
+import 'pre_visit_screens.dart';
 import 'well_child_screen.dart';
 
 String? _avatarUrl(DemoPatient p) =>
@@ -350,7 +352,41 @@ class DemoPatientDetailScreen extends StatelessWidget {
                             'orientação(ões) emitida(s)',
                         onTap: () => context.go('/rotina/${p.id}/orientacoes'),
                       ),
+                      for (final DemoAppointment a
+                          in demoSession.upcomingAppointmentsFor(p.id))
+                        _ActionTile(
+                          icon: Icons.assignment_outlined,
+                          title:
+                              'Pré-consulta de ${demoDate(a.start)} às '
+                              '${demoTime(a.start)}',
+                          subtitle: familyPreVisitStatus(
+                            demoSession.preVisits[a.id],
+                          ).$1,
+                          onTap: () => context.go(
+                            preVisitFamilyUrl(a.id, from: 'paciente'),
+                          ),
+                        ),
                     ],
+                    if (demoSession.canReviewPreVisits)
+                      _ActionTile(
+                        icon: Icons.assignment_outlined,
+                        title: 'Pré-consulta enviada pela família',
+                        subtitle: () {
+                          final int n = demoSession.sentPreVisitsFor(p.id).length;
+                          final int files = demoSession
+                              .sentPreVisitsFor(p.id)
+                              .fold<int>(
+                                0,
+                                (int s, (DemoAppointment, PreVisit) e) =>
+                                    s + e.$2.sentAttachments.length,
+                              );
+                          return n == 0
+                              ? 'Nenhuma enviada'
+                              : '$n enviada(s), $files anexo(s) - '
+                                    'informado pela família';
+                        }(),
+                        onTap: () => context.go(preVisitReviewUrl(p.id)),
+                      ),
                     if (demoSession.profile == DemoProfile.profissional)
                       if (demoSession.routineSharedWith(p.id)) ...<Widget>[
                         _ActionTile(

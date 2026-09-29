@@ -16,6 +16,7 @@ import 'screens/home_screen.dart';
 import 'screens/lab_screens.dart';
 import 'screens/patient_supplement_screens.dart';
 import 'screens/patients_screens.dart';
+import 'screens/pre_visit_screens.dart';
 import 'screens/record_screens.dart';
 import 'screens/restricted_screen.dart';
 import 'screens/routine_forms.dart';
@@ -66,6 +67,29 @@ Widget _routine(
     return DemoRoutineUnavailableScreen(patientId: patientId);
   }
   return messenger ? ScaffoldMessenger(child: child) : child;
+}
+
+/// Pré-consulta da família: só o responsável (a tela confere o vínculo com
+/// a criança).
+Widget _familyPreVisit(Widget child) =>
+    demoSession.profile == DemoProfile.responsavel
+    ? ScaffoldMessenger(child: child)
+    : const DemoRestrictedScreen(
+        module: DemoModule.pacientes,
+        title: 'Pré-consulta da família',
+      );
+
+/// Respostas e anexos enviados: só o profissional da clínica que atende.
+Widget _preVisitReview(Widget child) {
+  if (demoSession.canReviewPreVisits) return ScaffoldMessenger(child: child);
+  return DemoRestrictedScreen(
+    module: DemoModule.pacientes,
+    title: 'Pré-consulta',
+    reason: demoSession.canSeeClinicalRecord
+        ? 'Os anexos da pré-consulta ficam com a equipe da clínica que '
+              'atende a criança. Esta conta é de outra clínica.'
+        : null,
+  );
 }
 
 Widget _flow(DemoModule module, Widget child) =>
@@ -155,6 +179,17 @@ final GoRouter demoRouter = GoRouter(
                             ),
                     ),
                   ],
+                ),
+                GoRoute(
+                  path: 'pre-consulta',
+                  builder: (BuildContext context, GoRouterState state) =>
+                      _preVisitReview(
+                        DemoPreVisitReviewScreen(
+                          key: ValueKey<String>(state.uri.toString()),
+                          patientId: state.pathParameters['id']!,
+                          consultationId: state.uri.queryParameters['consulta'],
+                        ),
+                      ),
                 ),
                 GoRoute(
                   path: 'crescimento',
@@ -516,6 +551,17 @@ final GoRouter demoRouter = GoRouter(
               ],
             ),
           ],
+        ),
+        GoRoute(
+          path: '/pre-consulta/:aid',
+          builder: (BuildContext context, GoRouterState state) =>
+              _familyPreVisit(
+                DemoPreVisitScreen(
+                  key: ValueKey<String>(state.uri.toString()),
+                  appointmentId: state.pathParameters['aid']!,
+                  from: state.uri.queryParameters['de'],
+                ),
+              ),
         ),
         GoRoute(
           path: rxTemplatesPath,

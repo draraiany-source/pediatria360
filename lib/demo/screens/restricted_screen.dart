@@ -9,12 +9,20 @@ import '../widgets/demo_widgets.dart';
 /// Mostrada quando o perfil atual tenta abrir um modulo de outro perfil
 /// (por exemplo digitando o endereco direto).
 class DemoRestrictedScreen extends StatelessWidget {
-  const DemoRestrictedScreen({required this.module, super.key, this.title});
+  const DemoRestrictedScreen({
+    required this.module,
+    super.key,
+    this.title,
+    this.reason,
+  });
 
   final DemoModule module;
 
   /// Nome exibido quando a area bloqueada e uma subtela (ex.: Prontuario).
   final String? title;
+
+  /// Substitui a frase padrão quando o bloqueio não é pelo perfil.
+  final String? reason;
 
   @override
   Widget build(BuildContext context) {
@@ -51,7 +59,7 @@ class DemoRestrictedScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: AppSpacing.sm),
                 Text(
-                  '$name não faz parte da área de $profile.',
+                  reason ?? '$name não faz parte da área de $profile.',
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: AppSpacing.lg),

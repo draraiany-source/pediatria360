@@ -10,6 +10,7 @@ import '../demo_data.dart';
 import '../demo_session.dart';
 import '../widgets/demo_widgets.dart';
 import 'home_screen.dart' show DemoStatusChip;
+import 'pre_visit_screens.dart';
 
 DemoPatient? _patient(String id) => demoSession.patients
     .where((DemoPatient p) => p.id == id)
@@ -289,6 +290,7 @@ class DemoAppointmentDetailScreen extends StatelessWidget {
                       ],
                     ),
                     const SizedBox(height: AppSpacing.lg),
+                    DemoPreVisitAppointmentInfo(appointment: a),
                     if (!isReception &&
                         p != null &&
                         demoSession.canSeeClinicalRecord)

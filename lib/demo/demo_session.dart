@@ -9,6 +9,7 @@ import '../shared/clinical/lab_results.dart';
 import '../shared/clinical/orientation_templates.dart';
 import '../shared/clinical/rx_templates.dart';
 import '../shared/clinical/supplement_library.dart';
+import '../shared/previsit/pre_visit.dart';
 import '../shared/routine/child_routine.dart';
 import '../shared/wellchild/age_band.dart';
 import '../shared/wellchild/well_child_templates.dart';
@@ -16,6 +17,7 @@ import '../shared/wellchild/well_child_visit.dart';
 import 'demo_clinical.dart';
 import 'demo_data.dart';
 import 'demo_growth.dart';
+import 'demo_previsit_seed.dart';
 import 'demo_routine.dart';
 
 /// Perfis da demonstracao — espelham as areas de trabalho do app real.
@@ -184,6 +186,7 @@ class DemoSession extends ChangeNotifier {
   late Set<RoutineKind> routineKindFilter;
   late Set<DiaryKind> diaryKindFilter;
   String? lastRoutinePatientId;
+  late Map<String, PreVisit> preVisits;
   final List<DemoArticle> articles = DemoSeed.articles;
   final List<DoseReference> doseReferences = DemoClinicalSeed.doseReferences;
 
@@ -235,6 +238,7 @@ class DemoSession extends ChangeNotifier {
     diaryKindFilter = <DiaryKind>{};
     lastRoutinePatientId = null;
     sharedSummaries = routine.sharedSummaries(this);
+    preVisits = DemoPreVisitSeed.seed(now);
   }
 
   void enter(DemoProfile profile) {
@@ -1181,9 +1185,205 @@ class DemoSession extends ChangeNotifier {
     }
     return null;
   }
+
+  // ------------------------------------------------ Pré-consulta
+
+  DemoAppointment? appointmentById(String id) {
+    for (final DemoAppointment a in appointments) {
+      if (a.id == id) return a;
+    }
+    return null;
+  }
+
+  /// Consultas de hoje em diante, ainda não concluídas, de uma criança que o
+  /// perfil atual pode ver.
+  List<DemoAppointment> upcomingAppointmentsFor(String patientId) {
+    if (patientById(patientId) == null) return const <DemoAppointment>[];
+    final DateTime t = now;
+    final DateTime today = DateTime(t.year, t.month, t.day);
+    return appointments
+        .where(
+          (DemoAppointment a) =>
+              a.patientId == patientId &&
+              a.status != DemoAppointmentStatus.concluido &&
+              !a.start.isBefore(today),
+        )
+        .toList()
+      ..sort(
+        (DemoAppointment a, DemoAppointment b) => a.start.compareTo(b.start),
+      );
+  }
+
+  /// Só o responsável vinculado à criança abre a pré-consulta da família.
+  bool canOpenFamilyPreVisit(DemoAppointment a) =>
+      _profile == DemoProfile.responsavel && patientById(a.patientId) != null;
+
+  /// Depois de concluída a consulta, a pré-consulta fica só para leitura.
+  bool canEditPreVisit(DemoAppointment a) =>
+      canOpenFamilyPreVisit(a) && a.status != DemoAppointmentStatus.concluido;
+
+  /// Profissional da clínica que atende. Outra clínica, recepção,
+  /// financeiro e administração não abrem respostas nem anexos.
+  bool get canReviewPreVisits =>
+      canSeeClinicalRecord && _account.id == DemoProfessional.id;
+
+  /// A recepção vê só se foi enviada e quantos anexos há.
+  bool get canSeePreVisitStatus =>
+      canReviewPreVisits || _profile == DemoProfile.recepcao;
+
+  PreVisit? preVisitForFamily(String appointmentId) {
+    final DemoAppointment? a = appointmentById(appointmentId);
+    if (a == null || !canOpenFamilyPreVisit(a)) return null;
+    return preVisits.putIfAbsent(
+      appointmentId,
+      () => PreVisit(appointmentId: appointmentId, patientId: a.patientId),
+    );
+  }
+
+  PreVisit _editablePreVisit(String appointmentId) {
+    final DemoAppointment? a = appointmentById(appointmentId);
+    if (a == null || !canEditPreVisit(a)) {
+      throw StateError(
+        'Só o responsável pela criança altera a pré-consulta, até a consulta '
+        'ser concluída.',
+      );
+    }
+    return preVisitForFamily(appointmentId)!;
+  }
+
+  /// Confere o arquivo e a data e guarda como rascunho (a clínica não vê
+  /// até o envio). Erros saem como [StateError] com a mensagem para a família.
+  PreVisitAttachment addPreVisitAttachment(
+    String appointmentId, {
+    required String name,
+    required Uint8List bytes,
+    required PreVisitDocType type,
+    DateTime? date,
+    String description = '',
+  }) {
+    final PreVisit v = _editablePreVisit(appointmentId);
+    final PreVisitFileCheck check = PreVisitRules.check(
+      name: name,
+      bytes: bytes,
+      existing: v.attachments,
+    );
+    if (!check.ok) throw StateError(check.error!);
+    final String? typeError = PreVisitRules.typeError(type, check.format!);
+    if (typeError != null) throw StateError(typeError);
+    final String? dateError = PreVisitRules.dateError(
+      type,
+      date,
+      today: now,
+      birth: patientById(v.patientId)?.birthDate,
+    );
+    if (dateError != null) throw StateError(dateError);
+    final PreVisitAttachment att = PreVisitAttachment(
+      id: newId('pa'),
+      name: name,
+      format: check.format!,
+      bytes: bytes,
+      type: type,
+      addedAt: now,
+      date: date,
+      description: description.trim(),
+      pages: check.pages,
+    );
+    v.attachments.add(att);
+    notifyListeners();
+    return att;
+  }
+
+  void removePreVisitAttachment(String appointmentId, String attachmentId) {
+    final PreVisit v = _editablePreVisit(appointmentId);
+    final int i = v.attachments.indexWhere(
+      (PreVisitAttachment a) => a.id == attachmentId,
+    );
+    if (i < 0) return;
+    final PreVisitAttachment att = v.attachments.removeAt(i);
+    if (att.isSent) {
+      v.history.add(
+        PreVisitEvent(now, 'A família removeu o anexo "${att.name}" já enviado'),
+      );
+    }
+    notifyListeners();
+  }
+
+  void updatePreVisitAnswers(String appointmentId, PreVisitAnswers answers) {
+    final PreVisit v = _editablePreVisit(appointmentId);
+    if (v.answers == answers) return;
+    v.answers = answers;
+    notifyListeners();
+  }
+
+  /// Envia respostas e anexos novos. Devolve quantos anexos foram enviados.
+  int submitPreVisit(String appointmentId, {required bool consent}) {
+    final PreVisit v = _editablePreVisit(appointmentId);
+    if (!consent) {
+      throw StateError(
+        'Confirme que as informações e os anexos podem ser enviados à '
+        'equipe da clínica.',
+      );
+    }
+    if (!v.hasContent) {
+      throw StateError('Escreva o motivo da consulta ou inclua um anexo.');
+    }
+    if (!v.hasUnsentChanges) {
+      throw StateError('Não há alterações novas para enviar.');
+    }
+    final DateTime t = now;
+    final List<PreVisitAttachment> drafts = v.drafts;
+    for (final PreVisitAttachment a in drafts) {
+      a.sentAt = t;
+    }
+    final bool first = !v.isSent;
+    v
+      ..sentAnswers = v.answers
+      ..sentAt = t;
+    final String files = drafts.length == 1
+        ? '1 anexo'
+        : '${drafts.length} anexos';
+    v.history.add(
+      PreVisitEvent(
+        t,
+        first
+            ? 'Enviada pela família com $files'
+            : 'Atualizada pela família${drafts.isEmpty ? '' : ' (+$files)'}',
+      ),
+    );
+    notifyListeners();
+    return drafts.length;
+  }
+
+  /// Para o profissional autorizado: pré-consultas enviadas da criança, da
+  /// consulta mais recente para a mais antiga. Rascunhos nunca aparecem.
+  List<(DemoAppointment, PreVisit)> sentPreVisitsFor(String patientId) {
+    if (!canReviewPreVisits || patientById(patientId) == null) {
+      return const <(DemoAppointment, PreVisit)>[];
+    }
+    final List<(DemoAppointment, PreVisit)> out =
+        <(DemoAppointment, PreVisit)>[];
+    for (final PreVisit v in preVisits.values) {
+      if (v.patientId != patientId || !v.isSent) continue;
+      final DemoAppointment? a = appointmentById(v.appointmentId);
+      if (a != null) out.add((a, v));
+    }
+    out.sort(
+      ((DemoAppointment, PreVisit) x, (DemoAppointment, PreVisit) y) =>
+          y.$1.start.compareTo(x.$1.start),
+    );
+    return out;
+  }
+
+  /// Situação sem conteúdo (recepção e profissional). `null` se não pode ver.
+  ({bool sent, int files, DateTime? at})? preVisitStatus(String appointmentId) {
+    if (!canSeePreVisitStatus) return null;
+    final PreVisit? v = preVisits[appointmentId];
+    if (v == null || !v.isSent) return (sent: false, files: 0, at: null);
+    return (sent: true, files: v.sentAttachments.length, at: v.sentAt);
+  }
 }
 
-/// Altera��o da idade gestacional ao nascer (fica no hist�rico).
+/// Alteração da idade gestacional ao nascer (fica no histórico).
 class GestationalAgeChange {
   const GestationalAgeChange({
     required this.patientId,
