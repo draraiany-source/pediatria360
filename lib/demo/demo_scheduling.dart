@@ -781,6 +781,14 @@ class DemoScheduling {
     String? appointmentId,
     DateTime? at,
   }) {
+    final bool alreadyOpen = alerts.any(
+      (DemoReceptionAlert x) =>
+          x.open &&
+          x.kind == kind &&
+          appointmentId != null &&
+          x.appointmentId == appointmentId,
+    );
+    if (alreadyOpen) return;
     alerts.add(
       DemoReceptionAlert(
         id: s.newId('al'),

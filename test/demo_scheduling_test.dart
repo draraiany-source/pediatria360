@@ -63,11 +63,10 @@ void main() {
         for (final (DemoPatient p, FollowUpStatus st) in all)
           if (st.inactiveButScheduled) p.id,
       };
-      expect(
-        protectedIds,
-        <String>{'p4', 'p5'},
-        reason: 'têm consulta futura: não contam como inativos',
-      );
+      expect(protectedIds, <String>{
+        'p4',
+        'p5',
+      }, reason: 'têm consulta futura: não contam como inativos');
     });
 
     test('filtros por profissional e por clínica', () {
@@ -129,10 +128,7 @@ void main() {
 
   group('lembretes', () {
     test('rodada respeita intervalo, consentimento e preferência', () {
-      final DemoScheduling s = fresh(
-        DemoProfile.recepcao,
-        at: todayAt(12, 40),
-      );
+      final DemoScheduling s = fresh(DemoProfile.recepcao, at: todayAt(12, 40));
       final int before = s.openAlerts.length;
       final DemoReminderRun run = s.processReminders();
       expect(run.sent, 1, reason: 'a4 (14:30): lembrete de 2 h');
@@ -145,7 +141,11 @@ void main() {
       expect(a4.text, isNot(contains('rotina')));
       final ReminderRecord a5 = s.remindersFor('a5').first;
       expect(a5.status, ReminderStatus.naoEnviado);
-      expect(s.openAlerts.length, before + 1);
+      expect(
+        s.openAlerts.length,
+        before,
+        reason: 'a5 já tinha pendência aberta de contato manual',
+      );
       expect(s.processReminders().total, 0, reason: 'não repete o envio');
     });
 
@@ -172,6 +172,18 @@ void main() {
       final ReminderRecord r = s.remindersFor('a4').first;
       expect(r.status, ReminderStatus.naoEnviado);
       expect(r.failureReason, contains('não autorizou'));
+    });
+
+    test('pendência de contato manual não se repete na mesma consulta', () {
+      final DemoScheduling s = fresh(DemoProfile.recepcao, at: todayAt(12, 40));
+      s.processReminders();
+      expect(s.remindersFor('a5').length, greaterThan(1));
+      final Iterable<DemoReceptionAlert> open = s.openAlerts.where(
+        (DemoReceptionAlert a) =>
+            a.appointmentId == 'a5' &&
+            a.kind == DemoAlertKind.preferenciaManual,
+      );
+      expect(open, hasLength(1));
     });
 
     test('resposta Confirmar atualiza a agenda', () {
@@ -240,40 +252,45 @@ void main() {
   });
 
   group('agendar, remarcar e cancelar', () {
-    test('família agenda pelo assistente e a pré-consulta já traz o motivo', () {
-      final DemoScheduling s = fresh(DemoProfile.responsavel);
-      final BookingAssistant a = s.assistantFor(intent: null, restart: true);
-      a.send(BookingAssistant.optBook);
-      a.send('Luna Exemplo Souza');
-      a.send('Tosse leve há dois dias');
-      a.send(VisitType.queixa.label);
-      a.send(BookingAssistant.optPresencial);
-      a.send('Dra. Exemplo Demonstração');
-      a.send(DayPart.tarde.label);
-      a.send(a.options.first);
-      final int before = demoSession.appointments.length;
-      a.send(BookingAssistant.optConfirmBooking);
-      expect(demoSession.appointments.length, before + 1);
-      final DemoAppointment created = demoSession.appointments.last;
-      expect(created.patientId, 'p1');
-      expect(created.durationMinutes, 40);
-      expect(created.status, DemoAppointmentStatus.agendado);
-      expect(
-        demoSession.preVisits[created.id]!.answers.reason,
-        'Tosse leve há dois dias',
-      );
-      expect(a.bookedAppointmentId, created.id);
-    });
+    test(
+      'família agenda pelo assistente e a pré-consulta já traz o motivo',
+      () {
+        final DemoScheduling s = fresh(DemoProfile.responsavel);
+        final BookingAssistant a = s.assistantFor(intent: null, restart: true);
+        a.send(BookingAssistant.optBook);
+        a.send('Luna Exemplo Souza');
+        a.send('Tosse leve há dois dias');
+        a.send(VisitType.queixa.label);
+        a.send(BookingAssistant.optPresencial);
+        a.send('Dra. Exemplo Demonstração');
+        a.send(DayPart.tarde.label);
+        a.send(a.options.first);
+        final int before = demoSession.appointments.length;
+        a.send(BookingAssistant.optConfirmBooking);
+        expect(demoSession.appointments.length, before + 1);
+        final DemoAppointment created = demoSession.appointments.last;
+        expect(created.patientId, 'p1');
+        expect(created.durationMinutes, 40);
+        expect(created.status, DemoAppointmentStatus.agendado);
+        expect(
+          demoSession.preVisits[created.id]!.answers.reason,
+          'Tosse leve há dois dias',
+        );
+        expect(a.bookedAppointmentId, created.id);
+      },
+    );
 
     test('não grava horário duplicado nem para criança de outra família', () {
       final DemoScheduling s = fresh(DemoProfile.responsavel);
-      final DateTime slot = s.findSlots(
-        SlotQuery(
-          professionalId: 'prof-a',
-          durationMinutes: 40,
-          from: demoSession.now,
-        ),
-      ).first;
+      final DateTime slot = s
+          .findSlots(
+            SlotQuery(
+              professionalId: 'prof-a',
+              durationMinutes: 40,
+              from: demoSession.now,
+            ),
+          )
+          .first;
       s.book(
         patientId: 'p1',
         professionalId: 'prof-a',
@@ -313,26 +330,24 @@ void main() {
       final DemoScheduling s = fresh(DemoProfile.recepcao);
       final DemoAppointment a5 = demoSession.appointmentById('a5')!;
       final DateTime old = a5.start;
-      final DateTime next = s.findSlots(
-        SlotQuery(
-          professionalId: 'prof-a',
-          durationMinutes: 40,
-          from: old.add(const Duration(days: 1)),
-          patientId: 'p4',
-          ignoreAppointmentId: 'a5',
-        ),
-      ).first;
+      final DateTime next = s
+          .findSlots(
+            SlotQuery(
+              professionalId: 'prof-a',
+              durationMinutes: 40,
+              from: old.add(const Duration(days: 1)),
+              patientId: 'p4',
+              ignoreAppointmentId: 'a5',
+            ),
+          )
+          .first;
       s.reschedule('a5', next);
       expect(a5.start, next);
       expect(s.handledOffsets['a5'], isNull, reason: 'lembretes recomeçam');
       s.cancel('a5');
       expect(a5.status, DemoAppointmentStatus.cancelado);
       final List<DateTime> free = s.findSlots(
-        SlotQuery(
-          professionalId: 'prof-a',
-          durationMinutes: 40,
-          from: next,
-        ),
+        SlotQuery(professionalId: 'prof-a', durationMinutes: 40, from: next),
       );
       expect(free.first, next);
     });
@@ -415,10 +430,7 @@ void main() {
       expect(find.bySemanticsLabel('Indicador Inativos: 2'), findsOneWidget);
       expect(find.text('Bento Exemplo Alves'), findsOneWidget);
       expect(find.textContaining('já têm consulta marcada'), findsOneWidget);
-      await tap(
-        tester,
-        find.text('Registrar contato com Bento Exemplo Alves'),
-      );
+      await tap(tester, find.text('Registrar contato com Bento Exemplo Alves'));
       await tap(tester, find.text('Salvar contato'));
       expect(demoSession.scheduling.attemptsFor('p6'), hasLength(3));
       await tap(tester, find.widgetWithText(ChoiceChip, 'Dr. Exemplo Colega'));
@@ -452,7 +464,10 @@ void main() {
     ) async {
       await pumpDemo(tester, DemoProfile.responsavel);
       await goTo(tester, '/agendar?acao=agendar');
-      await tap(tester, find.widgetWithText(OutlinedButton, 'Luna Exemplo Souza'));
+      await tap(
+        tester,
+        find.widgetWithText(OutlinedButton, 'Luna Exemplo Souza'),
+      );
       await tester.enterText(
         find.widgetWithText(TextField, 'Mensagem para o assistente'),
         'Tosse leve',
@@ -468,7 +483,8 @@ void main() {
         find.widgetWithText(OutlinedButton, 'Dra. Exemplo Demonstração'),
       );
       await tap(tester, find.widgetWithText(OutlinedButton, 'Tarde'));
-      final String first = demoSession.scheduling.familyAssistant!.options.first;
+      final String first =
+          demoSession.scheduling.familyAssistant!.options.first;
       await tap(tester, find.widgetWithText(OutlinedButton, first));
       expect(find.text('Resumo do agendamento'), findsOneWidget);
       final int before = demoSession.appointments.length;
@@ -502,7 +518,10 @@ void main() {
       final DateTime old = demoSession.appointmentById('a5')!.start;
       await tap(tester, find.widgetWithText(OutlinedButton, 'Remarcar'));
       await tap(tester, find.byType(SimpleDialogOption));
-      await tap(tester, find.widgetWithText(FilledButton, 'Confirmar remarcação'));
+      await tap(
+        tester,
+        find.widgetWithText(FilledButton, 'Confirmar remarcação'),
+      );
       expect(demoSession.appointmentById('a5')!.start, isNot(old));
       await tap(
         tester,

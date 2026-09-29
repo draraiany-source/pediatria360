@@ -321,9 +321,13 @@ void main() {
       a.send(VisitType.queixa.label);
       a.send(BookingAssistant.optPresencial);
       a.send('Dra. Exemplo A');
-      final List<String> thisWeek = <String>[
-        for (final int d in <int>[29, 30]) '/09',
-        for (final int d in <int>[1, 2, 3, 4]) '0/10',
+      const List<String> thisWeek = <String>[
+        '29/09',
+        '30/09',
+        '01/10',
+        '02/10',
+        '03/10',
+        '04/10',
       ];
       bool offersThisWeek() => a.options.any(
         (String o) => thisWeek.any((String d) => o.contains(d)),
