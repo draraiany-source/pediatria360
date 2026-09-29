@@ -52,6 +52,7 @@ class DemoEncounter {
     required this.type,
     required this.summary,
     this.professionalId = 'prof-a',
+    this.consultationId,
   });
 
   final String patientId;
@@ -59,6 +60,10 @@ class DemoEncounter {
   final String type;
   final String summary;
   final String professionalId;
+
+  /// Evolução gerada ao finalizar uma consulta (a linha do tempo mostra a
+  /// consulta, não repete a evolução).
+  final String? consultationId;
 }
 
 enum DemoAppointmentKind { presencial, teleconsulta }
@@ -71,17 +76,21 @@ enum DemoAppointmentStatus {
 
   /// A família pediu outro horário (lembrete ou assistente).
   reagendar,
-  cancelado;
+  cancelado,
+
+  /// Não compareceu (só depois do horário).
+  falta;
 
   /// Ainda ocupa o horário na agenda.
   bool get holdsSlot => this != DemoAppointmentStatus.cancelado;
 
-  /// Status que a recepção escolhe à mão no detalhe.
+  /// Status que recepção e profissional escolhem à mão no detalhe.
   static const List<DemoAppointmentStatus> manual = <DemoAppointmentStatus>[
     agendado,
     confirmado,
     chegou,
     concluido,
+    falta,
   ];
 }
 
@@ -390,6 +399,43 @@ class DemoSeed {
         status: DemoAppointmentStatus.agendado,
         reason: 'Consulta de rotina (exemplo)',
         professionalId: 'prof-b',
+        durationMinutes: 40,
+      ),
+      // Horários passados para o diário de atendimentos.
+      DemoAppointment(
+        id: 'a8',
+        patientId: 'p1',
+        start: DateTime(d.year, d.month, d.day - 10, 9),
+        kind: DemoAppointmentKind.presencial,
+        status: DemoAppointmentStatus.concluido,
+        reason: 'Consulta de rotina (exemplo)',
+        durationMinutes: 40,
+      ),
+      DemoAppointment(
+        id: 'a9',
+        patientId: 'p3',
+        start: DateTime(d.year, d.month, d.day - 3, 10),
+        kind: DemoAppointmentKind.presencial,
+        status: DemoAppointmentStatus.falta,
+        reason: 'Retorno (exemplo)',
+        durationMinutes: 20,
+      ),
+      DemoAppointment(
+        id: 'a10',
+        patientId: 'p2',
+        start: DateTime(d.year, d.month, d.day - 2, 15),
+        kind: DemoAppointmentKind.presencial,
+        status: DemoAppointmentStatus.confirmado,
+        reason: 'Avaliação (exemplo)',
+        durationMinutes: 40,
+      ),
+      DemoAppointment(
+        id: 'a11',
+        patientId: 'p1',
+        start: DateTime(d.year, d.month, d.day - 40, 9),
+        kind: DemoAppointmentKind.presencial,
+        status: DemoAppointmentStatus.concluido,
+        reason: 'Puericultura (exemplo)',
         durationMinutes: 40,
       ),
     ];

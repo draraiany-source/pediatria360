@@ -406,9 +406,11 @@ const DOCS = [
     await fill(page, 'Conduta *', 'Conduta fictícia');
     check('consulta: conduta oferece receituario com calculadora e suplementacao', (await has(page, 'Receituário com calculadora')) && (await has(page, 'Suplementação do paciente')), '');
     await shot(page, 'd13_consulta_conduta');
+    await tap(page, 'Retorno em 30 dias', { wait: 900 });
     await tap(page, 'Próximo', { wait: 1500 });
     await tap(page, 'Finalizar consulta', { wait: 1500 });
     await tap(page, 'Finalizar', { last: true, wait: 2500 });
+    check('consulta: finalizar abre o resumo com retorno', hash(page).endsWith('/resumo') && (await waitText(page, 'Motivo fictício')) && (await has(page, 'Retorno recomendado')), hash(page));
     await nav(page, '#/pacientes/p2/prontuario');
     check('consulta: finalizada aparece no prontuario e peso atualizado', (await waitText(page, 'Motivo fictício')) && (await has(page, '17,1 kg')), '');
     await shot(page, 'd14_prontuario_apos_consulta');
@@ -2018,6 +2020,124 @@ const DOCS = [
         res.push(await waitText(page, 'Acesso restrito', 5000));
       }
       check('permissoes: ' + perfil + ' bloqueado em ' + routes.join(' '), res.every(Boolean), res.join('/'));
+      await ctx.close();
+    }
+  });
+
+  // ---------- Agenda e acompanhamento clinico ----------
+  await step('computador: agenda dia, semana, mes, pre-consulta, atendimento, resumo e historico', async () => {
+    const { ctx, page } = await newPage(browser, DESKTOP);
+    await open(page, '#/agenda?perfil=profissional');
+    check('agenda: dia com horarios livres', await waitText(page, 'Horário livre'), '');
+    await shot(page, 'ag01_agenda_dia');
+    await tap(page, 'Semana', { exact: true, wait: 1500 });
+    check('agenda: semana com contagem de livres', (await waitText(page, 'horário(s) livre(s)')) && hash(page).includes('vista=semana'), hash(page));
+    await shot(page, 'ag02_agenda_semana');
+    await tap(page, 'Mês', { exact: true, wait: 1500 });
+    check('agenda: mes com navegacao', (await waitText(page, 'Próximo mês')) && hash(page).includes('vista=mes'), hash(page));
+    await shot(page, 'ag03_agenda_mes');
+    await nav(page, '#/agenda/a1');
+    check('agenda: horario mostra dados essenciais e pre-consulta', (await waitText(page, 'Dados essenciais')) && (await has(page, 'Responsável:')) && (await has(page, 'Ver pré-consulta')), '');
+    await shot(page, 'ag04_horario_dados_essenciais');
+    await tap(page, 'Iniciar consulta', { wait: 2500 });
+    const cid = (hash(page).match(/consulta\/(c\d+)/) || [])[1];
+    check('agenda: iniciar consulta a partir do horario', hash(page).startsWith('#/pacientes/p1/consulta/') && !!cid, hash(page));
+    check('agenda: consulta mostra a pre-consulta do horario', await waitText(page, 'Pré-consulta enviada pela família'), '');
+    await tap(page, 'Resumo da consulta', { wait: 2000 });
+    check('resumo: abre a partir da consulta', hash(page) === '#/pacientes/p1/consulta/' + cid + '/resumo' && (await waitText(page, 'Organizar a consulta com o assistente')), hash(page));
+    await fill(page, 'Transcrição ou anotações da consulta (opcional)', 'Pele com lesão eritematosa. Orientei hidratante.');
+    await tap(page, 'Organizar rascunho', { wait: 1500 });
+    check('resumo: assistente gera rascunho aguardando revisao', (await waitText(page, 'Sugestão para Queixa')) && (await has(page, 'Aguardando revisão')), '');
+    check('resumo: aplicar bloqueado antes da revisao', (await isDisabled(page, 'Aplicar ao registro')) === true, '');
+    await shot(page, 'ag05_resumo_rascunho_assistente');
+    await tap(page, 'Revisei o conteúdo sugerido', { wait: 900 });
+    await tap(page, 'Aplicar ao registro', { wait: 1800 });
+    check('resumo: aplicado depois da revisao e registrado', (await waitText(page, 'Revisado e aplicado')) && (await has(page, 'Rascunho do assistente revisado e aplicado')), '');
+    await tap(page, 'Continuar consulta', { wait: 2000 });
+    await tap(page, 'Próximo', { wait: 1500 });
+    await fill(page, 'Avaliação *', 'Avaliação fictícia');
+    await tap(page, 'Próximo', { wait: 1500 });
+    await tap(page, 'Retorno em 15 dias', { wait: 900 });
+    await tap(page, 'Próximo', { wait: 1500 });
+    await tap(page, 'Finalizar consulta', { wait: 1500 });
+    await tap(page, 'Finalizar', { last: true, wait: 2500 });
+    check('resumo: consulta finalizada com retorno e registro', hash(page).endsWith('/resumo') && (await waitText(page, 'Finalizada')) && (await has(page, 'Retorno recomendado')) && (await has(page, 'Consulta finalizada')), hash(page));
+    await shot(page, 'ag06_resumo_finalizado');
+    await tap(page, 'Histórico do paciente', { wait: 2000 });
+    check('historico: linha do tempo com consultas, pre-consulta e crescimento', hash(page) === '#/pacientes/p1/historico' && (await waitText(page, 'Consulta de puericultura')) && (await has(page, 'Pré-consulta enviada pela família')) && (await has(page, 'Medidas de crescimento')), hash(page));
+    await shot(page, 'ag07_historico');
+    await tap(page, 'Comparar consultas', { wait: 2000 });
+    check('historico: comparar consultas com crescimento e desenvolvimento', hash(page).startsWith('#/pacientes/p1/historico/comparar') && (await waitText(page, 'Crescimento entre as consultas')) && (await has(page, 'Desenvolvimento ao longo do tempo')), hash(page));
+    await shot(page, 'ag08_comparar');
+    await nav(page, '#/agenda/a1');
+    check('agenda: horario concluido liga ao resumo', (await waitText(page, 'Resumo da consulta')) && (await has(page, 'Concluído')), '');
+    await ctx.close();
+  });
+
+  await step('computador: diario de atendimentos e tarefas', async () => {
+    const { ctx, page } = await newPage(browser, DESKTOP);
+    await open(page, '#/diario?perfil=profissional');
+    check('diario: realizadas, pendentes e faltas', (await waitText(page, 'Realizadas:')) && (await has(page, 'Falta (1)')) && (await has(page, 'Registrar falta')), '');
+    await shot(page, 'di01_diario');
+    await tap(page, 'Falta (1)', { wait: 1200 });
+    check('diario: filtro por situacao', !(await has(page, 'Registrar falta')), '');
+    await tap(page, 'Todas', { exact: true, wait: 1200 });
+    await tap(page, 'Nova tarefa', { wait: 1200 });
+    await fill(page, 'Descrição da tarefa', 'Ligar para a família (teste e2e)');
+    await tap(page, 'Amanhã', { exact: true, wait: 600 });
+    await tap(page, 'Salvar tarefa', { wait: 1500 });
+    check('diario: tarefa criada', await waitText(page, 'Ligar para a família (teste e2e)'), '');
+    await tap(page, 'Ligar para a família (teste e2e)', { wait: 1500 });
+    check('diario: tarefa concluida vai para Concluidas', await waitText(page, 'Concluídas (2)'), '');
+    await tap(page, 'Registrar falta', { wait: 1500 });
+    check('diario: registrar falta atualiza a contagem', await waitText(page, 'Falta (2)'), '');
+    await shot(page, 'di02_diario_tarefas');
+    await ctx.close();
+  });
+
+  await step('computador: observacoes internas e visiveis ao responsavel', async () => {
+    const { ctx, page } = await newPage(browser, DESKTOP);
+    await open(page, '#/pacientes/p1/observacoes?perfil=profissional');
+    check('observacoes: identifica interna e visivel, sem notas de outra clinica', (await waitText(page, 'Observação interna')) && (await has(page, 'Visível ao responsável')) && (await has(page, 'prefere consultas pela manhã')) && !(await has(page, 'outra clínica')), '');
+    await tap(page, 'Nova observação', { wait: 1200 });
+    await fill(page, 'Observação', 'Recado de teste para a família (e2e)');
+    await tap(page, 'Visível ao responsável', { last: true, wait: 700 });
+    await tap(page, 'Salvar observação', { wait: 1500 });
+    check('observacoes: nova observacao com data e autor', (await waitText(page, 'Recado de teste para a família (e2e)')) && (await has(page, 'Dra. ')), '');
+    await shot(page, 'ob01_observacoes_profissional');
+    await nav(page, '#/pacientes/p1/observacoes?perfil=responsavel');
+    check('observacoes: responsavel ve so as visiveis', (await waitText(page, 'Recado de teste para a família (e2e)')) && (await has(page, 'caderneta de vacinação')) && !(await has(page, 'prefere consultas pela manhã')) && !(await has(page, 'Nova observação')), '');
+    await shot(page, 'ob02_recados_familia');
+    await ctx.close();
+  });
+
+  await step('celular: agenda da semana e diario', async () => {
+    const { ctx, page } = await newPage(browser, MOBILE);
+    await open(page, '#/agenda?vista=semana&perfil=profissional');
+    check('celular: agenda da semana', await waitText(page, 'horário(s) livre(s)'), '');
+    await shot(page, 'm_ag01_agenda_semana');
+    await nav(page, '#/diario');
+    check('celular: diario abre', await waitText(page, 'Realizadas:'), '');
+    await shot(page, 'm_di01_diario');
+    await ctx.close();
+  });
+
+  await step('computador: permissoes agenda, diario, resumo, observacoes e historico', async () => {
+    const rules = [
+      ['recepcao', ['#/diario', '#/pacientes/p1/historico', '#/pacientes/p1/consulta/c1/resumo', '#/pacientes/p1/observacoes']],
+      ['financeiro', ['#/diario', '#/pacientes/p1/observacoes', '#/pacientes/p1/historico/comparar']],
+      ['responsavel', ['#/diario', '#/pacientes/p1/historico', '#/pacientes/p1/historico/alteracoes']],
+      ['profissional', ['#/agenda/a7']],
+    ];
+    for (const [perfil, routes] of rules) {
+      const { ctx, page } = await newPage(browser, DESKTOP);
+      await open(page, '#/inicio?perfil=' + perfil);
+      const res = [];
+      for (const r of routes) {
+        await nav(page, r);
+        res.push(await waitText(page, 'Acesso restrito', 5000));
+      }
+      check('permissoes clinicas: ' + perfil + ' bloqueado em ' + routes.join(' '), res.every(Boolean), res.join('/'));
       await ctx.close();
     }
   });

@@ -11,6 +11,10 @@ import 'screens/brand_screens.dart';
 import 'screens/business_screens.dart';
 import 'screens/care_screens.dart';
 import 'screens/consultation_screen.dart';
+import 'screens/consultation_summary_screen.dart';
+import 'screens/diary_screens.dart';
+import 'screens/history_screens.dart';
+import 'screens/patient_notes_screens.dart';
 import 'screens/documents_screens.dart';
 import 'screens/family_guidance_screens.dart';
 import 'screens/dose_screens.dart';
@@ -40,6 +44,12 @@ Widget _guard(DemoModule module, Widget child) =>
 /// O ScaffoldMessenger proprio faz os avisos aparecerem acima da barra de
 /// acoes do fluxo, e nao sobre ela.
 Widget _clinical(String title, Widget child) => demoSession.canUseClinicalTools
+    ? ScaffoldMessenger(child: child)
+    : DemoRestrictedScreen(module: DemoModule.pacientes, title: title);
+
+/// Diário, resumo, histórico e registro de alterações: só o profissional.
+Widget _workspace(String title, Widget child) =>
+    demoSession.workspace.canUseDiary
     ? ScaffoldMessenger(child: child)
     : DemoRestrictedScreen(module: DemoModule.pacientes, title: title);
 
@@ -363,6 +373,70 @@ final GoRouter demoRouter = GoRouter(
                                 initialStep: state.uri.queryParameters['etapa'],
                               ),
                       ),
+                  routes: <RouteBase>[
+                    GoRoute(
+                      path: 'resumo',
+                      builder: (BuildContext context, GoRouterState state) =>
+                          _workspace(
+                            'Resumo da consulta',
+                            DemoConsultationSummaryScreen(
+                              patientId: state.pathParameters['id']!,
+                              consultationId: state.pathParameters['cid']!,
+                            ),
+                          ),
+                    ),
+                  ],
+                ),
+                GoRoute(
+                  path: 'historico',
+                  builder: (BuildContext context, GoRouterState state) =>
+                      _workspace(
+                        'Histórico de consultas',
+                        DemoPatientHistoryScreen(
+                          patientId: state.pathParameters['id']!,
+                          filter: state.uri.queryParameters['tipo'],
+                        ),
+                      ),
+                  routes: <RouteBase>[
+                    GoRoute(
+                      path: 'comparar',
+                      builder: (BuildContext context, GoRouterState state) =>
+                          _workspace(
+                            'Comparar consultas',
+                            DemoCompareVisitsScreen(
+                              key: ValueKey<String>(state.uri.toString()),
+                              patientId: state.pathParameters['id']!,
+                              first: state.uri.queryParameters['a'],
+                              second: state.uri.queryParameters['b'],
+                            ),
+                          ),
+                    ),
+                    GoRoute(
+                      path: 'alteracoes',
+                      builder: (BuildContext context, GoRouterState state) =>
+                          _workspace(
+                            'Registro de alterações',
+                            DemoAuditScreen(
+                              patientId: state.pathParameters['id']!,
+                            ),
+                          ),
+                    ),
+                  ],
+                ),
+                GoRoute(
+                  path: 'observacoes',
+                  builder: (BuildContext context, GoRouterState state) =>
+                      demoSession.profile == DemoProfile.profissional ||
+                          demoSession.profile == DemoProfile.responsavel
+                      ? ScaffoldMessenger(
+                          child: DemoPatientNotesScreen(
+                            patientId: state.pathParameters['id']!,
+                          ),
+                        )
+                      : const DemoRestrictedScreen(
+                          module: DemoModule.pacientes,
+                          title: 'Observações',
+                        ),
                 ),
                 GoRoute(
                   path: 'documentos',
@@ -584,6 +658,16 @@ final GoRouter demoRouter = GoRouter(
               ),
         ),
         GoRoute(
+          path: '/diario',
+          builder: (BuildContext context, GoRouterState state) => _workspace(
+            'Diário de atendimentos',
+            DemoDiaryScreen(
+              key: ValueKey<String>(state.uri.toString()),
+              patientId: state.uri.queryParameters['paciente'],
+            ),
+          ),
+        ),
+        GoRoute(
           path: followUpPath,
           builder: (BuildContext context, GoRouterState state) => _followUp(
             'Acompanhamento de pacientes',
@@ -597,20 +681,17 @@ final GoRouter demoRouter = GoRouter(
           routes: <RouteBase>[
             GoRoute(
               path: 'criterios',
-              builder: (BuildContext context, GoRouterState state) =>
-                  _followUp(
-                    'Critérios de acompanhamento',
-                    const DemoFollowUpCriteriaScreen(),
-                  ),
+              builder: (BuildContext context, GoRouterState state) => _followUp(
+                'Critérios de acompanhamento',
+                const DemoFollowUpCriteriaScreen(),
+              ),
             ),
           ],
         ),
         GoRoute(
           path: remindersPath,
-          builder: (BuildContext context, GoRouterState state) => _followUp(
-            'Lembretes de consulta',
-            const DemoRemindersScreen(),
-          ),
+          builder: (BuildContext context, GoRouterState state) =>
+              _followUp('Lembretes de consulta', const DemoRemindersScreen()),
         ),
         GoRoute(
           path: bookingPath,
@@ -706,8 +787,14 @@ final GoRouter demoRouter = GoRouter(
         ),
         GoRoute(
           path: '/agenda',
-          pageBuilder: (BuildContext context, GoRouterState state) =>
-              _tab(state, DemoModule.agenda, const DemoAgendaScreen()),
+          pageBuilder: (BuildContext context, GoRouterState state) => _tab(
+            state,
+            DemoModule.agenda,
+            DemoAgendaScreen(
+              view: state.uri.queryParameters['vista'],
+              day: state.uri.queryParameters['dia'],
+            ),
+          ),
           routes: <RouteBase>[
             GoRoute(
               path: ':id',

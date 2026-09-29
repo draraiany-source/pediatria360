@@ -77,6 +77,18 @@ class DemoAccount {
   final String email;
 }
 
+class ConsultationAddendum {
+  const ConsultationAddendum({
+    required this.at,
+    required this.author,
+    required this.text,
+  });
+
+  final DateTime at;
+  final String author;
+  final String text;
+}
+
 enum DemoConsultationStatus {
   draft('Rascunho'),
   finished('Finalizada');
@@ -101,6 +113,9 @@ class DemoConsultation {
     this.status = DemoConsultationStatus.draft,
     this.ownerId,
     this.wellChild,
+    this.appointmentId,
+    this.returnPlan = '',
+    this.returnInDays,
     DateTime? updatedAt,
   }) : updatedAt = updatedAt ?? startedAt;
 
@@ -121,6 +136,16 @@ class DemoConsultation {
 
   /// Preenchido nas consultas de puericultura.
   WellChildVisit? wellChild;
+
+  /// Horário da agenda que originou a consulta.
+  String? appointmentId;
+
+  /// Plano de retorno (texto) e prazo em dias; `null` = sem retorno marcado.
+  String returnPlan;
+  int? returnInDays;
+
+  /// Complementos após finalizar: o texto original não muda.
+  final List<ConsultationAddendum> addenda = <ConsultationAddendum>[];
 
   bool get isDraft => status == DemoConsultationStatus.draft;
   bool get isWellChild => wellChild != null;
@@ -412,6 +437,9 @@ class DemoClinicalSeed {
           assessment: 'Avaliação fictícia para testar o fluxo.',
           plan: 'Conduta fictícia: retorno programado.',
           status: DemoConsultationStatus.finished,
+          appointmentId: 'a8',
+          returnPlan: 'Retorno em 30 dias para reavaliação (exemplo).',
+          returnInDays: 30,
         ),
         DemoConsultation(
           id: 'c2',
@@ -516,6 +544,7 @@ class DemoClinicalSeed {
       status: DemoConsultationStatus.finished,
       ownerId: DemoProfessional.id,
       wellChild: v,
+      appointmentId: 'a11',
       updatedAt: at.add(const Duration(minutes: 40)),
     );
   }

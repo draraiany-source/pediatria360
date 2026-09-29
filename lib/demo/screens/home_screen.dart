@@ -8,6 +8,7 @@ import '../../core/widgets/capi_illustration.dart';
 import '../../core/widgets/child_avatar.dart';
 import '../../core/widgets/clinical_ui.dart';
 import '../../shared/clinical/dose_calculator.dart';
+import '../../shared/clinical/visit_diary.dart';
 import '../demo_clinical.dart';
 import '../demo_data.dart';
 import '../demo_session.dart';
@@ -16,6 +17,53 @@ import '../widgets/demo_widgets.dart';
 import 'booking_assistant_screens.dart';
 import 'followup_screens.dart';
 import 'pre_visit_screens.dart';
+
+/// Pendências do diário e tarefas para hoje, com acesso ao diário.
+class _DiaryCard extends StatelessWidget {
+  const _DiaryCard({required this.session});
+
+  final DemoSession session;
+
+  @override
+  Widget build(BuildContext context) {
+    final Map<VisitOutcome, int> counts = session.workspace.diaryCounts(
+      period: DiaryPeriod.mes,
+    );
+    final int pending = counts[VisitOutcome.pendente]!;
+    final int tasks = session.workspace.tasksDueNow;
+    return Padding(
+      padding: const EdgeInsets.only(top: AppSpacing.sm),
+      child: PremiumCard(
+        onTap: () => context.go('/diario'),
+        child: Row(
+          children: <Widget>[
+            const Icon(Icons.menu_book_outlined, color: AppColors.brand),
+            const SizedBox(width: AppSpacing.md),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  Text(
+                    'Diário de atendimentos',
+                    style: Theme.of(context).textTheme.titleSmall,
+                  ),
+                  Text(
+                    '$pending atendimento(s) pendente(s) de registro - '
+                    '$tasks tarefa(s) para hoje ou atrasada(s)',
+                  ),
+                ],
+              ),
+            ),
+            TextButton(
+              onPressed: () => context.go('/diario'),
+              child: const Text('Abrir diário'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
 
 /// Inicio por perfil — cada area ve atalhos e resumo proprios.
 class DemoHomeScreen extends StatelessWidget {
@@ -113,6 +161,7 @@ class DemoHomeScreen extends StatelessWidget {
             ),
           ),
           for (final DemoAppointment a in today) _ConsultTile(appointment: a),
+          _DiaryCard(session: s),
           if (s.consultations.any(
             (DemoConsultation c) => c.isDraft,
           )) ...<Widget>[
@@ -678,6 +727,7 @@ class DemoStatusChip extends StatelessWidget {
       DemoAppointmentStatus.concluido => ('Concluído', AppColors.tealDeep),
       DemoAppointmentStatus.reagendar => ('Reagendar', AppColors.raspberry),
       DemoAppointmentStatus.cancelado => ('Cancelado', AppColors.danger),
+      DemoAppointmentStatus.falta => ('Falta', AppColors.badgeBronze),
     };
     return ClinicalBadge(label: label, color: color);
   }

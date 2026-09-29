@@ -20,6 +20,7 @@ import 'demo_growth.dart';
 import 'demo_previsit_seed.dart';
 import 'demo_routine.dart';
 import 'demo_scheduling.dart';
+import 'demo_workspace.dart';
 
 /// Perfis da demonstracao — espelham as areas de trabalho do app real.
 enum DemoProfile {
@@ -241,10 +242,14 @@ class DemoSession extends ChangeNotifier {
     sharedSummaries = routine.sharedSummaries(this);
     preVisits = DemoPreVisitSeed.seed(now);
     scheduling = DemoScheduling(this);
+    workspace = DemoWorkspace(this);
   }
 
   /// Acompanhamento, lembretes e agendamento assistido.
   late DemoScheduling scheduling;
+
+  /// Diário, tarefas, observações, resumo, histórico e alterações.
+  late DemoWorkspace workspace;
 
   /// Para os módulos auxiliares avisarem as telas.
   void changed() => notifyListeners();
@@ -375,7 +380,12 @@ class DemoSession extends ChangeNotifier {
   }
 
   void setAppointmentStatus(DemoAppointment a, DemoAppointmentStatus status) {
+    if (status == DemoAppointmentStatus.falta && a.start.isAfter(now)) {
+      throw StateError('Falta só pode ser registrada depois do horário.');
+    }
+    final DemoAppointmentStatus before = a.status;
     a.status = status;
+    if (before != status) workspace.onAppointmentStatus(a, before, status);
     notifyListeners();
   }
 
@@ -467,20 +477,26 @@ class DemoSession extends ChangeNotifier {
               b.startedAt.compareTo(a.startedAt),
         );
 
-  DemoConsultation startConsultation(String patientId) {
+  DemoConsultation startConsultation(
+    String patientId, {
+    String? appointmentId,
+  }) {
     final DemoConsultation c = DemoConsultation(
       id: 'c${_nextId++}',
       patientId: patientId,
       startedAt: DateTime.now(),
       author: currentAuthor,
+      appointmentId: appointmentId,
     );
     consultations = <DemoConsultation>[c, ...consultations];
+    workspace.onStarted(c);
     notifyListeners();
     return c;
   }
 
   void saveConsultation(DemoConsultation c) {
     c.updatedAt = DateTime.now();
+    workspace.onSaved(c);
     notifyListeners();
   }
 
@@ -496,9 +512,12 @@ class DemoSession extends ChangeNotifier {
             ? 'Consulta de puericultura (demonstração)'
             : 'Consulta (demonstração)',
         summary: c.summary,
+        professionalId: _account.id,
+        consultationId: c.id,
       ),
       ...encounters,
     ];
+    workspace.onFinished(c);
     notifyListeners();
   }
 
@@ -1313,7 +1332,10 @@ class DemoSession extends ChangeNotifier {
     final PreVisitAttachment att = v.attachments.removeAt(i);
     if (att.isSent) {
       v.history.add(
-        PreVisitEvent(now, 'A família removeu o anexo "${att.name}" já enviado'),
+        PreVisitEvent(
+          now,
+          'A família removeu o anexo "${att.name}" já enviado',
+        ),
       );
     }
     notifyListeners();

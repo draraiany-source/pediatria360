@@ -511,7 +511,8 @@ void main() {
     expect(find.text(doc.title), findsWidgets);
     await tapText(tester, 'Finalizar consulta');
     await tapText(tester, 'Finalizar', last: true);
-    expect(find.text('Prontuário'), findsOneWidget);
+    expect(find.text('Resumo da consulta'), findsOneWidget);
+    expect(find.textContaining(doc.title), findsWidgets);
     expect(demoSession.consultationById(doc.consultationId!)!.isDraft, isFalse);
   });
 

@@ -14,6 +14,7 @@ import '../demo_data.dart';
 import '../demo_session.dart';
 import '../widgets/demo_widgets.dart';
 import '../widgets/flow_widgets.dart';
+import 'consultation_summary_screen.dart' show consultationSummaryUrl;
 import 'documents_screens.dart';
 import 'pre_visit_screens.dart';
 import 'rx_template_screens.dart';
@@ -60,7 +61,11 @@ class _DemoConsultationScreenState extends State<DemoConsultationScreen> {
   final TextEditingController _exam = TextEditingController();
   final TextEditingController _assessment = TextEditingController();
   final TextEditingController _plan = TextEditingController();
+  final TextEditingController _returnPlan = TextEditingController();
+  int? _returnDays;
   bool _dirty = false;
+
+  static const List<int> _returnOptions = <int>[7, 15, 30, 60, 90];
 
   DemoConsultation? get _c =>
       demoSession.consultationById(widget.consultationId);
@@ -84,6 +89,7 @@ class _DemoConsultationScreenState extends State<DemoConsultationScreen> {
     _exam,
     _assessment,
     _plan,
+    _returnPlan,
   ];
 
   void _load() {
@@ -94,6 +100,8 @@ class _DemoConsultationScreenState extends State<DemoConsultationScreen> {
     _exam.text = c.physicalExam;
     _assessment.text = c.assessment;
     _plan.text = c.plan;
+    _returnPlan.text = c.returnPlan;
+    _returnDays = c.returnInDays;
     _weight.text = '';
     _dirty = false;
   }
@@ -133,7 +141,9 @@ class _DemoConsultationScreenState extends State<DemoConsultationScreen> {
       ..history = _history.text.trim()
       ..physicalExam = _exam.text.trim()
       ..assessment = _assessment.text.trim()
-      ..plan = _plan.text.trim();
+      ..plan = _plan.text.trim()
+      ..returnPlan = _returnPlan.text.trim()
+      ..returnInDays = _returnDays;
     final String w = _weight.text.trim();
     if (w.isNotEmpty) {
       final DateTime now = DateTime.now();
@@ -224,7 +234,7 @@ class _DemoConsultationScreenState extends State<DemoConsultationScreen> {
     if (ok != true || !mounted) return;
     demoSession.finishConsultation(c);
     showDemoSnack(context, 'Consulta finalizada (demonstração).');
-    context.go(_recordPath);
+    context.go(consultationSummaryUrl(widget.patientId, c.id));
   }
 
   Future<void> _fromRxTemplate(DemoPatient p) async {
@@ -280,6 +290,11 @@ class _DemoConsultationScreenState extends State<DemoConsultationScreen> {
           ),
           title: Text('Consulta · ${c.status.label}'),
           actions: <Widget>[
+            IconButton(
+              tooltip: 'Resumo da consulta',
+              icon: const Icon(Icons.summarize_outlined),
+              onPressed: () => _openLinked(consultationSummaryUrl(p.id, c.id)),
+            ),
             DemoRecordShortcut(patientId: p.id, onLeave: _canLeave),
           ],
         ),
@@ -397,6 +412,41 @@ class _DemoConsultationScreenState extends State<DemoConsultationScreen> {
                     ],
                     ConsultationStep.conduta => <Widget>[
                       _field(_plan, 'Conduta *', editable, lines: 5),
+                      const DemoSectionTitle('Plano de retorno'),
+                      Wrap(
+                        spacing: AppSpacing.sm,
+                        runSpacing: AppSpacing.xs,
+                        children: <Widget>[
+                          for (final int d in _returnOptions)
+                            ChoiceChip(
+                              label: Text('Retorno em $d dias'),
+                              selected: _returnDays == d,
+                              onSelected: editable
+                                  ? (_) => setState(() {
+                                      _returnDays = d;
+                                      _dirty = true;
+                                    })
+                                  : null,
+                            ),
+                          ChoiceChip(
+                            label: const Text('Sem retorno marcado'),
+                            selected: _returnDays == null,
+                            onSelected: editable
+                                ? (_) => setState(() {
+                                    _returnDays = null;
+                                    _dirty = true;
+                                  })
+                                : null,
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: AppSpacing.sm),
+                      _field(
+                        _returnPlan,
+                        'Plano de retorno (o que reavaliar)',
+                        editable,
+                        lines: 2,
+                      ),
                       const DemoSectionTitle('Apoio à conduta'),
                       Wrap(
                         spacing: AppSpacing.sm,

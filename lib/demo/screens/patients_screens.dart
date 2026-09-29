@@ -6,6 +6,7 @@ import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_tokens.dart';
 import '../../core/widgets/child_avatar.dart';
 import '../../core/widgets/clinical_ui.dart';
+import '../../shared/clinical/clinical_tasks.dart';
 import '../../shared/clinical/dose_calculator.dart';
 import '../../shared/clinical/lab_results.dart';
 import '../demo_clinical.dart';
@@ -299,6 +300,44 @@ class DemoPatientDetailScreen extends StatelessWidget {
                         onTap: () =>
                             context.go('/pacientes/${p.id}/prontuario'),
                       ),
+                    if (demoSession.workspace.canUseDiary) ...<Widget>[
+                      _ActionTile(
+                        icon: Icons.timeline_rounded,
+                        title: 'Histórico de consultas',
+                        subtitle:
+                            'Linha do tempo, comparação, crescimento e '
+                            'desenvolvimento',
+                        onTap: () => context.go('/pacientes/${p.id}/historico'),
+                      ),
+                      _ActionTile(
+                        icon: Icons.sticky_note_2_outlined,
+                        title: 'Observações',
+                        subtitle:
+                            '${demoSession.workspace.notesFor(p.id).length} '
+                            'registro(s): internas e visíveis ao responsável',
+                        onTap: () =>
+                            context.go('/pacientes/${p.id}/observacoes'),
+                      ),
+                      _ActionTile(
+                        icon: Icons.task_alt_rounded,
+                        title: 'Tarefas do paciente',
+                        subtitle:
+                            '${demoSession.workspace.tasksFor(patientId: p.id).where((ClinicalTask t) => !t.done).length} '
+                            'em aberto',
+                        onTap: () => context.go('/diario?paciente=${p.id}'),
+                      ),
+                    ],
+                    if (isGuardian &&
+                        demoSession.workspace.notesFor(p.id).isNotEmpty)
+                      _ActionTile(
+                        icon: Icons.mark_email_read_outlined,
+                        title: 'Recados da equipe',
+                        subtitle:
+                            '${demoSession.workspace.notesFor(p.id).length} '
+                            'recado(s) do pediatra',
+                        onTap: () =>
+                            context.go('/pacientes/${p.id}/observacoes'),
+                      ),
                     if (demoSession.canUseClinicalTools) ...<Widget>[
                       _ActionTile(
                         icon: Icons.folder_open_outlined,
@@ -372,7 +411,9 @@ class DemoPatientDetailScreen extends StatelessWidget {
                         icon: Icons.assignment_outlined,
                         title: 'Pré-consulta enviada pela família',
                         subtitle: () {
-                          final int n = demoSession.sentPreVisitsFor(p.id).length;
+                          final int n = demoSession
+                              .sentPreVisitsFor(p.id)
+                              .length;
                           final int files = demoSession
                               .sentPreVisitsFor(p.id)
                               .fold<int>(
