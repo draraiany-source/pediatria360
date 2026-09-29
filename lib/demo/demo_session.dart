@@ -2,14 +2,17 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../shared/branding/brand_logo.dart';
+import '../shared/clinical/audit_trail.dart';
 import '../shared/clinical/clinical_documents.dart';
 import '../shared/clinical/dose_calculator.dart';
+import '../shared/clinical/family_release.dart';
 import '../shared/clinical/growth.dart';
 import '../shared/clinical/lab_results.dart';
 import '../shared/clinical/orientation_templates.dart';
 import '../shared/clinical/rx_templates.dart';
 import '../shared/clinical/supplement_library.dart';
 import '../shared/previsit/pre_visit.dart';
+import '../shared/previsit/pre_visit_guidance.dart';
 import '../shared/routine/child_routine.dart';
 import '../shared/wellchild/age_band.dart';
 import '../shared/wellchild/well_child_templates.dart';
@@ -189,6 +192,12 @@ class DemoSession extends ChangeNotifier {
   late Set<DiaryKind> diaryKindFilter;
   String? lastRoutinePatientId;
   late Map<String, PreVisit> preVisits;
+
+  /// Documentos emitidos que o profissional liberou para a família.
+  late Map<String, FamilyRelease> familyReleases;
+
+  /// Orientações prévias da clínica, por categoria de consulta.
+  late PreVisitGuidance preVisitGuidance;
   final List<DemoArticle> articles = DemoSeed.articles;
   final List<DoseReference> doseReferences = DemoClinicalSeed.doseReferences;
 
@@ -241,6 +250,8 @@ class DemoSession extends ChangeNotifier {
     lastRoutinePatientId = null;
     sharedSummaries = routine.sharedSummaries(this);
     preVisits = DemoPreVisitSeed.seed(now);
+    familyReleases = DemoClinicalSeed.familyReleases(now);
+    preVisitGuidance = PreVisitGuidance();
     scheduling = DemoScheduling(this);
     workspace = DemoWorkspace(this);
   }
@@ -732,25 +743,187 @@ class DemoSession extends ChangeNotifier {
 
   // ------------------------------------------------ Área da família
 
-  /// Orientações emitidas para as crianças do responsável (a última versão
-  /// emitida; rascunhos posteriores não aparecem).
-  List<ClinicalDocRecord> familyOrientations(String patientId) {
+  /// Documentos liberados para as crianças do responsável, na última versão
+  /// emitida. Rascunhos, versões em revisão e documentos não liberados não
+  /// aparecem.
+  List<ClinicalDocRecord> familyDocuments(String patientId, {DocKind? kind}) {
     if (_profile != DemoProfile.responsavel || patientById(patientId) == null) {
       return const <ClinicalDocRecord>[];
     }
-    final List<ClinicalDocRecord> out = <ClinicalDocRecord>[];
-    for (final ClinicalDocRecord d in documents) {
-      if (d.patientId != patientId || d.kind != DocKind.orientacoes) continue;
-      final int i = d.versions.lastIndexWhere(
-        (DocVersion v) => v.status == DocStatus.issued,
-      );
-      if (i >= 0) out.add(d.upTo(i));
-    }
+    final List<ClinicalDocRecord> out = <ClinicalDocRecord>[
+      for (final ClinicalDocRecord d in documents)
+        if (d.patientId == patientId && (kind == null || d.kind == kind))
+          ?FamilyReleaseRules.visibleToFamily(d, familyReleases[d.id]),
+    ];
     out.sort(
       (ClinicalDocRecord a, ClinicalDocRecord b) =>
           b.current.issuedAt!.compareTo(a.current.issuedAt!),
     );
     return out;
+  }
+
+  ClinicalDocRecord? familyDocumentById(String patientId, String docId) {
+    for (final ClinicalDocRecord d in familyDocuments(patientId)) {
+      if (d.id == docId) return d;
+    }
+    return null;
+  }
+
+  /// Orientações liberadas para as crianças do responsável.
+  List<ClinicalDocRecord> familyOrientations(String patientId) =>
+      familyDocuments(patientId, kind: DocKind.orientacoes);
+
+  /// Consultas concluídas da criança, só com o que a família pode ver.
+  List<FamilyVisit> familyVisits(String patientId) {
+    if (_profile != DemoProfile.responsavel || patientById(patientId) == null) {
+      return const <FamilyVisit>[];
+    }
+    final List<ClinicalDocRecord> docs = familyDocuments(patientId);
+    return <FamilyVisit>[
+      for (final DemoConsultation c in consultationsFor(patientId))
+        if (!c.isDraft)
+          FamilyVisit(
+            id: c.id,
+            date: c.startedAt,
+            kindLabel: c.isWellChild
+                ? 'Consulta de puericultura'
+                : 'Consulta pediátrica',
+            professional: DemoProfessional.byId(
+              c.ownerId ?? DemoProfessional.id,
+            ).name,
+            clinic: DemoProfessional.byId(
+              c.ownerId ?? DemoProfessional.id,
+            ).clinic,
+            returnDate:
+                c.wellChild?.nextVisit ??
+                (c.returnInDays == null
+                    ? null
+                    : c.startedAt.add(Duration(days: c.returnInDays!))),
+            documents: <ClinicalDocRecord>[
+              for (final ClinicalDocRecord d in docs)
+                if (d.consultationId == c.id) d,
+            ],
+          ),
+    ];
+  }
+
+  /// Documentos liberados que não pertencem a nenhuma consulta concluída.
+  List<ClinicalDocRecord> familyLooseDocuments(String patientId) {
+    final Set<String> inVisits = <String>{
+      for (final FamilyVisit v in familyVisits(patientId))
+        for (final ClinicalDocRecord d in v.documents) d.id,
+    };
+    return <ClinicalDocRecord>[
+      for (final ClinicalDocRecord d in familyDocuments(patientId))
+        if (!inVisits.contains(d.id)) d,
+    ];
+  }
+
+  // ------------------------------------------------ Liberação à família
+
+  FamilyRelease? familyReleaseOf(String docId) => familyReleases[docId];
+
+  bool isReleasedToFamily(String docId) =>
+      familyReleases[docId]?.isReleased ?? false;
+
+  /// Motivo para o profissional em uso não poder liberar; `null` = pode.
+  String? familyReleaseBlock(ClinicalDocRecord doc) {
+    if (!canUseClinicalTools) {
+      return 'Só o profissional libera documentos para a família.';
+    }
+    final ClinicalDocRecord? mine = documentById(doc.id);
+    return FamilyReleaseRules.blockToRelease(
+      mine ?? doc,
+      isOwner: mine != null,
+      current: familyReleases[doc.id],
+    );
+  }
+
+  /// Libera a última versão emitida. Versões emitidas depois também ficam
+  /// visíveis; rascunhos, não.
+  void releaseToFamily(String docId) {
+    final ClinicalDocRecord? doc = documentById(docId);
+    if (doc == null) {
+      throw const FamilyReleaseException('Documento não encontrado.');
+    }
+    final String? block = familyReleaseBlock(doc);
+    if (block != null) throw FamilyReleaseException(block);
+    familyReleases
+        .putIfAbsent(docId, () => FamilyRelease(docId))
+        .events
+        .add(FamilyReleaseEvent(at: now, actor: currentAuthor, released: true));
+    final DocVersion v = doc.versions[FamilyReleaseRules.lastIssuedIndex(doc)];
+    workspace.log(
+      AuditEntity.documento,
+      docId,
+      'Documento liberado para a família',
+      patientId: doc.patientId,
+      detail: '${doc.title} (versão ${v.number})',
+    );
+    notifyListeners();
+  }
+
+  void revokeFamilyRelease(String docId, {required String reason}) {
+    final ClinicalDocRecord? doc = canUseClinicalTools
+        ? documentById(docId)
+        : null;
+    final String? block = doc == null
+        ? 'Só quem emitiu o documento pode retirá-lo.'
+        : FamilyReleaseRules.blockToRevoke(
+            doc,
+            isOwner: true,
+            reason: reason,
+            current: familyReleases[docId],
+          );
+    if (block != null) throw FamilyReleaseException(block);
+    familyReleases[docId]!.events.add(
+      FamilyReleaseEvent(
+        at: now,
+        actor: currentAuthor,
+        released: false,
+        reason: reason.trim(),
+      ),
+    );
+    workspace.log(
+      AuditEntity.documento,
+      docId,
+      'Liberação para a família retirada',
+      patientId: doc!.patientId,
+      detail: 'Motivo: ${reason.trim()}',
+    );
+    notifyListeners();
+  }
+
+  // ------------------------------------------------ Orientações prévias
+
+  VisitCategory visitCategoryOf(DemoAppointment a) => VisitCategory.classify(
+    label: a.typeLabel ?? a.reason,
+    telehealth: a.kind == DemoAppointmentKind.teleconsulta,
+  );
+
+  /// Itens para uma consulta: o responsável vê só os das crianças dele.
+  List<String> preVisitGuidanceFor(DemoAppointment a) {
+    if (patientById(a.patientId) == null) return const <String>[];
+    return preVisitGuidance.itemsFor(visitCategoryOf(a));
+  }
+
+  /// Profissional da clínica que atende.
+  bool get canEditPreVisitGuidance => canReviewPreVisits;
+
+  void savePreVisitGuidance({
+    required List<String> general,
+    required Map<VisitCategory, List<String>> byCategory,
+  }) {
+    if (!canEditPreVisitGuidance) {
+      throw StateError('Só o profissional da clínica edita as orientações.');
+    }
+    preVisitGuidance = preVisitGuidance.edited(
+      general: general,
+      byCategory: byCategory,
+      reviewer: currentAuthor,
+      now: now,
+    );
+    notifyListeners();
   }
 
   ClinicalDocRecord? familyOrientationById(String patientId, String docId) {

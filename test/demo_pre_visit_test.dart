@@ -199,9 +199,7 @@ void main() {
       await tester.enterText(field('Data do exame *'), dmy(tomorrow));
       await tapText(tester, 'Incluir anexo');
       expect(find.text('A data não pode ser futura.'), findsOneWidget);
-      final DateTime examDay = DateTime.now().subtract(
-        const Duration(days: 5),
-      );
+      final DateTime examDay = DateTime.now().subtract(const Duration(days: 5));
       await tester.enterText(field('Data do exame *'), dmy(examDay));
       await tapText(tester, 'Incluir anexo');
       await expectShown(tester, find.text('Exames, laudos e relatórios (1)'));
@@ -265,10 +263,10 @@ void main() {
       expect(find.text('Consulta de $day às 09:30'), findsOneWidget);
       final List<(DemoAppointment, PreVisit)> sent = demoSession
           .sentPreVisitsFor('p1');
-      expect(
-        sent.map(((DemoAppointment, PreVisit) e) => e.$1.id),
-        <String>['a6', 'a1'],
-      );
+      expect(sent.map(((DemoAppointment, PreVisit) e) => e.$1.id), <String>[
+        'a6',
+        'a1',
+      ]);
       for (final (DemoAppointment _, PreVisit v) in sent) {
         expect(
           groupSentAttachments(v).map(
@@ -277,7 +275,16 @@ void main() {
           <String>['Fotos da queixa 1', 'Exames, laudos e relatórios 1'],
         );
       }
-      await expectShown(tester, find.textContaining('Febre baixa e mancha'));
+      // Resumo organizado por regras e a resposta original da família.
+      await expectShown(
+        tester,
+        find.textContaining('Febre baixa e mancha'),
+        findsNWidgets(2),
+      );
+      expect(
+        find.textContaining('Organizado por regras, sem IA'),
+        findsWidgets,
+      );
       await expectShown(tester, find.text('Mancha na perna'));
       expect(find.text('Remover'), findsNothing);
       await tapLabel(tester, 'Ver laudo.pdf');

@@ -24,6 +24,7 @@ List<(String, String)> consultationSections(DemoConsultation c) {
       ('Anamnese', c.history),
       ('Exame físico', c.physicalExam),
       ('Avaliação', c.assessment),
+      ('Hipóteses diagnósticas', c.hypotheses),
       ('Conduta', c.plan),
       ('Plano de retorno', c.returnPlan),
     ];

@@ -6,7 +6,8 @@ enum AuditEntity {
   observacao('Observação'),
   tarefa('Tarefa'),
   agendamento('Agendamento'),
-  rascunhoAssistente('Rascunho do assistente');
+  rascunhoAssistente('Rascunho do assistente'),
+  documento('Documento');
 
   const AuditEntity(this.label);
 

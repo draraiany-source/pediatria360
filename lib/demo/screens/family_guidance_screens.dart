@@ -68,9 +68,9 @@ class DemoFamilyOrientationsScreen extends StatelessWidget {
                   icon: Icons.verified_outlined,
                   color: Color(0xFF0B6B8A),
                   text:
-                      'Aqui ficam as orientações revisadas e emitidas pelo '
-                      'profissional para esta criança. Em caso de dúvida, '
-                      'fale com a clínica.',
+                      'Aqui ficam as orientações revisadas, emitidas e '
+                      'liberadas pelo profissional para esta criança. Em caso '
+                      'de dúvida, fale com a clínica.',
                 ),
                 const SizedBox(height: AppSpacing.md),
                 if (docs.isEmpty)
@@ -113,17 +113,21 @@ class DemoFamilyOrientationsScreen extends StatelessWidget {
   }
 }
 
+/// Documento liberado para a família. Nas orientações abre pela lista de
+/// orientações; com [anyKind], pela lista de documentos da consulta.
 class DemoFamilyOrientationScreen extends StatefulWidget {
   const DemoFamilyOrientationScreen({
     required this.patientId,
     required this.docId,
     super.key,
     this.from,
+    this.anyKind = false,
   });
 
   final String patientId;
   final String docId;
   final String? from;
+  final bool anyKind;
 
   @override
   State<DemoFamilyOrientationScreen> createState() =>
@@ -135,7 +139,8 @@ class _DemoFamilyOrientationScreenState
   bool _busy = false;
 
   String get _list =>
-      '/rotina/${widget.patientId}/orientacoes'
+      '/rotina/${widget.patientId}/'
+      '${widget.anyKind ? 'documentos' : 'orientacoes'}'
       '${widget.from == null ? '' : '?de=${widget.from}'}';
 
   Future<void> _pdf(
@@ -185,31 +190,46 @@ class _DemoFamilyOrientationScreenState
         final DemoPatient? p = demoSession.routinePatient(widget.patientId);
         final ClinicalDocRecord? d = p == null
             ? null
+            : widget.anyKind
+            ? demoSession.familyDocumentById(p.id, widget.docId)
             : demoSession.familyOrientationById(p.id, widget.docId);
         final TextTheme t = Theme.of(context).textTheme;
         if (p == null || d == null) {
           return Scaffold(
             appBar: AppBar(
               leading: BackButton(onPressed: () => context.go(_list)),
-              title: const Text('Orientação'),
+              title: Text(widget.anyKind ? 'Documento' : 'Orientação'),
             ),
-            body: DemoEmpty(
-              title: 'Orientação não encontrada',
-              message:
-                  'Esta orientação não existe ou não foi emitida para esta '
-                  'criança.',
-              actionLabel: 'Ver orientações',
-              onAction: () => context.go(_list),
-            ),
+            body: widget.anyKind
+                ? DemoEmpty(
+                    title: 'Documento não encontrado',
+                    message:
+                        'Este documento não existe ou não foi liberado para '
+                        'esta criança.',
+                    actionLabel: 'Ver documentos',
+                    onAction: () => context.go(_list),
+                  )
+                : DemoEmpty(
+                    title: 'Orientação não encontrada',
+                    message:
+                        'Esta orientação não existe ou não foi emitida para '
+                        'esta criança.',
+                    actionLabel: 'Ver orientações',
+                    onAction: () => context.go(_list),
+                  ),
           );
         }
+        final bool orientation = d.kind == DocKind.orientacoes;
+        final String title = orientation
+            ? (d.current.fields['titulo'] ?? d.title)
+            : d.title;
         final DemoAccount who = demoSession.documentAccount(d);
         final BrandLogo? logo = demoSession.familyDocumentLogo(d);
         return Scaffold(
           backgroundColor: AppColors.lightBackground,
           appBar: AppBar(
             leading: BackButton(onPressed: () => context.go(_list)),
-            title: Text(d.current.fields['titulo'] ?? 'Orientação'),
+            title: Text(title),
           ),
           body: DemoContent(
             maxWidth: 820,
@@ -229,7 +249,7 @@ class _DemoFamilyOrientationScreenState
                       DemoBrandMark(logo: logo, height: 44),
                       const SizedBox(height: AppSpacing.sm),
                       Text(
-                        d.current.fields['titulo'] ?? d.title,
+                        title,
                         style: t.titleLarge?.copyWith(
                           color: AppColors.navy,
                           fontWeight: FontWeight.w800,
@@ -237,12 +257,15 @@ class _DemoFamilyOrientationScreenState
                       ),
                       Text(
                         '${who.name} - ${who.clinic}\n'
-                        'Emitida em ${formatDmy(d.current.issuedAt!)}',
+                        '${orientation ? 'Emitida' : 'Emitido'} em '
+                        '${formatDmy(d.current.issuedAt!)}',
                         style: t.bodySmall?.copyWith(color: AppColors.inkMuted),
                       ),
                       const Divider(height: AppSpacing.lg),
                       SelectableText(
-                        d.current.fields['texto'] ?? '',
+                        orientation
+                            ? d.current.fields['texto'] ?? ''
+                            : d.current.body,
                         style: t.bodyMedium,
                       ),
                     ],

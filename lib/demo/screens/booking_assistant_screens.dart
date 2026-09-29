@@ -11,6 +11,7 @@ import '../demo_data.dart';
 import '../demo_scheduling.dart';
 import '../demo_session.dart';
 import '../widgets/demo_widgets.dart';
+import 'family_health_screens.dart';
 import 'pre_visit_screens.dart' show preVisitFamilyUrl;
 
 const String bookingPath = '/agendar';
@@ -296,6 +297,17 @@ class _Card extends StatelessWidget {
             ),
             const SizedBox(height: AppSpacing.xs),
             for (final String l in card.lines) Text(l, style: t.bodySmall),
+            if ((card.kind == AssistantCardKind.booked ||
+                    card.kind == AssistantCardKind.rescheduled) &&
+                card.appointmentId != null &&
+                family &&
+                demoSession.appointmentById(card.appointmentId!) !=
+                    null) ...<Widget>[
+              const SizedBox(height: AppSpacing.sm),
+              DemoVisitGuidance(
+                appointment: demoSession.appointmentById(card.appointmentId!)!,
+              ),
+            ],
             if (card.kind == AssistantCardKind.booked &&
                 card.appointmentId != null &&
                 family) ...<Widget>[

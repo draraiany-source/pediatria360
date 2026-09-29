@@ -1,5 +1,6 @@
 import '../shared/clinical/clinical_documents.dart';
 import '../shared/clinical/dose_calculator.dart';
+import '../shared/clinical/family_release.dart';
 import '../shared/clinical/orientation_templates.dart';
 import '../shared/clinical/rx_templates.dart';
 import '../shared/wellchild/guidance_examples.dart';
@@ -109,6 +110,7 @@ class DemoConsultation {
     this.history = '',
     this.physicalExam = '',
     this.assessment = '',
+    this.hypotheses = '',
     this.plan = '',
     this.status = DemoConsultationStatus.draft,
     this.ownerId,
@@ -127,6 +129,10 @@ class DemoConsultation {
   String history;
   String physicalExam;
   String assessment;
+
+  /// Hipóteses diagnósticas escritas pelo profissional. O assistente de
+  /// organização nunca preenche este campo.
+  String hypotheses;
   String plan;
   DemoConsultationStatus status;
   DateTime updatedAt;
@@ -166,6 +172,7 @@ class DemoConsultation {
       : <String>[
           if (complaint.trim().isNotEmpty) 'Motivo: ${complaint.trim()}',
           if (assessment.trim().isNotEmpty) 'Avaliação: ${assessment.trim()}',
+          if (hypotheses.trim().isNotEmpty) 'Hipóteses: ${hypotheses.trim()}',
           if (plan.trim().isNotEmpty) 'Conduta: ${plan.trim()}',
         ].join('\n');
 }
@@ -551,6 +558,22 @@ class DemoClinicalSeed {
 
   /// Um documento emitido e editado (v2 em rascunho) e um rascunho simples,
   /// para o histórico já mostrar versões e estados.
+  /// A receita da consulta c1 e a orientação da puericultura já estão na
+  /// área da família. O atestado emitido (d1) ficou só com a clínica.
+  static Map<String, FamilyRelease> familyReleases(
+    DateTime now,
+  ) => <String, FamilyRelease>{
+    for (final (String id, int days) in <(String, int)>[('d3', 10), ('d4', 40)])
+      id: FamilyRelease(id)
+        ..events.add(
+          FamilyReleaseEvent(
+            at: now.subtract(Duration(days: days)),
+            actor: DemoProfessional.name,
+            released: true,
+          ),
+        ),
+  };
+
   static List<ClinicalDocRecord> documents(
     List<DemoPatient> patients,
     DateTime now,

@@ -368,6 +368,25 @@ class DemoPatientDetailScreen extends StatelessWidget {
                         onTap: () =>
                             context.go('/pacientes/${p.id}/crescimento'),
                       ),
+                    if (isGuardian) ...<Widget>[
+                      _ActionTile(
+                        icon: Icons.favorite_border_rounded,
+                        title: 'Saúde e desenvolvimento',
+                        subtitle:
+                            'Consultas, crescimento, vacinas, marcos e '
+                            'orientações',
+                        highlight: true,
+                        onTap: () => context.go('/rotina/${p.id}/saude'),
+                      ),
+                      _ActionTile(
+                        icon: Icons.folder_shared_outlined,
+                        title: 'Documentos da consulta',
+                        subtitle:
+                            '${demoSession.familyDocuments(p.id).length} '
+                            'liberado(s) pelo profissional',
+                        onTap: () => context.go('/rotina/${p.id}/documentos'),
+                      ),
+                    ],
                     if (isGuardian)
                       _ActionTile(
                         icon: Icons.event_note_outlined,
@@ -388,7 +407,7 @@ class DemoPatientDetailScreen extends StatelessWidget {
                         title: 'Orientações da clínica',
                         subtitle:
                             '${demoSession.familyOrientations(p.id).length} '
-                            'orientação(ões) emitida(s)',
+                            'orientação(ões) liberada(s)',
                         onTap: () => context.go('/rotina/${p.id}/orientacoes'),
                       ),
                       for (final DemoAppointment a

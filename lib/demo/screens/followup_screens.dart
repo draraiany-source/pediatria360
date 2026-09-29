@@ -12,6 +12,7 @@ import '../demo_data.dart';
 import '../demo_scheduling.dart';
 import '../demo_session.dart';
 import '../widgets/demo_widgets.dart';
+import 'guidance_settings_screen.dart';
 
 const String followUpPath = '/acompanhamento';
 const String followUpCriteriaPath = '/acompanhamento/criterios';
@@ -67,9 +68,7 @@ class _DemoFollowUpScreenState extends State<DemoFollowUpScreen> {
         );
         final List<(DemoPatient, FollowUpStatus)> members =
             all
-                .where(
-                  ((DemoPatient, FollowUpStatus) e) => e.$2.isIn(_cat),
-                )
+                .where(((DemoPatient, FollowUpStatus) e) => e.$2.isIn(_cat))
                 .toList()
               ..sort(
                 (
@@ -151,7 +150,8 @@ class _DemoFollowUpScreenState extends State<DemoFollowUpScreen> {
                       spacing: AppSpacing.sm,
                       runSpacing: AppSpacing.sm,
                       children: <Widget>[
-                        for (final FollowUpCategory c in FollowUpCategory.values)
+                        for (final FollowUpCategory c
+                            in FollowUpCategory.values)
                           _IndicatorCard(
                             category: c,
                             count: counts[c] ?? 0,
@@ -182,7 +182,9 @@ class _DemoFollowUpScreenState extends State<DemoFollowUpScreen> {
                     if (members.isEmpty)
                       Text(
                         'Nenhum paciente neste indicador com os filtros atuais.',
-                        style: t.bodyMedium?.copyWith(color: AppColors.inkMuted),
+                        style: t.bodyMedium?.copyWith(
+                          color: AppColors.inkMuted,
+                        ),
                       ),
                     for (final (DemoPatient p, FollowUpStatus st) in members)
                       _FollowUpTile(patient: p, status: st),
@@ -532,7 +534,8 @@ class _DemoFollowUpCriteriaScreenState
                 if (!edit)
                   const DemoNotice(
                     icon: Icons.lock_outline_rounded,
-                    text: 'Só a administração da clínica altera os critérios. '
+                    text:
+                        'Só a administração da clínica altera os critérios. '
                         'Aqui você consulta os valores em uso.',
                   ),
                 _Stepper(
@@ -574,7 +577,8 @@ class _DemoFollowUpCriteriaScreenState
                 const SizedBox(height: AppSpacing.sm),
                 const DemoNotice(
                   icon: Icons.event_available_outlined,
-                  text: 'Quem já tem consulta futura marcada nunca é '
+                  text:
+                      'Quem já tem consulta futura marcada nunca é '
                       'classificado como inativo.',
                 ),
                 if (edit) ...<Widget>[
@@ -680,7 +684,10 @@ class DemoRemindersScreen extends StatefulWidget {
 }
 
 class _DemoRemindersScreenState extends State<DemoRemindersScreen> {
-  late final Set<int> _offsets = demoSession.scheduling.reminderSettings.offsetsHours
+  late final Set<int> _offsets = demoSession
+      .scheduling
+      .reminderSettings
+      .offsetsHours
       .toSet();
 
   void _run() {
@@ -722,8 +729,10 @@ class _DemoRemindersScreenState extends State<DemoRemindersScreen> {
         final TextTheme t = Theme.of(context).textTheme;
         final List<DemoReceptionAlert> alerts = store.openAlerts;
         final List<ReminderRecord> log = store.reminderLog;
-        final bool dirty =
-            !_sameSet(_offsets, store.reminderSettings.offsetsHours.toSet());
+        final bool dirty = !_sameSet(
+          _offsets,
+          store.reminderSettings.offsetsHours.toSet(),
+        );
         return Scaffold(
           backgroundColor: AppColors.lightBackground,
           appBar: AppBar(
@@ -750,7 +759,9 @@ class _DemoRemindersScreenState extends State<DemoRemindersScreen> {
                             selected: _offsets.contains(h),
                             onSelected: edit
                                 ? (bool on) => setState(
-                                    () => on ? _offsets.add(h) : _offsets.remove(h),
+                                    () => on
+                                        ? _offsets.add(h)
+                                        : _offsets.remove(h),
                                   )
                                 : null,
                           ),
@@ -792,12 +803,15 @@ class _DemoRemindersScreenState extends State<DemoRemindersScreen> {
                     if (alerts.isEmpty)
                       Text(
                         'Nenhuma pendência para a recepção.',
-                        style: t.bodyMedium?.copyWith(color: AppColors.inkMuted),
+                        style: t.bodyMedium?.copyWith(
+                          color: AppColors.inkMuted,
+                        ),
                       ),
                     for (final DemoReceptionAlert a in alerts)
                       DemoAlertTile(alert: a),
                     DemoSectionTitle('Registro de envios (${log.length})'),
-                    for (final ReminderRecord r in log) DemoReminderTile(record: r),
+                    for (final ReminderRecord r in log)
+                      DemoReminderTile(record: r),
                   ],
                 ),
               ),
@@ -1147,7 +1161,10 @@ class DemoAppointmentActions extends StatelessWidget {
     if (ok != true || !context.mounted) return;
     try {
       store.reschedule(a.id, chosen);
-      showDemoSnack(context, 'Consulta remarcada para ${reminderWhen(chosen)}.');
+      showDemoSnack(
+        context,
+        'Consulta remarcada para ${reminderWhen(chosen)}.',
+      );
     } on Exception catch (e) {
       showDemoSnack(context, e.toString());
     }
@@ -1215,6 +1232,12 @@ class DemoSchedulingHomeCard extends StatelessWidget {
                     : 'Lembretes de consulta',
               ),
             ),
+            if (demoSession.canEditPreVisitGuidance)
+              FilledButton.tonalIcon(
+                onPressed: () => context.go(preVisitGuidancePath),
+                icon: const Icon(Icons.checklist_rounded),
+                label: const Text('Orientações antes da consulta'),
+              ),
             if (store.canManageAgenda)
               FilledButton.tonalIcon(
                 onPressed: () => context.go('/agendar'),

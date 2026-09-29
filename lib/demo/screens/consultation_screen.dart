@@ -60,6 +60,7 @@ class _DemoConsultationScreenState extends State<DemoConsultationScreen> {
   final TextEditingController _weight = TextEditingController();
   final TextEditingController _exam = TextEditingController();
   final TextEditingController _assessment = TextEditingController();
+  final TextEditingController _hypotheses = TextEditingController();
   final TextEditingController _plan = TextEditingController();
   final TextEditingController _returnPlan = TextEditingController();
   int? _returnDays;
@@ -88,6 +89,7 @@ class _DemoConsultationScreenState extends State<DemoConsultationScreen> {
     _weight,
     _exam,
     _assessment,
+    _hypotheses,
     _plan,
     _returnPlan,
   ];
@@ -99,6 +101,7 @@ class _DemoConsultationScreenState extends State<DemoConsultationScreen> {
     _history.text = c.history;
     _exam.text = c.physicalExam;
     _assessment.text = c.assessment;
+    _hypotheses.text = c.hypotheses;
     _plan.text = c.plan;
     _returnPlan.text = c.returnPlan;
     _returnDays = c.returnInDays;
@@ -141,6 +144,7 @@ class _DemoConsultationScreenState extends State<DemoConsultationScreen> {
       ..history = _history.text.trim()
       ..physicalExam = _exam.text.trim()
       ..assessment = _assessment.text.trim()
+      ..hypotheses = _hypotheses.text.trim()
       ..plan = _plan.text.trim()
       ..returnPlan = _returnPlan.text.trim()
       ..returnInDays = _returnDays;
@@ -380,6 +384,15 @@ class _DemoConsultationScreenState extends State<DemoConsultationScreen> {
                       ),
                       _field(_exam, 'Exame físico', editable, lines: 4),
                       _field(_assessment, 'Avaliação *', editable, lines: 4),
+                      _field(
+                        _hypotheses,
+                        'Hipóteses diagnósticas',
+                        editable,
+                        lines: 2,
+                        helper:
+                            'Escritas por você. O assistente não sugere '
+                            'hipóteses.',
+                      ),
                       const DemoSectionTitle('Crescimento e exames'),
                       Wrap(
                         spacing: AppSpacing.sm,
@@ -582,6 +595,7 @@ class _DemoConsultationScreenState extends State<DemoConsultationScreen> {
     String label,
     bool enabled, {
     int lines = 1,
+    String? helper,
   }) => Padding(
     padding: const EdgeInsets.only(bottom: AppSpacing.md),
     child: TextField(
@@ -591,6 +605,8 @@ class _DemoConsultationScreenState extends State<DemoConsultationScreen> {
       maxLines: lines + 6,
       decoration: InputDecoration(
         labelText: label,
+        helperText: helper,
+        helperMaxLines: 2,
         alignLabelWithHint: lines > 1,
       ),
     ),

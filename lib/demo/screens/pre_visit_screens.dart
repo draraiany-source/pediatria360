@@ -8,10 +8,13 @@ import '../../core/theme/app_tokens.dart';
 import '../../core/widgets/clinical_ui.dart';
 import '../../shared/clinical/file_input.dart';
 import '../../shared/previsit/pre_visit.dart';
+import '../../shared/previsit/pre_visit_summary.dart';
 import '../../shared/routine/child_routine.dart' show parseDmy;
 import '../demo_data.dart';
 import '../demo_session.dart';
+import '../widgets/ai_label.dart';
 import '../widgets/demo_widgets.dart';
+import 'family_health_screens.dart';
 
 String preVisitFamilyUrl(String appointmentId, {String? from}) =>
     '/pre-consulta/$appointmentId${from == null ? '' : '?de=$from'}';
@@ -54,11 +57,7 @@ String _answer(PreVisitAnswers a, String key) => switch (key) {
 // ------------------------------------------------------------ Família
 
 class DemoPreVisitScreen extends StatefulWidget {
-  const DemoPreVisitScreen({
-    required this.appointmentId,
-    super.key,
-    this.from,
-  });
+  const DemoPreVisitScreen({required this.appointmentId, super.key, this.from});
 
   final String appointmentId;
 
@@ -101,6 +100,9 @@ class _DemoPreVisitScreenState extends State<DemoPreVisitScreen> {
       return '/pacientes/${a.patientId}';
     }
     if (widget.from == 'agendar') return '/agendar';
+    if (widget.from == 'saude' && a != null) {
+      return '/rotina/${a.patientId}/saude';
+    }
     return '/inicio';
   }
 
@@ -428,11 +430,13 @@ class _DemoPreVisitScreenState extends State<DemoPreVisitScreen> {
                       padding: const EdgeInsets.only(top: AppSpacing.xs),
                       child: Text(
                         'Tudo enviado. Se algo mudar, edite e envie de novo.',
-                        style: t.bodySmall?.copyWith(
-                          color: AppColors.inkMuted,
-                        ),
+                        style: t.bodySmall?.copyWith(color: AppColors.inkMuted),
                       ),
                     ),
+                ],
+                if (editable) ...<Widget>[
+                  const DemoSectionTitle('Orientações da clínica'),
+                  DemoVisitGuidance(appointment: a),
                 ],
                 if (v.history.isNotEmpty) ...<Widget>[
                   const DemoSectionTitle('Histórico'),
@@ -768,6 +772,70 @@ class _Status extends StatelessWidget {
   }
 }
 
+/// Resumo por regras, com a etiqueta de texto de assistente.
+class _OrganizedSummary extends StatelessWidget {
+  const _OrganizedSummary({required this.summary});
+
+  final PreVisitSummary summary;
+
+  @override
+  Widget build(BuildContext context) {
+    final TextTheme t = Theme.of(context).textTheme;
+    return Container(
+      key: const ValueKey<String>('resumo-organizado'),
+      width: double.infinity,
+      padding: const EdgeInsets.all(AppSpacing.md),
+      decoration: BoxDecoration(
+        color: AppColors.honey.withValues(alpha: 0.06),
+        borderRadius: AppRadius.mdAll,
+        border: Border.all(color: AppColors.honey.withValues(alpha: 0.5)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Text('Resumo organizado', style: t.titleSmall),
+          const SizedBox(height: AppSpacing.xs),
+          const DemoAiLabel(detail: false),
+          const SizedBox(height: AppSpacing.xs),
+          Text(
+            PreVisitSummary.notice,
+            style: t.bodySmall?.copyWith(color: AppColors.inkMuted),
+          ),
+          if (summary.isEmpty)
+            const Padding(
+              padding: EdgeInsets.only(top: AppSpacing.sm),
+              child: Text('A família enviou sem respostas nem anexos.'),
+            ),
+          for (final PreVisitSummarySection s in summary.sections) ...<Widget>[
+            const SizedBox(height: AppSpacing.sm),
+            Text(
+              s.title,
+              style: t.labelLarge?.copyWith(fontWeight: FontWeight.w700),
+            ),
+            for (final String i in s.items) Text('•  $i', style: t.bodyMedium),
+          ],
+          if (summary.attachmentLine.isNotEmpty) ...<Widget>[
+            const SizedBox(height: AppSpacing.sm),
+            Text(
+              'Anexos: ${summary.attachmentLine}',
+              style: t.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
+            ),
+          ],
+          if (summary.checks.isNotEmpty) ...<Widget>[
+            const SizedBox(height: AppSpacing.sm),
+            Text(
+              'Para conferir',
+              style: t.labelLarge?.copyWith(fontWeight: FontWeight.w700),
+            ),
+            for (final String c in summary.checks)
+              Text('•  $c', style: t.bodySmall),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
 class _GroupLabel extends StatelessWidget {
   const _GroupLabel(this.text);
 
@@ -776,10 +844,7 @@ class _GroupLabel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(
-        top: AppSpacing.sm,
-        bottom: AppSpacing.xs,
-      ),
+      padding: const EdgeInsets.only(top: AppSpacing.sm, bottom: AppSpacing.xs),
       child: Text(
         text,
         style: Theme.of(context).textTheme.titleSmall?.copyWith(
@@ -811,9 +876,7 @@ class _AttachmentTile extends StatelessWidget {
     final String title = att.description.isEmpty
         ? att.type.label
         : att.description;
-    final String pages = att.pages == null
-        ? ''
-        : ', ${att.pages} pág.';
+    final String pages = att.pages == null ? '' : ', ${att.pages} pág.';
     return Card(
       margin: const EdgeInsets.only(bottom: AppSpacing.sm),
       child: Padding(
@@ -844,9 +907,7 @@ class _AttachmentTile extends StatelessWidget {
                       Text(
                         '${att.name} (${att.format.label}$pages, '
                         '${att.sizeLabel})',
-                        style: t.bodySmall?.copyWith(
-                          color: AppColors.inkMuted,
-                        ),
+                        style: t.bodySmall?.copyWith(color: AppColors.inkMuted),
                       ),
                       if (showStatus)
                         Padding(
@@ -1016,12 +1077,15 @@ class DemoFamilyUpcomingVisits extends StatelessWidget {
     final List<(DemoPatient, DemoAppointment)> items =
         <(DemoPatient, DemoAppointment)>[
           for (final DemoPatient p in demoSession.visiblePatients)
-            for (final DemoAppointment a
-                in demoSession.upcomingAppointmentsFor(p.id))
+            for (final DemoAppointment a in demoSession.upcomingAppointmentsFor(
+              p.id,
+            ))
               (p, a),
         ]..sort(
-          ((DemoPatient, DemoAppointment) x, (DemoPatient, DemoAppointment) y) =>
-              x.$2.start.compareTo(y.$2.start),
+          (
+            (DemoPatient, DemoAppointment) x,
+            (DemoPatient, DemoAppointment) y,
+          ) => x.$2.start.compareTo(y.$2.start),
         );
     if (items.isEmpty) {
       return Text(
@@ -1051,6 +1115,8 @@ class DemoFamilyUpcomingVisits extends StatelessWidget {
                       Text(_kind(a.kind), style: t.bodySmall),
                       const SizedBox(height: AppSpacing.xs),
                       _Status('Pré-consulta: $status', color: color),
+                      const SizedBox(height: AppSpacing.sm),
+                      DemoVisitGuidance(appointment: a),
                       const SizedBox(height: AppSpacing.sm),
                       FilledButton.tonalIcon(
                         onPressed: () =>
@@ -1090,8 +1156,9 @@ class DemoPreVisitCard extends StatelessWidget {
   Widget build(BuildContext context) {
     if (!demoSession.canReviewPreVisits) return const SizedBox.shrink();
     final TextTheme t = Theme.of(context).textTheme;
-    final List<(DemoAppointment, PreVisit)> sent = demoSession
-        .sentPreVisitsFor(patientId);
+    final List<(DemoAppointment, PreVisit)> sent = demoSession.sentPreVisitsFor(
+      patientId,
+    );
     if (sent.isEmpty) {
       return Padding(
         padding: const EdgeInsets.only(bottom: AppSpacing.md),
@@ -1182,9 +1249,9 @@ class DemoPreVisitAppointmentInfo extends StatelessWidget {
               padding: const EdgeInsets.only(top: AppSpacing.xs),
               child: Text(
                 'Respostas e anexos só o profissional abre.',
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: AppColors.inkMuted,
-                ),
+                style: Theme.of(
+                  context,
+                ).textTheme.bodySmall?.copyWith(color: AppColors.inkMuted),
               ),
             ),
         ],
@@ -1280,9 +1347,20 @@ class DemoPreVisitReviewScreen extends StatelessWidget {
                               style: t.bodySmall,
                             ),
                             const SizedBox(height: AppSpacing.sm),
+                            _OrganizedSummary(
+                              summary: PreVisitSummary.of(
+                                v,
+                                visitDate: a.start,
+                              ),
+                            ),
+                            const SizedBox(height: AppSpacing.sm),
+                            const _GroupLabel('Respostas originais da família'),
                             for (final (String key, String label)
                                 in _answerLabels)
-                              if (_answer(v.sentAnswers!, key).trim().isNotEmpty)
+                              if (_answer(
+                                v.sentAnswers!,
+                                key,
+                              ).trim().isNotEmpty)
                                 Padding(
                                   padding: const EdgeInsets.only(
                                     bottom: AppSpacing.xs,

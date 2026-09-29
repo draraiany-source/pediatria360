@@ -451,6 +451,7 @@ class DemoWorkspace {
     'Anamnese': c.history,
     'Exame físico': c.physicalExam,
     'Avaliação': c.assessment,
+    'Hipóteses diagnósticas': c.hypotheses,
     'Conduta': c.plan,
     'Plano de retorno': '${c.returnPlan}|${c.returnInDays ?? ''}',
   };

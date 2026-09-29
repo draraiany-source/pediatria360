@@ -2150,6 +2150,128 @@ const DOCS = [
     }
   });
 
+  // ------------------------------------------------ Etapa 1: familia e profissional
+  async function scrollTo(page, text, tries = 14) {
+    const vw = page.viewportSize().width;
+    const vh = page.viewportSize().height;
+    for (let i = 0; i < tries; i++) {
+      if (await has(page, text)) return true;
+      await page.mouse.move(vw / 2 + (vw > 900 ? 110 : 0), vh / 2);
+      await page.mouse.wheel(0, 500);
+      await page.waitForTimeout(500);
+    }
+    return has(page, text);
+  }
+
+  await step('celular: etapa1 familia saude e documentos liberados', async () => {
+    const { ctx, page } = await newPage(browser, MOBILE);
+    await open(page, '#/pacientes/p1?perfil=responsavel');
+    await tap(page, 'Saúde e desenvolvimento', { touch: true, wait: 2000 });
+    check('etapa1 familia: abre saude e desenvolvimento', hash(page) === '#/rotina/p1/saude', hash(page));
+    const l = await labels(page);
+    check('etapa1 familia: proximas consultas com orientacoes antes da consulta', l.includes('Próximas consultas') && l.includes('Antes da consulta'), '');
+    await shot(page, 'e1_01_saude_familia');
+    check('etapa1 familia: consultas anteriores sem anotacao clinica', (await scrollTo(page, 'Consultas anteriores')) && !(await has(page, 'Avaliação fictícia')), '');
+    await shot(page, 'e1_02_saude_consultas');
+    await tap(page, 'Documentos da consulta', { touch: true, wait: 2000 });
+    check('etapa1 familia: abre documentos da consulta', hash(page).startsWith('#/rotina/p1/documentos'), hash(page));
+    const d = await labels(page);
+    check('etapa1 familia: receita e orientacao liberadas; atestado nao liberado fica oculto', d.includes('Receituário') && d.includes('Rotina e sono') && !d.includes('Atestado médico'), '');
+    await shot(page, 'e1_03_documentos_familia');
+    await tap(page, 'Receituário', { touch: true, wait: 2000 });
+    check('etapa1 familia: receita abre com data de emissao', await waitText(page, 'Emitido em'), hash(page));
+    await shot(page, 'e1_04_receita_familia');
+    const pdf = await downloadPdf(page, 'Baixar PDF', { touch: true, keep: 'e1_receita' });
+    check('etapa1 familia: PDF da receita baixado', pdf.magic === '%PDF-', pdf.name);
+    await tap(page, 'Voltar', { touch: true, wait: 1800 });
+    check('etapa1 familia: voltar a lista de documentos', hash(page).startsWith('#/rotina/p1/documentos'), hash(page));
+    await nav(page, '#/rotina/p1/documentos/d1');
+    check('etapa1 familia: atestado nao liberado nao abre pelo endereco', await waitText(page, 'Documento não encontrado'), '');
+    await nav(page, '#/rotina/p2/documentos');
+    check('etapa1 familia: crianca de outra familia nao abre', !(await has(page, 'Receituário')), '');
+    await ctx.close();
+  });
+
+  await step('computador: etapa1 profissional libera e retira documento', async () => {
+    const { ctx, page } = await newPage(browser, DESKTOP);
+    await open(page, '#/pacientes/p1/documentos/d1?perfil=profissional');
+    check('etapa1 liberar: atestado emitido comeca oculto para a familia', await scrollTo(page, 'A família ainda não vê este documento'), '');
+    await shot(page, 'e1_05_documento_nao_liberado');
+    await tap(page, 'Liberar para a família', { wait: 1500 });
+    check('etapa1 liberar: pede confirmacao', await waitText(page, 'Liberar para a família?'), '');
+    await tap(page, 'Liberar', { exact: true, last: true, wait: 1800 });
+    check('etapa1 liberar: documento liberado com historico', (await waitText(page, 'Liberado para a família')) && (await has(page, 'Liberado por')), '');
+    await shot(page, 'e1_06_documento_liberado');
+    await nav(page, '#/rotina/p1/documentos?perfil=responsavel');
+    check('etapa1 liberar: familia passa a ver o atestado', await waitText(page, 'Atestado médico'), '');
+    await nav(page, '#/pacientes/p1/documentos/d1?perfil=profissional');
+    await tap(page, 'Retirar da área da família', { wait: 1500 });
+    await tap(page, 'Retirar', { exact: true, last: true, wait: 1200 });
+    check('etapa1 retirar: exige motivo', await waitText(page, 'Informe o motivo da retirada.'), '');
+    await fill(page, 'Motivo', 'Liberado por engano (teste e2e)');
+    await tap(page, 'Retirar', { exact: true, last: true, wait: 1800 });
+    check('etapa1 retirar: motivo no historico', await waitText(page, 'Liberado por engano (teste e2e)'), '');
+    await shot(page, 'e1_07_documento_retirado');
+    await nav(page, '#/rotina/p1/documentos?perfil=responsavel');
+    await page.waitForTimeout(1500);
+    check('etapa1 retirar: familia deixa de ver', !(await has(page, 'Atestado médico')), '');
+    await ctx.close();
+  });
+
+  await step('computador: etapa1 resumo organizado da pre-consulta', async () => {
+    const { ctx, page } = await newPage(browser, DESKTOP);
+    await open(page, '#/pacientes/p1/pre-consulta?perfil=profissional');
+    check('etapa1 resumo: resumo organizado com rotulo de assistente', (await scrollTo(page, 'Resumo organizado')) && (await has(page, 'Organizado por regras, sem IA - Revisão humana obrigatória')), '');
+    check('etapa1 resumo: respostas originais continuam', await scrollTo(page, 'Respostas originais da família'), '');
+    await shot(page, 'e1_08_resumo_pre_consulta');
+    await ctx.close();
+  });
+
+  await step('computador: etapa1 orientacoes antes da consulta', async () => {
+    const { ctx, page } = await newPage(browser, DESKTOP);
+    await open(page, '#/inicio?perfil=profissional');
+    await tap(page, 'Orientações antes da consulta', { wait: 2000 });
+    check('etapa1 orientacoes: abre a configuracao', hash(page) === '#/orientacoes-previas', hash(page));
+    check('etapa1 orientacoes: texto sugerido identificado', await has(page, 'Texto sugerido pelo aplicativo'), '');
+    await fill(page, 'Retorno', 'Traga os exames do retorno (teste e2e).');
+    await tap(page, 'Revisar e salvar', { wait: 1800 });
+    check('etapa1 orientacoes: salvas com revisao', await scrollTo(page, 'Revisado por'), '');
+    await shot(page, 'e1_09_orientacoes_config');
+    await nav(page, '#/pre-consulta/a6?perfil=responsavel&de=saude');
+    check('etapa1 orientacoes: familia ve na pre-consulta', await scrollTo(page, 'Traga os exames do retorno (teste e2e).'), '');
+    check('etapa1 orientacoes: aviso de urgencia sempre presente', await has(page, 'procure atendimento de urgência'), '');
+    await shot(page, 'e1_10_preconsulta_orientacoes');
+    await ctx.close();
+  });
+
+  await step('computador: etapa1 hipoteses na consulta', async () => {
+    const { ctx, page } = await newPage(browser, DESKTOP);
+    await open(page, '#/pacientes/p5/consulta/c2?etapa=avaliacao&perfil=profissional');
+    check('etapa1 hipoteses: campo com aviso de que o assistente nao sugere', await scrollTo(page, 'Escritas por você'), '');
+    await fill(page, 'Hipóteses diagnósticas', 'Hipótese fictícia (teste e2e)');
+    await tap(page, 'Salvar rascunho', { wait: 1500 });
+    check('etapa1 hipoteses: rascunho salvo', await waitText(page, 'Rascunho da consulta salvo'), '');
+    await shot(page, 'e1_11_hipoteses');
+    await ctx.close();
+  });
+
+  await step('computador: etapa1 permissoes area da familia', async () => {
+    for (const perfil of ['profissional', 'recepcao', 'financeiro', 'administrador']) {
+      const { ctx, page } = await newPage(browser, DESKTOP);
+      await open(page, '#/rotina/p1/saude?perfil=' + perfil);
+      const a = await waitText(page, 'Acesso restrito');
+      await nav(page, '#/rotina/p1/documentos');
+      const b = await waitText(page, 'Acesso restrito');
+      const res = [a, b];
+      if (perfil !== 'profissional') {
+        await nav(page, '#/orientacoes-previas');
+        res.push(await waitText(page, 'Acesso restrito'));
+      }
+      check('etapa1 permissoes: ' + perfil + ' bloqueado na area da familia', res.every(Boolean), res.join('/'));
+      await ctx.close();
+    }
+  });
+
   await browser.close();
   const failed = report.checks.filter((c) => !c.ok);
   fs.writeFileSync(path.join(OUT, 'report.json'), JSON.stringify(report, null, 2));

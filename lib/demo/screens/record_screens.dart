@@ -4,11 +4,13 @@ import 'package:go_router/go_router.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_tokens.dart';
 import '../../core/widgets/clinical_ui.dart';
+import '../../shared/ai/ai_policy.dart';
 import '../../shared/clinical/clinical_documents.dart';
 import '../../shared/clinical/lab_results.dart';
 import '../demo_clinical.dart';
 import '../demo_data.dart';
 import '../demo_session.dart';
+import '../widgets/ai_label.dart';
 import '../widgets/demo_widgets.dart';
 import '../widgets/flow_widgets.dart';
 import 'well_child_screen.dart';
@@ -386,8 +388,12 @@ class _DemoEncounterEditorScreenState extends State<DemoEncounterEditorScreen> {
                                 style: Theme.of(context).textTheme.titleSmall,
                               ),
                             ),
-                            const DemoTag('Simulado'),
                           ],
+                        ),
+                        const SizedBox(height: AppSpacing.sm),
+                        const DemoAiLabel(
+                          source: AiSource.simulado,
+                          detail: false,
                         ),
                         const SizedBox(height: AppSpacing.sm),
                         const Text(

@@ -17,6 +17,8 @@ import 'screens/history_screens.dart';
 import 'screens/patient_notes_screens.dart';
 import 'screens/documents_screens.dart';
 import 'screens/family_guidance_screens.dart';
+import 'screens/family_health_screens.dart';
+import 'screens/guidance_settings_screen.dart';
 import 'screens/dose_screens.dart';
 import 'screens/growth_screens.dart';
 import 'screens/home_screen.dart';
@@ -622,6 +624,43 @@ final GoRouter demoRouter = GoRouter(
               ],
             ),
             GoRoute(
+              path: 'saude',
+              builder: (BuildContext context, GoRouterState state) => _routine(
+                state.pathParameters['pid']!,
+                DemoFamilyHealthScreen(patientId: state.pathParameters['pid']!),
+                edit: true,
+              ),
+            ),
+            GoRoute(
+              path: 'documentos',
+              builder: (BuildContext context, GoRouterState state) => _routine(
+                state.pathParameters['pid']!,
+                DemoFamilyDocumentsScreen(
+                  key: ValueKey<String>(state.uri.toString()),
+                  patientId: state.pathParameters['pid']!,
+                  from: state.uri.queryParameters['de'],
+                ),
+                edit: true,
+              ),
+              routes: <RouteBase>[
+                GoRoute(
+                  path: ':docId',
+                  builder: (BuildContext context, GoRouterState state) =>
+                      _routine(
+                        state.pathParameters['pid']!,
+                        DemoFamilyOrientationScreen(
+                          key: ValueKey<String>(state.uri.toString()),
+                          patientId: state.pathParameters['pid']!,
+                          docId: state.pathParameters['docId']!,
+                          from: state.uri.queryParameters['de'],
+                          anyKind: true,
+                        ),
+                        edit: true,
+                      ),
+                ),
+              ],
+            ),
+            GoRoute(
               path: 'resumos',
               builder: (BuildContext context, GoRouterState state) => _routine(
                 state.pathParameters['pid']!,
@@ -687,6 +726,16 @@ final GoRouter demoRouter = GoRouter(
               ),
             ),
           ],
+        ),
+        GoRoute(
+          path: preVisitGuidancePath,
+          builder: (BuildContext context, GoRouterState state) =>
+              demoSession.canEditPreVisitGuidance
+              ? const ScaffoldMessenger(child: DemoPreVisitGuidanceScreen())
+              : const DemoRestrictedScreen(
+                  module: DemoModule.agenda,
+                  title: 'Orientações antes da consulta',
+                ),
         ),
         GoRoute(
           path: remindersPath,

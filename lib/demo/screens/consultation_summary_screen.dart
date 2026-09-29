@@ -16,6 +16,7 @@ import '../demo_clinical.dart';
 import '../demo_data.dart';
 import '../demo_session.dart';
 import '../demo_workspace.dart';
+import '../widgets/ai_label.dart';
 import '../widgets/demo_widgets.dart';
 import 'diary_screens.dart' show showTaskDialog;
 import 'history_screens.dart';
@@ -414,6 +415,8 @@ class _DemoConsultationSummaryScreenState
                 ),
               ],
             ),
+            const SizedBox(height: AppSpacing.xs),
+            const DemoAiLabel(detail: false),
             const SizedBox(height: AppSpacing.xs),
             const Text(
               'Simulação por regras, sem IA ativa. Distribui a pré-consulta e '

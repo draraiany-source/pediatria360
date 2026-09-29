@@ -9,6 +9,7 @@ import '../../core/widgets/clinical_ui.dart';
 import '../../shared/clinical/clinical_documents.dart';
 import '../../shared/clinical/clinical_pdf.dart';
 import '../../shared/clinical/dose_calculator.dart';
+import '../../shared/clinical/family_release.dart';
 import '../../shared/clinical/orientation_templates.dart';
 import '../../shared/clinical/pdf_output.dart';
 import '../../shared/clinical/rx_templates.dart';
@@ -144,6 +145,11 @@ class DemoDocTile extends StatelessWidget {
                     children: <Widget>[
                       DocStatusChip(v.status),
                       SignatureChip(doc.signature),
+                      if (demoSession.isReleasedToFamily(doc.id))
+                        const DemoTag(
+                          'Liberado à família',
+                          color: AppColors.success,
+                        ),
                     ],
                   ),
                 ],
@@ -1362,6 +1368,9 @@ class _DemoDocumentViewerScreenState extends State<DemoDocumentViewerScreen> {
   bool _reviewChecked = false;
   bool _busy = false;
 
+  /// `null` segue o padrão do tipo de documento.
+  bool? _releaseOnIssue;
+
   Future<void> _pdf(
     DemoPatient p,
     ClinicalDocRecord shown,
@@ -1513,6 +1522,8 @@ class _DemoDocumentViewerScreenState extends State<DemoDocumentViewerScreen> {
                     _MetaCard(version: v, doc: doc),
                     const DemoSectionTitle('Assinatura e emissão'),
                     _SignatureCard(doc: doc),
+                    const DemoSectionTitle('Área da família'),
+                    _FamilyReleaseCard(doc: doc),
                     const DemoSectionTitle('Conteúdo'),
                     DemoDocHeader(
                       account: demoSession.account,
@@ -1629,15 +1640,50 @@ class _DemoDocumentViewerScreenState extends State<DemoDocumentViewerScreen> {
                           style: t.bodyMedium,
                         ),
                         const SizedBox(height: AppSpacing.sm),
+                        if (demoSession.isReleasedToFamily(doc.id))
+                          Text(
+                            'Já liberado para a família: ao emitir, a família '
+                            'passa a ver esta versão.',
+                            style: t.bodySmall,
+                          )
+                        else
+                          CheckboxListTile(
+                            key: const ValueKey<String>('release-on-issue'),
+                            value:
+                                _releaseOnIssue ??
+                                FamilyReleaseRules.releaseOnIssueByDefault(
+                                  doc.kind,
+                                ),
+                            onChanged: (bool? x) =>
+                                setState(() => _releaseOnIssue = x ?? false),
+                            controlAffinity: ListTileControlAffinity.leading,
+                            contentPadding: EdgeInsets.zero,
+                            title: const Text(
+                              'Liberar para a família ao emitir',
+                            ),
+                            subtitle: const Text(
+                              'A família vê o documento emitido na área da '
+                              'criança. Você pode retirar depois.',
+                            ),
+                          ),
                         FilledButton.icon(
                           onPressed: () {
+                            final bool release =
+                                !demoSession.isReleasedToFamily(doc.id) &&
+                                (_releaseOnIssue ??
+                                    FamilyReleaseRules.releaseOnIssueByDefault(
+                                      doc.kind,
+                                    ));
                             demoSession.saveDocument(
                               demoSession.issueDocument(doc),
                             );
+                            if (release) demoSession.releaseToFamily(doc.id);
+                            setState(() => _releaseOnIssue = null);
                             showDemoSnack(
                               context,
                               'Documento emitido (versão ${v.number}). Continua NÃO assinado.'
-                              '${doc.consultationId == null ? '' : ' Salvo no histórico da consulta.'}',
+                              '${doc.consultationId == null ? '' : ' Salvo no histórico da consulta.'}'
+                              '${release ? ' Liberado para a família.' : ''}',
                             );
                           },
                           icon: const Icon(Icons.send_outlined),
@@ -1658,6 +1704,194 @@ class _DemoDocumentViewerScreenState extends State<DemoDocumentViewerScreen> {
           ),
         );
       },
+    );
+  }
+}
+
+/// Liberar ou retirar da área da família, com o histórico da liberação.
+class _FamilyReleaseCard extends StatelessWidget {
+  const _FamilyReleaseCard({required this.doc});
+
+  final ClinicalDocRecord doc;
+
+  Future<void> _release(BuildContext context, DocVersion issued) async {
+    final bool? ok = await showDialog<bool>(
+      context: context,
+      builder: (BuildContext ctx) => AlertDialog(
+        title: const Text('Liberar para a família?'),
+        content: Text(
+          'A família verá a versão ${issued.number}, emitida em '
+          '${formatDocDateTime(issued.issuedAt!)}, na área da criança. '
+          'Versões novas só aparecem depois de emitidas.',
+        ),
+        actions: <Widget>[
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text('Cancelar'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: const Text('Liberar'),
+          ),
+        ],
+      ),
+    );
+    if (ok != true || !context.mounted) return;
+    try {
+      demoSession.releaseToFamily(doc.id);
+      showDemoSnack(context, 'Documento liberado para a família.');
+    } on FamilyReleaseException catch (e) {
+      showDemoSnack(context, e.message);
+    }
+  }
+
+  Future<void> _revoke(BuildContext context) async {
+    final String? reason = await showDialog<String>(
+      context: context,
+      builder: (BuildContext ctx) => const _RevokeDialog(),
+    );
+    if (reason == null || !context.mounted) return;
+    try {
+      demoSession.revokeFamilyRelease(doc.id, reason: reason);
+      showDemoSnack(context, 'Documento retirado da área da família.');
+    } on FamilyReleaseException catch (e) {
+      showDemoSnack(context, e.message);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final TextTheme t = Theme.of(context).textTheme;
+    final FamilyRelease? r = demoSession.familyReleaseOf(doc.id);
+    final bool released = r?.isReleased ?? false;
+    final int issuedIdx = FamilyReleaseRules.lastIssuedIndex(doc);
+    final DocVersion? issued = issuedIdx < 0 ? null : doc.versions[issuedIdx];
+    final String? block = demoSession.familyReleaseBlock(doc);
+    return PremiumCard(
+      padding: const EdgeInsets.all(AppSpacing.md),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Row(
+            children: <Widget>[
+              Icon(
+                released
+                    ? Icons.family_restroom_rounded
+                    : Icons.lock_outline_rounded,
+                color: released ? AppColors.success : AppColors.inkMuted,
+              ),
+              const SizedBox(width: AppSpacing.sm),
+              Expanded(
+                child: Text(
+                  released
+                      ? 'Liberado para a família'
+                      : 'A família ainda não vê este documento',
+                  style: t.titleSmall,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.xs),
+          if (released && issued != null)
+            Text(
+              'A família vê a versão ${issued.number} (última emitida).'
+              '${doc.status != DocStatus.issued ? ' A versão ${doc.current.number} em ${doc.status.label.toLowerCase()} só aparece depois de emitida.' : ''}',
+              style: t.bodySmall,
+            )
+          else if (block != null)
+            Text(block, style: t.bodySmall)
+          else
+            Text(
+              'Receitas, atestados, encaminhamentos e exames só aparecem para a '
+              'família quando você libera.',
+              style: t.bodySmall,
+            ),
+          const SizedBox(height: AppSpacing.sm),
+          if (released)
+            OutlinedButton.icon(
+              onPressed: () => _revoke(context),
+              icon: const Icon(Icons.visibility_off_outlined),
+              label: const Text('Retirar da área da família'),
+            )
+          else if (block == null && issued != null)
+            FilledButton.tonalIcon(
+              onPressed: () => _release(context, issued),
+              icon: const Icon(Icons.family_restroom_rounded),
+              label: const Text('Liberar para a família'),
+            ),
+          if (r != null && r.events.isNotEmpty) ...<Widget>[
+            const SizedBox(height: AppSpacing.sm),
+            for (final FamilyReleaseEvent e in r.events.reversed)
+              Text(
+                '${formatDocDateTime(e.at)} - '
+                '${e.released ? 'Liberado' : 'Retirado'} por ${e.actor}'
+                '${e.reason == null ? '' : ' (${e.reason})'}',
+                style: t.bodySmall?.copyWith(color: AppColors.inkMuted),
+              ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _RevokeDialog extends StatefulWidget {
+  const _RevokeDialog();
+
+  @override
+  State<_RevokeDialog> createState() => _RevokeDialogState();
+}
+
+class _RevokeDialogState extends State<_RevokeDialog> {
+  final TextEditingController _reason = TextEditingController();
+  String? _error;
+
+  @override
+  void dispose() {
+    _reason.dispose();
+    super.dispose();
+  }
+
+  void _submit() {
+    if (_reason.text.trim().length < FamilyReleaseRules.minReasonLength) {
+      setState(() => _error = 'Informe o motivo da retirada.');
+      return;
+    }
+    Navigator.of(context).pop(_reason.text.trim());
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('Retirar da área da família?'),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          const Text(
+            'A família deixa de ver o documento. Se ela já baixou o PDF, a '
+            'cópia baixada continua com ela.',
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          TextField(
+            controller: _reason,
+            autofocus: true,
+            maxLength: 200,
+            decoration: InputDecoration(
+              labelText: 'Motivo *',
+              errorText: _error,
+            ),
+            onSubmitted: (_) => _submit(),
+          ),
+        ],
+      ),
+      actions: <Widget>[
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('Cancelar'),
+        ),
+        FilledButton(onPressed: _submit, child: const Text('Retirar')),
+      ],
     );
   }
 }
