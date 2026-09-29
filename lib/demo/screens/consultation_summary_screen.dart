@@ -424,12 +424,18 @@ class _DemoConsultationSummaryScreenState
             ),
             if (!pending) ...<Widget>[
               const SizedBox(height: AppSpacing.sm),
-              TextField(
-                controller: _transcript,
-                minLines: 2,
-                maxLines: 6,
-                decoration: const InputDecoration(
-                  labelText: 'Transcrição ou anotações da consulta (opcional)',
+              // Único campo do item da lista: sem nó próprio, a semântica
+              // juntaria todo o texto da tela no rótulo do campo.
+              Semantics(
+                container: true,
+                child: TextField(
+                  controller: _transcript,
+                  minLines: 2,
+                  maxLines: 6,
+                  decoration: const InputDecoration(
+                    labelText:
+                        'Transcrição ou anotações da consulta (opcional)',
+                  ),
                 ),
               ),
               const SizedBox(height: AppSpacing.sm),
