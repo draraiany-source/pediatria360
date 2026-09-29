@@ -1580,8 +1580,8 @@ const DOCS = [
   const ADD_PHOTO = 'Adicionar foto da queixa';
   const ADD_DOC = 'Adicionar exame, laudo ou relat\u00f3rio';
   const REVIEW = 'Conferir anexo antes de incluir';
-  const PHOTOS = (n) => 'Fotos da queixa (' + n + ')';
-  const DOCS = (n) => 'Exames, laudos e relat\u00f3rios (' + n + ')';
+  const PV_PHOTOS = (n) => 'Fotos da queixa (' + n + ')';
+  const PV_DOCS = (n) => 'Exames, laudos e relat\u00f3rios (' + n + ')';
   const REFUSED = 'Arquivo n\u00e3o anexado';
   const PNG_SIG = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
 
@@ -1611,7 +1611,7 @@ const DOCS = [
     await shot(page, 'pc03_conferir_foto');
     await fill(page, 'Descri\u00e7\u00e3o (opcional)', 'Mancha na perna (teste)', t);
     await tap(page, 'Incluir anexo', { ...t, wait: 1800 });
-    check('pre-consulta: foto incluida como rascunho', (await seek(page, PHOTOS(1))) && (await seek(page, 'Ainda n\u00e3o enviado')), '');
+    check('pre-consulta: foto incluida como rascunho', (await seek(page, PV_PHOTOS(1))) && (await seek(page, 'Ainda n\u00e3o enviado')), '');
     await shot(page, 'pc04_foto_incluida');
 
     await sendLogo(page, ADD_DOC, { name: 'laudo-teste.pdf', mimeType: 'application/pdf', buffer: makePdf('Laudo ficticio de teste') }, t);
@@ -1632,17 +1632,17 @@ const DOCS = [
     const examDay = dmy(addDays(new Date(), -7));
     await fill(page, 'Data do exame', examDay, t);
     await tap(page, 'Incluir anexo', { ...t, wait: 1800 });
-    check('pre-consulta: laudo incluido com a data do exame', (await seek(page, DOCS(1))) && (await seek(page, 'Laudo - Data do exame: ' + examDay)), '');
+    check('pre-consulta: laudo incluido com a data do exame', (await seek(page, PV_DOCS(1))) && (await seek(page, 'Laudo - Data do exame: ' + examDay)), '');
 
     await sendLogo(page, ADD_PHOTO, { name: 'foto-errada.png', mimeType: 'image/png', buffer: await makeLogo(page, { w: 400, h: 300, text: 'Errada' }) }, t);
     await tap(page, 'Incluir anexo', { ...t, wait: 1800 });
-    check('pre-consulta: terceiro anexo incluido', await seek(page, PHOTOS(2)), '');
+    check('pre-consulta: terceiro anexo incluido', await seek(page, PV_PHOTOS(2)), '');
     await shot(page, 'pc08_anexo_por_engano');
     await tap(page, 'Remover foto-errada.png', { ...t, wait: 1200 });
     check('pre-consulta: confirma antes de remover', await waitText(page, 'Remover anexo?'), '');
     await shot(page, 'pc09_confirmar_remocao');
     await tap(page, 'Remover', { ...t, exact: true, last: true, wait: 1800 });
-    check('pre-consulta: anexo removido', (await seek(page, PHOTOS(1))) && !(await has(page, 'foto-errada.png')), '');
+    check('pre-consulta: anexo removido', (await seek(page, PV_PHOTOS(1))) && !(await has(page, 'foto-errada.png')), '');
 
     const r1 = await refusedFile(page, { name: 'exame.pdf', mimeType: 'application/pdf', buffer: Buffer.from('nao e um PDF de verdade') }, 'embora o nome termine como um deles', true);
     await shot(page, 'pc10_arquivo_recusado');
@@ -1687,7 +1687,7 @@ const DOCS = [
     await tap(page, 'Ver ' + PV.toLowerCase(), { wait: 2000 });
     check('pre-consulta: abre a partir da consulta', hash(page) === '#/pacientes/p1/pre-consulta?consulta=c1', hash(page));
     const l = await labels(page);
-    check('pre-consulta: fotos e documentos em grupos', [PHOTOS(1), DOCS(1), 'Mancha no bra\u00e7o (fict\u00edcia)', 'Hemograma (fict\u00edcio)'].every((x) => l.includes(x)), '');
+    check('pre-consulta: fotos e documentos em grupos', [PV_PHOTOS(1), PV_DOCS(1), 'Mancha no bra\u00e7o (fict\u00edcia)', 'Hemograma (fict\u00edcio)'].every((x) => l.includes(x)), '');
     await shot(page, 'pc16_pre_consulta_organizada');
     await tap(page, 'Ver foto_braco.png', { wait: 1500 });
     check('pre-consulta: foto ampliada para o profissional', await waitText(page, 'Pr\u00e9via de foto_braco.png'), '');
