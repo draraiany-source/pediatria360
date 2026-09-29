@@ -406,7 +406,7 @@ class DemoScheduling {
                     a.status.holdsSlot &&
                     a.status != DemoAppointmentStatus.concluido &&
                     scope.contains(a.professionalId) &&
-                    a.start.isAfter(now),
+                    !a.start.isBefore(DateTime(now.year, now.month, now.day)),
               )
               .toList()
             ..sort(

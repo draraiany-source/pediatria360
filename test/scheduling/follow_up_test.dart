@@ -31,23 +31,28 @@ void main() {
     });
 
     test('NÃO é inativo quem já tem consulta futura marcada', () {
-      final FollowUpStatus s = classify(
-        <DateTime>[DateTime(2026, 2, 10)],
-        next: DateTime(2026, 10, 3, 9),
-      );
+      final FollowUpStatus s = classify(<DateTime>[
+        DateTime(2026, 2, 10),
+      ], next: DateTime(2026, 10, 3, 9));
       expect(s.isIn(FollowUpCategory.inativo), isFalse);
       expect(s.inactiveButScheduled, isTrue);
     });
 
     test('consulta futura já passada não protege', () {
-      final FollowUpStatus s = classify(
-        <DateTime>[DateTime(2026, 2, 10)],
-        next: DateTime(2026, 9, 1),
-      );
+      final FollowUpStatus s = classify(<DateTime>[
+        DateTime(2026, 2, 10),
+      ], next: DateTime(2026, 9, 1));
       expect(s.isIn(FollowUpCategory.inativo), isTrue);
       expect(s.nextAppointment, isNull);
     });
 
+    test('consulta de hoje já no horário continua protegendo', () {
+      final FollowUpStatus s = classify(<DateTime>[
+        DateTime(2026, 2, 10),
+      ], next: DateTime(2026, 9, 29, 8, 30));
+      expect(s.isIn(FollowUpCategory.inativo), isFalse);
+      expect(s.inactiveButScheduled, isTrue);
+    });
     test('critério configurável muda a classificação', () {
       final List<DateTime> v = <DateTime>[DateTime(2026, 5, 20)];
       expect(classify(v).isIn(FollowUpCategory.inativo), isFalse);
@@ -98,10 +103,9 @@ void main() {
 
   group('retorno próximo', () {
     test('faltam até N dias', () {
-      final FollowUpStatus s = classify(
-        <DateTime>[DateTime(2026, 9, 1)],
-        ret: DateTime(2026, 10, 10),
-      );
+      final FollowUpStatus s = classify(<DateTime>[
+        DateTime(2026, 9, 1),
+      ], ret: DateTime(2026, 10, 10));
       expect(s.daysToReturn, 11);
       expect(s.isIn(FollowUpCategory.retornoProximo), isTrue);
       expect(returnLabel(s), 'Retorno em 11 dias');

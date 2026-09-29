@@ -69,6 +69,12 @@ void main() {
       }, reason: 'têm consulta futura: não contam como inativos');
     });
 
+    test('indicadores não mudam depois do horário das consultas de hoje', () {
+      final DemoScheduling s = fresh(DemoProfile.recepcao, at: todayAt(18));
+      final Map<FollowUpCategory, int> c = counts(s);
+      expect(c[FollowUpCategory.inativo], 2);
+      expect(c[FollowUpCategory.retornoProximo], 3);
+    });
     test('filtros por profissional e por clínica', () {
       final DemoScheduling s = fresh(DemoProfile.recepcao);
       final Map<FollowUpCategory, int> b = counts(s, professionalId: 'prof-b');

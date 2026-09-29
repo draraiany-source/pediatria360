@@ -197,8 +197,11 @@ FollowUpStatus classifyFollowUp(
       .where((DateTime v) => !_dateOnly(v).isBefore(periodStart))
       .length;
 
+  // Consulta de hoje ainda não concluída conta como marcada, mesmo depois
+  // do horário: a criança está sendo atendida ou atrasou.
   final DateTime? next =
-      input.nextAppointment != null && input.nextAppointment!.isAfter(now)
+      input.nextAppointment != null &&
+          !_dateOnly(input.nextAppointment!).isBefore(today)
       ? input.nextAppointment
       : null;
 
