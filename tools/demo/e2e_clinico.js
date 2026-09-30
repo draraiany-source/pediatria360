@@ -2098,6 +2098,8 @@ const DOCS = [
     await tap(page, 'Ligar para a família (teste e2e)', { wait: 1500 });
     check('diario: tarefa concluida vai para Concluidas', await waitText(page, 'Concluídas (2)'), '');
     await tap(page, 'Registrar falta', { wait: 1500 });
+    // Os filtros com a contagem ficam no topo; com muitas consultas no dia eles saem da tela.
+    await page.mouse.move(800, 400); await page.mouse.wheel(0, -5000); await page.waitForTimeout(1200);
     check('diario: registrar falta atualiza a contagem', await waitText(page, 'Falta (2)'), '');
     await shot(page, 'di02_diario_tarefas');
     await ctx.close();
