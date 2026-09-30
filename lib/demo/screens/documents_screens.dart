@@ -1522,8 +1522,6 @@ class _DemoDocumentViewerScreenState extends State<DemoDocumentViewerScreen> {
                     _MetaCard(version: v, doc: doc),
                     const DemoSectionTitle('Assinatura e emissão'),
                     _SignatureCard(doc: doc),
-                    const DemoSectionTitle('Área da família'),
-                    _FamilyReleaseCard(doc: doc),
                     const DemoSectionTitle('Conteúdo'),
                     DemoDocHeader(
                       account: demoSession.account,
@@ -1696,6 +1694,8 @@ class _DemoDocumentViewerScreenState extends State<DemoDocumentViewerScreen> {
                         ),
                       ],
                     ],
+                    const DemoSectionTitle('Área da família'),
+                    _FamilyReleaseCard(doc: doc),
                     const SizedBox(height: AppSpacing.xl),
                   ],
                 ),
