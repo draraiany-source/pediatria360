@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Auditoria completa - Pediatria360 - 01/10/2026</title>
+<style>
+  @page { size: A4; margin: 18mm 15mm 18mm 15mm; }
+  * { box-sizing: border-box; }
+  body { font-family: "Segoe UI", Arial, sans-serif; color: #1b2440; font-size: 10.2pt; line-height: 1.45; margin: 0; }
+  h1 { font-size: 22pt; color: #0f1f4b; margin: 0 0 4px; }
+  h2 { font-size: 14pt; color: #0f1f4b; border-bottom: 2px solid #19b3a6; padding-bottom: 3px; margin: 22px 0 8px; page-break-after: avoid; }
+  h3 { font-size: 11.5pt; color: #0f1f4b; margin: 14px 0 6px; page-break-after: avoid; }
+  p { margin: 5px 0; }
+  ul { margin: 4px 0 6px 18px; padding: 0; }
+  li { margin: 2px 0; }
+  table { width: 100%; border-collapse: collapse; margin: 6px 0 10px; font-size: 8.9pt; page-break-inside: auto; }
+  tr { page-break-inside: avoid; }
+  th { background: #0f1f4b; color: #fff; text-align: left; padding: 5px 6px; font-weight: 600; }
+  td { border-bottom: 1px solid #d7dcea; padding: 4px 6px; vertical-align: top; }
+  tr:nth-child(even) td { background: #f5f7fc; }
+  code { font-family: Consolas, monospace; font-size: 8.8pt; background: #eef1f8; padding: 0 3px; border-radius: 3px; }
+  .capa { border: 1px solid #d7dcea; border-left: 8px solid #0f1f4b; border-radius: 6px; padding: 18px 20px; margin-bottom: 14px; background: #f7f9fd; }
+  .sub { color: #4a5578; font-size: 10.5pt; }
+  .veredito { margin-top: 12px; padding: 10px 12px; border-radius: 6px; background: #fdecea; border: 1px solid #f2b8b0; color: #8a1f12; font-weight: 600; }
+  .ok { color: #0d7a50; font-weight: 600; }
+  .bad { color: #b3261e; font-weight: 600; }
+  .warn { color: #a15c00; font-weight: 600; }
+  .tag { display: inline-block; padding: 0 6px; border-radius: 9px; font-size: 8pt; font-weight: 700; white-space: nowrap; }
+  .t-func { background: #d8f3e7; color: #0d6b47; }
+  .t-parc { background: #fff1d6; color: #8a5300; }
+  .t-sim { background: #e6e9ff; color: #3442a8; }
+  .t-off { background: #eceff3; color: #4a5568; }
+  .t-nao { background: #fde2df; color: #9b1c12; }
+  .alta { background: #fde2df; color: #9b1c12; }
+  .media { background: #fff1d6; color: #8a5300; }
+  .baixa { background: #e6eefc; color: #27458f; }
+  .nota { font-size: 8.8pt; color: #4a5578; }
+  .quebra { page-break-before: always; }
+  .grid2 { display: flex; gap: 12px; }
+  .grid2 > div { flex: 1; }
+  .box { border: 1px solid #d7dcea; border-radius: 6px; padding: 8px 10px; background: #fff; break-inside: avoid; }
+</style>
+</head>
+<body>
+
+<div class="capa">
+  <h1>Auditoria completa do Pediatria360</h1>
+  <div class="sub">Data: 01/10/2026 &middot; Repositório <code>draraiany-source/pediatria360</code> &middot; Branch <code>feat/area-profissional</code></div>
+  <div class="sub">Código auditado: commit <code>e795e63</code> (local; o GitHub está em <code>a66f2b3</code> e a diferença é só a correção do calendário descrita no achado 6)</div>
+  <div class="sub">Demonstração publicada: <code>https://draraiany-source.github.io/pediatria360-demo/</code> (fonte <code>0c6ce5c</code>)</div>
+  <div class="veredito">Classificação: NÃO PRONTO para as lojas, para produção nem para uso com pacientes reais. A demonstração web com dados fictícios está pronta para homologação.</div>
+</div>
+
+<h2>1. Resumo executivo</h2>
+<p>O projeto tem duas partes que precisam ser lidas separadamente:</p>
+<ul>
+  <li><b>App real</b> (<code>lib/main.dart</code>, Firebase): login, cadastro de crianças, crescimento, vacinas, prontuário, agenda, gestão de clínica e Cloud Functions. Compila para web com <code>ENV=prod</code> e passa nos testes automatizados, mas nunca foi testado de ponta a ponta com Firebase real, não tem assinatura de loja e depende de textos legais e dados do proprietário.</li>
+  <li><b>Demonstração web</b> (<code>lib/main_demo.dart</code>): onde foi feito todo o trabalho desde 27/09 (pré-consulta, área da família, rotina, sono, puericultura, documentos, calculadora, agenda e acompanhamento). Funciona com dados fictícios em memória, sem login e sem servidor, e foi testada no navegador em celular e computador.</li>
+</ul>
+<p><b>Principal achado:</b> quase nada do que foi construído na demonstração está ligado ao app real. O app real usa só 2 dos arquivos de regras compartilhadas (<code>lib/shared</code>) e a tela de crescimento dele ainda usa a tabela da OMS aproximada; a tabela oficial está só na demonstração.</p>
+
+<table>
+  <tr><th style="width:28%">Canal</th><th style="width:16%">Veredito</th><th>Motivo principal</th></tr>
+  <tr><td>Demonstração web (GitHub Pages)</td><td class="ok">Pronta para homologação</td><td>Dados fictícios; 427/428 verificações no link público (a falha era do roteiro de teste e foi corrigida); WebKit com perfil de iPhone 14/14.</td></tr>
+  <tr><td>Web de produção do app real</td><td class="bad">Bloqueado</td><td>Textos legais e domínio fictícios, App Check desligado, sem teste de ponta a ponta com Firebase real, publicação das regras não verificada.</td></tr>
+  <tr><td>Google Play / App Store</td><td class="bad">Bloqueado</td><td>Android assina com chave de debug; iOS precisa de Mac/Xcode; contas de loja e textos legais pendentes.</td></tr>
+  <tr><td>Uso clínico com pacientes reais</td><td class="bad">Bloqueado</td><td>OMS aproximada no app real, calendário de vacinas a conferir, conteúdo clínico em rascunho, LGPD sem controlador definido.</td></tr>
+</table>
+
+<h2>2. Escopo e método</h2>
+<div class="grid2">
+  <div class="box"><b>Verificado nesta auditoria (01/10/2026)</b>
+    <ul>
+      <li>Código atual da branch <code>feat/area-profissional</code>, Cloud Functions, regras do Firestore e do Storage, integração contínua e PRs no GitHub.</li>
+      <li>Execução de: <code>flutter test</code>, <code>flutter analyze</code>, build web do app real com <code>ENV=prod</code>, <code>tsc</code>, Jest e ESLint das Functions, teste offline das regras e <code>npm audit</code>.</li>
+      <li>Varredura de chaves, senhas e dados pessoais no código e no site publicado.</li>
+      <li>Resultados dos testes de navegador no link público de 30/09 (mesma fonte publicada).</li>
+    </ul>
+  </div>
+  <div class="box"><b>Não verificado</b>
+    <ul>
+      <li>Projeto Firebase de produção: deploy de regras, índices e Functions (exige acesso ao console).</li>
+      <li>Testes de regras no emulador nesta máquina (Java não instalado); vale a última execução no GitHub.</li>
+      <li>iPhone e Android físicos; build Android e iOS.</li>
+      <li>Fluxos com login real e dados reais (proibido por política).</li>
+      <li>Revisão jurídica e clínica de conteúdo.</li>
+    </ul>
+  </div>
+</div>
+
+<h2>3. Estado do repositório e da entrega</h2>
+<table>
+  <tr><th style="width:30%">Item</th><th>Situação verificada</th></tr>
+  <tr><td>Branch principal (<code>main</code>)</td><td>Parada em <code>988de4d</code> desde 26/09.</td></tr>
+  <tr><td>Branch de trabalho</td><td><code>feat/area-profissional</code>, 77 commits à frente do <code>main</code>, nenhum integrado.</td></tr>
+  <tr><td>Pull requests</td><td>6 abertos, nenhum integrado. Estão encadeados: #6 (esta branch) aponta para <code>demo/web-homolog</code> (#5), que aponta para <code>handoff/final-20260926</code>. Os PRs #1 a #4 apontam para o <code>main</code>.</td></tr>
+  <tr><td>Integração contínua</td><td>O fluxo principal (CI) só roda em <code>main</code>/<code>develop</code>: não rodou nesta branch. A última execução, em 26/09 na branch <code>visual/capi-avatars-3d</code>, terminou com falha. O fluxo de regras do Firestore passou em 27/09.</td></tr>
+  <tr><td>Alteração local fora do commit</td><td><code>lib/demo/screens/business_screens.dart</code> (só troca de fim de linha; não deve ser enviado).</td></tr>
+  <tr><td>Documentos antigos na raiz</td><td>Cerca de 40 arquivos de auditoria, fase e checklist entre 16 e 26/09. Vários estão desatualizados (por exemplo, <code>BLOQUEADORES_PRODUCAO.md</code> ainda diz que nenhuma linha foi compilada). Este documento os substitui como fotografia atual.</td></tr>
+</table>
+
+<h3>Tamanho do código</h3>
+<table>
+  <tr><th>Pasta</th><th>Conteúdo</th><th>Arquivos Dart</th><th>Linhas</th></tr>
+  <tr><td><code>lib/features</code></td><td>App real, 26 módulos</td><td>187</td><td>51.299</td></tr>
+  <tr><td><code>lib/demo</code></td><td>Demonstração web</td><td>48</td><td>35.236</td></tr>
+  <tr><td><code>lib/shared</code></td><td>Regras compartilhadas (clínica, pré-consulta, rotina, agenda, IA)</td><td>65</td><td>14.916</td></tr>
+  <tr><td><code>lib/core</code></td><td>Configuração, roteamento, serviços</td><td>51</td><td>8.451</td></tr>
+  <tr><td><code>test</code></td><td>Testes automatizados</td><td>84</td><td>15.741</td></tr>
+  <tr><td><code>functions/src</code></td><td>Cloud Functions (TypeScript, região <code>southamerica-east1</code>)</td><td colspan="2">15 arquivos, cerca de 50 funções chamáveis ou gatilhos</td></tr>
+</table>
+<p class="nota">Stack: Flutter 3.44.4 estável (SDK Dart ≥ 3.8 no pubspec), Riverpod, go_router, Firebase (Auth, Firestore, Storage, Functions, Messaging, Crashlytics, App Check preparado), pdf/printing.</p>
+
+<h2>4. Testes e builds executados</h2>
+<table>
+  <tr><th style="width:36%">Verificação</th><th style="width:18%">Resultado</th><th>Observação</th></tr>
+  <tr><td><code>flutter test</code> (suíte completa)</td><td class="ok">769/769</td><td>A primeira rodada de hoje deu 768/769: estouro de layout no calendário da rotina em tela de 320 px, que só aparece em outubro. Corrigido (achado 6) e repetido.</td></tr>
+  <tr><td><code>flutter analyze</code></td><td class="ok">0 erros, 0 avisos</td><td>132 apontamentos informativos de estilo, todos antigos.</td></tr>
+  <tr><td>Build web do app real (<code>lib/main.dart</code>, <code>ENV=prod</code>)</td><td class="ok">Compila</td><td>233 s, sem erros. Prova só a compilação: não houve teste de uso com Firebase.</td></tr>
+  <tr><td>Build da demonstração</td><td class="ok">Compila</td><td>Varredura de termos proibidos sem ocorrências (30/09).</td></tr>
+  <tr><td>Cloud Functions: TypeScript (<code>tsc --noEmit</code>)</td><td class="ok">Sem erros</td><td></td></tr>
+  <tr><td>Cloud Functions: Jest</td><td class="ok">25/25</td><td>Agendamento, WhatsApp e voz.</td></tr>
+  <tr><td>Cloud Functions: ESLint</td><td class="warn">1 aviso</td><td>0 erros.</td></tr>
+  <tr><td>Regras do Firestore: teste offline</td><td class="ok">4/4</td><td>Estrutura das regras de isolamento por clínica.</td></tr>
+  <tr><td>Regras do Firestore: emulador</td><td class="warn">Não executado aqui</td><td>Java ausente. No GitHub passou em 27/09, e as regras atuais são idênticas às testadas.</td></tr>
+  <tr><td>Navegador no link público (Chrome, computador 1366 px e celular 390 px)</td><td class="ok">427/428</td><td>30/09. A falha era do roteiro (contador fora da tela) e passou 5/5 depois do ajuste.</td></tr>
+  <tr><td>WebKit com perfil de iPhone 15 no link público</td><td class="ok">14/14</td><td>30/09. Emulação; não substitui um iPhone real.</td></tr>
+  <tr><td>Calculadora, bloco "dose máxima" no navegador</td><td class="warn">Intermitente</td><td>Às vezes perde a digitação depois de o campo ser apagado (achado 7).</td></tr>
+  <tr><td>Android (APK/AAB) e iOS</td><td class="bad">Não executado</td><td>Sem chave de release; iOS exige Mac.</td></tr>
+</table>
+
+<h2>5. Segurança e privacidade</h2>
+<table>
+  <tr><th style="width:30%">Ponto</th><th style="width:16%">Situação</th><th>Detalhe</th></tr>
+  <tr><td>Segredos no repositório</td><td class="ok">Nenhum encontrado</td><td>Sem chaves privadas, tokens, senhas ou contas de serviço versionados. <code>key.properties</code>, <code>*.jks</code>, <code>google-services.json</code> e <code>.secret.local</code> estão no <code>.gitignore</code>.</td></tr>
+  <tr><td>Chaves Firebase de cliente</td><td class="warn">Versionadas</td><td><code>lib/firebase_options.dart</code> tem 4 chaves de API do Firebase. Elas não são segredo (vão para todo cliente), mas precisam de restrição por app e domínio no Google Cloud e de App Check para evitar abuso.</td></tr>
+  <tr><td>Site da demonstração</td><td class="ok">Limpo</td><td>Sem chaves, senhas, CPFs ou endereços do Firebase; e-mails <code>@exemplo.invalid</code>, telefones <code>90000-000x</code>, CRM <code>00000-UF</code>. A política de segurança só permite o próprio site.</td></tr>
+  <tr><td>Regras do Firestore e do Storage</td><td class="warn">Prontas, publicação não verificada</td><td>1.010 e 39 linhas, com isolamento por criança, por responsável e por clínica. O isolamento por unidade (<code>unitId</code>) existe só no app. Não há regras para os módulos novos (pré-consulta da família, liberação de documentos, rotina), porque eles não existem no app real.</td></tr>
+  <tr><td>App Check</td><td class="warn">Preparado, desligado</td><td>Liga com <code>ENABLE_APP_CHECK=true</code>; as regras ainda não exigem o token. Na web precisa da chave do reCAPTCHA.</td></tr>
+  <tr><td>Modo de desenvolvimento</td><td class="ok">Bloqueado em produção</td><td><code>DevMode</code> nunca liga com <code>ENV=prod</code>. O padrão sem a variável é <code>dev</code>: builds de loja precisam de <code>--dart-define=ENV=prod</code>.</td></tr>
+  <tr><td>Dependências das Functions</td><td class="warn">8 moderadas</td><td><code>npm audit</code> (produção): 0 altas, 0 críticas.</td></tr>
+  <tr><td>LGPD</td><td class="warn">Técnica parcial</td><td>Exportar e excluir dados e consentimento existem no código. Faltam controlador (CNPJ), encarregado de dados, e-mail de suporte e domínio reais, Termos e Política (URLs fictícias em <code>pediatria360.app</code>).</td></tr>
+  <tr><td>Separação de acesso na demonstração</td><td class="ok">Testada</td><td>Responsável vê só as próprias crianças e documentos liberados; recepção, financeiro e administrador bloqueados nas áreas clínicas e da família. Vale só para a demonstração: no app real, depende das regras do Firestore.</td></tr>
+</table>
+
+<h2>6. Funcionalidades: status real</h2>
+<p class="nota">Legenda:
+<span class="tag t-func">Funcional</span> funciona e foi testado no ambiente indicado &middot;
+<span class="tag t-parc">Parcial</span> funciona com lacunas &middot;
+<span class="tag t-sim">Simulado</span> só demonstra o fluxo &middot;
+<span class="tag t-off">Desligado</span> código preparado, desligado por configuração &middot;
+<span class="tag t-nao">Não feito</span> não existe.
+"Demo" = demonstração web com dados fictícios em memória. "App real" = Firebase, sem teste de ponta a ponta com login real.</p>
+
+<h3>6.1 Fluxo da família e da criança</h3>
+<table>
+  <tr><th style="width:21%">Funcionalidade</th><th style="width:11%">Demo</th><th style="width:11%">App real</th><th style="width:22%">Tela / origem dos dados</th><th>Pendência</th></tr>
+  <tr><td>Acesso separado por responsável e criança</td><td><span class="tag t-func">Funcional</span></td><td><span class="tag t-parc">Parcial</span></td><td>Perfil escolhido na demo; Firebase Auth e vínculo de responsáveis no app</td><td>App real: teste de ponta a ponta com login real e regras publicadas.</td></tr>
+  <tr><td>Pré-consulta (queixas, sintomas, fotos, exames)</td><td><span class="tag t-func">Funcional</span></td><td><span class="tag t-parc">Parcial</span></td><td><code>#/pre-consulta/:id</code>; questionário de teleconsulta no app</td><td>Fotos e exames no app real; resumo organizado só na demo.</td></tr>
+  <tr><td>Agenda: solicitar, confirmar, remarcar</td><td><span class="tag t-func">Funcional</span></td><td><span class="tag t-parc">Parcial</span></td><td>Agenda e assistente na demo; agendamento de teleconsulta no app</td><td>Assistente de horários com respostas simuladas.</td></tr>
+  <tr><td>Lembretes e orientações prévias</td><td><span class="tag t-sim">Simulado</span></td><td><span class="tag t-nao">Não feito</span></td><td>Painel de lembretes com enviado, falhou e pendente</td><td>WhatsApp oficial (credenciais Meta); orientações padrão sem revisão clínica.</td></tr>
+  <tr><td>Diário (mamadas, fraldas, banho, sono, temperatura, peso) com calendário</td><td><span class="tag t-func">Funcional</span></td><td><span class="tag t-nao">Não feito</span></td><td><code>#/rotina/:id</code>; memória da aba</td><td>Gravação no Firestore e regras.</td></tr>
+  <tr><td>Sono com linha do tempo</td><td><span class="tag t-func">Funcional</span></td><td><span class="tag t-nao">Não feito</span></td><td>Aba Sono da rotina</td><td>Levar ao app real.</td></tr>
+  <tr><td>Saúde e desenvolvimento</td><td><span class="tag t-func">Funcional</span></td><td><span class="tag t-parc">Parcial</span></td><td><code>#/rotina/:id/saude</code>; crescimento e vacinas no app</td><td>Lista de marcos de exemplo; decidir quais estados a família vê.</td></tr>
+  <tr><td>Curvas de crescimento</td><td><span class="tag t-func">Funcional</span></td><td><span class="tag t-parc">Parcial</span></td><td>Demo: tabelas LMS oficiais da OMS; app: tabela aproximada</td><td>Trocar a tabela do app real pela oficial.</td></tr>
+  <tr><td>Calendário de vacinação</td><td><span class="tag t-parc">Parcial</span></td><td><span class="tag t-parc">Parcial</span></td><td>Calendário PNI de referência</td><td>Conferir com o gov.br (aviso visível).</td></tr>
+  <tr><td>Pós-consulta: documentos liberados</td><td><span class="tag t-func">Funcional</span></td><td><span class="tag t-nao">Não feito</span></td><td><code>#/rotina/:id/documentos</code></td><td>Levar a liberação ao app real.</td></tr>
+</table>
+
+<h3>6.2 Fluxo do profissional</h3>
+<table>
+  <tr><th style="width:21%">Funcionalidade</th><th style="width:11%">Demo</th><th style="width:11%">App real</th><th style="width:22%">Tela / origem dos dados</th><th>Pendência</th></tr>
+  <tr><td>Agenda diária e semanal, pacientes sem retorno</td><td><span class="tag t-func">Funcional</span></td><td><span class="tag t-parc">Parcial</span></td><td>Agenda dia/semana/mês e acompanhamento na demo; agenda do profissional no app</td><td>Acompanhamento de retorno só na demo.</td></tr>
+  <tr><td>Histórico e observações por consulta</td><td><span class="tag t-func">Funcional</span></td><td><span class="tag t-parc">Parcial</span></td><td>Prontuário e histórico; prontuário eletrônico no app</td><td>CID só por código digitado.</td></tr>
+  <tr><td>Anamnese, exame, hipóteses, conduta, retorno</td><td><span class="tag t-func">Funcional</span></td><td><span class="tag t-parc">Parcial</span></td><td>Consulta em etapas</td><td>Hipóteses e resumo da consulta só na demo.</td></tr>
+  <tr><td>Puericultura (5 etapas, marcos, idade corrigida)</td><td><span class="tag t-func">Funcional</span></td><td><span class="tag t-nao">Não feito</span></td><td>Consulta de puericultura</td><td>Marcos e modelos precisam de revisão clínica.</td></tr>
+  <tr><td>Modelos próprios</td><td><span class="tag t-parc">Parcial</span></td><td><span class="tag t-nao">Não feito</span></td><td>Receitas, orientações por faixa e evolução de puericultura</td><td>Modelos de atestado e encaminhamento a criar.</td></tr>
+  <tr><td>Documentos com logomarca, PDF e impressão</td><td><span class="tag t-func">Funcional</span></td><td><span class="tag t-parc">Parcial</span></td><td>Receita, atestado, encaminhamento, exames, orientações</td><td>Sem assinatura ICP-Brasil: documentos "Não assinado".</td></tr>
+  <tr><td>Calculadora de doses com revisão obrigatória</td><td><span class="tag t-func">Funcional</span></td><td><span class="tag t-parc">Parcial</span></td><td>Referências fictícias de teste</td><td>Referências reais validadas; achado 7.</td></tr>
+  <tr><td>Vitaminas, suplementação, exames laboratoriais</td><td><span class="tag t-parc">Parcial</span></td><td><span class="tag t-parc">Parcial</span></td><td>17 temas em rascunho, sem conteúdo clínico</td><td>Conteúdo licenciado e revisado.</td></tr>
+  <tr><td>IA: resumo e rascunhos com rótulo e revisão humana</td><td><span class="tag t-sim">Simulado</span></td><td><span class="tag t-parc">Parcial</span></td><td>Resumo por regras e rascunho simulado; chat de IA nas Functions</td><td>IA real desligada na demo; revisar cotas e custos.</td></tr>
+  <tr><td>Teleconsulta</td><td><span class="tag t-sim">Protótipo</span></td><td><span class="tag t-off">Desligado</span></td><td><code>videoConsultationEnabled = false</code></td><td>Contratar provedor de vídeo.</td></tr>
+</table>
+
+<h3>6.3 Comunicação, gestão e plataforma</h3>
+<table>
+  <tr><th style="width:21%">Funcionalidade</th><th style="width:11%">Demo</th><th style="width:11%">App real</th><th style="width:22%">Tela / origem dos dados</th><th>Pendência</th></tr>
+  <tr><td>Regras de lembrete com consentimento</td><td><span class="tag t-func">Funcional</span></td><td><span class="tag t-nao">Não feito</span></td><td>Lembretes na demo</td><td>Levar ao app real.</td></tr>
+  <tr><td>WhatsApp oficial (mensagens administrativas)</td><td><span class="tag t-sim">Simulado</span></td><td><span class="tag t-off">Preparado</span></td><td><code>functions/src/whatsapp.ts</code>, testado e sem gatilho publicado</td><td>Conta Meta, número, modelos aprovados.</td></tr>
+  <tr><td>Pagamentos</td><td>&ndash;</td><td><span class="tag t-off">Desligado</span></td><td><code>paymentGatewayEnabled = false</code></td><td>Contratar gateway.</td></tr>
+  <tr><td>Financeiro, faturamento, estoque, BI, auditoria</td><td><span class="tag t-parc">Parcial</span></td><td><span class="tag t-parc">Parcial</span></td><td>Módulos de gestão</td><td>Sem operador TISS; homologação incompleta.</td></tr>
+  <tr><td>Visual navy, tema claro/escuro</td><td><span class="tag t-nao">Não feito</span></td><td><span class="tag t-nao">Não feito</span></td><td>&ndash;</td><td>Próxima etapa combinada.</td></tr>
+  <tr><td>Celular e computador</td><td><span class="tag t-func">Funcional</span></td><td><span class="tag t-parc">Parcial</span></td><td>Demo testada em 320, 390, 430 e 1366 px</td><td>App real sem teste em aparelho.</td></tr>
+</table>
+
+<h2 class="quebra">7. Achados desta auditoria</h2>
+<table>
+  <tr><th style="width:4%">#</th><th style="width:9%">Gravidade</th><th style="width:30%">Achado</th><th>Evidência e recomendação</th></tr>
+  <tr><td>1</td><td><span class="tag alta">Alta</span></td><td>Os módulos novos existem só na demonstração</td><td>O app real importa apenas <code>shared/scheduling/agenda_conflicts.dart</code> e <code>shared/widgets/sync_banner.dart</code>. Pré-consulta organizada, área da família, rotina, sono, puericultura e liberação de documentos precisam de repositório no Firestore, regras e telas no app real.</td></tr>
+  <tr><td>2</td><td><span class="tag alta">Alta</span></td><td>O app real usa a tabela da OMS aproximada</td><td><code>lib/features/growth/domain/who_reference.dart</code> carrega <code>who_reference.json</code>. A tabela oficial (<code>who_growth_lms.json</code>, com fonte, commit e hashes) é usada só pela demo. Ligar o app real à tabela oficial.</td></tr>
+  <tr><td>3</td><td><span class="tag alta">Alta</span></td><td>Nada integrado ao <code>main</code>; integração contínua não roda nesta branch</td><td>6 PRs abertos e encadeados, 77 commits fora do <code>main</code>; a última integração contínua falhou em 26/09. Decidir a ordem de revisão e integração, e ligar a integração contínua também para os PRs desta cadeia.</td></tr>
+  <tr><td>4</td><td><span class="tag alta">Alta</span></td><td>Publicação do backend não verificada</td><td>Não há evidência de deploy das regras, índices e Functions no projeto de produção. Publicar as regras antes de qualquer dado real e testar no emulador.</td></tr>
+  <tr><td>5</td><td><span class="tag media">Média</span></td><td>Chaves Firebase sem proteção adicional</td><td>Chaves de cliente versionadas e App Check desligado. Restringir as chaves no Google Cloud e ativar o App Check com as regras exigindo o token.</td></tr>
+  <tr><td>6</td><td><span class="tag media">Média</span></td><td>Estouro no calendário da rotina em tela de 320 px (corrigido)</td><td>Aparecia em outubro, com 3 marcadores mais "+" no mesmo dia. Corrigido no commit local <code>e795e63</code>; os testes passam. Ainda não está no GitHub nem no link público.</td></tr>
+  <tr><td>7</td><td><span class="tag media">Média</span></td><td>Calculadora: digitação perdida com acessibilidade da web ligada</td><td>No teste automatizado, ao apagar o campo de dose e digitar, a tecla às vezes se perde. Afeta o modo usado por leitores de tela. Verificar com leitor de tela e corrigir antes de uso real.</td></tr>
+  <tr><td>8</td><td><span class="tag media">Média</span></td><td>Functions: dependências e funções preparadas</td><td>8 vulnerabilidades moderadas; 1 aviso de lint. Agendamento e WhatsApp têm código e testes, mas nenhum gatilho publicado. Atualizar dependências antes do deploy.</td></tr>
+  <tr><td>9</td><td><span class="tag media">Média</span></td><td>Assinatura e plataformas nativas</td><td>Android assina release com chave de debug; iOS sem build. Criar a chave de release e montar o build iOS num Mac.</td></tr>
+  <tr><td>10</td><td><span class="tag baixa">Baixa</span></td><td>Documentação antiga desatualizada</td><td>Cerca de 40 arquivos de auditoria na raiz com afirmações vencidas. Mover para uma pasta de histórico e manter este relatório como referência.</td></tr>
+  <tr><td>11</td><td><span class="tag baixa">Baixa</span></td><td>Avisos de estilo do analisador</td><td>132 apontamentos informativos, sem erros. Limpar aos poucos.</td></tr>
+</table>
+
+<h2>8. Bloqueadores para publicação</h2>
+<table>
+  <tr><th style="width:4%">#</th><th style="width:34%">Bloqueador</th><th>O que falta</th></tr>
+  <tr><td>1</td><td>Textos legais e dados do controlador</td><td>Termos de Uso, Política de Privacidade, CNPJ, encarregado de dados, e-mail de suporte e domínio reais.</td></tr>
+  <tr><td>2</td><td>Firebase de produção</td><td>Confirmar o projeto, publicar regras, índices e Functions, restringir chaves, autorizar domínios e SHA do Android, ativar o App Check.</td></tr>
+  <tr><td>3</td><td>Módulos novos fora do app real</td><td>Achado 1: levar ao app real com regras e testes.</td></tr>
+  <tr><td>4</td><td>Dados clínicos</td><td>OMS oficial no app real, conferência do calendário PNI, revisão de marcos, orientações, modelos e calculadora.</td></tr>
+  <tr><td>5</td><td>Assinatura e lojas</td><td>Chave de release Android, build iOS, contas Google Play e Apple Developer, ficha das lojas sem prometer vídeo, pagamento ou ICP-Brasil.</td></tr>
+  <tr><td>6</td><td>Homologação do app real</td><td>Ponta a ponta com login real em aparelhos, exportar e excluir dados (LGPD), separação de acesso por perfil nas regras.</td></tr>
+  <tr><td>7</td><td>Integração do código</td><td>Revisar e integrar a cadeia de PRs ao <code>main</code> com integração contínua passando.</td></tr>
+</table>
+
+<h2>9. O que depende de você ou de terceiros</h2>
+<div class="grid2">
+  <div class="box"><b>Credenciais e serviços externos</b>
+    <ul>
+      <li>Projeto Firebase de produção e acesso ao console.</li>
+      <li>WhatsApp Business (Meta): número, token e modelos aprovados.</li>
+      <li>Provedor de IA para uso real (chave nas Functions) e limites de custo.</li>
+      <li>Provedor de vídeo para a teleconsulta.</li>
+      <li>Gateway de pagamento.</li>
+      <li>Certificado ICP-Brasil para assinatura de documentos.</li>
+      <li>Contas Google Play e Apple Developer; Mac com Xcode.</li>
+    </ul>
+  </div>
+  <div class="box"><b>Revisão clínica e jurídica</b>
+    <ul>
+      <li>Calendário PNI; marcos do desenvolvimento.</li>
+      <li>Textos de orientação (antes da consulta e por faixa etária) e modelos de evolução.</li>
+      <li>Referências da calculadora de doses (hoje fictícias).</li>
+      <li>Biblioteca de suplementação (17 temas em rascunho; conteúdo de terceiros exige licença).</li>
+      <li>Termos de Uso e Política de Privacidade.</li>
+    </ul>
+  </div>
+</div>
+<div class="box" style="margin-top:10px"><b>Decisões suas</b>
+  <ul>
+    <li>Ordem de integração dos 6 PRs ao <code>main</code>.</li>
+    <li>Quando levar os módulos da demonstração ao app real e em qual ordem.</li>
+    <li>Quais estados de marcos a família vê (hoje só "Adquirido").</li>
+    <li>Se receita, atestado, encaminhamento e exames continuam exigindo liberação explícita para a família.</li>
+    <li>Envio do commit <code>e795e63</code> e nova publicação da demonstração.</li>
+  </ul>
+</div>
+
+<h2>10. Plano recomendado</h2>
+<ol>
+  <li>Revisar e integrar a cadeia de PRs ao <code>main</code>, com a integração contínua ligada e passando.</li>
+  <li>Ligar o app real à tabela oficial da OMS (rápido, alto impacto clínico).</li>
+  <li>Levar ao app real, nesta ordem: pré-consulta organizada, liberação de documentos para a família, rotina e sono, puericultura. Cada um com repositório, regras do Firestore e testes no emulador.</li>
+  <li>Configurar o Firebase de produção: regras, índices, Functions, App Check e restrição de chaves.</li>
+  <li>Concluir o visual navy com tema claro e escuro (etapa combinada) e os modelos de atestado e encaminhamento.</li>
+  <li>Revisão clínica e jurídica dos conteúdos e textos legais.</li>
+  <li>Homologar o app real com login em iPhone e Android físicos, e só então preparar as lojas.</li>
+</ol>
+
+<h2>11. Anexo: comandos executados</h2>
+<table>
+  <tr><th style="width:52%">Comando</th><th>Resultado</th></tr>
+  <tr><td><code>flutter test --reporter expanded</code></td><td>769 aprovados (após a correção do achado 6)</td></tr>
+  <tr><td><code>flutter analyze</code></td><td>132 informativos, 0 erros, 0 avisos</td></tr>
+  <tr><td><code>flutter build web -t lib/main.dart --release --dart-define=ENV=prod</code></td><td>Build concluído</td></tr>
+  <tr><td><code>npx tsc --noEmit</code> (functions)</td><td>Sem erros</td></tr>
+  <tr><td><code>npx jest</code> (functions)</td><td>3 suítes, 25 testes aprovados</td></tr>
+  <tr><td><code>npx eslint src</code> (functions)</td><td>0 erros, 1 aviso</td></tr>
+  <tr><td><code>npm audit --omit=dev</code> (functions)</td><td>8 moderadas, 0 altas, 0 críticas</td></tr>
+  <tr><td><code>npm run test:offline</code> (tools/firestore-rules-tests)</td><td>4 aprovados</td></tr>
+  <tr><td><code>node tools/demo/e2e_clinico.js</code> (link público, 30/09)</td><td>427/428; falha do roteiro corrigida e repetida (5/5)</td></tr>
+  <tr><td><code>node tools/demo/smoke_ios.js</code> (link público, 30/09)</td><td>14/14</td></tr>
+</table>
+<p class="nota">Este relatório foi gerado a partir do código e dos testes executados em 01/10/2026. Não contém dados de pacientes, senhas nem chaves. Não afirma que o aplicativo está pronto para publicação.</p>
+
+</body>
+</html>
