@@ -576,17 +576,20 @@ class _MonthGrid extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 3),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: <Widget>[
-                      for (final CalendarItem i in list.take(3))
-                        _Dot(item: i, onBrand: isSel),
-                      if (list.length > 3)
-                        Text(
-                          '+',
-                          style: t.labelSmall?.copyWith(color: fg, height: 1),
-                        ),
-                    ],
+                  FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: <Widget>[
+                        for (final CalendarItem i in list.take(3))
+                          _Dot(item: i, onBrand: isSel),
+                        if (list.length > 3)
+                          Text(
+                            '+',
+                            style: t.labelSmall?.copyWith(color: fg, height: 1),
+                          ),
+                      ],
+                    ),
                   ),
                   if (n > 0)
                     Container(
