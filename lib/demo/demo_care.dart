@@ -54,8 +54,11 @@ class DemoCareTeam {
     physio,
   ];
 
-  /// Marca o conteúdo reservado da psicóloga nos testes.
-  static const String reservedMarker = 'Anotação reservada (fictícia)';
+  /// Marca a anotação privada, a transcrição e a conversa nos testes.
+  static const String privateMarker = 'Anotação privada (fictícia)';
+
+  /// Marca o texto completo do registro (evolução) nos testes.
+  static const String fullRecordMarker = 'Evolução completa (fictícia)';
 }
 
 /// Cuidado multidisciplinar na demonstração: liga a sessão ao [CareStore].
@@ -219,6 +222,7 @@ class DemoCare {
   void _seed() {
     final DateTime now = _s.now;
     DateTime ago(int days) => now.subtract(Duration(days: days));
+    DateTime ahead(int days) => now.add(Duration(days: days));
 
     CareLink link(
       String child,
@@ -284,10 +288,10 @@ class DemoCare {
       String title,
       String body, {
       required int days,
-      CareVisibility visibility = CareVisibility.equipe,
+      CareVisibility visibility = CareVisibility.privado,
       String? measure,
       int? session,
-      String? sourceId,
+      List<CareSectionInput> sections = const <CareSectionInput>[],
     }) {
       final CareRecord r = CareRecord(
         id: store.newId('r'),
@@ -303,7 +307,15 @@ class DemoCare {
         createdAt: ago(days),
         measure: measure,
         sessionNumber: session,
-        sourceId: sourceId,
+        sections: <CareSection>[
+          for (final CareSectionInput s in sections)
+            CareSection(
+              id: store.newId('sec'),
+              kind: s.kind,
+              label: s.label,
+              text: s.text,
+            ),
+        ],
       );
       if (visibility == CareVisibility.familia) r.releasedAt = ago(days);
       store.records.add(r);
@@ -314,31 +326,104 @@ class DemoCare {
     const DemoAccount fis = DemoCareTeam.physio;
     const DemoAccount ped = DemoProfessional.account;
 
-    rec(
+    String who(DemoAccount a) =>
+        '${a.name} (${CareSpecialty.fromText(a.specialty)!.area})';
+
+    /// Resumo já publicado, com a versão 1 no histórico.
+    void share(
+      CareRecord r,
+      DemoAccount author, {
+      required List<String> itemIds,
+      required List<DemoAccount> to,
+      required CareAudience audience,
+      required int days,
+      String note = '',
+    }) {
+      final CareSummary s =
+          CareSummary(
+              id: store.newId('s'),
+              recordId: r.id,
+              childId: luna,
+              clinicId: author.clinicId!,
+              authorId: author.id,
+              authorName: author.name,
+              specialty: r.specialty,
+              recordTitle: r.title,
+              createdAt: ago(days),
+            )
+            ..audience = audience
+            ..recipientIds = <String>[for (final DemoAccount a in to) a.id]
+            ..recipientNames = <String, String>{
+              for (final DemoAccount a in to) a.id: who(a),
+            }
+            ..items = <CareShareItem>[
+              for (final CareShareItem i in r.shareableItems)
+                if (itemIds.contains(i.id)) i,
+            ]
+            ..note = note
+            ..version = 1
+            ..updatedAt = ago(days);
+      s.versions.add(
+        CareSummaryVersion(
+          version: 1,
+          at: ago(days),
+          actorName: author.name,
+          status: s.status,
+          audience: audience,
+          recipientNames: s.recipientNames.values.toList(),
+          items: s.items,
+          attachmentNames: const <String>[],
+          note: note,
+        ),
+      );
+      store.summaries.add(s);
+    }
+
+    final CareRecord pedEval = rec(
       ped,
-      CareRecordKind.resumoEquipe,
-      'Resumo pediátrico para a equipe',
+      CareRecordKind.avaliacao,
+      'Consulta pediátrica',
       'Crescimento adequado para a idade; alergia registrada no cadastro. '
-          'Encaminhada para psicologia e fisioterapia. (Resumo fictício)',
+          'Encaminhada para psicologia e fisioterapia. (Registro fictício)',
       days: 38,
     );
+    share(
+      pedEval,
+      ped,
+      itemIds: <String>[CareRecord.bodyItemId],
+      to: <DemoAccount>[psi, fis],
+      audience: CareAudience.equipe,
+      days: 38,
+    );
+
     final CareRecord eval = rec(
       psi,
       CareRecordKind.avaliacao,
       'Avaliação inicial',
-      '${DemoCareTeam.reservedMarker}: conteúdo da entrevista inicial com a '
-          'família, disponível só para a psicóloga responsável.',
+      '${DemoCareTeam.fullRecordMarker}: entrevista inicial com a família, '
+          'histórico do sono e da separação e observação lúdica.',
       days: 30,
-      visibility: CareVisibility.reservado,
-    );
-    rec(
-      psi,
-      CareRecordKind.resumoEquipe,
-      'Resumo para a equipe: Avaliação inicial',
-      'Acompanhamento semanal para ansiedade na separação na hora de dormir. '
-          'Sem sinais de alerta. (Resumo fictício)',
-      days: 30,
-      sourceId: eval.id,
+      sections: <CareSectionInput>[
+        (
+          kind: CareSectionKind.clinica,
+          label: 'Hipótese de trabalho',
+          text:
+              'Ansiedade de separação na hora de dormir, sem sinais de '
+              'alerta. (Exemplo)',
+        ),
+        (
+          kind: CareSectionKind.clinica,
+          label: 'Conduta',
+          text: 'Acompanhamento semanal por 8 semanas. (Exemplo)',
+        ),
+        (
+          kind: CareSectionKind.anotacaoPrivada,
+          label: 'Anotação privada',
+          text:
+              '${DemoCareTeam.privateMarker}: impressões da psicóloga sobre '
+              'a dinâmica familiar.',
+        ),
+      ],
     );
     store.attachments.add(
       CareAttachment(
@@ -349,14 +434,44 @@ class DemoCare {
         at: ago(30),
       ),
     );
+    share(
+      eval,
+      psi,
+      itemIds: <String>[
+        for (final CareSection s in eval.sections)
+          if (s.kind.shareable) s.id,
+      ],
+      to: <DemoAccount>[ped],
+      audience: CareAudience.selecionados,
+      days: 30,
+      note: 'Sugiro reforçar a rotina do sono nas consultas. (Exemplo)',
+    );
     rec(
       psi,
       CareRecordKind.sessao,
       'Sessão 2',
-      '${DemoCareTeam.reservedMarker}: evolução da sessão 2.',
+      '${DemoCareTeam.fullRecordMarker}: evolução da sessão 2, brincadeira '
+          'de despedida e combinados para a noite.',
       days: 16,
-      visibility: CareVisibility.reservado,
       session: 2,
+      sections: <CareSectionInput>[
+        (
+          kind: CareSectionKind.clinica,
+          label: 'Evolução para a equipe',
+          text:
+              'Aceitou dormir com a porta encostada em 3 noites. (Exemplo)',
+        ),
+        (
+          kind: CareSectionKind.transcricao,
+          label: 'Transcrição',
+          text: '${DemoCareTeam.privateMarker}: trecho transcrito da sessão.',
+        ),
+        (
+          kind: CareSectionKind.conversa,
+          label: 'Conversa com a responsável',
+          text: '${DemoCareTeam.privateMarker}: conversa ao fim da sessão.',
+        ),
+      ],
     );
     rec(
       psi,
@@ -376,20 +491,29 @@ class DemoCare {
       visibility: CareVisibility.familia,
     );
 
-    rec(
+    final CareRecord fisEval = rec(
       fis,
       CareRecordKind.avaliacaoFuncional,
       'Avaliação funcional',
       'Marcha com base alargada e equilíbrio num pé só abaixo do esperado '
           'para a idade. (Exemplo)',
       days: 33,
+      sections: <CareSectionInput>[
+        (
+          kind: CareSectionKind.anotacaoPrivada,
+          label: 'Anotação privada',
+          text:
+              '${DemoCareTeam.privateMarker}: observação da fisioterapeuta '
+              'para a próxima sessão.',
+        ),
+      ],
     );
-    rec(
+    share(
+      fisEval,
       fis,
-      CareRecordKind.objetivos,
-      'Objetivos da fisioterapia',
-      'Ficar num pé só por 5 segundos e subir degraus alternando os pés. '
-          '(Exemplo)',
+      itemIds: <String>[CareRecord.bodyItemId],
+      to: <DemoAccount>[ped, psi],
+      audience: CareAudience.equipe,
       days: 33,
     );
     rec(
@@ -449,35 +573,110 @@ class DemoCare {
       days: 5,
     );
 
-    store.plans[CareStore.planKey(luna, DemoProfessional.clinicId)] =
-        CarePlan(
-          childId: luna,
-          clinicId: DemoProfessional.clinicId,
-          text:
-              'Psicologia semanal, fisioterapia 2 vezes por semana e '
-              'retorno pediátrico em 20 dias. Conversa da equipe a cada 30 '
-              'dias. (Plano fictício)',
-          updatedAt: ago(28),
-          updatedBy: ped.name,
-          updatedBySpecialty: CareSpecialty.pediatria,
-          goals: <CarePlanGoal>[
-            CarePlanGoal(
-              text: 'Manter crescimento e sono adequados',
-              specialty: CareSpecialty.pediatria,
-              ownerName: ped.name,
-            ),
-            CarePlanGoal(
-              text: 'Dormir no próprio quarto 5 noites por semana',
-              specialty: CareSpecialty.psicologia,
-              ownerName: psi.name,
-            ),
-            CarePlanGoal(
-              text: 'Ficar num pé só por 5 segundos',
-              specialty: CareSpecialty.fisioterapia,
-              ownerName: fis.name,
-            ),
-          ],
-        );
+    final CarePlan plan = CarePlan(
+      childId: luna,
+      clinicId: DemoProfessional.clinicId,
+    );
+    CarePlanGoal goal(
+      String objective,
+      DemoAccount owner, {
+      required int due,
+      required int reassess,
+      required int days,
+    }) {
+      final CarePlanGoal g = CarePlanGoal(
+        id: store.newId('o'),
+        objective: objective,
+        responsibleId: owner.id,
+        responsibleName: owner.name,
+        responsibleSpecialty: CareSpecialty.fromText(owner.specialty)!,
+        dueDate: ahead(due),
+        reassessAt: ahead(reassess),
+        createdBy: ped.name,
+        createdAt: ago(days),
+      );
+      plan.goals.add(g);
+      plan.history.add(
+        CarePlanChange(
+          at: ago(days),
+          actorName: ped.name,
+          specialty: CareSpecialty.pediatria,
+          description:
+              'Novo objetivo: $objective (responsável: ${owner.name})',
+        ),
+      );
+      return g;
+    }
+
+    void contribution(
+      CarePlanGoal g,
+      DemoAccount a,
+      CareContributionKind kind,
+      String text, {
+      required int days,
+    }) => g.contributions.add(
+      CarePlanContribution(
+        id: store.newId('c'),
+        authorId: a.id,
+        authorName: a.name,
+        specialty: CareSpecialty.fromText(a.specialty)!,
+        kind: kind,
+        text: text,
+        at: ago(days),
+      ),
+    );
+
+    final CarePlanGoal sleep = goal(
+      'Dormir no próprio quarto 5 noites por semana',
+      psi,
+      due: 60,
+      reassess: 20,
+      days: 28,
+    );
+    contribution(
+      sleep,
+      psi,
+      CareContributionKind.acao,
+      'Sessões semanais com combinados de rotina para a noite. (Exemplo)',
+      days: 28,
+    );
+    contribution(
+      sleep,
+      ped,
+      CareContributionKind.informacao,
+      'Sem causa clínica para os despertares noturnos. (Exemplo)',
+      days: 25,
+    );
+    final CarePlanGoal balance = goal(
+      'Ficar num pé só por 5 segundos',
+      fis,
+      due: 45,
+      reassess: 15,
+      days: 28,
+    );
+    contribution(
+      balance,
+      fis,
+      CareContributionKind.acao,
+      'Circuito de equilíbrio 2 vezes por semana e exercício para casa. '
+          '(Exemplo)',
+      days: 28,
+    );
+    contribution(
+      balance,
+      fis,
+      CareContributionKind.informacao,
+      'Medida atual: 3 segundos. (Exemplo)',
+      days: 12,
+    );
+    goal(
+      'Manter crescimento e alimentação adequados',
+      ped,
+      due: 120,
+      reassess: 30,
+      days: 28,
+    );
+    store.plans[CareStore.planKey(luna, DemoProfessional.clinicId)] = plan;
 
     CareMessage msg(
       DemoAccount from,

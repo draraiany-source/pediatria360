@@ -1,5 +1,7 @@
 /**
- * Regras do cuidado multidisciplinar (care_teams e care/ no Storage).
+ * Regras do cuidado multidisciplinar (care_teams e care/ no Storage), com
+ * compartilhamento seletivo: o registro completo é do autor; a equipe recebe
+ * só o resumo que o autor escolheu e endereçou.
  *
  * Cenário fictício: a Luna, filha da Ana, é atendida por pediatra,
  * psicóloga e fisioterapeuta da Clínica A. Outro psicólogo da mesma clínica,
@@ -42,6 +44,13 @@ const PED_B = "uid_ped_b"; // pediatra da Clínica B
 const NAO_VERIFICADO = "uid_nao_verificado";
 const CHILD = "luna";
 const TEAM = `care_teams/${CHILD}`;
+const DAY = 24 * 60 * 60 * 1000;
+
+const SESSION = `${TEAM}/records/sessao1`;
+const SUMMARY = `${TEAM}/summaries/sessao1`;
+const PRIVATE_FILE = `care/${CHILD}/registros/${PSI}/sessao1/desenho.png`;
+const FAMILY_FILE = `care/${CHILD}/familia/familia1/exercicio.pdf`;
+const PNG = new Uint8Array([137, 80, 78, 71]);
 
 let testEnv;
 
@@ -73,6 +82,15 @@ async function seedClinicMember(fs, uid, clinicId, role) {
     clinicId,
     role,
     active: true,
+  });
+}
+
+function endLink(by, uid, reason = "Encerramento fictício") {
+  return updateDoc(doc(db(by), `${TEAM}/members/${uid}`), {
+    status: "ended",
+    endedAt: serverTimestamp(),
+    endedBy: by,
+    endReason: reason,
   });
 }
 
@@ -134,21 +152,28 @@ beforeEach(async () => {
     await seedMember(fs, FIS, "fisioterapia", "clinica-a");
 
     const base = { clinicId: "clinica-a", revision: 1, createdAt: Timestamp.now() };
-    await setDoc(doc(fs, `${TEAM}/records/reservado1`), {
+    // Sessão privada da psicóloga, com partes clínica, privada e transcrição.
+    await setDoc(doc(fs, SESSION), {
       ...base,
       authorUid: PSI,
       specialty: "psicologia",
       kind: "sessao",
-      visibility: "reservado",
-      body: "Anotação reservada fictícia",
+      visibility: "privado",
+      title: "Sessão (fictícia)",
+      body: "Evolução completa fictícia",
     });
-    await setDoc(doc(fs, `${TEAM}/records/equipe1`), {
+    const section = (kind, text) => ({ kind, label: kind, text, createdAt: Timestamp.now() });
+    await setDoc(doc(fs, `${SESSION}/sections/clin`), section("clinica", "Conteúdo clínico fictício"));
+    await setDoc(doc(fs, `${SESSION}/sections/priv`), section("anotacaoPrivada", "Anotação privada fictícia"));
+    await setDoc(doc(fs, `${SESSION}/sections/trans`), section("transcricao", "Transcrição fictícia"));
+
+    await setDoc(doc(fs, `${TEAM}/records/fis1`), {
       ...base,
       authorUid: FIS,
       specialty: "fisioterapia",
       kind: "evolucao",
-      visibility: "equipe",
-      body: "Evolução fictícia",
+      visibility: "privado",
+      body: "Evolução fictícia da fisioterapia",
     });
     await setDoc(doc(fs, `${TEAM}/records/familia1`), {
       ...base,
@@ -158,6 +183,17 @@ beforeEach(async () => {
       visibility: "familia",
       releasedAt: Timestamp.now(),
       body: "Exercício fictício",
+    });
+    await setDoc(doc(fs, `${TEAM}/plan/clinica-a/goals/g1`), {
+      objective: "Equilíbrio em um pé por 10 segundos (fictício)",
+      responsibleUid: FIS,
+      responsibleSpecialty: "fisioterapia",
+      dueDate: Timestamp.fromMillis(Date.now() + 45 * DAY),
+      reassessAt: Timestamp.fromMillis(Date.now() + 15 * DAY),
+      status: "emAndamento",
+      reassessCount: 0,
+      createdBy: FIS,
+      createdAt: Timestamp.now(),
     });
     await setDoc(doc(fs, `${TEAM}/messages/msg1`), {
       authorUid: PED,
@@ -196,109 +232,392 @@ beforeEach(async () => {
     });
 
     const st = context.storage();
-    const png = new Uint8Array([137, 80, 78, 71]);
-    await uploadBytes(ref(st, `care/${CHILD}/reservado1/desenho.png`), png, {
-      contentType: "image/png",
-    });
-    await uploadBytes(ref(st, `care/${CHILD}/familia1/exercicio.pdf`), png, {
-      contentType: "application/pdf",
-    });
+    await uploadBytes(ref(st, PRIVATE_FILE), PNG, { contentType: "image/png" });
+    await uploadBytes(ref(st, FAMILY_FILE), PNG, { contentType: "application/pdf" });
   });
 });
+
+// ------------------------------------------------------------- auxiliares
+
+const summaryData = (overrides = {}) => ({
+  authorUid: PSI,
+  clinicId: "clinica-a",
+  specialty: "psicologia",
+  recordTitle: "Sessão (fictícia)",
+  status: "publicado",
+  audience: "selecionados",
+  recipients: [PED],
+  items: [{ label: "Conteúdo clínico", text: "Resumo fictício para a equipe" }],
+  attachments: [],
+  note: "",
+  version: 1,
+  createdAt: serverTimestamp(),
+  updatedAt: serverTimestamp(),
+  ...overrides,
+});
+
+const versionOf = (s, uid) => ({
+  version: s.version,
+  actorUid: uid,
+  at: serverTimestamp(),
+  status: s.status,
+  audience: s.audience,
+  recipients: s.recipients,
+  items: s.items,
+  attachments: s.attachments,
+  ...(s.reason ? { reason: s.reason } : {}),
+});
+
+/** Publica a versão 1 no mesmo lote que o histórico. */
+function publish(uid = PSI, rid = "sessao1", overrides = {}) {
+  const fs = db(uid);
+  const s = summaryData(overrides);
+  const b = writeBatch(fs);
+  b.set(doc(fs, `${TEAM}/summaries/${rid}`), s);
+  b.set(doc(fs, `${TEAM}/summaries/${rid}/versions/${s.version}`), versionOf(s, uid));
+  return b.commit();
+}
+
+/** Atualiza ou encerra: muda só os campos indicados e grava a versão. */
+function revise(uid, changes, current, rid = "sessao1", { withVersion = true } = {}) {
+  const fs = db(uid);
+  const next = { ...summaryData(current), ...changes };
+  const b = writeBatch(fs);
+  const { reason, ...fields } = changes;
+  b.update(doc(fs, `${TEAM}/summaries/${rid}`), { ...fields, updatedAt: serverTimestamp() });
+  if (withVersion) {
+    b.set(
+      doc(fs, `${TEAM}/summaries/${rid}/versions/${next.version}`),
+      versionOf({ ...next, reason }, uid)
+    );
+  }
+  return b.commit();
+}
+
+const grantData = (overrides = {}) => ({
+  granteeUid: PED,
+  clinicId: "clinica-a",
+  justification: "Avaliar a medicação em uso (fictício)",
+  grantedAt: serverTimestamp(),
+  grantedBy: PSI,
+  round: 1,
+  ...overrides,
+});
+
+const grant = (uid = PSI, grantee = PED, overrides = {}) =>
+  setDoc(
+    doc(db(uid), `${SESSION}/grants/${grantee}`),
+    grantData({ granteeUid: grantee, grantedBy: uid, ...overrides })
+  );
+
+const revoke = (uid = PSI, grantee = PED) =>
+  updateDoc(doc(db(uid), `${SESSION}/grants/${grantee}`), {
+    revokedAt: serverTimestamp(),
+    revokedBy: uid,
+    revokeReason: "Avaliação concluída (fictício)",
+  });
+
+const readAll = (uid) => ({
+  record: () => getDoc(doc(db(uid), SESSION)),
+  clinical: () => getDoc(doc(db(uid), `${SESSION}/sections/clin`)),
+  privateNote: () => getDoc(doc(db(uid), `${SESSION}/sections/priv`)),
+  transcript: () => getDoc(doc(db(uid), `${SESSION}/sections/trans`)),
+  file: () => getBytes(ref(storage(uid), PRIVATE_FILE)),
+});
+
+async function expectNoFullRecord(uid) {
+  const r = readAll(uid);
+  await assertFails(r.record());
+  await assertFails(r.clinical());
+  await assertFails(r.privateNote());
+  await assertFails(r.transcript());
+  await assertFails(r.file());
+}
 
 const newRecord = (overrides) => ({
   clinicId: "clinica-a",
   revision: 1,
   createdAt: serverTimestamp(),
-  visibility: "equipe",
+  visibility: "privado",
   title: "Registro fictício",
   body: "Texto fictício",
   ...overrides,
 });
 
-describe("registro reservado", () => {
-  test("a psicóloga autora lê", async () => {
-    await assertSucceeds(getDoc(doc(db(PSI), `${TEAM}/records/reservado1`)));
+// ------------------------------------------------- cenário pedido no teste
+
+describe("cenário: psicóloga, pediatra, fisioterapeuta e família", () => {
+  test("1. a psicóloga registra a sessão privada: só ela lê registro, partes e anexo", async () => {
+    const r = readAll(PSI);
+    await assertSucceeds(r.record());
+    await assertSucceeds(r.clinical());
+    await assertSucceeds(r.privateNote());
+    await assertSucceeds(r.transcript());
+    await assertSucceeds(r.file());
+    for (const uid of [PED, FIS, PSI2, GESTOR, PED_B, ANA]) {
+      await expectNoFullRecord(uid);
+    }
   });
 
-  test.each([
-    ["pediatra da equipe", PED],
-    ["fisioterapeuta da equipe", FIS],
-    ["psicólogo da mesma clínica sem vínculo", PSI2],
-    ["gestão da clínica", GESTOR],
-    ["responsável", ANA],
-  ])("%s não lê", async (_, uid) => {
-    await assertFails(getDoc(doc(db(uid), `${TEAM}/records/reservado1`)));
-  });
-});
-
-describe("registro da equipe e da família", () => {
-  test("equipe com vínculo lê o registro da equipe", async () => {
-    await assertSucceeds(getDoc(doc(db(PED), `${TEAM}/records/equipe1`)));
-    await assertSucceeds(getDoc(doc(db(PSI), `${TEAM}/records/equipe1`)));
+  test("2. a psicóloga compartilha só um resumo com o pediatra", async () => {
+    await assertSucceeds(publish());
+    await assertSucceeds(getDoc(doc(db(PED), SUMMARY)));
+    await expectNoFullRecord(PED);
   });
 
-  test("mesma clínica sem vínculo, gestão e família não leem o registro da equipe", async () => {
-    await assertFails(getDoc(doc(db(PSI2), `${TEAM}/records/equipe1`)));
-    await assertFails(getDoc(doc(db(GESTOR), `${TEAM}/records/equipe1`)));
-    await assertFails(getDoc(doc(db(ANA), `${TEAM}/records/equipe1`)));
+  test("3. a fisioterapeuta não lê o resumo endereçado só ao pediatra", async () => {
+    await assertSucceeds(publish());
+    for (const uid of [FIS, PSI2, GESTOR, PED_B, ANA, BRUNO]) {
+      await assertFails(getDoc(doc(db(uid), SUMMARY)));
+    }
   });
 
-  test("família lê o que foi liberado; outra família não", async () => {
+  test("4. a fisioterapeuta vê apenas o que foi compartilhado com ela", async () => {
+    await assertSucceeds(publish());
+    await assertFails(getDoc(doc(db(FIS), SUMMARY)));
+    await assertSucceeds(revise(PSI, { recipients: [PED, FIS], version: 2 }, {}));
+    await assertSucceeds(getDoc(doc(db(FIS), SUMMARY)));
+    await expectNoFullRecord(FIS);
+    // O resumo da fisioterapeuta, endereçado ao pediatra, não chega à psicóloga.
+    await assertSucceeds(
+      publish(FIS, "fis1", {
+        authorUid: FIS,
+        specialty: "fisioterapia",
+        recordTitle: "Evolução (fictícia)",
+        recipients: [PED],
+      })
+    );
+    await assertSucceeds(getDoc(doc(db(PED), `${TEAM}/summaries/fis1`)));
+    await assertFails(getDoc(doc(db(PSI), `${TEAM}/summaries/fis1`)));
+  });
+
+  test("5. a família vê somente as orientações liberadas", async () => {
+    await assertSucceeds(publish(PSI, "sessao1", { recipients: [PED, FIS] }));
     await assertSucceeds(getDoc(doc(db(ANA), `${TEAM}/records/familia1`)));
+    await assertSucceeds(getBytes(ref(storage(ANA), FAMILY_FILE)));
+    await assertFails(getDoc(doc(db(ANA), SUMMARY)));
+    await assertFails(getDoc(doc(db(ANA), `${TEAM}/records/fis1`)));
+    await assertFails(getDoc(doc(db(ANA), `${TEAM}/plan/clinica-a/goals/g1`)));
+    await assertFails(getDoc(doc(db(ANA), `${TEAM}/documents/emitido`)));
+    await expectNoFullRecord(ANA);
     await assertFails(getDoc(doc(db(BRUNO), `${TEAM}/records/familia1`)));
+    await assertFails(getBytes(ref(storage(BRUNO), FAMILY_FILE)));
+  });
+
+  test("6. retirada do acesso: o pediatra deixa de ler e as versões ficam no histórico", async () => {
+    await assertSucceeds(publish());
+    await assertSucceeds(getDoc(doc(db(PED), SUMMARY)));
+    await assertSucceeds(
+      revise(PSI, { status: "encerrado", version: 2, reason: "Conduta revista" }, {})
+    );
+    await assertFails(getDoc(doc(db(PED), SUMMARY)));
+    await assertSucceeds(getDoc(doc(db(PSI), SUMMARY)));
+    await assertSucceeds(getDoc(doc(db(PSI), `${SUMMARY}/versions/1`)));
+    await assertSucceeds(getDoc(doc(db(PSI), `${SUMMARY}/versions/2`)));
+    await assertFails(getDoc(doc(db(PED), `${SUMMARY}/versions/1`)));
+    await assertFails(
+      setDoc(doc(db(PED), `${SUMMARY}/access/depois`), {
+        readerUid: PED,
+        at: serverTimestamp(),
+        version: 2,
+      })
+    );
+    await assertFails(deleteDoc(doc(db(PSI), SUMMARY)));
+    await assertFails(deleteDoc(doc(db(PSI), `${SUMMARY}/versions/1`)));
+    await assertFails(updateDoc(doc(db(PSI), `${SUMMARY}/versions/1`), { items: [] }));
+  });
+
+  test("7. republicar depois de encerrar volta a liberar, em nova versão", async () => {
+    await assertSucceeds(publish());
+    await assertSucceeds(revise(PSI, { status: "encerrado", version: 2 }, {}));
+    await assertSucceeds(revise(PSI, { status: "publicado", version: 3 }, { version: 2 }));
+    await assertSucceeds(getDoc(doc(db(PED), SUMMARY)));
+  });
+
+  test("8. vínculo encerrado também retira a leitura do resumo", async () => {
+    await assertSucceeds(publish());
+    await assertSucceeds(endLink(GESTOR, PED));
+    await assertFails(getDoc(doc(db(PED), SUMMARY)));
   });
 });
 
-describe("registros compatíveis com a especialidade", () => {
-  test("fisioterapeuta registra evolução da fisioterapia", async () => {
+describe("quem compartilhou, com quem, quando e quem acessou", () => {
+  const access = (uid, overrides = {}) =>
+    setDoc(doc(db(uid), `${SUMMARY}/access/${uid}-1`), {
+      readerUid: uid,
+      at: serverTimestamp(),
+      version: 1,
+      ...overrides,
+    });
+
+  test("o destinatário grava o próprio acesso; só a autora consulta", async () => {
+    await assertSucceeds(publish());
+    await assertSucceeds(access(PED));
+    await assertSucceeds(getDoc(doc(db(PSI), `${SUMMARY}/access/${PED}-1`)));
+    await assertFails(getDoc(doc(db(PED), `${SUMMARY}/access/${PED}-1`)));
+    await assertFails(getDoc(doc(db(FIS), `${SUMMARY}/access/${PED}-1`)));
+    await assertFails(
+      updateDoc(doc(db(PED), `${SUMMARY}/access/${PED}-1`), { version: 9 })
+    );
+    await assertFails(deleteDoc(doc(db(PSI), `${SUMMARY}/access/${PED}-1`)));
+  });
+
+  test("não se grava acesso em nome de outro, de versão antiga ou sem ser destinatário", async () => {
+    await assertSucceeds(publish());
+    await assertFails(access(PED, { readerUid: PSI }));
+    await assertFails(access(PED, { version: 2 }));
+    await assertFails(access(FIS));
+  });
+
+  test("a versão guarda quem compartilhou, com quem e quando", async () => {
+    await assertSucceeds(publish());
+    const v = await getDoc(doc(db(PSI), `${SUMMARY}/versions/1`));
+    expect(v.get("actorUid")).toBe(PSI);
+    expect(v.get("recipients")).toEqual([PED]);
+    expect(v.get("at")).toBeInstanceOf(Timestamp);
+  });
+});
+
+describe("resumo: só o autor publica, com versão e destinatários", () => {
+  test("outro profissional não publica nem altera o resumo da psicóloga", async () => {
+    await assertFails(publish(PED, "sessao1", { authorUid: PED }));
+    await assertSucceeds(publish());
+    await assertFails(revise(FIS, { recipients: [PED, FIS], version: 2 }, {}));
+    await assertFails(revise(PED, { status: "encerrado", version: 2 }, {}));
+  });
+
+  test("sem a versão no mesmo lote, ou pulando versão, é recusado", async () => {
+    await assertFails(setDoc(doc(db(PSI), SUMMARY), summaryData()));
+    await assertSucceeds(publish());
+    await assertFails(revise(PSI, { version: 3 }, {}));
+    await assertFails(revise(PSI, { version: 2 }, {}, "sessao1", { withVersion: false }));
+  });
+
+  test("destinatários: ao menos um, sem o próprio autor", async () => {
+    await assertFails(publish(PSI, "sessao1", { recipients: [] }));
+    await assertFails(publish(PSI, "sessao1", { recipients: [PSI, PED] }));
+  });
+
+  test("campos fora do resumo e texto da IA sem revisão são recusados", async () => {
+    await assertFails(publish(PSI, "sessao1", { privateNotes: "não deveria ir" }));
+    await assertFails(publish(PSI, "sessao1", { aiAssisted: true }));
+    await assertSucceeds(publish(PSI, "sessao1", { aiAssisted: true, reviewedBy: PSI }));
+  });
+
+  test("encerrar vale mesmo com o vínculo da autora encerrado; atualizar não", async () => {
+    await assertSucceeds(publish());
+    await assertSucceeds(endLink(GESTOR, PSI));
+    await assertFails(revise(PSI, { recipients: [PED, FIS], version: 2 }, {}));
+    await assertSucceeds(revise(PSI, { status: "encerrado", version: 2 }, {}));
+  });
+
+  test("destinatário de outra clínica não lê, mesmo listado", async () => {
+    await assertSucceeds(publish(PSI, "sessao1", { recipients: [PED, PED_B, PSI2] }));
+    await assertFails(getDoc(doc(db(PED_B), SUMMARY)));
+    await assertFails(getDoc(doc(db(PSI2), SUMMARY)));
+  });
+});
+
+describe("acesso ao registro completo concedido com justificativa", () => {
+  test("só a autora concede, com justificativa, a colega com vínculo ativo", async () => {
+    await assertFails(grant(PSI, PED, { justification: "curta" }));
+    await assertFails(grant(PSI, PSI2));
+    await assertFails(grant(PSI, PED_B));
+    await assertFails(grant(PSI, PSI));
+    await assertFails(grant(PED, PED));
+    await assertFails(grant(FIS, PED));
+    await assertFails(grant(PSI, PED, { clinicId: "clinica-b" }));
+    await assertSucceeds(grant(PSI, PED));
+  });
+
+  test("com acesso: registro, parte clínica e anexo; nunca anotação privada nem transcrição", async () => {
+    await assertSucceeds(grant(PSI, PED));
+    const r = readAll(PED);
+    await assertSucceeds(r.record());
+    await assertSucceeds(r.clinical());
+    await assertFails(r.privateNote());
+    await assertFails(r.transcript());
+    await assertSucceeds(r.file());
+    await expectNoFullRecord(FIS);
+    await assertSucceeds(getDoc(doc(db(PED), `${SESSION}/grants/${PED}`)));
+    await assertFails(getDoc(doc(db(FIS), `${SESSION}/grants/${PED}`)));
+  });
+
+  test("retirada: o pediatra perde registro e anexo; só a autora retira", async () => {
+    await assertSucceeds(grant(PSI, PED));
+    await assertFails(revoke(PED, PED));
+    await assertFails(deleteDoc(doc(db(PSI), `${SESSION}/grants/${PED}`)));
+    await assertSucceeds(revoke(PSI, PED));
+    await expectNoFullRecord(PED);
+    const g = await getDoc(doc(db(PSI), `${SESSION}/grants/${PED}`));
+    expect(g.get("revokedBy")).toBe(PSI);
+    expect(g.get("justification")).toBe("Avaliar a medicação em uso (fictício)");
+  });
+
+  test("nova concessão guarda a anterior no histórico", async () => {
+    await assertSucceeds(grant(PSI, PED));
+    await assertSucceeds(revoke(PSI, PED));
+    await assertFails(grant(PSI, PED, { round: 2 }));
+    const fs = db(PSI);
+    const b = writeBatch(fs);
+    b.set(doc(fs, `${SESSION}/grants/${PED}/history/1`), {
+      justification: "Avaliar a medicação em uso (fictício)",
+      grantedAt: Timestamp.now(),
+      revokedAt: Timestamp.now(),
+      revokedBy: PSI,
+      revokeReason: "Avaliação concluída (fictício)",
+    });
+    b.set(doc(fs, `${SESSION}/grants/${PED}`), grantData({ round: 2 }));
+    await assertSucceeds(b.commit());
+    await assertSucceeds(getDoc(doc(db(PED), SESSION)));
+  });
+
+  test("acesso concedido não sobrevive ao fim do vínculo de quem recebeu", async () => {
+    await assertSucceeds(grant(PSI, PED));
+    await assertSucceeds(endLink(ANA, PED));
+    await expectNoFullRecord(PED);
+  });
+});
+
+describe("registros privados por padrão", () => {
+  test("fisioterapeuta registra evolução privada da fisioterapia", async () => {
     await assertSucceeds(
       setDoc(
-        doc(db(FIS), `${TEAM}/records/novo`),
+        doc(db(FIS), `${TEAM}/records/x1`),
         newRecord({ authorUid: FIS, specialty: "fisioterapia", kind: "evolucao" })
       )
     );
+    await assertFails(getDoc(doc(db(PED), `${TEAM}/records/x1`)));
   });
 
-  test("fisioterapeuta não registra sessão de psicologia nem reservado", async () => {
-    await assertFails(
-      setDoc(
-        doc(db(FIS), `${TEAM}/records/x1`),
-        newRecord({ authorUid: FIS, specialty: "fisioterapia", kind: "sessao" })
-      )
-    );
+  test("visibilidades antigas (equipe, reservado) não existem mais", async () => {
+    for (const visibility of ["equipe", "reservado"]) {
+      await assertFails(
+        setDoc(
+          doc(db(PSI), `${TEAM}/records/v-${visibility}`),
+          newRecord({ authorUid: PSI, specialty: "psicologia", kind: "sessao", visibility })
+        )
+      );
+    }
+  });
+
+  test("tipo e especialidade conferem com o vínculo", async () => {
     await assertFails(
       setDoc(
         doc(db(FIS), `${TEAM}/records/x2`),
-        newRecord({
-          authorUid: FIS,
-          specialty: "fisioterapia",
-          kind: "evolucao",
-          visibility: "reservado",
-        })
+        newRecord({ authorUid: FIS, specialty: "fisioterapia", kind: "sessao" })
       )
     );
-  });
-
-  test("fisioterapeuta não se declara psicóloga", async () => {
     await assertFails(
       setDoc(
         doc(db(FIS), `${TEAM}/records/x3`),
         newRecord({ authorUid: FIS, specialty: "psicologia", kind: "sessao" })
       )
     );
-  });
-
-  test("psicóloga cria registro reservado", async () => {
-    await assertSucceeds(
+    await assertFails(
       setDoc(
-        doc(db(PSI), `${TEAM}/records/r2`),
-        newRecord({
-          authorUid: PSI,
-          specialty: "psicologia",
-          kind: "sessao",
-          visibility: "reservado",
-        })
+        doc(db(PSI), `${TEAM}/records/x4`),
+        newRecord({ authorUid: PSI, specialty: "psicologia", kind: "resumoEquipe" })
       )
     );
   });
@@ -306,95 +625,80 @@ describe("registros compatíveis com a especialidade", () => {
   test("só orientação e atividade para casa vão para a família", async () => {
     await assertFails(
       setDoc(
-        doc(db(FIS), `${TEAM}/records/x4`),
-        newRecord({
-          authorUid: FIS,
-          specialty: "fisioterapia",
-          kind: "evolucao",
-          visibility: "familia",
-          releasedAt: serverTimestamp(),
-        })
-      )
-    );
-  });
-
-  test("sem vínculo não cria registro", async () => {
-    await assertFails(
-      setDoc(
-        doc(db(PSI2), `${TEAM}/records/x5`),
-        newRecord({ authorUid: PSI2, specialty: "psicologia", kind: "sessao" })
-      )
-    );
-  });
-
-  test("texto da IA só entra revisado por quem grava", async () => {
-    await assertFails(
-      setDoc(
-        doc(db(PED), `${TEAM}/records/ia1`),
-        newRecord({
-          authorUid: PED,
-          specialty: "pediatria",
-          kind: "resumoEquipe",
-          aiGenerated: true,
-        })
+        doc(db(PSI), `${TEAM}/records/x5`),
+        newRecord({ authorUid: PSI, specialty: "psicologia", kind: "sessao", visibility: "familia" })
       )
     );
     await assertSucceeds(
       setDoc(
-        doc(db(PED), `${TEAM}/records/ia2`),
+        doc(db(PSI), `${TEAM}/records/x6`),
         newRecord({
-          authorUid: PED,
-          specialty: "pediatria",
-          kind: "resumoEquipe",
-          aiGenerated: true,
-          reviewedBy: PED,
+          authorUid: PSI,
+          specialty: "psicologia",
+          kind: "orientacao",
+          visibility: "familia",
         })
       )
     );
+  });
+
+  test("sem vínculo não cria registro; texto da IA só entra revisado", async () => {
+    await assertFails(
+      setDoc(
+        doc(db(PSI2), `${TEAM}/records/x7`),
+        newRecord({ authorUid: PSI2, specialty: "psicologia", kind: "sessao" })
+      )
+    );
+    const ai = newRecord({
+      authorUid: PSI,
+      specialty: "psicologia",
+      kind: "sessao",
+      aiGenerated: true,
+    });
+    await assertFails(setDoc(doc(db(PSI), `${TEAM}/records/x8`), ai));
+    await assertSucceeds(
+      setDoc(doc(db(PSI), `${TEAM}/records/x9`), { ...ai, reviewedBy: PSI })
+    );
+  });
+
+  test("partes do registro: só a autora cria e altera", async () => {
+    const part = (kind) => ({ kind, label: "Parte", text: "Fictício", createdAt: serverTimestamp() });
+    await assertSucceeds(setDoc(doc(db(PSI), `${SESSION}/sections/nova`), part("conversa")));
+    await assertFails(setDoc(doc(db(PSI), `${SESSION}/sections/outra`), part("resumo")));
+    await assertFails(setDoc(doc(db(PED), `${SESSION}/sections/ped`), part("clinica")));
+    await assertFails(
+      updateDoc(doc(db(PSI), `${SESSION}/sections/priv`), { kind: "clinica" })
+    );
+    await assertSucceeds(
+      updateDoc(doc(db(PSI), `${SESSION}/sections/priv`), { text: "Atualizada (fictícia)" })
+    );
+    await assertFails(deleteDoc(doc(db(PSI), `${SESSION}/sections/priv`)));
   });
 });
 
 describe("alteração com histórico", () => {
   test("autora altera gravando a revisão no mesmo lote", async () => {
-    const fs = db(FIS);
-    const batch = writeBatch(fs);
-    batch.update(doc(fs, `${TEAM}/records/equipe1`), {
-      body: "Evolução corrigida",
-      revision: 2,
-    });
-    batch.set(doc(fs, `${TEAM}/records/equipe1/revisions/2`), {
-      actorUid: FIS,
+    const fs = db(PSI);
+    const b = writeBatch(fs);
+    b.update(doc(fs, SESSION), { body: "Novo texto fictício", revision: 2 });
+    b.set(doc(fs, `${SESSION}/revisions/2`), {
+      actorUid: PSI,
       at: serverTimestamp(),
       note: "Correção",
-      previousBody: "Evolução fictícia",
+      previousBody: "Evolução completa fictícia",
     });
-    await assertSucceeds(batch.commit());
+    await assertSucceeds(b.commit());
+    await assertFails(getDoc(doc(db(PED), `${SESSION}/revisions/2`)));
   });
 
-  test("sem a revisão, a alteração é recusada", async () => {
-    await assertFails(
-      updateDoc(doc(db(FIS), `${TEAM}/records/equipe1`), {
-        body: "Sem histórico",
-        revision: 2,
-      })
-    );
-  });
-
-  test("outro profissional não altera nem troca o autor", async () => {
-    const fs = db(PED);
-    const batch = writeBatch(fs);
-    batch.update(doc(fs, `${TEAM}/records/equipe1`), { body: "x", revision: 2 });
-    batch.set(doc(fs, `${TEAM}/records/equipe1/revisions/2`), {
-      actorUid: PED,
-      at: serverTimestamp(),
-      note: "x",
-      previousBody: "x",
-    });
-    await assertFails(batch.commit());
+  test("sem a revisão, a alteração é recusada; outro profissional não altera", async () => {
+    await assertFails(updateDoc(doc(db(PSI), SESSION), { body: "x", revision: 2 }));
+    await assertFails(updateDoc(doc(db(PED), SESSION), { body: "x", revision: 2 }));
+    await assertFails(updateDoc(doc(db(PSI), SESSION), { authorUid: PED, revision: 2 }));
   });
 
   test("registro não se apaga", async () => {
-    await assertFails(deleteDoc(doc(db(FIS), `${TEAM}/records/equipe1`)));
+    await assertFails(deleteDoc(doc(db(PSI), SESSION)));
   });
 });
 
@@ -408,12 +712,9 @@ describe("vínculo autorizado pela família", () => {
     since: serverTimestamp(),
   });
 
-  test("gestão designa; só depois da autorização da família há acesso", async () => {
+  test("gestão designa; só depois da autorização da família há equipe, e vínculo não abre registros", async () => {
     await assertSucceeds(setDoc(doc(db(GESTOR), `${TEAM}/members/${PSI2}`), pending()));
-    await assertFails(getDoc(doc(db(PSI2), `${TEAM}/records/equipe1`)));
-    await assertFails(
-      updateDoc(doc(db(PSI2), `${TEAM}/members/${PSI2}`), { reason: "Alterado" })
-    );
+    await assertFails(getDoc(doc(db(PSI2), `${TEAM}/messages/msg1`)));
     await assertFails(
       updateDoc(doc(db(PSI2), `${TEAM}/members/${PSI2}`), { status: "active" })
     );
@@ -431,8 +732,9 @@ describe("vínculo autorizado pela família", () => {
         authorizedBy: ANA,
       })
     );
-    await assertSucceeds(getDoc(doc(db(PSI2), `${TEAM}/records/equipe1`)));
-    await assertFails(getDoc(doc(db(PSI2), `${TEAM}/records/reservado1`)));
+    await assertSucceeds(getDoc(doc(db(PSI2), `${TEAM}/messages/msg1`)));
+    await assertSucceeds(getDoc(doc(db(PSI2), `${TEAM}/plan/clinica-a/goals/g1`)));
+    await expectNoFullRecord(PSI2);
   });
 
   test("especialidade diferente da conferida e profissional não verificado são recusados", async () => {
@@ -454,33 +756,23 @@ describe("vínculo autorizado pela família", () => {
   });
 
   test("troca de profissional: vínculo encerrado perde a equipe e mantém os próprios", async () => {
-    await assertSucceeds(
-      updateDoc(doc(db(GESTOR), `${TEAM}/members/${PSI}`), {
-        status: "ended",
-        endedAt: serverTimestamp(),
-        endedBy: GESTOR,
-        endReason: "Troca de profissional",
-      })
-    );
-    await assertSucceeds(getDoc(doc(db(PSI), `${TEAM}/records/reservado1`)));
-    await assertFails(getDoc(doc(db(PSI), `${TEAM}/records/equipe1`)));
+    await assertSucceeds(endLink(GESTOR, PSI, "Troca de profissional"));
+    await assertSucceeds(getDoc(doc(db(PSI), SESSION)));
+    await assertSucceeds(getDoc(doc(db(PSI), `${SESSION}/sections/priv`)));
+    await assertSucceeds(getBytes(ref(storage(PSI), PRIVATE_FILE)));
+    await assertFails(getDoc(doc(db(PSI), `${TEAM}/messages/msg1`)));
+    await assertFails(getDoc(doc(db(PSI), `${TEAM}/plan/clinica-a/goals/g1`)));
     await assertFails(
       setDoc(
-        doc(db(PSI), `${TEAM}/records/x6`),
+        doc(db(PSI), `${TEAM}/records/x10`),
         newRecord({ authorUid: PSI, specialty: "psicologia", kind: "sessao" })
       )
     );
   });
 
-  test("troca de clínica: nova equipe não vê os registros da anterior", async () => {
-    await assertSucceeds(
-      updateDoc(doc(db(ANA), `${TEAM}/members/${PED}`), {
-        status: "ended",
-        endedAt: serverTimestamp(),
-        endedBy: ANA,
-        endReason: "Troca de clínica",
-      })
-    );
+  test("troca de clínica: nova equipe não vê resumos, plano nem registros da anterior", async () => {
+    await assertSucceeds(publish(PSI, "sessao1", { recipients: [PED, FIS] }));
+    await assertSucceeds(endLink(ANA, PED, "Troca de clínica"));
     await assertSucceeds(
       setDoc(
         doc(db(PED_B), `${TEAM}/members/${PED_B}`),
@@ -494,10 +786,109 @@ describe("vínculo autorizado pela família", () => {
         authorizedBy: ANA,
       })
     );
-    await assertFails(getDoc(doc(db(PED), `${TEAM}/records/equipe1`)));
-    await assertFails(getDoc(doc(db(PED_B), `${TEAM}/records/equipe1`)));
+    await assertFails(getDoc(doc(db(PED), SUMMARY)));
+    await assertFails(getDoc(doc(db(PED_B), SUMMARY)));
+    await assertFails(getDoc(doc(db(PED_B), `${TEAM}/plan/clinica-a/goals/g1`)));
     await assertFails(getDoc(doc(db(PED_B), `${TEAM}/records/familia1`)));
+    await expectNoFullRecord(PED_B);
     await assertSucceeds(getDoc(doc(db(ANA), `${TEAM}/records/familia1`)));
+  });
+});
+
+describe("plano terapêutico conjunto", () => {
+  const GOAL = `${TEAM}/plan/clinica-a/goals/g1`;
+  const goal = (overrides = {}) => ({
+    objective: "Dormir no próprio quarto (fictício)",
+    responsibleUid: PSI,
+    responsibleSpecialty: "psicologia",
+    dueDate: Timestamp.fromMillis(Date.now() + 60 * DAY),
+    reassessAt: Timestamp.fromMillis(Date.now() + 20 * DAY),
+    status: "emAndamento",
+    reassessCount: 0,
+    createdBy: PED,
+    createdAt: serverTimestamp(),
+    ...overrides,
+  });
+
+  test("objetivo com responsável da equipe, prazo e reavaliação", async () => {
+    const goals = `${TEAM}/plan/clinica-a/goals`;
+    await assertSucceeds(setDoc(doc(db(PED), `${goals}/g2`), goal()));
+    await assertFails(setDoc(doc(db(PED), `${goals}/g3`), goal({ responsibleUid: PSI2 })));
+    await assertFails(
+      setDoc(doc(db(PED), `${goals}/g4`), goal({ responsibleSpecialty: "pediatria" }))
+    );
+    await assertFails(
+      setDoc(
+        doc(db(PED), `${goals}/g5`),
+        goal({ dueDate: Timestamp.fromMillis(Date.now() - DAY) })
+      )
+    );
+    await assertFails(
+      setDoc(
+        doc(db(PED), `${goals}/g6`),
+        goal({ reassessAt: Timestamp.fromMillis(Date.now() + 90 * DAY) })
+      )
+    );
+    await assertFails(setDoc(doc(db(PSI2), `${goals}/g7`), goal({ createdBy: PSI2 })));
+    await assertFails(setDoc(doc(db(PED), `${TEAM}/plan/clinica-a`), { text: "Plano" }));
+  });
+
+  test("cada profissional contribui com o que escolhe escrever, em nome próprio", async () => {
+    const contribution = (uid, specialty, overrides = {}) => ({
+      authorUid: uid,
+      authorSpecialty: specialty,
+      kind: "informacao",
+      text: "Informação compartilhada (fictícia)",
+      at: serverTimestamp(),
+      ...overrides,
+    });
+    await assertSucceeds(
+      setDoc(doc(db(PED), `${GOAL}/contributions/c1`), contribution(PED, "pediatria"))
+    );
+    await assertFails(
+      setDoc(doc(db(FIS), `${GOAL}/contributions/c2`), contribution(PED, "pediatria"))
+    );
+    await assertFails(
+      setDoc(doc(db(FIS), `${GOAL}/contributions/c3`), contribution(FIS, "psicologia"))
+    );
+    await assertFails(
+      setDoc(
+        doc(db(FIS), `${GOAL}/contributions/c4`),
+        contribution(FIS, "fisioterapia", { kind: "registroCompleto" })
+      )
+    );
+    await assertSucceeds(getDoc(doc(db(PSI), `${GOAL}/contributions/c1`)));
+    await assertFails(getDoc(doc(db(ANA), `${GOAL}/contributions/c1`)));
+    await assertFails(
+      updateDoc(doc(db(PED), `${GOAL}/contributions/c1`), { text: "Alterado" })
+    );
+  });
+
+  test("só a responsável reavalia, gravando a reavaliação no mesmo lote", async () => {
+    const reassess = (uid, { withEntry = true } = {}) => {
+      const fs = db(uid);
+      const b = writeBatch(fs);
+      b.update(doc(fs, GOAL), {
+        status: "revisar",
+        reassessAt: Timestamp.fromMillis(Date.now() + 30 * DAY),
+        reassessCount: 1,
+      });
+      if (withEntry) {
+        b.set(doc(fs, `${GOAL}/reassessments/1`), {
+          actorUid: uid,
+          at: serverTimestamp(),
+          status: "revisar",
+          note: "Ajustar frequência (fictício)",
+          nextReassessAt: Timestamp.fromMillis(Date.now() + 30 * DAY),
+        });
+      }
+      return b.commit();
+    };
+    await assertFails(reassess(PED));
+    await assertFails(reassess(FIS, { withEntry: false }));
+    await assertSucceeds(reassess(FIS));
+    await assertFails(updateDoc(doc(db(FIS), GOAL), { objective: "Outro" }));
+    await assertFails(deleteDoc(doc(db(FIS), GOAL)));
   });
 });
 
@@ -564,9 +955,9 @@ describe("documentos por especialidade", () => {
     );
   });
 
-  test("rascunho é da autora; emitido vai à equipe; família só depois de liberado", async () => {
+  test("documentos são da autora; a equipe não lê; a família só depois de liberado", async () => {
     await assertFails(getDoc(doc(db(PED), `${TEAM}/documents/rascunho`)));
-    await assertSucceeds(getDoc(doc(db(PED), `${TEAM}/documents/emitido`)));
+    await assertFails(getDoc(doc(db(PED), `${TEAM}/documents/emitido`)));
     await assertFails(getDoc(doc(db(ANA), `${TEAM}/documents/emitido`)));
     await assertFails(
       updateDoc(doc(db(PSI), `${TEAM}/documents/rascunho`), { status: "issued" })
@@ -577,14 +968,15 @@ describe("documentos por especialidade", () => {
       })
     );
     await assertSucceeds(getDoc(doc(db(ANA), `${TEAM}/documents/emitido`)));
+    await assertFails(getDoc(doc(db(PED), `${TEAM}/documents/emitido`)));
   });
 });
 
 describe("trilha de acessos", () => {
   const entry = (uid) => ({
     actorUid: uid,
-    action: "visualizou registros",
-    target: "Fisioterapia",
+    action: "acessou resumo",
+    target: "Sessão (fictícia)",
     at: serverTimestamp(),
     allowed: true,
     clinicId: "clinica-a",
@@ -633,38 +1025,50 @@ describe("modelos próprios e especialidade conferida", () => {
   });
 });
 
-describe("anexos no Storage", () => {
-  const reserved = `care/${CHILD}/reservado1/desenho.png`;
-  const released = `care/${CHILD}/familia1/exercicio.pdf`;
+describe("arquivos no Storage", () => {
+  const bytes = new Uint8Array([1, 2, 3]);
+  const pdf = { contentType: "application/pdf" };
 
-  test("anexo de registro reservado: só a autora", async () => {
-    await assertSucceeds(getBytes(ref(storage(PSI), reserved)));
-    await assertFails(getBytes(ref(storage(PED), reserved)));
-    await assertFails(getBytes(ref(storage(FIS), reserved)));
-    await assertFails(getBytes(ref(storage(ANA), reserved)));
-  });
-
-  test("anexo liberado: a família lê; outra família não", async () => {
-    await assertSucceeds(getBytes(ref(storage(ANA), released)));
-    await assertFails(getBytes(ref(storage(BRUNO), released)));
-  });
-
-  test("só a autora anexa, e só imagem ou PDF", async () => {
-    const bytes = new Uint8Array([1, 2, 3]);
-    await assertFails(
-      uploadBytes(ref(storage(PED), `care/${CHILD}/reservado1/x.pdf`), bytes, {
-        contentType: "application/pdf",
-      })
-    );
+  test("anexo privado: só a autora envia, no próprio caminho e no próprio registro", async () => {
     await assertSucceeds(
-      uploadBytes(ref(storage(PSI), `care/${CHILD}/reservado1/y.pdf`), bytes, {
-        contentType: "application/pdf",
-      })
+      uploadBytes(ref(storage(PSI), `care/${CHILD}/registros/${PSI}/sessao1/y.pdf`), bytes, pdf)
     );
     await assertFails(
-      uploadBytes(ref(storage(PSI), `care/${CHILD}/reservado1/z.txt`), bytes, {
+      uploadBytes(ref(storage(PED), `care/${CHILD}/registros/${PSI}/sessao1/x.pdf`), bytes, pdf)
+    );
+    await assertFails(
+      uploadBytes(ref(storage(PSI), `care/${CHILD}/registros/${PSI}/fis1/x.pdf`), bytes, pdf)
+    );
+    await assertFails(
+      uploadBytes(ref(storage(PSI), `care/${CHILD}/registros/${PSI}/sessao1/z.txt`), bytes, {
         contentType: "text/plain",
       })
     );
+    await assertFails(uploadBytes(ref(storage(PSI), PRIVATE_FILE), bytes, pdf));
+  });
+
+  test("material da família: o autor e a responsável leem; mais ninguém", async () => {
+    await assertSucceeds(getBytes(ref(storage(FIS), FAMILY_FILE)));
+    await assertSucceeds(getBytes(ref(storage(ANA), FAMILY_FILE)));
+    await assertFails(getBytes(ref(storage(BRUNO), FAMILY_FILE)));
+    await assertFails(getBytes(ref(storage(PED), FAMILY_FILE)));
+  });
+
+  test("anexo copiado para o resumo: só destinatário, só o escolhido, só enquanto publicado", async () => {
+    const copy = `care/${CHILD}/resumos/sessao1/1/desenho-copia.png`;
+    const other = `care/${CHILD}/resumos/sessao1/1/outro.png`;
+    await assertFails(uploadBytes(ref(storage(PED), copy), PNG, { contentType: "image/png" }));
+    await assertSucceeds(uploadBytes(ref(storage(PSI), copy), PNG, { contentType: "image/png" }));
+    await assertSucceeds(uploadBytes(ref(storage(PSI), other), PNG, { contentType: "image/png" }));
+    await assertSucceeds(publish(PSI, "sessao1", { attachments: ["desenho-copia.png"] }));
+    await assertSucceeds(getBytes(ref(storage(PED), copy)));
+    await assertFails(getBytes(ref(storage(PED), other)));
+    await assertFails(getBytes(ref(storage(FIS), copy)));
+    await assertFails(getBytes(ref(storage(ANA), copy)));
+    await assertSucceeds(
+      revise(PSI, { status: "encerrado", version: 2 }, { attachments: ["desenho-copia.png"] })
+    );
+    await assertFails(getBytes(ref(storage(PED), copy)));
+    await assertSucceeds(getBytes(ref(storage(PSI), copy)));
   });
 });

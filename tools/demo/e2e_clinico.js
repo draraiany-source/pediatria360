@@ -2397,54 +2397,101 @@ const DOCS = [
     await ctx.close();
   });
 
-  // ---------- Cuidado multidisciplinar (Luna: pediatra, psicologa e fisioterapeuta) ----------
-  const RESERVED = 'Anota\u00e7\u00e3o reservada (fict\u00edcia)';
+  // ---------- Cuidado multidisciplinar com compartilhamento seletivo ----------
+  // Luna (p1): pediatra (prof-a), psicologa (psi-a) e fisioterapeuta (fis-a).
+  const PRIVATE = 'Anota\u00e7\u00e3o privada (fict\u00edcia)';
+  const FULL = 'Evolu\u00e7\u00e3o completa (fict\u00edcia)';
+  const SHARED_S2 = 'Aceitou dormir com a porta encostada';
   const CARE = (aba, extra) => '#/cuidado/p1?aba=' + aba + (extra ? '&' + extra : '');
-  // Negativo: rola a tela inteira antes de afirmar que o texto nao aparece.
-  const absent = async (page, text) => !(await scrollTo(page, text, 10));
+  const top = async (page) => { await page.mouse.wheel(0, -8000); await page.waitForTimeout(600); };
+  // Negativo: volta ao topo e rola a tela inteira antes de afirmar que o texto nao aparece.
+  const absent = async (page, text) => { await top(page); return !(await scrollTo(page, text, 12)); };
+  const checkedBoxes = (page) => page.evaluate(() => document.querySelectorAll('flt-semantics[role="checkbox"][aria-checked="true"]').length);
+  // Positivo depois de fechar um dialogo: volta ao topo antes de procurar.
+  const seekTop = async (page, text) => { await top(page); return scrollTo(page, text); };
+  // Toca o botao com o rotulo indicado mais proximo abaixo de um texto ancora
+  // (o mesmo rotulo aparece em varios cartoes).
+  // Toca o botao com o rotulo indicado dentro do cartao identificado
+  // (flt-semantics-identifier = 'registro:<titulo>', 'resumo:<titulo>' ou
+  // 'objetivo:<objetivo>'); o mesmo rotulo aparece em varios cartoes.
+  const tapIn = async (page, label, card, opts = {}) => {
+    const locate = () => page.evaluate(({ label, card }) => {
+      const vh = window.innerHeight;
+      const text = (e) => (e.getAttribute('aria-label') || e.textContent || '').replace(/\s+/g, ' ').trim();
+      const box = [...document.querySelectorAll('[flt-semantics-identifier]')].find((e) => e.getAttribute('flt-semantics-identifier') === card);
+      if (!box) return { card: false };
+      const roles = ['button', 'checkbox', 'radio', 'tab', 'link'];
+      const nodes = [...box.querySelectorAll('flt-semantics')].filter((e) => text(e).startsWith(label));
+      const tappable = nodes.filter((e) => roles.includes(e.getAttribute('role')) || e.hasAttribute('flt-tappable') || e.hasAttribute('aria-expanded'));
+      // Cabecalho expansivel pode vir sem papel de botao: vale o no mais interno com o rotulo.
+      const pool = tappable.length ? tappable : nodes.filter((a) => !nodes.some((b) => b !== a && a.contains(b)));
+      const btn = pool
+        .map((e) => e.getBoundingClientRect())
+        .find((r) => r.height > 0 && r.top >= 0 && r.bottom <= vh);
+      return { card: true, btn: btn ? { x: btn.left + btn.width / 2, y: btn.top + btn.height / 2 } : null };
+    }, { label, card });
+    const vw = page.viewportSize().width;
+    const vh = page.viewportSize().height;
+    // Espera a tela terminar de reconstruir (troca de conta, dialogo fechando).
+    await page.waitForTimeout(opts.settle || 1000);
+    await top(page);
+    await page.mouse.move(vw / 2 + (vw > 900 ? 110 : 0), vh / 2);
+    let seen = false;
+    for (let i = 0; i < 30; i++) {
+      const found = await locate();
+      seen = seen || found.card;
+      if (found.btn) {
+        await page.mouse.click(found.btn.x, found.btn.y);
+        await page.waitForTimeout(opts.wait || 1200);
+        return;
+      }
+      await page.mouse.wheel(0, 250);
+      await page.waitForTimeout(450);
+    }
+    throw new Error('botao ' + label + (seen ? ' nao encontrado no cartao ' : ' sem o cartao ') + card);
+  };
 
-  await step('computador: cuidado visao da equipe, areas, comunicacao e documentos', async () => {
+  await step('computador: cuidado visao da equipe so com o que foi compartilhado', async () => {
     const { ctx, page } = await newPage(browser, DESKTOP);
     await open(page, CARE('equipe', 'perfil=profissional'));
-    const v = [await waitText(page, 'Profissionais envolvidos'), await has(page, 'Plano combinado'), await scrollTo(page, 'Pr\u00f3ximos atendimentos'), await scrollTo(page, 'Evolu\u00e7\u00e3o relevante')];
-    check('cuidado: visao compartilhada da equipe', v.every(Boolean), v.join('/'));
-    await page.mouse.wheel(0, -5000);
-    await page.waitForTimeout(600);
+    const v = [await waitText(page, 'Profissionais envolvidos'), await has(page, 'Plano terap\u00eautico conjunto'), await scrollTo(page, 'Resumos compartilhados com voc\u00ea'), await scrollTo(page, 'Hip\u00f3tese de trabalho'), await absent(page, FULL), await absent(page, PRIVATE)];
+    check('cuidado: pediatra ve resumos e plano, nao o registro completo', v.every(Boolean), v.join('/'));
+    await top(page);
     await shot(page, 'cm01_visao_equipe');
-    await tap(page, 'Resumo com IA', { wait: 1500 });
-    const ia = [await waitText(page, 'RASCUNHO DA IA (SIMULADO)'), await has(page, 'Revisei e confirmo o texto'), !(await has(page, RESERVED))];
-    check('cuidado: IA prepara rascunho identificado, sem reservado', ia.every(Boolean), ia.join('/'));
-    await shot(page, 'cm02_ia_rascunho');
-    await tap(page, 'Descartar rascunho', { wait: 1200 });
+    await tap(page, 'Vis\u00e3o com IA', { wait: 1500 });
+    const ia = [await waitText(page, 'RASCUNHO DA IA (SIMULADO)'), await has(page, 'Hip\u00f3tese de trabalho'), !(await has(page, PRIVATE)), !(await has(page, FULL))];
+    check('cuidado: IA usa so o que foi compartilhado com quem pede', ia.every(Boolean), ia.join('/'));
+    await shot(page, 'cm02_ia_visao');
+    await tap(page, 'Fechar', { exact: true, last: true, wait: 1000 });
 
     await nav(page, CARE('psicologia'));
-    const ped = [await waitText(page, 'Registros da psicologia'), await scrollTo(page, 'Plano terap\u00eautico'), await absent(page, RESERVED)];
-    check('cuidado: pediatra nao ve o reservado da psicologia', ped.every(Boolean), ped.join('/'));
-    await page.mouse.wheel(0, -5000);
-    await page.waitForTimeout(600);
-    await shot(page, 'cm03_psicologia_vista_pela_pediatra');
+    const ped = [await waitText(page, 'Resumos da psicologia para voc\u00ea'), await scrollTo(page, 'Hip\u00f3tese de trabalho'), await absent(page, FULL), await absent(page, PRIVATE), await absent(page, 'desenho-sessao-1-exemplo.png')];
+    check('cuidado: pediatra le o resumo da psicologa, nao a evolucao nem o anexo', ped.every(Boolean), ped.join('/'));
+    await top(page);
+    await shot(page, 'cm03_psicologia_vista_pelo_pediatra');
 
     await nav(page, CARE('psicologia', 'conta=psi-a'));
-    const psi = [await waitText(page, 'Agenda da psicologia'), await scrollTo(page, RESERVED)];
-    check('cuidado: psicologa ve o proprio registro reservado', psi.every(Boolean), psi.join('/'));
-    await shot(page, 'cm04_psicologia_reservado');
+    const psi = [await waitText(page, 'Agenda da psicologia'), await scrollTo(page, FULL), await scrollTo(page, PRIVATE), await scrollTo(page, 'desenho-sessao-1-exemplo.png')];
+    check('cuidado: psicologa ve o proprio registro completo e as anotacoes privadas', psi.every(Boolean), psi.join('/'));
+    await shot(page, 'cm04_psicologa_registro_completo');
+
+    await nav(page, CARE('equipe', 'conta=fis-a'));
+    const fe = [await waitText(page, 'Resumos compartilhados com voc\u00ea'), await absent(page, 'Hip\u00f3tese de trabalho'), await absent(page, PRIVATE)];
+    check('cuidado: fisioterapeuta nao ve o resumo enderecado so ao pediatra', fe.every(Boolean), fe.join('/'));
+    await top(page);
+    await shot(page, 'cm05_fisioterapeuta_equipe');
 
     await nav(page, CARE('fisioterapia', 'conta=fis-a'));
     const fis = [await waitText(page, 'Agenda da fisioterapia'), await has(page, 'Medidas de acompanhamento'), await scrollTo(page, 'Avalia\u00e7\u00e3o funcional')];
-    check('cuidado: fisioterapia com agenda, medidas e avaliacao funcional', fis.every(Boolean), fis.join('/'));
-    await shot(page, 'cm05_fisioterapia');
-    await nav(page, CARE('psicologia'));
-    check('cuidado: fisioterapeuta nao ve o reservado da psicologia', await absent(page, RESERVED), '');
+    check('cuidado: fisioterapia com agenda, medidas e registros proprios', fis.every(Boolean), fis.join('/'));
+    await shot(page, 'cm06_fisioterapia');
 
     await nav(page, CARE('comunicacao'));
     const com = [await waitText(page, 'Comunica\u00e7\u00e3o da equipe'), await scrollTo(page, 'SOLICITA\u00c7\u00c3O DE PARECER'), await scrollTo(page, 'ENCAMINHAMENTO INTERNO')];
     check('cuidado: comunicacao com encaminhamento e parecer', com.every(Boolean), com.join('/'));
-    await page.mouse.wheel(0, -5000);
-    await page.waitForTimeout(600);
-    await shot(page, 'cm06_comunicacao');
 
     await nav(page, CARE('documentos', 'conta=psi-a'));
-    await waitText(page, 'Documentos da equipe');
+    await waitText(page, 'Meus documentos');
     await tap(page, 'Novo documento', { wait: 1500 });
     const doc = [await waitText(page, 'Relat\u00f3rio psicol\u00f3gico'), !(await has(page, 'Receitu\u00e1rio')), !(await has(page, 'Atestado m\u00e9dico'))];
     check('cuidado: psicologa so prepara documentos da propria area', doc.every(Boolean), doc.join('/'));
@@ -2452,58 +2499,148 @@ const DOCS = [
     await ctx.close();
   });
 
-  await step('computador: cuidado perfil profissional, pacientes vinculados e ferramentas medicas', async () => {
+  await step('computador: cuidado resumo para a equipe em 4 passos e retirada do acesso', async () => {
     const { ctx, page } = await newPage(browser, DESKTOP);
-    await open(page, '#/profissional?perfil=profissional&conta=psi-a');
-    const p = [await waitText(page, 'O que este perfil pode fazer'), await has(page, 'CRP'), await scrollTo(page, 'Pacientes vinculados'), await scrollTo(page, 'Modelos pr\u00f3prios')];
-    check('cuidado: perfil da psicologa com registro, pacientes e modelos', p.every(Boolean), p.join('/'));
-    await page.mouse.wheel(0, -5000);
-    await page.waitForTimeout(600);
-    await shot(page, 'cm08_perfil_psicologa');
-    await nav(page, '#/pacientes');
-    const l = [await waitText(page, 'Luna'), !(await has(page, 'Maya')), !(await has(page, 'Theo'))];
-    check('cuidado: psicologa so ve a crianca vinculada', l.every(Boolean), l.join('/'));
-    await shot(page, 'cm09_pacientes_vinculados');
-    const blocked = [];
-    for (const r of ['#/calculadora', '#/pacientes/p1/prontuario', '#/suplementacao']) {
-      await nav(page, r);
-      blocked.push(await waitText(page, 'Acesso restrito', 5000));
-    }
-    check('cuidado: psicologa sem calculadora, prontuario medico e suplementacao', blocked.every(Boolean), blocked.join('/'));
-    await nav(page, CARE('equipe', 'conta=psi-c'));
-    const none = [await waitText(page, 'Acesso restrito'), !(await has(page, RESERVED))];
-    check('cuidado: mesma clinica sem vinculo nao abre a ficha', none.every(Boolean), none.join('/'));
-    await shot(page, 'cm10_mesma_clinica_sem_vinculo');
+    await open(page, CARE('psicologia', 'perfil=profissional&conta=psi-a'));
+    await waitText(page, 'Meus registros da psicologia');
+    await tapIn(page, 'Criar resumo para a equipe', 'registro:Sess\u00e3o 2', { wait: 2000 });
+    const p1 = [await waitText(page, 'Passo 1 de 3: Informa\u00e7\u00f5es'), await has(page, 'Nada vem marcado'), await scrollTo(page, 'Fica s\u00f3 com voc\u00ea. N\u00e3o pode entrar no resumo.'), (await checkedBoxes(page)) === 0];
+    check('cuidado resumo: nada vem marcado e as partes privadas ficam bloqueadas', p1.every(Boolean), p1.join('/'));
+    await top(page);
+    await shot(page, 'cm08_resumo_passo1_nada_marcado');
+    await tap(page, 'Escolher destinat\u00e1rios', { wait: 1200 });
+    check('cuidado resumo: sem item escolhido nao avanca', await has(page, 'Passo 1 de 3'), '');
+    await tap(page, 'Evolu\u00e7\u00e3o para a equipe', { wait: 800 });
+    await tap(page, 'Escolher destinat\u00e1rios', { wait: 1500 });
+    const p2 = [await waitText(page, 'Passo 2 de 3: Destinat\u00e1rios'), (await checkedBoxes(page)) === 0];
+    check('cuidado resumo: nenhum destinatario vem escolhido', p2.every(Boolean), p2.join('/'));
+    await tap(page, 'Profissionais escolhidos', { wait: 800 });
+    await tap(page, 'Fisioterapeuta Exemplo Moura', { wait: 800 });
+    await shot(page, 'cm09_resumo_passo2_destinatarios');
+    await tap(page, 'Ver pr\u00e9via', { wait: 1500 });
+    const p3 = [await waitText(page, 'Passo 3 de 3: Pr\u00e9via e confirma\u00e7\u00e3o'), await has(page, SHARED_S2), await has(page, 'Fisioterapeuta Exemplo Moura'), !(await has(page, PRIVATE)), !(await has(page, FULL))];
+    check('cuidado resumo: previa mostra so o escolhido e o destinatario', p3.every(Boolean), p3.join('/'));
+    await shot(page, 'cm10_resumo_previa');
+    await tap(page, 'Compartilhar', { exact: true, wait: 1200 });
+    await tap(page, 'Confirmar compartilhamento', { wait: 1500 });
+    check('cuidado resumo: compartilhado so depois de confirmar', await waitText(page, 'Resumo compartilhado'), '');
+    await shot(page, 'cm11_resumo_compartilhado');
+
+    await nav(page, CARE('equipe', 'conta=fis-a'));
+    const f = [await waitText(page, 'Resumos compartilhados com voc\u00ea'), await scrollTo(page, SHARED_S2), await absent(page, PRIVATE)];
+    check('cuidado resumo: a fisioterapeuta recebe so o resumo', f.every(Boolean), f.join('/'));
+    await shot(page, 'cm12_fisioterapeuta_recebe_resumo');
+    await nav(page, CARE('equipe', 'conta=prof-a'));
+    await waitText(page, 'Resumos compartilhados com voc\u00ea');
+    check('cuidado resumo: o pediatra nao recebe o que nao foi enderecado a ele', await absent(page, SHARED_S2), '');
+
+    await nav(page, CARE('equipe', 'conta=psi-a'));
+    await waitText(page, 'Profissionais envolvidos');
+    await scrollTo(page, 'Resumo: Sess\u00e3o 2');
+    await tapIn(page, 'Quem acessou', 'resumo:Sess\u00e3o 2', { wait: 1000 });
+    const acc = [await scrollTo(page, 'Fisioterapeuta Exemplo Moura'), !(await has(page, 'Nenhum acesso ainda.'))];
+    check('cuidado resumo: a autora ve quem acessou', acc.every(Boolean), acc.join('/'));
+    await shot(page, 'cm13_quem_acessou');
+    await tapIn(page, 'Encerrar acesso', 'resumo:Sess\u00e3o 2', { wait: 1200 });
+    await fill(page, 'Motivo *', 'Conduta revista (e2e)');
+    await tap(page, 'Encerrar acesso', { exact: true, last: true, wait: 1500 });
+    check('cuidado resumo: acesso encerrado com historico', await seekTop(page, 'ACESSO ENCERRADO'), '');
+    await shot(page, 'cm14_acesso_encerrado');
+    await nav(page, CARE('equipe', 'conta=fis-a'));
+    await waitText(page, 'Resumos compartilhados com voc\u00ea');
+    check('cuidado resumo: depois de encerrado a fisioterapeuta nao ve mais', await absent(page, SHARED_S2), '');
+    await nav(page, CARE('acessos', 'perfil=responsavel'));
+    const t = [await waitText(page, 'Registro de acessos e altera\u00e7\u00f5es'), await scrollTo(page, 'compartilhou resumo'), await scrollTo(page, 'acessou resumo'), await scrollTo(page, 'encerrou acesso ao resumo')];
+    check('cuidado resumo: trilha registra quem compartilhou, acessou e encerrou', t.every(Boolean), t.join('/'));
+    await shot(page, 'cm15_trilha_resumo');
+    await ctx.close();
+  });
+
+  await step('computador: cuidado acesso justificado ao registro completo e retirada', async () => {
+    const { ctx, page } = await newPage(browser, DESKTOP);
+    await open(page, CARE('psicologia', 'perfil=profissional&conta=psi-a'));
+    await waitText(page, 'Meus registros da psicologia');
+    await tapIn(page, 'Conceder acesso ao registro', 'registro:Avalia\u00e7\u00e3o inicial', { wait: 1500 });
+    await waitText(page, 'Acesso ao registro completo');
+    await tap(page, '(Pediatria)', { contains: true, last: true, wait: 600 });
+    await fill(page, 'Justificativa *', 'Avaliar a medica\u00e7\u00e3o em uso (e2e)');
+    await shot(page, 'cm16_conceder_acesso');
+    await tap(page, 'Conceder acesso', { exact: true, last: true, wait: 1500 });
+    await nav(page, CARE('psicologia', 'conta=prof-a'));
+    const g = [await waitText(page, 'Registros com acesso concedido a voc\u00ea'), await scrollTo(page, FULL), await scrollTo(page, 'parte(s) privada(s)'), await absent(page, PRIVATE)];
+    check('cuidado acesso: pediatra le o registro concedido, sem as partes privadas', g.every(Boolean), g.join('/'));
+    await shot(page, 'cm17_registro_concedido');
+    await nav(page, CARE('psicologia', 'conta=psi-a'));
+    await waitText(page, 'Meus registros da psicologia');
+    await tapIn(page, 'Acessos concedidos ao registro completo', 'registro:Avalia\u00e7\u00e3o inicial', { wait: 1000 });
+    await tapIn(page, 'Retirar', 'registro:Avalia\u00e7\u00e3o inicial', { wait: 1200 });
+    await fill(page, 'Motivo *', 'Avalia\u00e7\u00e3o conclu\u00edda (e2e)');
+    await tap(page, 'Retirar acesso', { exact: true, last: true, wait: 1500 });
+    check('cuidado acesso: retirada registrada com motivo', await seekTop(page, 'retirado em'), '');
+    await shot(page, 'cm18_acesso_retirado');
+    await nav(page, CARE('psicologia', 'conta=prof-a'));
+    await waitText(page, 'Resumos da psicologia para voc\u00ea');
+    check('cuidado acesso: depois da retirada o pediatra nao le mais o registro', await absent(page, FULL), '');
+    await ctx.close();
+  });
+
+  await step('computador: cuidado plano terapeutico conjunto', async () => {
+    const { ctx, page } = await newPage(browser, DESKTOP);
+    await open(page, CARE('equipe', 'perfil=profissional'));
+    await waitText(page, 'Plano terap\u00eautico conjunto');
+    await tap(page, 'Novo objetivo', { wait: 1200 });
+    await fill(page, 'Objetivo *', 'Subir degraus alternando os p\u00e9s (e2e)');
+    await tap(page, 'Fisioterapeuta Exemplo Moura', { wait: 500 });
+    await tap(page, '30 dias', { exact: true, wait: 500 });
+    await fill(page, 'Primeira a\u00e7\u00e3o (opcional)', 'Treino de escada (e2e)');
+    await shot(page, 'cm19_novo_objetivo');
+    await tap(page, 'Salvar objetivo', { wait: 1500 });
+    const o = [await seekTop(page, 'Subir degraus alternando os p\u00e9s (e2e)'), await scrollTo(page, 'Treino de escada (e2e)')];
+    check('cuidado plano: objetivo com responsavel, prazo e acao', o.every(Boolean), o.join('/'));
+    await nav(page, CARE('equipe', 'conta=fis-a'));
+    await waitText(page, 'Plano terap\u00eautico conjunto');
+    await tapIn(page, 'Contribuir', 'objetivo:Subir degraus alternando os p\u00e9s (e2e)', { wait: 1200 });
+    await tap(page, 'Informa\u00e7\u00e3o compartilhada', { wait: 500 });
+    await fill(page, 'Texto *', 'Sobe 2 degraus com apoio (e2e)');
+    await tap(page, 'Salvar', { exact: true, last: true, wait: 1500 });
+    await tapIn(page, 'Reavaliar', 'objetivo:Subir degraus alternando os p\u00e9s (e2e)', { wait: 1200 });
+    await tap(page, 'Revisar', { exact: true, wait: 500 });
+    await fill(page, 'O que mudou (compartilhado com a equipe)', 'Ajustar a frequ\u00eancia (e2e)');
+    await tap(page, 'Salvar reavalia\u00e7\u00e3o', { wait: 1500 });
+    await tapIn(page, 'Reavalia\u00e7\u00f5es (1)', 'objetivo:Subir degraus alternando os p\u00e9s (e2e)', { wait: 800 });
+    const c = [await seekTop(page, 'Sobe 2 degraus com apoio (e2e)'), await seekTop(page, 'Ajustar a frequ\u00eancia (e2e)'), await absent(page, PRIVATE)];
+    check('cuidado plano: contribuicao e reavaliacao da responsavel', c.every(Boolean), c.join('/'));
+    await top(page);
+    await scrollTo(page, 'Subir degraus alternando os p\u00e9s (e2e)');
+    await shot(page, 'cm20_plano_conjunto');
     await ctx.close();
   });
 
   await step('celular: cuidado area da familia e liberacao pela fisioterapeuta', async () => {
     const { ctx, page } = await newPage(browser, MOBILE);
     await open(page, CARE('familia', 'perfil=responsavel'));
-    const f = [await waitText(page, 'Pr\u00f3ximas sess\u00f5es'), await scrollTo(page, 'Brincadeira do flamingo'), await scrollTo(page, 'Rotina do sono em 3 passos'), await absent(page, 'Degraus alternados'), await absent(page, RESERVED)];
+    const f = [await waitText(page, 'Pr\u00f3ximas sess\u00f5es'), await scrollTo(page, 'Brincadeira do flamingo'), await scrollTo(page, 'Rotina do sono em 3 passos'), await absent(page, 'Degraus alternados'), await absent(page, PRIVATE), await absent(page, FULL), await absent(page, 'Hip\u00f3tese de trabalho'), await absent(page, 'Plano terap\u00eautico conjunto')];
     check('cuidado: familia ve so o liberado por cada profissional', f.every(Boolean), f.join('/'));
-    await page.mouse.wheel(0, -5000);
-    await page.waitForTimeout(600);
-    await shot(page, 'm_cm11_familia');
+    await top(page);
+    await shot(page, 'm_cm21_familia');
     await nav(page, CARE('fisioterapia', 'perfil=profissional&conta=fis-a'));
-    await waitText(page, 'Registros da fisioterapia');
+    await waitText(page, 'Meus registros da fisioterapia');
     await tap(page, 'Liberar para a fam\u00edlia', { touch: true, wait: 1500 });
     await nav(page, CARE('familia', 'perfil=responsavel'));
     await waitText(page, 'Pr\u00f3ximas sess\u00f5es');
-    const r = [await scrollTo(page, 'Degraus alternados'), await absent(page, RESERVED)];
+    const r = [await scrollTo(page, 'Degraus alternados'), await absent(page, PRIVATE)];
     check('cuidado: exercicio liberado aparece para a familia', r.every(Boolean), r.join('/'));
-    await shot(page, 'm_cm12_familia_exercicio_liberado');
+    await shot(page, 'm_cm22_familia_exercicio_liberado');
     await ctx.close();
   });
 
   await step('computador: cuidado troca de profissional com autorizacao da familia', async () => {
     const { ctx, page } = await newPage(browser, DESKTOP);
     await open(page, CARE('equipe', 'perfil=administrador'));
-    const g = [await waitText(page, 'Designar profissional'), await absent(page, RESERVED)];
+    const g = [await waitText(page, 'Designar profissional'), await absent(page, PRIVATE), await absent(page, FULL)];
     check('cuidado: gestao organiza a equipe sem ler registros', g.every(Boolean), g.join('/'));
-    await page.mouse.wheel(0, -5000);
-    await page.waitForTimeout(600);
-    await shot(page, 'cm13_gestao_equipe');
+    await top(page);
+    await shot(page, 'cm23_gestao_equipe');
     await tap(page, 'Encerrar v\u00ednculo de Psic\u00f3loga Exemplo Ramos', { wait: 1200 });
     await fill(page, 'Motivo do encerramento *', 'Troca de profissional (e2e)');
     await tap(page, 'Encerrar v\u00ednculo', { exact: true, last: true, wait: 1500 });
@@ -2512,25 +2649,20 @@ const DOCS = [
     await fill(page, 'Motivo do encaminhamento *', 'Assume a psicologia (e2e)');
     await tap(page, 'Designar', { exact: true, last: true, wait: 1500 });
     check('cuidado: novo psicologo aguarda autorizacao', await scrollTo(page, 'AGUARDANDO AUTORIZA\u00c7\u00c3O DA FAM\u00cdLIA'), '');
-    await shot(page, 'cm14_designado_aguardando');
     await nav(page, CARE('psicologia', 'perfil=profissional&conta=psi-c'));
     check('cuidado: sem autorizacao da familia o novo psicologo nao entra', await waitText(page, 'Acesso restrito'), '');
     await nav(page, CARE('familia', 'perfil=responsavel'));
     await waitText(page, 'Autoriza\u00e7\u00f5es pendentes');
-    await shot(page, 'cm15_familia_autoriza');
     await tap(page, 'Autorizar acesso', { wait: 1500 });
     await nav(page, CARE('psicologia', 'perfil=profissional&conta=psi-c'));
-    const n = [await waitText(page, 'Registros da psicologia'), await scrollTo(page, 'Plano terap\u00eautico'), await absent(page, RESERVED)];
-    check('cuidado: novo psicologo ve o plano, nao o reservado da anterior', n.every(Boolean), n.join('/'));
-    await shot(page, 'cm16_novo_psicologo');
+    const n = [await waitText(page, 'Meus registros da psicologia'), await has(page, 'Nenhum registro seu nesta \u00e1rea.'), await absent(page, PRIVATE), await absent(page, FULL)];
+    check('cuidado: novo psicologo nao herda os registros da anterior', n.every(Boolean), n.join('/'));
+    await top(page);
+    await shot(page, 'cm24_novo_psicologo');
     await nav(page, CARE('psicologia', 'conta=psi-a'));
-    const o = [await waitText(page, 'Seu v\u00ednculo com a crian\u00e7a foi encerrado'), await scrollTo(page, RESERVED), !(await has(page, 'Novo registro'))];
+    const o = [await waitText(page, 'Seu v\u00ednculo com a crian\u00e7a foi encerrado'), await scrollTo(page, PRIVATE), !(await has(page, 'Novo registro'))];
     check('cuidado: psicologa anterior le so os proprios registros', o.every(Boolean), o.join('/'));
-    await shot(page, 'cm17_psicologa_anterior');
-    await nav(page, CARE('acessos', 'perfil=responsavel'));
-    const a = [await waitText(page, 'Registro de acessos e altera\u00e7\u00f5es'), await scrollTo(page, 'encerrou v\u00ednculo (Troca de profissional (e2e))'), await scrollTo(page, 'autorizou v\u00ednculo')];
-    check('cuidado: trilha de acessos e alteracoes para a familia', a.every(Boolean), a.join('/'));
-    await shot(page, 'cm18_trilha_acessos');
+    await shot(page, 'cm25_psicologa_anterior');
     await ctx.close();
   });
 
@@ -2541,21 +2673,17 @@ const DOCS = [
     await tap(page, 'Confirmar troca', { wait: 1500 });
     const t = [await scrollTo(page, 'Autoriza\u00e7\u00f5es pendentes'), await scrollTo(page, 'Brincadeira do flamingo')];
     check('cuidado: troca de clinica encerra a equipe e mantem o liberado', t.every(Boolean), t.join('/'));
-    await page.mouse.wheel(0, -5000);
-    await page.waitForTimeout(600);
+    await top(page);
     await tap(page, 'Autorizar acesso', { wait: 1500 });
-    await shot(page, 'cm19_troca_de_clinica');
     await nav(page, CARE('equipe', 'perfil=profissional&conta=prof-b'));
-    const b = [await waitText(page, 'Profissionais envolvidos'), await absent(page, 'Fisioterapeuta Exemplo Moura'), await absent(page, RESERVED)];
-    check('cuidado: nova clinica nao ve a equipe nem os registros anteriores', b.every(Boolean), b.join('/'));
-    await page.mouse.wheel(0, -5000);
-    await page.waitForTimeout(600);
-    await shot(page, 'cm20_nova_clinica');
+    const b = [await waitText(page, 'Profissionais envolvidos'), await scrollTo(page, 'Nenhum resumo compartilhado com voc\u00ea.'), await absent(page, 'Hip\u00f3tese de trabalho'), await absent(page, PRIVATE)];
+    check('cuidado: nova clinica nao ve resumos, plano nem registros anteriores', b.every(Boolean), b.join('/'));
+    await top(page);
+    await shot(page, 'cm26_nova_clinica');
     await nav(page, CARE('equipe', 'conta=fis-a'));
     check('cuidado: fisioterapeuta da clinica anterior perde a visao da equipe', !(await waitText(page, 'Profissionais envolvidos', 3000)), '');
     await ctx.close();
   });
-
   await browser.close();
   const failed = report.checks.filter((c) => !c.ok);
   fs.writeFileSync(path.join(OUT, 'report.json'), JSON.stringify(report, null, 2));

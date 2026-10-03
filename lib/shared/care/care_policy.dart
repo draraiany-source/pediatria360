@@ -5,72 +5,53 @@ import 'care_model.dart';
 class CarePolicy {
   const CarePolicy._();
 
+  static const Set<CareAction> _sharing = <CareAction>{
+    CareAction.orientacaoFamilia,
+    CareAction.liberarFamilia,
+    CareAction.compartilharResumo,
+    CareAction.concederAcesso,
+    CareAction.planoCompartilhado,
+    CareAction.encaminhar,
+    CareAction.solicitarParecer,
+    CareAction.mensagemEquipe,
+  };
+
   static Set<CareAction> actionsFor(CareSpecialty s) => switch (s) {
     CareSpecialty.pediatria => const <CareAction>{
       CareAction.prescrever,
       CareAction.solicitarExames,
       CareAction.atestadoMedico,
-      CareAction.orientacaoFamilia,
-      CareAction.liberarFamilia,
-      CareAction.planoCompartilhado,
-      CareAction.encaminhar,
-      CareAction.solicitarParecer,
-      CareAction.mensagemEquipe,
+      ..._sharing,
       CareAction.rascunhoIa,
     },
     CareSpecialty.psicologia => const <CareAction>{
       CareAction.avaliacaoPsicologica,
-      CareAction.registroReservado,
-      CareAction.orientacaoFamilia,
-      CareAction.liberarFamilia,
-      CareAction.planoCompartilhado,
-      CareAction.encaminhar,
-      CareAction.solicitarParecer,
-      CareAction.mensagemEquipe,
+      ..._sharing,
       CareAction.rascunhoIa,
     },
     CareSpecialty.fisioterapia => const <CareAction>{
       CareAction.avaliacaoFuncional,
       CareAction.exerciciosCasa,
-      CareAction.orientacaoFamilia,
-      CareAction.liberarFamilia,
-      CareAction.planoCompartilhado,
-      CareAction.encaminhar,
-      CareAction.solicitarParecer,
-      CareAction.mensagemEquipe,
+      ..._sharing,
       CareAction.rascunhoIa,
     },
     CareSpecialty.fonoaudiologia ||
     CareSpecialty.terapiaOcupacional => const <CareAction>{
       CareAction.avaliacaoFuncional,
       CareAction.exerciciosCasa,
-      CareAction.orientacaoFamilia,
-      CareAction.liberarFamilia,
-      CareAction.planoCompartilhado,
-      CareAction.encaminhar,
-      CareAction.solicitarParecer,
-      CareAction.mensagemEquipe,
+      ..._sharing,
     },
-    CareSpecialty.nutricao => const <CareAction>{
-      CareAction.orientacaoFamilia,
-      CareAction.liberarFamilia,
-      CareAction.planoCompartilhado,
-      CareAction.encaminhar,
-      CareAction.solicitarParecer,
-      CareAction.mensagemEquipe,
-    },
+    CareSpecialty.nutricao => _sharing,
   };
 
   static Set<CareRecordKind> kindsFor(CareSpecialty s) => switch (s) {
     CareSpecialty.pediatria => const <CareRecordKind>{
-      CareRecordKind.resumoEquipe,
       CareRecordKind.avaliacao,
       CareRecordKind.evolucao,
       CareRecordKind.objetivos,
       CareRecordKind.orientacao,
     },
     CareSpecialty.psicologia => const <CareRecordKind>{
-      CareRecordKind.resumoEquipe,
       CareRecordKind.avaliacao,
       CareRecordKind.sessao,
       CareRecordKind.planoTerapeutico,
@@ -78,7 +59,6 @@ class CarePolicy {
       CareRecordKind.orientacao,
     },
     CareSpecialty.fisioterapia => const <CareRecordKind>{
-      CareRecordKind.resumoEquipe,
       CareRecordKind.avaliacaoFuncional,
       CareRecordKind.objetivos,
       CareRecordKind.planoSessoes,
@@ -90,7 +70,6 @@ class CarePolicy {
     },
     CareSpecialty.fonoaudiologia ||
     CareSpecialty.terapiaOcupacional => const <CareRecordKind>{
-      CareRecordKind.resumoEquipe,
       CareRecordKind.avaliacao,
       CareRecordKind.objetivos,
       CareRecordKind.evolucao,
@@ -98,7 +77,6 @@ class CarePolicy {
       CareRecordKind.orientacao,
     },
     CareSpecialty.nutricao => const <CareRecordKind>{
-      CareRecordKind.resumoEquipe,
       CareRecordKind.avaliacao,
       CareRecordKind.objetivos,
       CareRecordKind.evolucao,
@@ -137,10 +115,6 @@ class CarePolicy {
     },
   };
 
-  /// Registro reservado: hoje só a psicologia.
-  static bool canReserve(CareSpecialty s) =>
-      actionsFor(s).contains(CareAction.registroReservado);
-
   static bool allows(CareSpecialty s, CareAction a) =>
       actionsFor(s).contains(a);
 
@@ -159,22 +133,40 @@ class CarePolicy {
     return null;
   }
 
-  /// Leitura de um registro.
+  /// Concessão ativa do registro para o profissional, valendo só enquanto
+  /// ele tem vínculo ativo na clínica do registro.
+  static CareRecordGrant? activeGrant(
+    CareActor actor,
+    CareRecord record,
+    Iterable<CareLink> links,
+    Iterable<CareRecordGrant> grants,
+  ) {
+    final CareLink? link = activeLink(links, actor, record.childId);
+    if (link == null || link.clinicId != record.clinicId) return null;
+    for (final CareRecordGrant g in grants) {
+      if (g.recordId == record.id && g.granteeId == actor.id && g.active) {
+        return g;
+      }
+    }
+    return null;
+  }
+
+  /// Leitura do registro completo.
   ///
-  /// - o autor sempre lê o que escreveu (guarda legal), mesmo sem vínculo;
-  /// - reservado: só o autor;
-  /// - equipe: profissional com vínculo ativo na mesma clínica do registro;
-  /// - família: o responsável da criança, quando liberado.
+  /// - o autor sempre lê o que escreveu (guarda do prontuário), mesmo sem
+  ///   vínculo;
+  /// - outro profissional só com acesso concedido e vínculo ativo na mesma
+  ///   clínica, e mesmo assim sem as seções privadas;
+  /// - o responsável só o que foi liberado para a família.
   static bool canRead(
     CareActor actor,
     CareRecord record,
     Iterable<CareLink> links,
+    Iterable<CareRecordGrant> grants,
   ) {
     if (actor.isProfessional) {
       if (record.authorId == actor.id) return true;
-      if (record.visibility == CareVisibility.reservado) return false;
-      final CareLink? link = activeLink(links, actor, record.childId);
-      return link != null && link.clinicId == record.clinicId;
+      return activeGrant(actor, record, links, grants) != null;
     }
     if (actor.isFamily) {
       return actor.guardianOf.contains(record.childId) &&
@@ -182,6 +174,22 @@ class CarePolicy {
           record.releasedAt != null;
     }
     return false;
+  }
+
+  /// Leitura de um resumo: o autor sempre; destinatário só enquanto o resumo
+  /// está publicado e ele tem vínculo ativo na mesma clínica.
+  static bool canReadSummary(
+    CareActor actor,
+    CareSummary summary,
+    Iterable<CareLink> links,
+  ) {
+    if (!actor.isProfessional) return false;
+    if (summary.authorId == actor.id) return true;
+    final CareLink? link = activeLink(links, actor, summary.childId);
+    return summary.published &&
+        link != null &&
+        link.clinicId == summary.clinicId &&
+        summary.recipientIds.contains(actor.id);
   }
 
   /// Motivo da recusa de um novo registro, ou `null` se permitido.
@@ -195,11 +203,6 @@ class CarePolicy {
     }
     if (!kindsFor(link.specialty).contains(kind)) {
       return '${kind.label} não é registro da ${link.specialty.area}.';
-    }
-    if (visibility == CareVisibility.reservado &&
-        !canReserve(link.specialty)) {
-      return 'Registro reservado não disponível para '
-          '${link.specialty.area}.';
     }
     if (visibility == CareVisibility.familia && !kind.canGoToFamily) {
       return 'Só orientações e atividades para casa vão para a família.';

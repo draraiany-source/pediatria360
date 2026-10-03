@@ -4,6 +4,8 @@ Branch `feat/area-profissional`, 02 e 03/10/2026. Todos os nomes, registros prof
 
 **Situação:** o módulo está pronto na camada de domínio (`lib/shared/care/`), nas regras do Firestore e do Storage e na demonstração. No aplicativo real, as telas ainda não foram construídas: o acesso aos dados já é controlado pelas regras do banco e dos anexos, mas falta a interface. Nada foi publicado em produção nem no GitHub Pages.
 
+> **Atualização em 03/10/2026 (compartilhamento seletivo):** os níveis de visibilidade `equipe` e `reservado`, o registro `resumoEquipe`, a visão automática da equipe e o plano em texto único foram substituídos. Agora o registro completo é sempre privado do autor; a equipe recebe só resumos escolhidos, endereçados e confirmados, ou acesso concedido com justificativa; o plano conjunto tem objetivos com responsável, prazo e reavaliação. A auditoria, a matriz de acesso, os testes e as novas capturas estão em [`../compartilhamento-seletivo/RELATORIO.md`](../compartilhamento-seletivo/RELATORIO.md). Os resultados e as capturas `cm*` desta página descrevem a versão anterior.
+
 ## 1. O que já existia, o que era só visual e o que foi criado
 
 Levantamento feito no commit `c75e667`, antes desta entrega.

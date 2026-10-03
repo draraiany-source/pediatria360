@@ -1,10 +1,11 @@
-/// Cuidado multidisciplinar: equipe vinculada à criança, registros por
-/// especialidade, plano compartilhado, comunicação da equipe e trilha de
-/// acesso.
+/// Cuidado multidisciplinar: equipe vinculada à criança, registros de cada
+/// profissional, resumos compartilhados por escolha do autor, plano
+/// terapêutico conjunto, comunicação da equipe e trilha de acesso.
 ///
-/// O acesso nasce do vínculo de cada profissional com a criança (autorizado
-/// pela família) e da especialidade registrada nesse vínculo. Pertencer à
-/// mesma clínica não dá acesso a nada.
+/// O registro completo de um atendimento é do profissional que o produziu.
+/// Os demais só recebem o que o autor escolheu compartilhar (resumo) ou o que
+/// ele concedeu com justificativa. Vínculo com a criança e pertencer à mesma
+/// clínica não abrem nada sozinhos.
 library;
 
 enum CareSpecialty {
@@ -58,7 +59,6 @@ enum CareSpecialty {
 }
 
 enum CareRecordKind {
-  resumoEquipe('Resumo para a equipe'),
   avaliacao('Avaliação'),
   sessao('Evolução da sessão'),
   planoTerapeutico('Plano terapêutico'),
@@ -81,13 +81,57 @@ enum CareRecordKind {
 }
 
 enum CareVisibility {
-  reservado('Reservado ao profissional responsável'),
-  equipe('Equipe do cuidado'),
+  privado('Privado: autor e acessos concedidos'),
   familia('Liberado para a família');
 
   const CareVisibility(this.label);
 
   final String label;
+}
+
+/// Partes de um registro. Só o conteúdo clínico pode ser escolhido para um
+/// resumo ou visto por quem recebeu acesso concedido.
+enum CareSectionKind {
+  clinica('Conteúdo clínico', shareable: true),
+  anotacaoPrivada('Anotação privada'),
+  transcricao('Transcrição'),
+  conversa('Conversa registrada');
+
+  const CareSectionKind(this.label, {this.shareable = false});
+
+  final String label;
+  final bool shareable;
+}
+
+class CareSection {
+  const CareSection({
+    required this.id,
+    required this.kind,
+    required this.label,
+    required this.text,
+  });
+
+  final String id;
+  final CareSectionKind kind;
+  final String label;
+  final String text;
+}
+
+/// Seção informada ao criar um registro; o identificador é dado pelo store.
+typedef CareSectionInput = ({CareSectionKind kind, String label, String text});
+
+/// Informação que pode entrar num resumo, com a parte do registro de onde
+/// veio.
+class CareShareItem {
+  const CareShareItem({
+    required this.id,
+    required this.label,
+    required this.text,
+  });
+
+  final String id;
+  final String label;
+  final String text;
 }
 
 /// Documentos que cada especialidade pode preparar.
@@ -113,16 +157,17 @@ enum CareAction {
   solicitarExames('Solicitar exames laboratoriais'),
   atestadoMedico('Emitir atestado médico'),
   avaliacaoPsicologica('Avaliação e evolução psicológica'),
-  registroReservado('Registro reservado'),
   avaliacaoFuncional('Avaliação funcional e medidas'),
   exerciciosCasa('Exercícios e atividades para casa'),
   orientacaoFamilia('Orientações aos responsáveis'),
   liberarFamilia('Liberar conteúdo para a família'),
-  planoCompartilhado('Editar o plano compartilhado'),
+  compartilharResumo('Compartilhar resumo escolhido com a equipe'),
+  concederAcesso('Conceder acesso justificado ao registro completo'),
+  planoCompartilhado('Contribuir com o plano terapêutico conjunto'),
   encaminhar('Encaminhamento interno'),
   solicitarParecer('Solicitar parecer'),
   mensagemEquipe('Mensagens da equipe'),
-  rascunhoIa('Rascunho de resumo pela IA (com revisão)');
+  rascunhoIa('Sugestão da IA sobre o que já foi compartilhado (com revisão)');
 
   const CareAction(this.label);
 
@@ -242,14 +287,15 @@ class CareRecord {
     required this.kind,
     required this.title,
     required this.body,
-    required this.visibility,
     required this.createdAt,
+    this.visibility = CareVisibility.privado,
     this.sessionNumber,
     this.measure,
-    this.sourceId,
-    this.fromAi = false,
-    this.reviewedBy,
-  });
+    List<CareSection>? sections,
+  }) : sections = sections ?? <CareSection>[];
+
+  static const String bodyItemId = 'registro';
+  static const String measureItemId = 'medida';
 
   final String id;
   final String childId;
@@ -269,16 +315,27 @@ class CareRecord {
   final int? sessionNumber;
   String? measure;
 
-  /// Resumo compartilhado de um registro reservado: aponta para ele.
-  final String? sourceId;
-
-  /// Texto preparado pela IA e revisado por [reviewedBy] antes de salvar.
-  final bool fromAi;
-  final String? reviewedBy;
+  /// Partes do registro. Anotação privada, transcrição e conversa ficam só
+  /// com o autor.
+  final List<CareSection> sections;
   final List<CareRevision> revisions = <CareRevision>[];
 
   /// De onde veio a informação: especialidade, autor e data.
   String get origin => '${specialty.area} - $authorName';
+
+  /// O que o autor pode escolher para um resumo.
+  List<CareShareItem> get shareableItems => <CareShareItem>[
+    CareShareItem(id: bodyItemId, label: kind.label, text: body),
+    if (measure != null)
+      CareShareItem(id: measureItemId, label: 'Medida', text: measure!),
+    for (final CareSection s in sections)
+      if (s.kind.shareable) CareShareItem(id: s.id, label: s.label, text: s.text),
+  ];
+
+  List<CareSection> get lockedSections => <CareSection>[
+    for (final CareSection s in sections)
+      if (!s.kind.shareable) s,
+  ];
 }
 
 class CareAttachment {
@@ -297,53 +354,311 @@ class CareAttachment {
   final DateTime at;
 }
 
-class CarePlanGoal {
-  const CarePlanGoal({
-    required this.text,
-    required this.specialty,
-    required this.ownerName,
+/// Acesso ao registro completo concedido pelo autor a um profissional da
+/// equipe, com justificativa. Não inclui as seções privadas.
+class CareRecordGrant {
+  CareRecordGrant({
+    required this.id,
+    required this.recordId,
+    required this.childId,
+    required this.granteeId,
+    required this.granteeName,
+    required this.granteeSpecialty,
+    required this.justification,
+    required this.grantedAt,
+    required this.grantedBy,
   });
 
-  final String text;
-  final CareSpecialty specialty;
-  final String ownerName;
+  static const int minJustification = 15;
+
+  final String id;
+  final String recordId;
+  final String childId;
+  final String granteeId;
+  final String granteeName;
+  final CareSpecialty granteeSpecialty;
+  final String justification;
+  final DateTime grantedAt;
+  final String grantedBy;
+  DateTime? revokedAt;
+  String? revokedBy;
+  String? revokeReason;
+
+  bool get active => revokedAt == null;
 }
 
-class CarePlanVersion {
-  const CarePlanVersion({
+enum CareSummaryStatus {
+  publicado('Compartilhado'),
+  encerrado('Acesso encerrado');
+
+  const CareSummaryStatus(this.label);
+
+  final String label;
+}
+
+enum CareAudience {
+  selecionados('Profissionais escolhidos'),
+  equipe('Equipe de cuidado autorizada');
+
+  const CareAudience(this.label);
+
+  final String label;
+}
+
+/// Cada publicação, atualização ou encerramento gera uma versão.
+class CareSummaryVersion {
+  const CareSummaryVersion({
+    required this.version,
+    required this.at,
+    required this.actorName,
+    required this.status,
+    required this.audience,
+    required this.recipientNames,
+    required this.items,
+    required this.attachmentNames,
+    required this.note,
+    this.reason,
+    this.aiAssisted = false,
+  });
+
+  final int version;
+  final DateTime at;
+  final String actorName;
+  final CareSummaryStatus status;
+  final CareAudience audience;
+  final List<String> recipientNames;
+  final List<CareShareItem> items;
+  final List<String> attachmentNames;
+  final String note;
+  final String? reason;
+  final bool aiAssisted;
+}
+
+class CareSummaryAccess {
+  const CareSummaryAccess({
+    required this.at,
+    required this.actorId,
+    required this.actorName,
+    required this.version,
+  });
+
+  final DateTime at;
+  final String actorId;
+  final String actorName;
+  final int version;
+}
+
+/// Resumo de um atendimento para a equipe, separado do registro completo.
+/// Guarda cópia só do que o autor escolheu.
+class CareSummary {
+  CareSummary({
+    required this.id,
+    required this.recordId,
+    required this.childId,
+    required this.clinicId,
+    required this.authorId,
+    required this.authorName,
+    required this.specialty,
+    required this.recordTitle,
+    required this.createdAt,
+  });
+
+  final String id;
+  final String recordId;
+  final String childId;
+  final String clinicId;
+  final String authorId;
+  final String authorName;
+  final CareSpecialty specialty;
+  final String recordTitle;
+  final DateTime createdAt;
+
+  CareSummaryStatus status = CareSummaryStatus.publicado;
+  CareAudience audience = CareAudience.selecionados;
+  List<String> recipientIds = <String>[];
+  Map<String, String> recipientNames = <String, String>{};
+  List<CareShareItem> items = <CareShareItem>[];
+  List<String> attachmentIds = <String>[];
+  String note = '';
+  int version = 0;
+  DateTime? updatedAt;
+  bool aiAssisted = false;
+  String? reviewedBy;
+  final List<CareSummaryVersion> versions = <CareSummaryVersion>[];
+  final List<CareSummaryAccess> accessLog = <CareSummaryAccess>[];
+
+  bool get published => status == CareSummaryStatus.publicado;
+
+  String get recipientsLabel => audience == CareAudience.equipe
+      ? '${audience.label}: ${recipientNames.values.join(', ')}'
+      : recipientNames.values.join(', ');
+}
+
+/// Escolhas do autor antes de compartilhar. Tudo começa vazio: nenhuma
+/// informação, nenhum anexo e nenhum destinatário.
+class CareSummaryDraft {
+  CareSummaryDraft({required this.recordId});
+
+  final String recordId;
+  final Set<String> itemIds = <String>{};
+  final Set<String> attachmentIds = <String>{};
+  CareAudience? audience;
+  final Set<String> recipientIds = <String>{};
+  String note = '';
+
+  /// Texto da observação sugerido pela IA; exige revisão de quem publica.
+  bool aiAssisted = false;
+  bool aiReviewed = false;
+}
+
+/// O que será enviado, para quem e em que versão.
+class CareSummaryPreview {
+  const CareSummaryPreview({
+    required this.recordId,
+    required this.recordTitle,
+    required this.items,
+    required this.attachments,
+    required this.recipients,
+    required this.audience,
+    required this.note,
+    required this.version,
+    required this.aiAssisted,
+  });
+
+  final String recordId;
+  final String recordTitle;
+  final List<CareShareItem> items;
+  final List<CareAttachment> attachments;
+  final List<CareLink> recipients;
+  final CareAudience audience;
+  final String note;
+  final int version;
+  final bool aiAssisted;
+
+  bool get isUpdate => version > 1;
+}
+
+// --------------------------------------------- Plano terapêutico conjunto
+
+enum CareGoalStatus {
+  emAndamento('Em andamento'),
+  atingido('Atingido'),
+  revisar('Revisar');
+
+  const CareGoalStatus(this.label);
+
+  final String label;
+}
+
+enum CareContributionKind {
+  acao('Ação'),
+  informacao('Informação compartilhada');
+
+  const CareContributionKind(this.label);
+
+  final String label;
+}
+
+/// Contribuição escrita para o plano: o profissional decide o que entra; o
+/// registro completo não é anexado.
+class CarePlanContribution {
+  const CarePlanContribution({
+    required this.id,
+    required this.authorId,
+    required this.authorName,
+    required this.specialty,
+    required this.kind,
+    required this.text,
+    required this.at,
+  });
+
+  final String id;
+  final String authorId;
+  final String authorName;
+  final CareSpecialty specialty;
+  final CareContributionKind kind;
+  final String text;
+  final DateTime at;
+}
+
+class CareReassessment {
+  const CareReassessment({
+    required this.at,
+    required this.actorName,
+    required this.status,
+    required this.note,
+    required this.nextReassessAt,
+  });
+
+  final DateTime at;
+  final String actorName;
+  final CareGoalStatus status;
+  final String note;
+  final DateTime nextReassessAt;
+}
+
+class CarePlanGoal {
+  CarePlanGoal({
+    required this.id,
+    required this.objective,
+    required this.responsibleId,
+    required this.responsibleName,
+    required this.responsibleSpecialty,
+    required this.dueDate,
+    required this.reassessAt,
+    required this.createdBy,
+    required this.createdAt,
+  });
+
+  final String id;
+  final String objective;
+  final String responsibleId;
+  final String responsibleName;
+  final CareSpecialty responsibleSpecialty;
+  final DateTime dueDate;
+  DateTime reassessAt;
+  CareGoalStatus status = CareGoalStatus.emAndamento;
+  final String createdBy;
+  final DateTime createdAt;
+  final List<CarePlanContribution> contributions = <CarePlanContribution>[];
+  final List<CareReassessment> reassessments = <CareReassessment>[];
+
+  List<CarePlanContribution> get actions => <CarePlanContribution>[
+    for (final CarePlanContribution c in contributions)
+      if (c.kind == CareContributionKind.acao) c,
+  ];
+
+  List<CarePlanContribution> get shared => <CarePlanContribution>[
+    for (final CarePlanContribution c in contributions)
+      if (c.kind == CareContributionKind.informacao) c,
+  ];
+}
+
+class CarePlanChange {
+  const CarePlanChange({
     required this.at,
     required this.actorName,
     required this.specialty,
-    required this.text,
+    required this.description,
   });
 
   final DateTime at;
   final String actorName;
   final CareSpecialty specialty;
-  final String text;
+  final String description;
 }
 
-/// Plano combinado pela equipe da clínica para a criança.
+/// Plano terapêutico conjunto da equipe de uma clínica para a criança.
 class CarePlan {
-  CarePlan({
-    required this.childId,
-    required this.clinicId,
-    required this.text,
-    required this.updatedAt,
-    required this.updatedBy,
-    required this.updatedBySpecialty,
-    List<CarePlanGoal>? goals,
-  }) : goals = goals ?? <CarePlanGoal>[];
+  CarePlan({required this.childId, required this.clinicId});
 
   final String childId;
   final String clinicId;
-  String text;
-  DateTime updatedAt;
-  String updatedBy;
-  CareSpecialty updatedBySpecialty;
-  final List<CarePlanGoal> goals;
-  final List<CarePlanVersion> history = <CarePlanVersion>[];
+  final List<CarePlanGoal> goals = <CarePlanGoal>[];
+  final List<CarePlanChange> history = <CarePlanChange>[];
 }
+
+// ------------------------------------------------------------ Comunicação
 
 enum CareMessageKind {
   encaminhamento('Encaminhamento interno'),

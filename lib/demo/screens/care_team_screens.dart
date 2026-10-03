@@ -64,7 +64,10 @@ String careTileSubtitle(String childId) {
   final int pending = care.store.links
       .where((CareLink l) => l.childId == childId && l.pending)
       .length;
-  final String areas = active.map((CareLink l) => l.specialty.area).toSet().join(', ');
+  final String areas = active
+      .map((CareLink l) => l.specialty.area)
+      .toSet()
+      .join(', ');
   return '${active.length} profissional(is): $areas'
       '${pending == 0 ? '' : ' - $pending aguardando autorização'}';
 }
@@ -83,16 +86,18 @@ void _run(BuildContext context, void Function() action, {String? ok}) {
 }
 
 Color _visibilityColor(CareVisibility v) => switch (v) {
-  CareVisibility.reservado => AppColors.danger,
-  CareVisibility.equipe => AppColors.brand,
+  CareVisibility.privado => AppColors.navy,
   CareVisibility.familia => AppColors.success,
 };
 
 IconData _visibilityIcon(CareVisibility v) => switch (v) {
-  CareVisibility.reservado => Icons.lock_outline_rounded,
-  CareVisibility.equipe => Icons.groups_2_outlined,
+  CareVisibility.privado => Icons.lock_outline_rounded,
   CareVisibility.familia => Icons.family_restroom_outlined,
 };
+
+/// Assistente do resumo para a equipe de um registro.
+String careSummaryPath(String childId, String recordId) =>
+    '/cuidado/$childId/resumo/$recordId';
 
 /// Ficha multidisciplinar da criança.
 class DemoCareScreen extends StatelessWidget {
@@ -171,14 +176,17 @@ class DemoCareScreen extends StatelessWidget {
           );
         }
         final CareTab current =
-            CareTab.fromSlug(tab) != null && tabs.contains(CareTab.fromSlug(tab))
+            CareTab.fromSlug(tab) != null &&
+                tabs.contains(CareTab.fromSlug(tab))
             ? CareTab.fromSlug(tab)!
             : tabs.first;
         return Scaffold(
           backgroundColor: AppColors.lightBackground,
           appBar: AppBar(
             title: Text(
-              actor.isFamily ? 'Equipe e atividades' : 'Cuidado multidisciplinar',
+              actor.isFamily
+                  ? 'Equipe e atividades'
+                  : 'Cuidado multidisciplinar',
             ),
           ),
           body: ListView(
@@ -249,98 +257,95 @@ class DemoCareScreen extends StatelessWidget {
     CareActor actor,
     CareStore store,
   ) {
-    final CareSharedView view = store.sharedView(actor, child.id);
     final CareLink link = store.linkOf(actor, child.id)!;
+    final List<CareLink> team = store.team(actor, child.id);
+    final CarePlan? plan = store.planFor(actor, child.id);
+    final List<CareSummary> visible = store.summariesFor(actor, child.id);
+    final List<CareSummary> received = visible
+        .where((CareSummary s) => s.authorId != actor.id)
+        .toList();
+    final List<CareSummary> mine = visible
+        .where((CareSummary s) => s.authorId == actor.id)
+        .toList();
     final bool canPlan = CarePolicy.allows(
       link.specialty,
       CareAction.planoCompartilhado,
     );
-    final CarePlan? plan = view.plan;
     return <Widget>[
       const DemoSectionTitle('Profissionais envolvidos'),
-      for (final CareLink l in view.team) _LinkCard(link: l),
+      for (final CareLink l in team) _LinkCard(link: l),
       DemoSectionTitle(
-        'Plano combinado',
+        'Plano terapêutico conjunto',
         trailing: canPlan
             ? TextButton.icon(
-                key: const ValueKey<String>('editar-plano'),
-                onPressed: () => _editPlan(context, child.id, plan),
-                icon: const Icon(Icons.edit_outlined, size: 18),
-                label: const Text('Editar plano'),
+                key: const ValueKey<String>('novo-objetivo'),
+                onPressed: () => _newGoal(context, child.id),
+                icon: const Icon(Icons.add_rounded, size: 18),
+                label: const Text('Novo objetivo'),
               )
             : null,
       ),
-      PremiumCard(
-        child: plan == null
-            ? const Text('Ainda sem plano combinado.')
-            : Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: <Widget>[
-                  Text(plan.text),
-                  if (plan.goals.isNotEmpty) ...<Widget>[
-                    const SizedBox(height: AppSpacing.sm),
-                    Text(
-                      'Objetivos do cuidado',
-                      style: Theme.of(context).textTheme.titleSmall,
-                    ),
-                    for (final CarePlanGoal g in plan.goals)
-                      Padding(
-                        padding: const EdgeInsets.only(top: 4),
-                        child: Text(
-                          '- ${g.text} (${g.specialty.area} - ${g.ownerName})',
-                        ),
-                      ),
-                  ],
-                  const SizedBox(height: AppSpacing.sm),
-                  Text(
-                    'Atualizado por ${plan.updatedBy} '
-                    '(${plan.updatedBySpecialty.area}) em '
-                    '${_dt(plan.updatedAt)}',
-                    style: Theme.of(context).textTheme.bodySmall,
-                  ),
-                  if (plan.history.isNotEmpty)
-                    ExpansionTile(
-                      tilePadding: EdgeInsets.zero,
-                      title: Text(
-                        'Histórico do plano (${plan.history.length})',
-                      ),
-                      children: <Widget>[
-                        for (final CarePlanVersion v in plan.history.reversed)
-                          ListTile(
-                            contentPadding: EdgeInsets.zero,
-                            title: Text(v.text),
-                            subtitle: Text(
-                              '${v.actorName} (${v.specialty.area}) - '
-                              '${_dt(v.at)}',
-                            ),
-                          ),
-                      ],
-                    ),
-                ],
-              ),
+      const DemoNotice(
+        icon: Icons.handshake_outlined,
+        text:
+            'Cada profissional contribui com o que escolhe escrever aqui. O '
+            'registro completo de cada atendimento não aparece no plano.',
       ),
+      const SizedBox(height: AppSpacing.sm),
+      if (plan == null || plan.goals.isEmpty)
+        const Text('Ainda sem objetivos no plano conjunto.'),
+      if (plan != null)
+        for (final CarePlanGoal g in plan.goals)
+          _GoalCard(goal: g, actor: actor, canPlan: canPlan),
+      if (plan != null && plan.history.isNotEmpty)
+        Semantics(
+          container: true,
+          child: ExpansionTile(
+            tilePadding: EdgeInsets.zero,
+            title: Text('Histórico do plano (${plan.history.length})'),
+            children: <Widget>[
+              for (final CarePlanChange c in plan.history.reversed)
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  dense: true,
+                  title: Text(c.description),
+                  subtitle: Text(
+                    '${c.actorName} (${c.specialty.area}) - ${_dt(c.at)}',
+                  ),
+                ),
+            ],
+          ),
+        ),
       const DemoSectionTitle('Próximos atendimentos'),
       ..._sessions(context, demoSession.care.nextSessions(child.id)),
       DemoSectionTitle(
-        'Evolução relevante',
+        'Resumos compartilhados com você',
         trailing: CarePolicy.allows(link.specialty, CareAction.rascunhoIa)
             ? TextButton.icon(
-                key: const ValueKey<String>('ia-resumo'),
-                onPressed: () => _aiSummary(context, child.id),
+                key: const ValueKey<String>('ia-visao'),
+                onPressed: () => _aiOverview(context, child.id),
                 icon: const Icon(Icons.auto_awesome_outlined, size: 18),
-                label: const Text('Resumo com IA'),
+                label: const Text('Visão com IA'),
               )
             : null,
       ),
       const DemoNotice(
         icon: Icons.lock_outline_rounded,
         text:
-            'Registros reservados não aparecem para a equipe: só o resumo '
-            'que o próprio autor decidiu compartilhar.',
+            'Aqui aparece só o que cada autor escolheu compartilhar com você. '
+            'O registro completo, as anotações privadas e os anexos não '
+            'escolhidos ficam com quem atendeu.',
       ),
       const SizedBox(height: AppSpacing.sm),
-      for (final CareSharedItem item in view.items)
-        _SharedItemCard(item: item, store: store),
+      if (received.isEmpty) const Text('Nenhum resumo compartilhado com você.'),
+      for (final CareSummary s in received) _SummaryCard(summary: s),
+      const DemoSectionTitle('Resumos que você compartilhou'),
+      if (mine.isEmpty)
+        const Text(
+          'Você ainda não compartilhou resumos. Crie um a partir de um '
+          'registro seu.',
+        ),
+      for (final CareSummary s in mine) _SummaryCard(summary: s),
     ];
   }
 
@@ -369,113 +374,85 @@ class DemoCareScreen extends StatelessWidget {
     ];
   }
 
-  Future<void> _editPlan(
-    BuildContext context,
-    String childId,
-    CarePlan? plan,
-  ) async {
-    final TextEditingController text = TextEditingController(
-      text: plan?.text ?? '',
-    );
-    final TextEditingController goal = TextEditingController();
-    final bool? ok = await showDialog<bool>(
-      context: context,
-      builder: (BuildContext d) => AlertDialog(
-        title: const Text('Plano combinado'),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: <Widget>[
-              TextField(
-                key: const ValueKey<String>('plano-texto'),
-                controller: text,
-                minLines: 3,
-                maxLines: 6,
-                decoration: const InputDecoration(labelText: 'Plano da equipe'),
-              ),
-              const SizedBox(height: AppSpacing.md),
-              TextField(
-                key: const ValueKey<String>('plano-objetivo'),
-                controller: goal,
-                decoration: const InputDecoration(
-                  labelText: 'Novo objetivo da sua área (opcional)',
-                ),
-              ),
-            ],
-          ),
-        ),
-        actions: <Widget>[
-          TextButton(
-            onPressed: () => Navigator.of(d).pop(false),
-            child: const Text('Cancelar'),
-          ),
-          FilledButton(
-            key: const ValueKey<String>('salvar-plano'),
-            onPressed: () => Navigator.of(d).pop(true),
-            child: const Text('Salvar plano'),
-          ),
-        ],
-      ),
-    );
-    if (ok != true || !context.mounted) return;
-    _run(
-      context,
-      () => demoSession.care.store.updatePlan(
-        demoSession.care.actor,
-        childId,
-        text: text.text.trim(),
-        newGoal: goal.text,
-      ),
-      ok: 'Plano atualizado. A versão anterior fica no histórico.',
-    );
-  }
-
-  Future<void> _aiSummary(BuildContext context, String childId) async {
+  Future<void> _newGoal(BuildContext context, String childId) async {
+    final CareStore store = demoSession.care.store;
     final CareActor actor = demoSession.care.actor;
-    final CareAiDraft draft;
-    try {
-      draft = CareAi.teamSummary(demoSession.care.store, actor, childId);
-    } on CareAccessDenied catch (e) {
-      showDemoSnack(context, e.message);
-      return;
-    }
-    final TextEditingController text = TextEditingController(text: draft.text);
-    bool reviewed = false;
-    final bool? save = await showDialog<bool>(
+    final CareLink me = store.linkOf(actor, childId)!;
+    final List<CareLink> options = <CareLink>[
+      me,
+      ...store.colleaguesOf(actor, childId),
+    ];
+    CareLink responsible = me;
+    int due = 60;
+    int reassess = 30;
+    final TextEditingController objective = TextEditingController();
+    final TextEditingController action = TextEditingController();
+    final bool? ok = await showDialog<bool>(
       context: context,
       builder: (BuildContext d) => StatefulBuilder(
         builder: (BuildContext context, StateSetter set) => AlertDialog(
-          title: const Text('Resumo com IA'),
+          title: const Text('Novo objetivo do plano'),
           content: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
-                const DemoTag(CareAiDraft.label),
-                const SizedBox(height: AppSpacing.sm),
-                const DemoNotice(
-                  icon: Icons.lock_outline_rounded,
-                  text:
-                      'O rascunho usa só a visão compartilhada. Registros '
-                      'reservados não entram, e nada é salvo ou enviado '
-                      'sem a sua revisão.',
+                TextField(
+                  key: const ValueKey<String>('objetivo-texto'),
+                  controller: objective,
+                  decoration: const InputDecoration(labelText: 'Objetivo *'),
                 ),
                 const SizedBox(height: AppSpacing.md),
-                TextField(
-                  key: const ValueKey<String>('ia-texto'),
-                  controller: text,
-                  minLines: 6,
-                  maxLines: 14,
-                  decoration: const InputDecoration(
-                    labelText: 'Rascunho (edite antes de salvar)',
-                  ),
+                const Text('Profissional responsável'),
+                Wrap(
+                  spacing: AppSpacing.sm,
+                  runSpacing: AppSpacing.sm,
+                  children: <Widget>[
+                    for (final CareLink l in options)
+                      ChoiceChip(
+                        key: ValueKey<String>('resp-${l.professionalId}'),
+                        label: Text(
+                          '${l.professionalName} (${l.specialty.area})',
+                        ),
+                        selected: l == responsible,
+                        onSelected: (_) => set(() => responsible = l),
+                      ),
+                  ],
                 ),
-                CheckboxListTile(
-                  key: const ValueKey<String>('ia-revisado'),
-                  contentPadding: EdgeInsets.zero,
-                  value: reviewed,
-                  onChanged: (bool? v) => set(() => reviewed = v ?? false),
-                  title: const Text('Revisei e confirmo o texto'),
+                const SizedBox(height: AppSpacing.sm),
+                const Text('Prazo'),
+                Wrap(
+                  spacing: AppSpacing.sm,
+                  children: <Widget>[
+                    for (final int days in const <int>[30, 60, 90, 120])
+                      ChoiceChip(
+                        key: ValueKey<String>('prazo-$days'),
+                        label: Text('$days dias'),
+                        selected: due == days,
+                        onSelected: (_) => set(() => due = days),
+                      ),
+                  ],
+                ),
+                const SizedBox(height: AppSpacing.sm),
+                const Text('Reavaliação'),
+                Wrap(
+                  spacing: AppSpacing.sm,
+                  children: <Widget>[
+                    for (final int days in const <int>[15, 30, 45])
+                      ChoiceChip(
+                        key: ValueKey<String>('reav-$days'),
+                        label: Text('em $days dias'),
+                        selected: reassess == days,
+                        onSelected: (_) => set(() => reassess = days),
+                      ),
+                  ],
+                ),
+                TextField(
+                  key: const ValueKey<String>('objetivo-acao'),
+                  controller: action,
+                  decoration: const InputDecoration(
+                    labelText: 'Primeira ação (opcional)',
+                  ),
                 ),
               ],
             ),
@@ -483,28 +460,82 @@ class DemoCareScreen extends StatelessWidget {
           actions: <Widget>[
             TextButton(
               onPressed: () => Navigator.of(d).pop(false),
-              child: const Text('Descartar rascunho'),
+              child: const Text('Cancelar'),
             ),
             FilledButton(
-              key: const ValueKey<String>('ia-salvar'),
-              onPressed: reviewed ? () => Navigator.of(d).pop(true) : null,
-              child: const Text('Salvar resumo revisado'),
+              key: const ValueKey<String>('salvar-objetivo'),
+              onPressed: () => Navigator.of(d).pop(true),
+              child: const Text('Salvar objetivo'),
             ),
           ],
         ),
       ),
     );
-    if (save != true || !context.mounted) return;
+    if (ok != true || !context.mounted) return;
+    final DateTime now = demoSession.now;
     _run(
       context,
-      () => CareAi.saveReviewed(
-        demoSession.care.store,
+      () => store.addGoal(
         actor,
-        draft,
-        reviewedText: text.text,
-        reviewed: reviewed,
+        childId,
+        objective: objective.text,
+        responsibleId: responsible.professionalId,
+        dueDate: now.add(Duration(days: due)),
+        reassessAt: now.add(Duration(days: reassess)),
+        firstAction: action.text,
       ),
-      ok: 'Resumo revisado salvo para a equipe.',
+      ok: 'Objetivo incluído no plano conjunto.',
+    );
+  }
+
+  Future<void> _aiOverview(BuildContext context, String childId) async {
+    final CareAiDraft draft;
+    try {
+      draft = CareAi.teamOverview(
+        demoSession.care.store,
+        demoSession.care.actor,
+        childId,
+      );
+    } on CareAccessDenied catch (e) {
+      showDemoSnack(context, e.message);
+      return;
+    }
+    await showDialog<void>(
+      context: context,
+      builder: (BuildContext d) => AlertDialog(
+        title: const Text('Visão da equipe com IA'),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: <Widget>[
+              const DemoTag(CareAiDraft.label),
+              const SizedBox(height: AppSpacing.sm),
+              const DemoNotice(
+                icon: Icons.lock_outline_rounded,
+                text:
+                    'A IA usou só os resumos compartilhados com você e o plano '
+                    'conjunto. Registros completos, anotações privadas e '
+                    'anexos não entram. Este texto não é salvo.',
+              ),
+              const SizedBox(height: AppSpacing.md),
+              SelectionArea(
+                child: Text(
+                  draft.text,
+                  key: const ValueKey<String>('ia-texto'),
+                ),
+              ),
+            ],
+          ),
+        ),
+        actions: <Widget>[
+          FilledButton(
+            key: const ValueKey<String>('ia-fechar'),
+            onPressed: () => Navigator.of(d).pop(),
+            child: const Text('Fechar'),
+          ),
+        ],
+      ),
     );
   }
 
@@ -535,9 +566,7 @@ class DemoCareScreen extends StatelessWidget {
       for (final CareLink l in team)
         _LinkCard(
           link: l,
-          onEnd: l.endedAt == null
-              ? () => _endLink(context, l)
-              : null,
+          onEnd: l.endedAt == null ? () => _endLink(context, l) : null,
         ),
     ];
   }
@@ -557,7 +586,10 @@ class DemoCareScreen extends StatelessWidget {
         )
         .toList();
     if (options.isEmpty) {
-      showDemoSnack(context, 'Todos os profissionais da clínica já estão na equipe.');
+      showDemoSnack(
+        context,
+        'Todos os profissionais da clínica já estão na equipe.',
+      );
       return;
     }
     DemoAccount selected = options.first;
@@ -639,7 +671,8 @@ class DemoCareScreen extends StatelessWidget {
     if (reason == null || !context.mounted) return;
     _run(
       context,
-      () => demoSession.care.store.endLink(demoSession.care.actor, link, reason),
+      () =>
+          demoSession.care.store.endLink(demoSession.care.actor, link, reason),
       ok: 'Vínculo encerrado. O acesso de ${link.professionalName} foi retirado.',
     );
   }
@@ -655,19 +688,37 @@ class DemoCareScreen extends StatelessWidget {
     final CareStore store = demoSession.care.store;
     final CareLink? link = store.linkOf(actor, child.id);
     final bool own = link != null && link.specialty == s;
+    final bool authorArea = own || (link == null && actor.specialty == s);
     final List<CareRecord> records = store.recordsFor(
       actor,
       child.id,
       specialty: s,
     );
-    final List<CareRecord> measures = records
-        .where((CareRecord r) => r.kind == CareRecordKind.medida)
-        .toList()
-      ..sort((CareRecord a, CareRecord b) => a.createdAt.compareTo(b.createdAt));
-    final List<DemoAppointment> agenda = demoSession.care
-        .nextSessions(child.id)
-        .where((DemoAppointment a) => DemoCare.specialtyOf(a.professionalId) == s)
+    final List<CareRecord> mine = records
+        .where((CareRecord r) => r.authorId == actor.id)
         .toList();
+    final List<CareRecord> granted = records
+        .where((CareRecord r) => r.authorId != actor.id)
+        .toList();
+    final List<CareSummary> fromArea = link == null || own
+        ? const <CareSummary>[]
+        : store
+              .summariesFor(actor, child.id)
+              .where(
+                (CareSummary x) => x.specialty == s && x.authorId != actor.id,
+              )
+              .toList();
+    final List<CareRecord> measures =
+        mine.where((CareRecord r) => r.kind == CareRecordKind.medida).toList()
+          ..sort(
+            (CareRecord a, CareRecord b) => a.createdAt.compareTo(b.createdAt),
+          );
+    final List<DemoAppointment> agenda = own
+        ? demoSession.care
+              .nextSessions(child.id)
+              .where((DemoAppointment a) => a.professionalId == actor.id)
+              .toList()
+        : const <DemoAppointment>[];
     return <Widget>[
       if (link == null)
         const DemoNotice(
@@ -677,23 +728,26 @@ class DemoCareScreen extends StatelessWidget {
               'Seu vínculo com a criança foi encerrado. Você vê apenas os '
               'registros que fez, somente para leitura.',
         ),
-      if (s == CareSpecialty.psicologia && !own)
+      if (own)
         const DemoNotice(
           icon: Icons.lock_outline_rounded,
           text:
-              'Registros reservados da psicologia ficam só com o profissional '
-              'responsável. A equipe vê o plano terapêutico e os resumos '
-              'compartilhados.',
+              'Seus registros ficam só com você. Para a equipe, crie um resumo '
+              'escolhendo exatamente o que compartilhar; anotações privadas, '
+              'transcrições e conversas nunca entram.',
         ),
-      if (own && CarePolicy.canReserve(s))
-        const DemoNotice(
+      if (!authorArea)
+        DemoNotice(
           icon: Icons.lock_outline_rounded,
           text:
-              'Registros marcados como reservados ficam só com você. Para a '
-              'continuidade do cuidado, compartilhe um resumo com a equipe.',
+              'Registros da ${s.area.toLowerCase()} ficam com quem atendeu. '
+              'Aqui aparecem só os resumos compartilhados com você e registros '
+              'com acesso concedido.',
         ),
-      DemoSectionTitle('Agenda da ${s.area.toLowerCase()}'),
-      ..._sessions(context, agenda),
+      if (own) ...<Widget>[
+        DemoSectionTitle('Agenda da ${s.area.toLowerCase()}'),
+        ..._sessions(context, agenda),
+      ],
       if (measures.isNotEmpty) ...<Widget>[
         const DemoSectionTitle('Medidas de acompanhamento'),
         PremiumCard(
@@ -701,25 +755,38 @@ class DemoCareScreen extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
               for (final CareRecord m in measures)
-                Text('${demoDate(m.createdAt)} - ${m.title}: ${m.measure ?? '-'}'),
+                Text(
+                  '${demoDate(m.createdAt)} - ${m.title}: ${m.measure ?? '-'}',
+                ),
             ],
           ),
         ),
       ],
-      DemoSectionTitle(
-        'Registros da ${s.area.toLowerCase()}',
-        trailing: own
-            ? FilledButton.icon(
-                key: const ValueKey<String>('novo-registro'),
-                onPressed: () => _newRecord(context, child.id, s),
-                icon: const Icon(Icons.add_rounded, size: 18),
-                label: const Text('Novo registro'),
-              )
-            : null,
-      ),
-      if (records.isEmpty) const Text('Nenhum registro visível para você.'),
-      for (final CareRecord r in records)
-        _RecordCard(record: r, editable: own && r.authorId == actor.id),
+      if (authorArea) ...<Widget>[
+        DemoSectionTitle(
+          'Meus registros da ${s.area.toLowerCase()}',
+          trailing: own
+              ? FilledButton.icon(
+                  key: const ValueKey<String>('novo-registro'),
+                  onPressed: () => _newRecord(context, child.id, s),
+                  icon: const Icon(Icons.add_rounded, size: 18),
+                  label: const Text('Novo registro'),
+                )
+              : null,
+        ),
+        if (mine.isEmpty) const Text('Nenhum registro seu nesta área.'),
+        for (final CareRecord r in mine) _RecordCard(record: r, editable: own),
+      ] else ...<Widget>[
+        DemoSectionTitle('Resumos da ${s.area.toLowerCase()} para você'),
+        if (fromArea.isEmpty)
+          const Text('Nada desta área foi compartilhado com você.'),
+        for (final CareSummary x in fromArea) _SummaryCard(summary: x),
+      ],
+      if (granted.isNotEmpty) ...<Widget>[
+        const DemoSectionTitle('Registros com acesso concedido a você'),
+        for (final CareRecord r in granted)
+          _RecordCard(record: r, editable: false),
+      ],
     ];
   }
 
@@ -728,25 +795,25 @@ class DemoCareScreen extends StatelessWidget {
     String childId,
     CareSpecialty s,
   ) async {
-    final List<CareRecordKind> kinds = CarePolicy.kindsFor(s)
-        .where((CareRecordKind k) => k != CareRecordKind.resumoEquipe)
-        .toList();
+    final List<CareRecordKind> kinds = CarePolicy.kindsFor(s).toList();
     CareRecordKind kind = kinds.first;
-    CareVisibility visibility = CareVisibility.equipe;
+    CareVisibility visibility = CareVisibility.privado;
     final TextEditingController title = TextEditingController();
     final TextEditingController body = TextEditingController();
-    final TextEditingController summary = TextEditingController();
+    final TextEditingController clinical = TextEditingController();
+    final TextEditingController privateNote = TextEditingController();
     final TextEditingController measure = TextEditingController();
     final bool? ok = await showDialog<bool>(
       context: context,
       builder: (BuildContext d) => StatefulBuilder(
         builder: (BuildContext context, StateSetter set) {
           final List<CareVisibility> allowed = <CareVisibility>[
-            if (CarePolicy.canReserve(s)) CareVisibility.reservado,
-            CareVisibility.equipe,
+            CareVisibility.privado,
             if (kind.canGoToFamily) CareVisibility.familia,
           ];
-          if (!allowed.contains(visibility)) visibility = CareVisibility.equipe;
+          if (!allowed.contains(visibility)) {
+            visibility = CareVisibility.privado;
+          }
           return AlertDialog(
             title: Text('Novo registro - ${s.area}'),
             content: SingleChildScrollView(
@@ -778,7 +845,9 @@ class DemoCareScreen extends StatelessWidget {
                     controller: body,
                     minLines: 3,
                     maxLines: 8,
-                    decoration: const InputDecoration(labelText: 'Registro *'),
+                    decoration: const InputDecoration(
+                      labelText: 'Registro completo do atendimento *',
+                    ),
                   ),
                   if (kind == CareRecordKind.medida)
                     TextField(
@@ -788,6 +857,25 @@ class DemoCareScreen extends StatelessWidget {
                         labelText: 'Medida (valor e unidade)',
                       ),
                     ),
+                  TextField(
+                    key: const ValueKey<String>('registro-clinica'),
+                    controller: clinical,
+                    minLines: 2,
+                    maxLines: 4,
+                    decoration: const InputDecoration(
+                      labelText:
+                          'Síntese clínica (pode ser escolhida para um resumo)',
+                    ),
+                  ),
+                  TextField(
+                    key: const ValueKey<String>('registro-privada'),
+                    controller: privateNote,
+                    minLines: 2,
+                    maxLines: 4,
+                    decoration: const InputDecoration(
+                      labelText: 'Anotação privada (nunca entra em resumo)',
+                    ),
+                  ),
                   const SizedBox(height: AppSpacing.md),
                   const Text('Quem pode ver'),
                   Wrap(
@@ -804,17 +892,13 @@ class DemoCareScreen extends StatelessWidget {
                         ),
                     ],
                   ),
-                  if (visibility == CareVisibility.reservado)
-                    TextField(
-                      key: const ValueKey<String>('registro-resumo'),
-                      controller: summary,
-                      minLines: 2,
-                      maxLines: 4,
-                      decoration: const InputDecoration(
-                        labelText:
-                            'Resumo para a equipe (só o necessário, opcional)',
-                      ),
-                    ),
+                  const SizedBox(height: AppSpacing.sm),
+                  const DemoNotice(
+                    icon: Icons.lock_outline_rounded,
+                    text:
+                        'Nada vai para a equipe ao salvar. Para compartilhar, '
+                        'crie depois um resumo e escolha o que entra.',
+                  ),
                 ],
               ),
             ),
@@ -847,10 +931,23 @@ class DemoCareScreen extends StatelessWidget {
         title: title.text.trim(),
         body: body.text.trim(),
         visibility: visibility,
-        teamSummary: summary.text,
         measure: measure.text.trim().isEmpty ? null : measure.text.trim(),
+        sections: <CareSectionInput>[
+          (
+            kind: CareSectionKind.clinica,
+            label: 'Síntese clínica',
+            text: clinical.text,
+          ),
+          (
+            kind: CareSectionKind.anotacaoPrivada,
+            label: 'Anotação privada',
+            text: privateNote.text,
+          ),
+        ],
       ),
-      ok: 'Registro salvo (${visibility.label.toLowerCase()}).',
+      ok:
+          'Registro salvo (${visibility.label.toLowerCase()}). Nada foi '
+          'compartilhado com a equipe.',
     );
   }
 
@@ -887,9 +984,7 @@ class DemoCareScreen extends StatelessWidget {
       for (final CareMessage m in roots)
         _MessageCard(
           message: m,
-          replies: all
-              .where((CareMessage r) => r.replyTo == m.id)
-              .toList()
+          replies: all.where((CareMessage r) => r.replyTo == m.id).toList()
             ..sort((CareMessage a, CareMessage b) => a.at.compareTo(b.at)),
           onReply: () => _compose(context, child.id, replyTo: m),
         ),
@@ -942,7 +1037,9 @@ class DemoCareScreen extends StatelessWidget {
                       for (final CareSpecialty s in CareSpecialty.values)
                         ChoiceChip(
                           key: ValueKey<String>('para-${s.name}'),
-                          label: Text(s.active ? s.area : '${s.area} (em breve)'),
+                          label: Text(
+                            s.active ? s.area : '${s.area} (em breve)',
+                          ),
                           selected: s == to,
                           onSelected: (_) => set(() => to = s),
                         ),
@@ -1010,7 +1107,7 @@ class DemoCareScreen extends StatelessWidget {
         .toList();
     return <Widget>[
       DemoSectionTitle(
-        'Documentos da equipe',
+        'Meus documentos',
         trailing: FilledButton.icon(
           key: const ValueKey<String>('novo-documento'),
           onPressed: () => _newDocument(context, child, link),
@@ -1024,7 +1121,9 @@ class DemoCareScreen extends StatelessWidget {
             '${link.specialty.area} prepara: '
             '${allowed.map((CareDocKind k) => k.label).join(', ')}. '
             'Não disponível para esta especialidade: '
-            '${blocked.map((CareDocKind k) => k.label).join(', ')}.',
+            '${blocked.map((CareDocKind k) => k.label).join(', ')}. '
+            'Documentos ficam com o autor; a família recebe só os que você '
+            'liberar.',
       ),
       if (link.specialty == CareSpecialty.pediatria) ...<Widget>[
         const SizedBox(height: AppSpacing.sm),
@@ -1201,7 +1300,8 @@ class DemoCareScreen extends StatelessWidget {
                       onPressed: () => _run(
                         context,
                         () => store.authorize(actor, l),
-                        ok: '${l.professionalName} passa a fazer parte da '
+                        ok:
+                            '${l.professionalName} passa a fazer parte da '
                             'equipe.',
                       ),
                       child: const Text('Autorizar acesso'),
@@ -1227,7 +1327,8 @@ class DemoCareScreen extends StatelessWidget {
         icon: Icons.verified_user_outlined,
         text:
             'Aqui aparece só o que cada profissional liberou para a família. '
-            'Anotações reservadas e registros da equipe não aparecem.',
+            'Registros completos, anotações privadas e resumos da equipe não '
+            'aparecem.',
       ),
       const SizedBox(height: AppSpacing.sm),
       if (view.released.isEmpty) const Text('Nada liberado ainda.'),
@@ -1507,48 +1608,163 @@ class _LinkCard extends StatelessWidget {
   }
 }
 
-class _SharedItemCard extends StatelessWidget {
-  const _SharedItemCard({required this.item, required this.store});
+/// Resumo para a equipe: o destinatário vê só o que o autor escolheu; o autor
+/// vê também destinatários, versões e quem acessou.
+class _SummaryCard extends StatelessWidget {
+  const _SummaryCard({required this.summary});
 
-  final CareSharedItem item;
-  final CareStore store;
+  final CareSummary summary;
 
   @override
   Widget build(BuildContext context) {
-    final CareRecord? r = store.records
-        .where((CareRecord r) => r.id == item.recordId)
-        .firstOrNull;
-    return Padding(
-      padding: const EdgeInsets.only(bottom: AppSpacing.sm),
-      child: PremiumCard(
-        padding: const EdgeInsets.all(AppSpacing.md),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: <Widget>[
-            Wrap(
-              spacing: AppSpacing.sm,
-              runSpacing: 4,
-              crossAxisAlignment: WrapCrossAlignment.center,
-              children: <Widget>[
-                Text(item.title, style: Theme.of(context).textTheme.titleSmall),
-                if (item.fromReserved)
-                  const DemoTag('Resumo compartilhado', color: AppColors.brand),
-                if (r?.fromAi ?? false)
+    final CareSummary s = summary;
+    final CareStore store = demoSession.care.store;
+    final CareActor actor = demoSession.care.actor;
+    final bool mine = s.authorId == actor.id;
+    final List<CareAttachment> files = store.summaryAttachments(actor, s);
+    final List<CareSummaryAccess> accesses = mine
+        ? store.accessesOf(actor, s)
+        : const <CareSummaryAccess>[];
+    final TextTheme t = Theme.of(context).textTheme;
+    return Semantics(
+      container: true,
+      identifier: 'resumo:${s.recordTitle}',
+      child: Padding(
+        padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+        child: PremiumCard(
+          padding: const EdgeInsets.all(AppSpacing.md),
+          borderColor: mine ? null : AppColors.brand.withValues(alpha: 0.4),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              Wrap(
+                spacing: AppSpacing.sm,
+                runSpacing: 4,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                children: <Widget>[
+                  Text('Resumo: ${s.recordTitle}', style: t.titleSmall),
                   DemoTag(
-                    'Preparado com IA, revisado por ${r!.reviewedBy}',
-                    color: AppColors.warning,
+                    mine ? s.status.label : 'Compartilhado com você',
+                    color: s.published ? AppColors.brand : AppColors.inkMuted,
                   ),
+                  DemoTag('Versão ${s.version}', color: AppColors.inkMuted),
+                  if (s.aiAssisted)
+                    DemoTag(
+                      'Preparado com IA, revisado por ${s.reviewedBy}',
+                      color: AppColors.warning,
+                    ),
+                ],
+              ),
+              for (final CareShareItem i in s.items) ...<Widget>[
+                const SizedBox(height: 4),
+                Text(
+                  i.label,
+                  style: const TextStyle(fontWeight: FontWeight.w700),
+                ),
+                Text(i.text),
               ],
-            ),
-            const SizedBox(height: 4),
-            Text(item.text),
-            const SizedBox(height: 4),
-            Text(
-              'Origem: ${item.specialty.area} - ${item.authorName} - '
-              '${demoDate(item.at)} (${item.kind.label})',
-              style: Theme.of(context).textTheme.bodySmall,
-            ),
-          ],
+              if (s.note.isNotEmpty) ...<Widget>[
+                const SizedBox(height: 4),
+                Text('Observação: ${s.note}'),
+              ],
+              for (final CareAttachment f in files)
+                Text(
+                  'Anexo escolhido: ${f.fileName}',
+                  style: t.bodySmall?.copyWith(color: AppColors.brand),
+                ),
+              const SizedBox(height: 4),
+              Text(
+                'Origem: ${s.specialty.area} - ${s.authorName} - '
+                '${_dt(s.updatedAt ?? s.createdAt)}',
+                style: t.bodySmall,
+              ),
+              if (mine) ...<Widget>[
+                Text('Destinatários: ${s.recipientsLabel}', style: t.bodySmall),
+                Semantics(
+                  container: true,
+                  child: ExpansionTile(
+                    key: ValueKey<String>('versoes-${s.id}'),
+                    tilePadding: EdgeInsets.zero,
+                    title: Text('Versões (${s.versions.length})'),
+                    children: <Widget>[
+                      for (final CareSummaryVersion v in s.versions.reversed)
+                        ListTile(
+                          contentPadding: EdgeInsets.zero,
+                          dense: true,
+                          title: Text(
+                            'Versão ${v.version} - ${v.status.label}'
+                            '${v.reason == null ? '' : ': ${v.reason}'}',
+                          ),
+                          subtitle: Text(
+                            '${_dt(v.at)} - ${v.actorName} - para '
+                            '${v.recipientNames.join(', ')} - itens: '
+                            '${v.items.map((CareShareItem i) => i.label).join(', ')}'
+                            '${v.note.isEmpty ? '' : ', observação'}'
+                            '${v.attachmentNames.isEmpty ? '' : ' - anexos: ${v.attachmentNames.join(', ')}'}',
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+                Semantics(
+                  container: true,
+                  child: ExpansionTile(
+                    key: ValueKey<String>('acessos-${s.id}'),
+                    tilePadding: EdgeInsets.zero,
+                    title: Text('Quem acessou (${accesses.length})'),
+                    children: <Widget>[
+                      if (accesses.isEmpty)
+                        const ListTile(
+                          contentPadding: EdgeInsets.zero,
+                          title: Text('Nenhum acesso ainda.'),
+                        ),
+                      for (final CareSummaryAccess a in accesses)
+                        ListTile(
+                          contentPadding: EdgeInsets.zero,
+                          dense: true,
+                          title: Text(a.actorName),
+                          subtitle: Text('${_dt(a.at)} - versão ${a.version}'),
+                        ),
+                    ],
+                  ),
+                ),
+                Wrap(
+                  spacing: AppSpacing.sm,
+                  children: <Widget>[
+                    TextButton(
+                      key: ValueKey<String>('atualizar-resumo-${s.id}'),
+                      onPressed: () =>
+                          context.go(careSummaryPath(s.childId, s.recordId)),
+                      child: Text(
+                        s.published ? 'Atualizar resumo' : 'Publicar novamente',
+                      ),
+                    ),
+                    if (s.published)
+                      TextButton(
+                        key: ValueKey<String>('encerrar-resumo-${s.id}'),
+                        onPressed: () async {
+                          final String? why = await _askReason(
+                            context,
+                            title: 'Encerrar acesso ao resumo',
+                            label: 'Motivo *',
+                            confirm: 'Encerrar acesso',
+                          );
+                          if (why == null || !context.mounted) return;
+                          _run(
+                            context,
+                            () => store.endSummary(actor, s, why),
+                            ok:
+                                'Acesso encerrado. As versões continuam no '
+                                'histórico.',
+                          );
+                        },
+                        child: const Text('Encerrar acesso'),
+                      ),
+                  ],
+                ),
+              ],
+            ],
+          ),
         ),
       ),
     );
@@ -1566,137 +1782,353 @@ class _RecordCard extends StatelessWidget {
     final CareRecord r = record;
     final CareStore store = demoSession.care.store;
     final CareActor actor = demoSession.care.actor;
-    final List<CareAttachment> files = store.attachments
-        .where((CareAttachment a) => a.recordId == r.id)
-        .toList();
+    final bool mine = r.authorId == actor.id;
+    final List<CareSection> sections = store.sectionsFor(actor, r);
+    final List<CareAttachment> files = store.attachmentsFor(actor, r);
+    final CareRecordGrant? grant = mine ? null : store.grantOf(actor, r);
+    final CareSummary? summary = mine ? store.summaryOf(r.id) : null;
+    final List<CareRecordGrant> grants = mine
+        ? store.grantsFor(actor, r)
+        : const <CareRecordGrant>[];
+    final int hidden = mine ? 0 : r.lockedSections.length;
     final TextTheme t = Theme.of(context).textTheme;
-    final Color vc = _visibilityColor(r.visibility);
-    return Padding(
-      padding: const EdgeInsets.only(bottom: AppSpacing.sm),
-      child: PremiumCard(
-        padding: const EdgeInsets.all(AppSpacing.md),
-        borderColor: r.visibility == CareVisibility.reservado
-            ? AppColors.danger.withValues(alpha: 0.4)
-            : null,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: <Widget>[
-            Wrap(
-              spacing: AppSpacing.sm,
-              runSpacing: 4,
-              crossAxisAlignment: WrapCrossAlignment.center,
-              children: <Widget>[
-                Text(r.kind.label, style: t.labelMedium),
-                DemoTag(r.visibility.label, color: vc),
-                if (r.sourceId != null)
-                  const DemoTag('Resumo compartilhado', color: AppColors.brand),
-              ],
-            ),
-            const SizedBox(height: 4),
-            Text(r.title, style: t.titleSmall),
-            Text(r.body),
-            if (r.measure != null) Text('Medida: ${r.measure}'),
-            const SizedBox(height: 4),
-            Text(
-              'Origem: ${r.origin} - ${demoDate(r.createdAt)}'
-              '${r.updatedAt == null ? '' : ' (alterado em ${demoDate(r.updatedAt!)})'}',
-              style: t.bodySmall,
-            ),
-            if (files.isNotEmpty)
+    return Semantics(
+      container: true,
+      identifier: 'registro:${r.title}',
+      child: Padding(
+        padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+        child: PremiumCard(
+          padding: const EdgeInsets.all(AppSpacing.md),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              Wrap(
+                spacing: AppSpacing.sm,
+                runSpacing: 4,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                children: <Widget>[
+                  Text(r.kind.label, style: t.labelMedium),
+                  DemoTag(
+                    r.visibility.label,
+                    color: _visibilityColor(r.visibility),
+                  ),
+                  if (grant != null)
+                    const DemoTag('Acesso concedido', color: AppColors.warning),
+                  if (summary != null && summary.published)
+                    DemoTag(
+                      'Resumo v${summary.version} compartilhado',
+                      color: AppColors.brand,
+                    ),
+                  if (summary != null && !summary.published)
+                    const DemoTag(
+                      'Resumo encerrado',
+                      color: AppColors.inkMuted,
+                    ),
+                ],
+              ),
+              const SizedBox(height: 4),
+              Text(r.title, style: t.titleSmall),
+              Text(r.body),
+              if (r.measure != null) Text('Medida: ${r.measure}'),
+              for (final CareSection sec in sections)
+                Container(
+                  margin: const EdgeInsets.only(top: AppSpacing.sm),
+                  padding: const EdgeInsets.all(AppSpacing.sm),
+                  decoration: BoxDecoration(
+                    color: sec.kind.shareable
+                        ? AppColors.softBlue
+                        : AppColors.danger.withValues(alpha: 0.06),
+                    borderRadius: AppRadius.mdAll,
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: <Widget>[
+                      Row(
+                        children: <Widget>[
+                          Icon(
+                            sec.kind.shareable
+                                ? Icons.notes_rounded
+                                : Icons.lock_outline_rounded,
+                            size: 16,
+                          ),
+                          const SizedBox(width: AppSpacing.xs),
+                          Expanded(
+                            child: Text(
+                              sec.kind.shareable
+                                  ? sec.label
+                                  : '${sec.label} - só você vê; nunca entra em '
+                                        'resumo',
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      Text(sec.text),
+                    ],
+                  ),
+                ),
+              if (hidden > 0)
+                Text(
+                  '$hidden parte(s) privada(s) do autor não aparecem para você.',
+                  style: t.bodySmall,
+                ),
+              const SizedBox(height: 4),
+              Text(
+                'Origem: ${r.origin} - ${demoDate(r.createdAt)}'
+                '${r.updatedAt == null ? '' : ' (alterado em ${demoDate(r.updatedAt!)})'}',
+                style: t.bodySmall,
+              ),
+              if (grant != null)
+                Text(
+                  'Acesso concedido por ${grant.grantedBy} em '
+                  '${demoDate(grant.grantedAt)}: ${grant.justification}',
+                  style: t.bodySmall,
+                ),
               for (final CareAttachment f in files)
                 Text(
                   'Anexo: ${f.fileName}',
                   style: t.bodySmall?.copyWith(color: AppColors.brand),
                 ),
-            if (r.revisions.isNotEmpty)
-              ExpansionTile(
-                tilePadding: EdgeInsets.zero,
-                title: Text('Histórico de alterações (${r.revisions.length})'),
-                children: <Widget>[
-                  for (final CareRevision v in r.revisions.reversed)
-                    ListTile(
-                      contentPadding: EdgeInsets.zero,
-                      title: Text('${v.actorName} - ${v.note}'),
-                      subtitle: Text(
-                        '${_dt(v.at)} - antes: ${v.previousBody}',
-                      ),
+              if (summary != null)
+                Text(
+                  'Resumo ${summary.status.label.toLowerCase()} - versão '
+                  '${summary.version} - ${summary.recipientsLabel}',
+                  style: t.bodySmall,
+                ),
+              if (mine && r.revisions.isNotEmpty)
+                Semantics(
+                  container: true,
+                  child: ExpansionTile(
+                    tilePadding: EdgeInsets.zero,
+                    title: Text(
+                      'Histórico de alterações (${r.revisions.length})',
                     ),
-                ],
-              ),
-            if (editable)
-              Wrap(
-                spacing: AppSpacing.sm,
-                children: <Widget>[
-                  TextButton(
-                    key: ValueKey<String>('alterar-${r.id}'),
-                    onPressed: () => _edit(context, r),
-                    child: const Text('Alterar'),
+                    children: <Widget>[
+                      for (final CareRevision v in r.revisions.reversed)
+                        ListTile(
+                          contentPadding: EdgeInsets.zero,
+                          title: Text('${v.actorName} - ${v.note}'),
+                          subtitle: Text(
+                            '${_dt(v.at)} - antes: ${v.previousBody}',
+                          ),
+                        ),
+                    ],
                   ),
-                  if (r.kind.canGoToFamily &&
-                      r.visibility == CareVisibility.equipe)
-                    TextButton(
-                      key: ValueKey<String>('liberar-${r.id}'),
-                      onPressed: () => _run(
-                        context,
-                        () => store.release(actor, r),
-                        ok: 'Liberado para a família.',
-                      ),
-                      child: const Text('Liberar para a família'),
+                ),
+              if (grants.isNotEmpty)
+                Semantics(
+                  container: true,
+                  child: ExpansionTile(
+                    key: ValueKey<String>('concessoes-${r.id}'),
+                    tilePadding: EdgeInsets.zero,
+                    title: Text(
+                      'Acessos concedidos ao registro completo (${grants.length})',
                     ),
-                  if (r.visibility == CareVisibility.familia)
-                    TextButton(
-                      onPressed: () async {
-                        final String? why = await _askReason(
-                          context,
-                          title: 'Retirar da família',
-                          label: 'Motivo *',
-                          confirm: 'Retirar',
-                        );
-                        if (why == null || !context.mounted) return;
-                        _run(
-                          context,
-                          () => store.withdraw(actor, r, why),
-                          ok: 'Retirado da área da família.',
-                        );
-                      },
-                      child: const Text('Retirar da família'),
-                    ),
-                  if (r.visibility == CareVisibility.reservado)
+                    children: <Widget>[
+                      for (final CareRecordGrant g in grants)
+                        ListTile(
+                          contentPadding: EdgeInsets.zero,
+                          title: Text(
+                            '${g.granteeName} (${g.granteeSpecialty.area})',
+                          ),
+                          subtitle: Text(
+                            '${g.justification} - ${_dt(g.grantedAt)}'
+                            '${g.active ? '' : ' - retirado em ${_dt(g.revokedAt!)}: ${g.revokeReason}'}',
+                          ),
+                          trailing: g.active
+                              ? TextButton(
+                                  key: ValueKey<String>('revogar-${g.id}'),
+                                  onPressed: () async {
+                                    final String? why = await _askReason(
+                                      context,
+                                      title:
+                                          'Retirar acesso de ${g.granteeName}',
+                                      label: 'Motivo *',
+                                      confirm: 'Retirar acesso',
+                                    );
+                                    if (why == null || !context.mounted) return;
+                                    _run(
+                                      context,
+                                      () => store.revokeGrant(actor, g, why),
+                                      ok: 'Acesso de ${g.granteeName} retirado.',
+                                    );
+                                  },
+                                  child: const Text('Retirar'),
+                                )
+                              : null,
+                        ),
+                    ],
+                  ),
+                ),
+              if (editable)
+                Wrap(
+                  spacing: AppSpacing.sm,
+                  children: <Widget>[
                     TextButton(
                       key: ValueKey<String>('resumo-${r.id}'),
-                      onPressed: () async {
-                        final String? text = await _askReason(
-                          context,
-                          title: 'Resumo para a equipe',
-                          label: 'Só o necessário para a continuidade *',
-                          confirm: 'Compartilhar resumo',
-                        );
-                        if (text == null || !context.mounted) return;
-                        _run(
-                          context,
-                          () => store.shareSummary(actor, r, text),
-                          ok: 'Resumo compartilhado com a equipe.',
-                        );
-                      },
-                      child: const Text('Resumo para a equipe'),
-                    ),
-                  TextButton(
-                    onPressed: () => _run(
-                      context,
-                      () => store.attach(
-                        actor,
-                        r,
-                        'anexo-exemplo-${files.length + 1}.pdf',
+                      onPressed: () =>
+                          context.go(careSummaryPath(r.childId, r.id)),
+                      child: Text(
+                        summary == null
+                            ? 'Criar resumo para a equipe'
+                            : summary.published
+                            ? 'Atualizar resumo'
+                            : 'Publicar novo resumo',
                       ),
-                      ok: 'Anexo fictício adicionado (simulado).',
                     ),
-                    child: const Text('Anexar arquivo (simulado)'),
+                    TextButton(
+                      key: ValueKey<String>('conceder-${r.id}'),
+                      onPressed: () => _grant(context, r),
+                      child: const Text('Conceder acesso ao registro'),
+                    ),
+                    TextButton(
+                      key: ValueKey<String>('alterar-${r.id}'),
+                      onPressed: () => _edit(context, r),
+                      child: const Text('Alterar'),
+                    ),
+                    if (r.kind.canGoToFamily &&
+                        r.visibility == CareVisibility.privado)
+                      TextButton(
+                        key: ValueKey<String>('liberar-${r.id}'),
+                        onPressed: () => _run(
+                          context,
+                          () => store.release(actor, r),
+                          ok: 'Liberado para a família.',
+                        ),
+                        child: const Text('Liberar para a família'),
+                      ),
+                    if (r.visibility == CareVisibility.familia)
+                      TextButton(
+                        key: ValueKey<String>('retirar-${r.id}'),
+                        onPressed: () async {
+                          final String? why = await _askReason(
+                            context,
+                            title: 'Retirar da família',
+                            label: 'Motivo *',
+                            confirm: 'Retirar',
+                          );
+                          if (why == null || !context.mounted) return;
+                          _run(
+                            context,
+                            () => store.withdraw(actor, r, why),
+                            ok: 'Retirado da área da família.',
+                          );
+                        },
+                        child: const Text('Retirar da família'),
+                      ),
+                    TextButton(
+                      onPressed: () => _run(
+                        context,
+                        () => store.attach(
+                          actor,
+                          r,
+                          'anexo-exemplo-${files.length + 1}.pdf',
+                        ),
+                        ok: 'Anexo fictício adicionado (simulado).',
+                      ),
+                      child: const Text('Anexar arquivo (simulado)'),
+                    ),
+                  ],
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _grant(BuildContext context, CareRecord r) async {
+    final CareStore store = demoSession.care.store;
+    final CareActor actor = demoSession.care.actor;
+    final List<CareLink> team = store.colleaguesOf(actor, r.childId);
+    if (team.isEmpty) {
+      showDemoSnack(context, 'Não há outros profissionais na equipe.');
+      return;
+    }
+    CareLink? to;
+    final TextEditingController why = TextEditingController();
+    final bool? ok = await showDialog<bool>(
+      context: context,
+      builder: (BuildContext d) => StatefulBuilder(
+        builder: (BuildContext context, StateSetter set) => AlertDialog(
+          title: const Text('Acesso ao registro completo'),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                const DemoNotice(
+                  icon: Icons.policy_outlined,
+                  text:
+                      'Use só quando o resumo não basta. A pessoa verá o '
+                      'registro e os anexos, nunca as anotações privadas, '
+                      'transcrições e conversas. Fica registrado com a '
+                      'justificativa e você pode retirar a qualquer momento.',
+                ),
+                const SizedBox(height: AppSpacing.sm),
+                const Text('Profissional'),
+                Wrap(
+                  spacing: AppSpacing.sm,
+                  runSpacing: AppSpacing.sm,
+                  children: <Widget>[
+                    for (final CareLink l in team)
+                      ChoiceChip(
+                        key: ValueKey<String>(
+                          'conceder-para-${l.professionalId}',
+                        ),
+                        label: Text(
+                          '${l.professionalName} (${l.specialty.area})',
+                        ),
+                        selected: l == to,
+                        onSelected: (_) => set(() => to = l),
+                      ),
+                  ],
+                ),
+                TextField(
+                  key: const ValueKey<String>('justificativa'),
+                  controller: why,
+                  minLines: 2,
+                  maxLines: 4,
+                  decoration: const InputDecoration(
+                    labelText: 'Justificativa * (mínimo de 15 caracteres)',
                   ),
-                ],
-              ),
+                ),
+              ],
+            ),
+          ),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () => Navigator.of(d).pop(false),
+              child: const Text('Cancelar'),
+            ),
+            FilledButton(
+              key: const ValueKey<String>('salvar-concessao'),
+              onPressed: () => Navigator.of(d).pop(true),
+              child: const Text('Conceder acesso'),
+            ),
           ],
         ),
       ),
+    );
+    if (ok != true || !context.mounted) return;
+    final CareLink? target = to;
+    if (target == null) {
+      showDemoSnack(context, 'Escolha o profissional.');
+      return;
+    }
+    _run(
+      context,
+      () => store.grantAccess(
+        actor,
+        r,
+        granteeId: target.professionalId,
+        justification: why.text,
+      ),
+      ok:
+          'Acesso concedido a ${target.professionalName}. Fica registrado na '
+          'trilha.',
     );
   }
 
@@ -1757,6 +2189,791 @@ class _RecordCard extends StatelessWidget {
       ok: 'Alteração salva. A versão anterior fica no histórico.',
     );
   }
+}
+
+/// Objetivo do plano terapêutico conjunto.
+class _GoalCard extends StatelessWidget {
+  const _GoalCard({
+    required this.goal,
+    required this.actor,
+    required this.canPlan,
+  });
+
+  final CarePlanGoal goal;
+  final CareActor actor;
+  final bool canPlan;
+
+  @override
+  Widget build(BuildContext context) {
+    final CarePlanGoal g = goal;
+    final TextTheme t = Theme.of(context).textTheme;
+    final Color statusColor = switch (g.status) {
+      CareGoalStatus.atingido => AppColors.success,
+      CareGoalStatus.revisar => AppColors.warning,
+      CareGoalStatus.emAndamento => AppColors.brand,
+    };
+    Widget line(CarePlanContribution c) => Padding(
+      padding: const EdgeInsets.only(top: 2),
+      child: Text(
+        '- ${c.text} (${c.specialty.area} - ${c.authorName}, ${demoDate(c.at)})',
+      ),
+    );
+    return Semantics(
+      container: true,
+      identifier: 'objetivo:${g.objective}',
+      child: Padding(
+        padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+        child: PremiumCard(
+          padding: const EdgeInsets.all(AppSpacing.md),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              Wrap(
+                spacing: AppSpacing.sm,
+                runSpacing: 4,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                children: <Widget>[
+                  Text(g.objective, style: t.titleSmall),
+                  DemoTag(g.status.label, color: statusColor),
+                ],
+              ),
+              Text(
+                'Responsável: ${g.responsibleName} (${g.responsibleSpecialty.area})',
+              ),
+              Text(
+                'Prazo: ${demoDate(g.dueDate)} - Reavaliação: '
+                '${demoDate(g.reassessAt)}',
+                style: t.bodySmall,
+              ),
+              if (g.actions.isNotEmpty) ...<Widget>[
+                const SizedBox(height: 4),
+                const Text(
+                  'Ações',
+                  style: TextStyle(fontWeight: FontWeight.w700),
+                ),
+                for (final CarePlanContribution c in g.actions) line(c),
+              ],
+              if (g.shared.isNotEmpty) ...<Widget>[
+                const SizedBox(height: 4),
+                const Text(
+                  'Informações compartilhadas',
+                  style: TextStyle(fontWeight: FontWeight.w700),
+                ),
+                for (final CarePlanContribution c in g.shared) line(c),
+              ],
+              if (g.reassessments.isNotEmpty)
+                Semantics(
+                  container: true,
+                  child: ExpansionTile(
+                    tilePadding: EdgeInsets.zero,
+                    title: Text('Reavaliações (${g.reassessments.length})'),
+                    children: <Widget>[
+                      for (final CareReassessment r in g.reassessments.reversed)
+                        ListTile(
+                          contentPadding: EdgeInsets.zero,
+                          dense: true,
+                          title: Text(
+                            '${r.status.label}${r.note.isEmpty ? '' : ': ${r.note}'}',
+                          ),
+                          subtitle: Text(
+                            '${r.actorName} - ${_dt(r.at)} - próxima em '
+                            '${demoDate(r.nextReassessAt)}',
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+              if (canPlan)
+                Wrap(
+                  spacing: AppSpacing.sm,
+                  children: <Widget>[
+                    TextButton(
+                      key: ValueKey<String>('contribuir-${g.id}'),
+                      onPressed: () => _contribute(context),
+                      child: const Text('Contribuir'),
+                    ),
+                    if (g.responsibleId == actor.id)
+                      TextButton(
+                        key: ValueKey<String>('reavaliar-${g.id}'),
+                        onPressed: () => _reassess(context),
+                        child: const Text('Reavaliar'),
+                      ),
+                  ],
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _contribute(BuildContext context) async {
+    CareContributionKind kind = CareContributionKind.acao;
+    final TextEditingController text = TextEditingController();
+    final bool? ok = await showDialog<bool>(
+      context: context,
+      builder: (BuildContext d) => StatefulBuilder(
+        builder: (BuildContext context, StateSetter set) => AlertDialog(
+          title: Text('Contribuir: ${goal.objective}'),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                Wrap(
+                  spacing: AppSpacing.sm,
+                  children: <Widget>[
+                    for (final CareContributionKind k
+                        in CareContributionKind.values)
+                      ChoiceChip(
+                        key: ValueKey<String>('contrib-${k.name}'),
+                        label: Text(k.label),
+                        selected: k == kind,
+                        onSelected: (_) => set(() => kind = k),
+                      ),
+                  ],
+                ),
+                const SizedBox(height: AppSpacing.sm),
+                const DemoNotice(
+                  icon: Icons.lock_outline_rounded,
+                  text:
+                      'Escreva só o que deseja compartilhar com a equipe. Seu '
+                      'registro completo não é anexado.',
+                ),
+                TextField(
+                  key: const ValueKey<String>('contrib-texto'),
+                  controller: text,
+                  minLines: 2,
+                  maxLines: 5,
+                  decoration: const InputDecoration(labelText: 'Texto *'),
+                ),
+              ],
+            ),
+          ),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () => Navigator.of(d).pop(false),
+              child: const Text('Cancelar'),
+            ),
+            FilledButton(
+              key: const ValueKey<String>('salvar-contribuicao'),
+              onPressed: () => Navigator.of(d).pop(true),
+              child: const Text('Salvar'),
+            ),
+          ],
+        ),
+      ),
+    );
+    if (ok != true || !context.mounted) return;
+    _run(
+      context,
+      () => demoSession.care.store.contribute(
+        demoSession.care.actor,
+        goal,
+        kind: kind,
+        text: text.text,
+      ),
+      ok: 'Contribuição registrada no plano.',
+    );
+  }
+
+  Future<void> _reassess(BuildContext context) async {
+    CareGoalStatus status = goal.status;
+    int next = 30;
+    final TextEditingController note = TextEditingController();
+    final bool? ok = await showDialog<bool>(
+      context: context,
+      builder: (BuildContext d) => StatefulBuilder(
+        builder: (BuildContext context, StateSetter set) => AlertDialog(
+          title: Text('Reavaliar: ${goal.objective}'),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                Wrap(
+                  spacing: AppSpacing.sm,
+                  children: <Widget>[
+                    for (final CareGoalStatus s in CareGoalStatus.values)
+                      ChoiceChip(
+                        key: ValueKey<String>('status-${s.name}'),
+                        label: Text(s.label),
+                        selected: s == status,
+                        onSelected: (_) => set(() => status = s),
+                      ),
+                  ],
+                ),
+                TextField(
+                  key: const ValueKey<String>('reaval-nota'),
+                  controller: note,
+                  decoration: const InputDecoration(
+                    labelText: 'O que mudou (compartilhado com a equipe)',
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.sm),
+                const Text('Próxima reavaliação'),
+                Wrap(
+                  spacing: AppSpacing.sm,
+                  children: <Widget>[
+                    for (final int days in const <int>[15, 30, 60])
+                      ChoiceChip(
+                        key: ValueKey<String>('proxima-$days'),
+                        label: Text('em $days dias'),
+                        selected: next == days,
+                        onSelected: (_) => set(() => next = days),
+                      ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () => Navigator.of(d).pop(false),
+              child: const Text('Cancelar'),
+            ),
+            FilledButton(
+              key: const ValueKey<String>('salvar-reavaliacao'),
+              onPressed: () => Navigator.of(d).pop(true),
+              child: const Text('Salvar reavaliação'),
+            ),
+          ],
+        ),
+      ),
+    );
+    if (ok != true || !context.mounted) return;
+    _run(
+      context,
+      () => demoSession.care.store.reassess(
+        demoSession.care.actor,
+        goal,
+        status: status,
+        note: note.text,
+        nextReassessAt: demoSession.now.add(Duration(days: next)),
+      ),
+      ok: 'Reavaliação registrada.',
+    );
+  }
+}
+
+/// Resumo para a equipe em quatro passos: escolher as informações, escolher
+/// os destinatários, conferir a prévia e confirmar.
+class DemoCareSummaryScreen extends StatefulWidget {
+  const DemoCareSummaryScreen({
+    required this.childId,
+    required this.recordId,
+    super.key,
+  });
+
+  final String childId;
+  final String recordId;
+
+  @override
+  State<DemoCareSummaryScreen> createState() => _DemoCareSummaryScreenState();
+}
+
+class _DemoCareSummaryScreenState extends State<DemoCareSummaryScreen> {
+  static const List<String> _steps = <String>[
+    'Informações',
+    'Destinatários',
+    'Prévia e confirmação',
+  ];
+
+  final TextEditingController _note = TextEditingController();
+  CareSummaryDraft? _draft;
+  CareSummaryPreview? _preview;
+  CareSummary? _published;
+  String? _error;
+  int _step = 0;
+
+  CareStore get _store => demoSession.care.store;
+  CareActor get _actor => demoSession.care.actor;
+
+  CareRecord? get _record => _store.records
+      .where(
+        (CareRecord r) =>
+            r.id == widget.recordId && r.childId == widget.childId,
+      )
+      .firstOrNull;
+
+  @override
+  void initState() {
+    super.initState();
+    final CareRecord? r = _record;
+    if (r == null) {
+      _error = 'Registro não encontrado.';
+      return;
+    }
+    try {
+      _draft = _store.startSummary(_actor, r);
+      _note.text = _draft!.note;
+    } on CareAccessDenied catch (e) {
+      _error = e.message;
+    }
+  }
+
+  @override
+  void dispose() {
+    _note.dispose();
+    super.dispose();
+  }
+
+  void _snack(String text) {
+    demoSession.changed();
+    showDemoSnack(context, text);
+  }
+
+  void _toArea() => context.go(
+    carePath(widget.childId, tab: CareTab.forSpecialty(_record!.specialty)),
+  );
+
+  void _next() {
+    final CareSummaryDraft d = _draft!..note = _note.text;
+    if (_step == 0) {
+      if (d.itemIds.isEmpty && d.note.trim().isEmpty) {
+        _snack('Escolha ao menos uma informação para o resumo.');
+        return;
+      }
+      if (d.aiAssisted && !d.aiReviewed) {
+        _snack('Revise o texto sugerido pela IA antes de continuar.');
+        return;
+      }
+      setState(() => _step = 1);
+      return;
+    }
+    try {
+      final CareSummaryPreview p = _store.previewSummary(_actor, _record!, d);
+      setState(() {
+        _preview = p;
+        _step = 2;
+      });
+    } on CareAccessDenied catch (e) {
+      _snack(e.message);
+    }
+  }
+
+  void _suggest() {
+    final CareSummaryDraft d = _draft!;
+    try {
+      final CareAiDraft ai = CareAi.suggestSummaryNote(
+        _store,
+        _actor,
+        _record!,
+        d,
+      );
+      setState(() {
+        _note.text = ai.text;
+        d
+          ..aiAssisted = true
+          ..aiReviewed = false;
+      });
+    } on CareAccessDenied catch (e) {
+      _snack(e.message);
+    }
+  }
+
+  Future<void> _confirm() async {
+    final CareSummaryPreview p = _preview!;
+    final String names = p.recipients
+        .map((CareLink l) => l.professionalName)
+        .join(', ');
+    final bool? ok = await showDialog<bool>(
+      context: context,
+      builder: (BuildContext d) => AlertDialog(
+        title: Text(
+          p.isUpdate ? 'Atualizar o resumo?' : 'Compartilhar o resumo?',
+        ),
+        content: Text(
+          '${p.items.length + (p.note.isEmpty ? 0 : 1)} informação(ões) e '
+          '${p.attachments.length} anexo(s) para $names. O registro completo '
+          'continua só com você.',
+        ),
+        actions: <Widget>[
+          TextButton(
+            onPressed: () => Navigator.of(d).pop(false),
+            child: const Text('Voltar à prévia'),
+          ),
+          FilledButton(
+            key: const ValueKey<String>('confirmar-compartilhamento'),
+            onPressed: () => Navigator.of(d).pop(true),
+            child: const Text('Confirmar compartilhamento'),
+          ),
+        ],
+      ),
+    );
+    if (ok != true || !mounted) return;
+    try {
+      final CareSummary s = _store.publishSummary(
+        _actor,
+        _record!,
+        _draft!,
+        confirmed: true,
+      );
+      demoSession.changed();
+      setState(() {
+        _published = s;
+        _step = 3;
+      });
+    } on CareAccessDenied catch (e) {
+      _snack(e.message);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final CareRecord? r = _record;
+    final CareSummaryDraft? d = _draft;
+    if (_error != null || r == null || d == null) {
+      return Scaffold(
+        appBar: AppBar(title: const Text('Resumo para a equipe')),
+        body: DemoEmpty(
+          title: 'Acesso restrito',
+          message: _error ?? 'Só o autor do registro prepara o resumo.',
+          actionLabel: 'Voltar à ficha',
+          onAction: () => context.go(carePath(widget.childId)),
+        ),
+      );
+    }
+    final TextTheme t = Theme.of(context).textTheme;
+    return Scaffold(
+      backgroundColor: AppColors.lightBackground,
+      appBar: AppBar(title: const Text('Resumo para a equipe')),
+      body: ListView(
+        padding: const EdgeInsets.all(AppSpacing.lg),
+        children: <Widget>[
+          DemoContent(
+            maxWidth: 760,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: <Widget>[
+                PremiumCard(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: <Widget>[
+                      Text(
+                        r.title,
+                        style: t.titleLarge?.copyWith(
+                          color: AppColors.navy,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                      Text(
+                        '${r.kind.label} - ${r.origin} - ${demoDate(r.createdAt)}',
+                      ),
+                      const SizedBox(height: AppSpacing.xs),
+                      Text(
+                        _step > 2
+                            ? 'Concluído'
+                            : 'Passo ${_step + 1} de 3: ${_steps[_step]}',
+                        style: t.bodySmall,
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.md),
+                ...switch (_step) {
+                  0 => _itemsStep(r, d),
+                  1 => _recipientsStep(r, d),
+                  2 => _previewStep(r, _preview!),
+                  _ => _doneStep(_published!),
+                },
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  List<Widget> _itemsStep(CareRecord r, CareSummaryDraft d) {
+    final List<CareAttachment> files = _store.attachments
+        .where((CareAttachment a) => a.recordId == r.id)
+        .toList();
+    void toggle(Set<String> set, String id, bool? on) => setState(() {
+      on == true ? set.add(id) : set.remove(id);
+      if (d.aiAssisted) d.aiReviewed = false;
+    });
+    return <Widget>[
+      const DemoNotice(
+        icon: Icons.lock_outline_rounded,
+        text:
+            'Nada vem marcado. Escolha exatamente o que entra no resumo. '
+            'Anotações privadas, transcrições e conversas não podem ser '
+            'incluídas.',
+      ),
+      const DemoSectionTitle('Informações do registro'),
+      for (final CareShareItem i in r.shareableItems)
+        CheckboxListTile(
+          key: ValueKey<String>('item-${i.id}'),
+          contentPadding: EdgeInsets.zero,
+          controlAffinity: ListTileControlAffinity.leading,
+          value: d.itemIds.contains(i.id),
+          onChanged: (bool? v) => toggle(d.itemIds, i.id, v),
+          title: Text(i.label),
+          subtitle: Text(i.text, maxLines: 4, overflow: TextOverflow.ellipsis),
+        ),
+      for (final CareSection s in r.lockedSections)
+        ListTile(
+          key: ValueKey<String>('bloqueado-${s.id}'),
+          contentPadding: EdgeInsets.zero,
+          leading: const Icon(
+            Icons.lock_outline_rounded,
+            color: AppColors.danger,
+          ),
+          title: Text('${s.label} (${s.kind.label})'),
+          subtitle: const Text('Fica só com você. Não pode entrar no resumo.'),
+        ),
+      if (files.isNotEmpty) ...<Widget>[
+        const DemoSectionTitle('Anexos'),
+        for (final CareAttachment a in files)
+          CheckboxListTile(
+            key: ValueKey<String>('anexo-${a.id}'),
+            contentPadding: EdgeInsets.zero,
+            controlAffinity: ListTileControlAffinity.leading,
+            value: d.attachmentIds.contains(a.id),
+            onChanged: (bool? v) => toggle(d.attachmentIds, a.id, v),
+            title: Text(a.fileName),
+            subtitle: const Text('Só entra se você marcar.'),
+          ),
+      ],
+      DemoSectionTitle(
+        'Observação para a equipe (opcional)',
+        trailing: TextButton.icon(
+          key: const ValueKey<String>('ia-sugerir'),
+          onPressed: _suggest,
+          icon: const Icon(Icons.auto_awesome_outlined, size: 18),
+          label: const Text('Sugerir com IA'),
+        ),
+      ),
+      TextField(
+        key: const ValueKey<String>('resumo-nota'),
+        controller: _note,
+        minLines: 2,
+        maxLines: 6,
+        decoration: const InputDecoration(
+          labelText: 'Só o necessário para a continuidade do cuidado',
+        ),
+      ),
+      if (d.aiAssisted) ...<Widget>[
+        const SizedBox(height: AppSpacing.sm),
+        const DemoTag(CareAiDraft.label, color: AppColors.warning),
+        const Text('A IA usou só as informações marcadas acima.'),
+        CheckboxListTile(
+          key: const ValueKey<String>('ia-revisado'),
+          contentPadding: EdgeInsets.zero,
+          controlAffinity: ListTileControlAffinity.leading,
+          value: d.aiReviewed,
+          onChanged: (bool? v) => setState(() => d.aiReviewed = v ?? false),
+          title: const Text('Revisei o texto sugerido pela IA'),
+        ),
+      ],
+      const SizedBox(height: AppSpacing.md),
+      Wrap(
+        alignment: WrapAlignment.spaceBetween,
+        spacing: AppSpacing.sm,
+        runSpacing: AppSpacing.sm,
+        children: <Widget>[
+          OutlinedButton(onPressed: _toArea, child: const Text('Cancelar')),
+          FilledButton(
+            key: const ValueKey<String>('proximo-1'),
+            onPressed: _next,
+            child: const Text('Escolher destinatários'),
+          ),
+        ],
+      ),
+    ];
+  }
+
+  List<Widget> _recipientsStep(CareRecord r, CareSummaryDraft d) {
+    final List<CareLink> team = _store
+        .colleaguesOf(_actor, r.childId)
+        .where((CareLink l) => l.clinicId == r.clinicId)
+        .toList();
+    return <Widget>[
+      const DemoNotice(
+        icon: Icons.groups_2_outlined,
+        text:
+            'Ninguém vem marcado. Escolha profissionais da equipe ou a equipe '
+            'de cuidado autorizada (quem está na equipe agora; quem entrar '
+            'depois não recebe este resumo).',
+      ),
+      const DemoSectionTitle('Para quem'),
+      Wrap(
+        spacing: AppSpacing.sm,
+        runSpacing: AppSpacing.sm,
+        children: <Widget>[
+          ChoiceChip(
+            key: const ValueKey<String>('publico-selecionados'),
+            label: Text(CareAudience.selecionados.label),
+            selected: d.audience == CareAudience.selecionados,
+            onSelected: (_) =>
+                setState(() => d.audience = CareAudience.selecionados),
+          ),
+          ChoiceChip(
+            key: const ValueKey<String>('publico-equipe'),
+            label: Text('${CareAudience.equipe.label} (${team.length})'),
+            selected: d.audience == CareAudience.equipe,
+            onSelected: (_) => setState(() => d.audience = CareAudience.equipe),
+          ),
+        ],
+      ),
+      if (team.isEmpty)
+        const Text('Não há outros profissionais na equipe ativa.'),
+      if (d.audience == CareAudience.selecionados)
+        for (final CareLink l in team)
+          CheckboxListTile(
+            key: ValueKey<String>('dest-${l.professionalId}'),
+            contentPadding: EdgeInsets.zero,
+            controlAffinity: ListTileControlAffinity.leading,
+            value: d.recipientIds.contains(l.professionalId),
+            onChanged: (bool? v) => setState(
+              () => v == true
+                  ? d.recipientIds.add(l.professionalId)
+                  : d.recipientIds.remove(l.professionalId),
+            ),
+            title: Text(l.professionalName),
+            subtitle: Text(l.specialty.profession),
+          ),
+      if (d.audience == CareAudience.equipe)
+        for (final CareLink l in team)
+          ListTile(
+            contentPadding: EdgeInsets.zero,
+            dense: true,
+            leading: const Icon(Icons.check_rounded, color: AppColors.success),
+            title: Text('${l.professionalName} (${l.specialty.area})'),
+          ),
+      const SizedBox(height: AppSpacing.sm),
+      Text(
+        'A família não recebe resumos da equipe. Para a família, libere '
+        'orientações e documentos na área própria.',
+        style: Theme.of(context).textTheme.bodySmall,
+      ),
+      const SizedBox(height: AppSpacing.md),
+      Wrap(
+        alignment: WrapAlignment.spaceBetween,
+        spacing: AppSpacing.sm,
+        runSpacing: AppSpacing.sm,
+        children: <Widget>[
+          OutlinedButton(
+            key: const ValueKey<String>('voltar-1'),
+            onPressed: () => setState(() => _step = 0),
+            child: const Text('Voltar'),
+          ),
+          FilledButton(
+            key: const ValueKey<String>('proximo-2'),
+            onPressed: _next,
+            child: const Text('Ver prévia'),
+          ),
+        ],
+      ),
+    ];
+  }
+
+  List<Widget> _previewStep(CareRecord r, CareSummaryPreview p) {
+    final TextTheme t = Theme.of(context).textTheme;
+    return <Widget>[
+      const DemoNotice(
+        icon: Icons.visibility_outlined,
+        text: 'Prévia: é exatamente isto que os destinatários vão ver.',
+      ),
+      const SizedBox(height: AppSpacing.sm),
+      PremiumCard(
+        key: const ValueKey<String>('previa'),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            Wrap(
+              spacing: AppSpacing.sm,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              children: <Widget>[
+                Text('Resumo: ${p.recordTitle}', style: t.titleSmall),
+                DemoTag('Versão ${p.version}', color: AppColors.inkMuted),
+                if (p.aiAssisted)
+                  const DemoTag(
+                    'Preparado com IA, revisado por você',
+                    color: AppColors.warning,
+                  ),
+              ],
+            ),
+            for (final CareShareItem i in p.items) ...<Widget>[
+              const SizedBox(height: 4),
+              Text(
+                i.label,
+                style: const TextStyle(fontWeight: FontWeight.w700),
+              ),
+              Text(i.text),
+            ],
+            if (p.note.isNotEmpty) ...<Widget>[
+              const SizedBox(height: 4),
+              Text('Observação: ${p.note}'),
+            ],
+            const SizedBox(height: 4),
+            if (p.attachments.isEmpty) const Text('Sem anexos.'),
+            for (final CareAttachment a in p.attachments)
+              Text('Anexo: ${a.fileName}'),
+            const Divider(),
+            Text(
+              'Para: ${p.audience.label}',
+              style: const TextStyle(fontWeight: FontWeight.w700),
+            ),
+            for (final CareLink l in p.recipients)
+              Text('- ${l.professionalName} (${l.specialty.area})'),
+          ],
+        ),
+      ),
+      const SizedBox(height: AppSpacing.sm),
+      Text(
+        'Não vai junto: o registro completo, '
+        '${r.lockedSections.isEmpty ? '' : 'as partes privadas, '}'
+        'as informações e os anexos não marcados.',
+        style: t.bodySmall,
+      ),
+      const SizedBox(height: AppSpacing.md),
+      Wrap(
+        alignment: WrapAlignment.spaceBetween,
+        spacing: AppSpacing.sm,
+        runSpacing: AppSpacing.sm,
+        children: <Widget>[
+          OutlinedButton(
+            key: const ValueKey<String>('voltar-2'),
+            onPressed: () => setState(() => _step = 1),
+            child: const Text('Voltar'),
+          ),
+          FilledButton(
+            key: const ValueKey<String>('compartilhar'),
+            onPressed: _confirm,
+            child: const Text('Compartilhar'),
+          ),
+        ],
+      ),
+    ];
+  }
+
+  List<Widget> _doneStep(CareSummary s) => <Widget>[
+    PremiumCard(
+      borderColor: AppColors.success,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Text(
+            'Resumo compartilhado',
+            style: Theme.of(context).textTheme.titleMedium,
+          ),
+          Text(
+            'Versão ${s.version} para ${s.recipientNames.values.join(', ')}. '
+            'Você pode atualizar ou encerrar o acesso na visão da equipe.',
+          ),
+        ],
+      ),
+    ),
+    const SizedBox(height: AppSpacing.md),
+    FilledButton(
+      key: const ValueKey<String>('voltar-ficha'),
+      onPressed: () =>
+          context.go(carePath(widget.childId, tab: CareTab.equipe)),
+      child: const Text('Voltar à ficha'),
+    ),
+  ];
 }
 
 class _MessageCard extends StatelessWidget {
@@ -1822,18 +3039,21 @@ class _MessageCard extends StatelessWidget {
                   ],
                 ),
               ),
-            ExpansionTile(
-              tilePadding: EdgeInsets.zero,
-              title: Text('Histórico (${m.events.length})'),
-              children: <Widget>[
-                for (final CareMessageEvent e in m.events)
-                  ListTile(
-                    contentPadding: EdgeInsets.zero,
-                    dense: true,
-                    title: Text('${e.actorName}: ${e.status.label}'),
-                    subtitle: Text(_dt(e.at)),
-                  ),
-              ],
+            Semantics(
+              container: true,
+              child: ExpansionTile(
+                tilePadding: EdgeInsets.zero,
+                title: Text('Histórico (${m.events.length})'),
+                children: <Widget>[
+                  for (final CareMessageEvent e in m.events)
+                    ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      dense: true,
+                      title: Text('${e.actorName}: ${e.status.label}'),
+                      subtitle: Text(_dt(e.at)),
+                    ),
+                ],
+              ),
             ),
             Align(
               alignment: Alignment.centerRight,
@@ -1948,7 +3168,8 @@ class DemoProfessionalProfileScreen extends StatelessWidget {
         final DemoCare care = demoSession.care;
         final CareActor actor = care.actor;
         final CareSpecialty s =
-            CareSpecialty.fromText(account.specialty) ?? CareSpecialty.pediatria;
+            CareSpecialty.fromText(account.specialty) ??
+            CareSpecialty.pediatria;
         final DateTime now = demoSession.now;
         final List<DemoAppointment> mine =
             demoSession.appointments
@@ -1960,8 +3181,7 @@ class DemoProfessionalProfileScreen extends StatelessWidget {
               );
         final List<DemoAppointment> upcoming = mine
             .where(
-              (DemoAppointment a) =>
-                  a.start.isAfter(now) && a.status.holdsSlot,
+              (DemoAppointment a) => a.start.isAfter(now) && a.status.holdsSlot,
             )
             .toList();
         final List<DemoAppointment> past = mine
@@ -1974,6 +3194,9 @@ class DemoProfessionalProfileScreen extends StatelessWidget {
         final List<CareDocument> docs = care.store.documents
             .where((CareDocument d) => d.authorId == account.id)
             .toList();
+        final int shared = care.store.summaries
+            .where((CareSummary x) => x.authorId == account.id && x.published)
+            .length;
         final int authored = care.store.records
             .where((CareRecord r) => r.authorId == account.id)
             .length;
@@ -2091,7 +3314,9 @@ class DemoProfessionalProfileScreen extends StatelessWidget {
                     ),
                     if (upcoming.isEmpty) const Text('Nenhum horário futuro.'),
                     for (final DemoAppointment a in upcoming.take(6))
-                      Text('${_dt(a.start)} - ${childName(a.patientId)} - ${a.reason}'),
+                      Text(
+                        '${_dt(a.start)} - ${childName(a.patientId)} - ${a.reason}',
+                      ),
                     const DemoSectionTitle('Pacientes vinculados'),
                     if (children.isEmpty)
                       const Text('Nenhuma criança com vínculo ativo.'),
@@ -2116,14 +3341,20 @@ class DemoProfessionalProfileScreen extends StatelessWidget {
                       const Text('Nenhum modelo próprio.'),
                     const DemoSectionTitle('Documentos'),
                     if (docs.isEmpty)
-                      const Text('Nenhum documento do cuidado multidisciplinar.'),
+                      const Text(
+                        'Nenhum documento do cuidado multidisciplinar.',
+                      ),
                     for (final CareDocument d in docs)
                       Text(
                         '${d.kind.label} - ${childName(d.childId)} - ${d.status.label}',
                       ),
                     const DemoSectionTitle('Histórico de atendimentos'),
-                    Text('$authored registro(s) feitos no cuidado multidisciplinar.'),
-                    if (past.isEmpty) const Text('Nenhum atendimento anterior.'),
+                    Text(
+                      '$authored registro(s) feitos no cuidado '
+                      'multidisciplinar; $shared resumo(s) compartilhado(s).',
+                    ),
+                    if (past.isEmpty)
+                      const Text('Nenhum atendimento anterior.'),
                     for (final DemoAppointment a in past.take(8))
                       Text(
                         '${_dt(a.start)} - ${childName(a.patientId)} - '

@@ -1,43 +1,6 @@
 import 'care_model.dart';
 import 'care_policy.dart';
 
-/// Item da visão compartilhada, sempre com a origem.
-class CareSharedItem {
-  const CareSharedItem({
-    required this.recordId,
-    required this.specialty,
-    required this.authorName,
-    required this.kind,
-    required this.title,
-    required this.text,
-    required this.at,
-    this.fromReserved = false,
-  });
-
-  final String recordId;
-  final CareSpecialty specialty;
-  final String authorName;
-  final CareRecordKind kind;
-  final String title;
-  final String text;
-  final DateTime at;
-
-  /// Resumo que o autor escreveu a partir de um registro reservado.
-  final bool fromReserved;
-}
-
-class CareSharedView {
-  const CareSharedView({
-    required this.team,
-    required this.plan,
-    required this.items,
-  });
-
-  final List<CareLink> team;
-  final CarePlan? plan;
-  final List<CareSharedItem> items;
-}
-
 class CareFamilyView {
   const CareFamilyView({
     required this.released,
@@ -62,6 +25,8 @@ class CareStore {
   final List<CareLink> links = <CareLink>[];
   final List<CareRecord> records = <CareRecord>[];
   final List<CareAttachment> attachments = <CareAttachment>[];
+  final List<CareRecordGrant> grants = <CareRecordGrant>[];
+  final List<CareSummary> summaries = <CareSummary>[];
   final Map<String, CarePlan> plans = <String, CarePlan>{};
   final List<CareMessage> messages = <CareMessage>[];
   final List<CareDocument> documents = <CareDocument>[];
@@ -87,15 +52,17 @@ class CareStore {
     final DateTime now = clock();
     // Reabrir a mesma tela em sequência não gera uma linha nova por quadro.
     if (allowed &&
-        (action.startsWith('visualizou') || action.startsWith('abriu')) &&
-        audit.isNotEmpty) {
-      final CareAuditEntry last = audit.last;
-      if (last.actorId == actor.id &&
-          last.action == action &&
-          last.target == target &&
-          last.childId == childId &&
-          now.difference(last.at).inSeconds.abs() < 60) {
-        return;
+        (action.startsWith('visualizou') ||
+            action.startsWith('abriu') ||
+            action.startsWith('acessou'))) {
+      for (final CareAuditEntry e in audit.reversed) {
+        if (now.difference(e.at).inSeconds.abs() >= 60) break;
+        if (e.actorId == actor.id &&
+            e.action == action &&
+            e.target == target &&
+            e.childId == childId) {
+          return;
+        }
       }
     }
     audit.add(
@@ -181,6 +148,21 @@ class CareStore {
       childId,
       'Sem vínculo com a criança.',
     );
+  }
+
+  /// Outros profissionais com vínculo ativo na clínica do autor: os únicos
+  /// que podem receber resumo ou acesso concedido.
+  List<CareLink> colleaguesOf(CareActor actor, String childId) {
+    final CareLink? link = linkOf(actor, childId);
+    if (link == null) return const <CareLink>[];
+    return <CareLink>[
+      for (final CareLink l in links)
+        if (l.childId == childId &&
+            l.active &&
+            l.clinicId == link.clinicId &&
+            l.professionalId != actor.id)
+          l,
+    ];
   }
 
   /// Crianças com vínculo ativo do profissional.
@@ -345,7 +327,8 @@ class CareStore {
 
   /// A família leva o acompanhamento para outra clínica: todos os vínculos
   /// atuais são encerrados. A nova equipe precisa de vínculos novos e não vê
-  /// os registros da equipe anterior; a família mantém o que foi liberado.
+  /// os registros nem os resumos da equipe anterior; a família mantém o que
+  /// foi liberado.
   List<CareLink> transferClinic(
     CareActor actor,
     String childId, {
@@ -380,6 +363,7 @@ class CareStore {
 
   // ------------------------------------------------------------- Registros
 
+  /// Registros que o profissional pode ler: os próprios e os concedidos.
   List<CareRecord> recordsFor(
     CareActor actor,
     String childId, {
@@ -400,7 +384,7 @@ class CareStore {
               (CareRecord r) =>
                   r.childId == childId &&
                   (specialty == null || r.specialty == specialty) &&
-                  CarePolicy.canRead(actor, r, links),
+                  CarePolicy.canRead(actor, r, links, grants),
             )
             .toList()
           ..sort((CareRecord a, CareRecord b) => b.createdAt.compareTo(a.createdAt));
@@ -413,25 +397,47 @@ class CareStore {
     return visible;
   }
 
+  CareRecord _record(String recordId) => records.firstWhere(
+    (CareRecord r) => r.id == recordId,
+    orElse: () => throw const CareAccessDenied('Registro inexistente.'),
+  );
+
   /// Leitura de um registro específico, com recusa registrada.
   CareRecord open(CareActor actor, String recordId) {
-    final CareRecord r = records.firstWhere(
-      (CareRecord r) => r.id == recordId,
-      orElse: () => throw const CareAccessDenied('Registro inexistente.'),
-    );
-    if (!CarePolicy.canRead(actor, r, links)) {
+    final CareRecord r = _record(recordId);
+    if (!CarePolicy.canRead(actor, r, links, grants)) {
       _deny(
         actor,
-        'abrir registro',
+        'abrir registro completo',
         '${r.kind.label} (${r.specialty.area})',
         r.childId,
-        r.visibility == CareVisibility.reservado
-            ? 'Registro reservado ao profissional responsável.'
-            : 'Sem acesso a este registro.',
+        'Registro completo restrito ao autor e a acessos concedidos com '
+            'justificativa.',
       );
     }
     _log(actor, 'abriu registro', '${r.kind.label} - ${r.origin}', r.childId);
     return r;
+  }
+
+  /// Seções que o leitor pode ver. Quem recebeu acesso concedido não vê
+  /// anotação privada, transcrição nem conversa.
+  List<CareSection> sectionsFor(CareActor actor, CareRecord record) {
+    if (record.authorId == actor.id) return record.sections;
+    if (!CarePolicy.canRead(actor, record, links, grants)) {
+      _deny(
+        actor,
+        'abrir registro completo',
+        '${record.kind.label} (${record.specialty.area})',
+        record.childId,
+        'Registro completo restrito ao autor e a acessos concedidos com '
+            'justificativa.',
+      );
+    }
+    if (!actor.isProfessional) return const <CareSection>[];
+    return <CareSection>[
+      for (final CareSection s in record.sections)
+        if (s.kind.shareable) s,
+    ];
   }
 
   CareRecord addRecord(
@@ -440,16 +446,11 @@ class CareStore {
     required CareRecordKind kind,
     required String title,
     required String body,
-    CareVisibility visibility = CareVisibility.equipe,
-    String? teamSummary,
+    CareVisibility visibility = CareVisibility.privado,
     String? measure,
     int? sessionNumber,
-    bool fromAi = false,
-    String? reviewedBy,
+    List<CareSectionInput> sections = const <CareSectionInput>[],
   }) {
-    if (fromAi && (reviewedBy ?? '').isEmpty) {
-      throw const CareAccessDenied('Texto da IA só é salvo depois de revisado.');
-    }
     final CareLink? link = linkOf(actor, childId);
     final String? why = CarePolicy.denyCreate(
       link: link,
@@ -472,8 +473,16 @@ class CareStore {
       createdAt: now,
       measure: measure,
       sessionNumber: sessionNumber,
-      fromAi: fromAi,
-      reviewedBy: reviewedBy,
+      sections: <CareSection>[
+        for (final CareSectionInput s in sections)
+          if (s.text.trim().isNotEmpty)
+            CareSection(
+              id: newId('sec'),
+              kind: s.kind,
+              label: s.label,
+              text: s.text.trim(),
+            ),
+      ],
     );
     if (visibility == CareVisibility.familia) r.releasedAt = now;
     records.add(r);
@@ -484,66 +493,7 @@ class CareStore {
       childId,
       clinicId: link.clinicId,
     );
-    final String summary = (teamSummary ?? '').trim();
-    if (visibility == CareVisibility.reservado && summary.isNotEmpty) {
-      _addSummary(actor, link, r, summary);
-    }
     return r;
-  }
-
-  CareRecord _addSummary(
-    CareActor actor,
-    CareLink link,
-    CareRecord source,
-    String text,
-  ) {
-    final CareRecord s = CareRecord(
-      id: newId('r'),
-      childId: source.childId,
-      clinicId: link.clinicId,
-      authorId: actor.id,
-      authorName: actor.name,
-      specialty: link.specialty,
-      kind: CareRecordKind.resumoEquipe,
-      title: 'Resumo para a equipe: ${source.title}',
-      body: text,
-      visibility: CareVisibility.equipe,
-      createdAt: clock(),
-      sourceId: source.id,
-    );
-    records.add(s);
-    _log(
-      actor,
-      'compartilhou resumo de registro reservado',
-      source.title,
-      source.childId,
-      clinicId: link.clinicId,
-    );
-    return s;
-  }
-
-  /// Resumo compartilhado de um registro reservado (cria ou atualiza).
-  CareRecord shareSummary(CareActor actor, CareRecord reserved, String text) {
-    final CareLink link = _requireLink(
-      actor,
-      reserved.childId,
-      'compartilhar resumo',
-    );
-    if (reserved.authorId != actor.id ||
-        reserved.visibility != CareVisibility.reservado) {
-      _deny(
-        actor,
-        'compartilhar resumo',
-        reserved.title,
-        reserved.childId,
-        'Só o autor compartilha o resumo do registro reservado.',
-      );
-    }
-    final CareRecord? existing = records
-        .where((CareRecord r) => r.sourceId == reserved.id)
-        .firstOrNull;
-    if (existing == null) return _addSummary(actor, link, reserved, text);
-    return edit(actor, existing, body: text, note: 'Resumo atualizado');
   }
 
   CareRecord edit(
@@ -594,7 +544,6 @@ class CareStore {
     if (record.authorId != actor.id ||
         link == null ||
         !record.kind.canGoToFamily ||
-        record.visibility == CareVisibility.reservado ||
         !CarePolicy.allows(link.specialty, CareAction.liberarFamilia)) {
       _deny(
         actor,
@@ -615,6 +564,7 @@ class CareStore {
     );
   }
 
+  /// Retirar da família devolve o registro ao autor (privado), não à equipe.
   void withdraw(CareActor actor, CareRecord record, String reason) {
     if (record.authorId != actor.id ||
         record.visibility != CareVisibility.familia) {
@@ -626,7 +576,7 @@ class CareStore {
         'Só o autor retira o conteúdo da família.',
       );
     }
-    record.visibility = CareVisibility.equipe;
+    record.visibility = CareVisibility.privado;
     record.releasedAt = null;
     _log(
       actor,
@@ -640,14 +590,17 @@ class CareStore {
   // ---------------------------------------------------------------- Anexos
 
   List<CareAttachment> attachmentsFor(CareActor actor, CareRecord record) {
-    if (!CarePolicy.canRead(actor, record, links)) {
+    if (!CarePolicy.canRead(actor, record, links, grants)) {
       _deny(
         actor,
         'abrir anexos',
         record.title,
         record.childId,
-        'Anexo protegido pelas mesmas regras do registro.',
+        'Anexo protegido pelas mesmas regras do registro completo.',
       );
+    }
+    if (record.authorId != actor.id) {
+      _log(actor, 'abriu anexos do registro', record.title, record.childId);
     }
     return attachments
         .where((CareAttachment a) => a.recordId == record.id)
@@ -677,115 +630,730 @@ class CareStore {
     return a;
   }
 
-  // ------------------------------------------------------- Visão da equipe
+  // ---------------------------------------------------- Acesso concedido
 
-  CareSharedView sharedView(CareActor actor, String childId) {
-    final CareLink link = _requireLink(actor, childId, 'abrir visão da equipe');
-    const Set<CareRecordKind> relevant = <CareRecordKind>{
-      CareRecordKind.resumoEquipe,
-      CareRecordKind.evolucao,
-      CareRecordKind.medida,
-      CareRecordKind.objetivos,
-      CareRecordKind.planoTerapeutico,
-      CareRecordKind.planoSessoes,
-    };
-    final List<CareSharedItem> items =
-        <CareSharedItem>[
-          for (final CareRecord r in records)
-            if (r.childId == childId &&
-                r.clinicId == link.clinicId &&
-                r.visibility != CareVisibility.reservado &&
-                relevant.contains(r.kind))
-              CareSharedItem(
-                recordId: r.id,
-                specialty: r.specialty,
-                authorName: r.authorName,
-                kind: r.kind,
-                title: r.title,
-                text: r.measure == null ? r.body : '${r.body} (${r.measure})',
-                at: r.updatedAt ?? r.createdAt,
-                fromReserved: r.sourceId != null,
-              ),
-        ]..sort(
-          (CareSharedItem a, CareSharedItem b) => b.at.compareTo(a.at),
-        );
+  CareLink _requireAuthor(CareActor actor, CareRecord record, String action) {
+    final CareLink? link = linkOf(actor, record.childId);
+    if (record.authorId != actor.id ||
+        link == null ||
+        link.clinicId != record.clinicId) {
+      _deny(
+        actor,
+        action,
+        '${record.kind.label} - ${record.origin}',
+        record.childId,
+        'Só o autor do registro, com vínculo ativo, faz isso.',
+      );
+    }
+    return link;
+  }
+
+  CareLink _requireColleague(
+    CareActor actor,
+    CareRecord record,
+    String professionalId,
+    String action,
+  ) {
+    final CareLink? target = colleaguesOf(actor, record.childId)
+        .where((CareLink l) => l.professionalId == professionalId)
+        .firstOrNull;
+    if (target == null || target.clinicId != record.clinicId) {
+      _deny(
+        actor,
+        action,
+        professionalId,
+        record.childId,
+        'Só profissionais com vínculo ativo na equipe da criança podem '
+            'receber.',
+      );
+    }
+    return target;
+  }
+
+  /// O autor concede acesso ao registro completo (sem as seções privadas) a
+  /// um profissional da equipe, com justificativa.
+  CareRecordGrant grantAccess(
+    CareActor actor,
+    CareRecord record, {
+    required String granteeId,
+    required String justification,
+  }) {
+    _requireAuthor(actor, record, 'conceder acesso');
+    final CareLink target = _requireColleague(
+      actor,
+      record,
+      granteeId,
+      'conceder acesso',
+    );
+    final String why = justification.trim();
+    if (why.length < CareRecordGrant.minJustification) {
+      throw const CareAccessDenied(
+        'Justifique o acesso ao registro completo (mínimo de '
+        '${CareRecordGrant.minJustification} caracteres).',
+      );
+    }
+    if (grants.any(
+      (CareRecordGrant g) =>
+          g.recordId == record.id && g.granteeId == granteeId && g.active,
+    )) {
+      throw const CareAccessDenied('Este profissional já tem acesso.');
+    }
+    final CareRecordGrant g = CareRecordGrant(
+      id: newId('g'),
+      recordId: record.id,
+      childId: record.childId,
+      granteeId: granteeId,
+      granteeName: target.professionalName,
+      granteeSpecialty: target.specialty,
+      justification: why,
+      grantedAt: clock(),
+      grantedBy: actor.name,
+    );
+    grants.add(g);
     _log(
       actor,
-      'visualizou visão compartilhada',
+      'concedeu acesso ao registro completo a ${target.professionalName} '
+          '($why)',
+      '${record.kind.label}: ${record.title}',
+      record.childId,
+      clinicId: record.clinicId,
+    );
+    return g;
+  }
+
+  /// Retirar o acesso vale também depois do fim do vínculo do autor.
+  void revokeGrant(CareActor actor, CareRecordGrant grant, String reason) {
+    final CareRecord record = _record(grant.recordId);
+    if (record.authorId != actor.id || !grant.active) {
+      _deny(
+        actor,
+        'retirar acesso',
+        grant.granteeName,
+        record.childId,
+        'Só o autor retira um acesso concedido.',
+      );
+    }
+    grant
+      ..revokedAt = clock()
+      ..revokedBy = actor.name
+      ..revokeReason = reason;
+    _log(
+      actor,
+      'retirou acesso de ${grant.granteeName} ao registro completo ($reason)',
+      '${record.kind.label}: ${record.title}',
+      record.childId,
+      clinicId: record.clinicId,
+    );
+  }
+
+  List<CareRecordGrant> grantsFor(CareActor actor, CareRecord record) {
+    if (record.authorId != actor.id) {
+      _deny(
+        actor,
+        'consultar acessos concedidos',
+        record.title,
+        record.childId,
+        'Só o autor consulta os acessos ao registro.',
+      );
+    }
+    return grants.where((CareRecordGrant g) => g.recordId == record.id).toList();
+  }
+
+  CareRecordGrant? grantOf(CareActor actor, CareRecord record) =>
+      CarePolicy.activeGrant(actor, record, links, grants);
+
+  // -------------------------------------------------- Resumo para a equipe
+
+  CareSummary? summaryOf(String recordId) => summaries
+      .where((CareSummary s) => s.recordId == recordId)
+      .firstOrNull;
+
+  /// Começa um resumo. O primeiro começa vazio; a atualização parte do que
+  /// está publicado.
+  CareSummaryDraft startSummary(CareActor actor, CareRecord record) {
+    _requireAuthor(actor, record, 'preparar resumo');
+    final CareSummaryDraft d = CareSummaryDraft(recordId: record.id);
+    final CareSummary? current = summaryOf(record.id);
+    if (current != null && current.published) {
+      final Set<String> still = <String>{
+        for (final CareShareItem i in record.shareableItems) i.id,
+      };
+      d.itemIds.addAll(
+        current.items.map((CareShareItem i) => i.id).where(still.contains),
+      );
+      d.attachmentIds.addAll(current.attachmentIds);
+      d.audience = current.audience;
+      if (current.audience == CareAudience.selecionados) {
+        d.recipientIds.addAll(current.recipientIds);
+      }
+      d.note = current.note;
+    }
+    return d;
+  }
+
+  /// Confere as escolhas e mostra exatamente o que será enviado.
+  CareSummaryPreview previewSummary(
+    CareActor actor,
+    CareRecord record,
+    CareSummaryDraft draft,
+  ) {
+    _requireAuthor(actor, record, 'compartilhar resumo');
+    if (draft.recordId != record.id) {
+      throw const CareAccessDenied('O resumo não é deste registro.');
+    }
+    final Map<String, CareShareItem> allowed = <String, CareShareItem>{
+      for (final CareShareItem i in record.shareableItems) i.id: i,
+    };
+    final Set<String> locked = <String>{
+      for (final CareSection s in record.lockedSections) s.id,
+    };
+    for (final String id in draft.itemIds) {
+      if (locked.contains(id)) {
+        _deny(
+          actor,
+          'incluir no resumo',
+          record.title,
+          record.childId,
+          'Anotação privada, transcrição e conversa não entram no resumo.',
+        );
+      }
+      if (!allowed.containsKey(id)) {
+        throw const CareAccessDenied('Informação inexistente no registro.');
+      }
+    }
+    final String note = draft.note.trim();
+    if (draft.itemIds.isEmpty && note.isEmpty) {
+      throw const CareAccessDenied(
+        'Escolha ao menos uma informação para o resumo.',
+      );
+    }
+    final List<CareAttachment> files = <CareAttachment>[];
+    for (final String id in draft.attachmentIds) {
+      final CareAttachment? a = attachments
+          .where((CareAttachment a) => a.id == id && a.recordId == record.id)
+          .firstOrNull;
+      if (a == null) {
+        throw const CareAccessDenied('Anexo inexistente neste registro.');
+      }
+      files.add(a);
+    }
+    final CareAudience? audience = draft.audience;
+    if (audience == null) {
+      throw const CareAccessDenied('Escolha os destinatários do resumo.');
+    }
+    final List<CareLink> recipients = switch (audience) {
+      CareAudience.equipe => colleaguesOf(actor, record.childId)
+          .where((CareLink l) => l.clinicId == record.clinicId)
+          .toList(),
+      CareAudience.selecionados => <CareLink>[
+        for (final String id in draft.recipientIds)
+          _requireColleague(actor, record, id, 'compartilhar resumo'),
+      ],
+    };
+    if (recipients.isEmpty) {
+      throw const CareAccessDenied(
+        'Escolha ao menos um profissional da equipe.',
+      );
+    }
+    if (draft.aiAssisted && !draft.aiReviewed) {
+      throw const CareAccessDenied(
+        'Revise o texto sugerido pela IA antes de compartilhar.',
+      );
+    }
+    final CareSummary? current = summaryOf(record.id);
+    return CareSummaryPreview(
+      recordId: record.id,
+      recordTitle: record.title,
+      items: <CareShareItem>[
+        for (final CareShareItem i in record.shareableItems)
+          if (draft.itemIds.contains(i.id)) i,
+      ],
+      attachments: files,
+      recipients: recipients,
+      audience: audience,
+      note: note,
+      version: (current?.version ?? 0) + 1,
+      aiAssisted: draft.aiAssisted,
+    );
+  }
+
+  /// Publica (ou atualiza) o resumo depois da prévia e da confirmação.
+  CareSummary publishSummary(
+    CareActor actor,
+    CareRecord record,
+    CareSummaryDraft draft, {
+    required bool confirmed,
+  }) {
+    final CareSummaryPreview p = previewSummary(actor, record, draft);
+    if (!confirmed) {
+      throw const CareAccessDenied(
+        'Confira a prévia e confirme o compartilhamento.',
+      );
+    }
+    final DateTime now = clock();
+    final CareSummary s =
+        summaryOf(record.id) ??
+        CareSummary(
+          id: newId('s'),
+          recordId: record.id,
+          childId: record.childId,
+          clinicId: record.clinicId,
+          authorId: actor.id,
+          authorName: actor.name,
+          specialty: record.specialty,
+          recordTitle: record.title,
+          createdAt: now,
+        );
+    if (!summaries.contains(s)) summaries.add(s);
+    s
+      ..status = CareSummaryStatus.publicado
+      ..audience = p.audience
+      ..recipientIds = <String>[
+        for (final CareLink l in p.recipients) l.professionalId,
+      ]
+      ..recipientNames = <String, String>{
+        for (final CareLink l in p.recipients)
+          l.professionalId: '${l.professionalName} (${l.specialty.area})',
+      }
+      ..items = List<CareShareItem>.of(p.items)
+      ..attachmentIds = <String>[
+        for (final CareAttachment a in p.attachments) a.id,
+      ]
+      ..note = p.note
+      ..version = p.version
+      ..updatedAt = now
+      ..aiAssisted = p.aiAssisted
+      ..reviewedBy = p.aiAssisted ? actor.name : null;
+    s.versions.add(
+      CareSummaryVersion(
+        version: s.version,
+        at: now,
+        actorName: actor.name,
+        status: s.status,
+        audience: s.audience,
+        recipientNames: s.recipientNames.values.toList(),
+        items: s.items,
+        attachmentNames: <String>[
+          for (final CareAttachment a in p.attachments) a.fileName,
+        ],
+        note: s.note,
+        aiAssisted: s.aiAssisted,
+      ),
+    );
+    _log(
+      actor,
+      '${p.isUpdate ? 'atualizou' : 'compartilhou'} resumo (versão '
+          '${s.version}) com ${s.recipientNames.values.join(', ')}',
+      '${record.kind.label}: ${record.title}',
+      record.childId,
+      clinicId: record.clinicId,
+    );
+    return s;
+  }
+
+  /// Encerra o acesso dos destinatários. As versões continuam com o autor.
+  void endSummary(CareActor actor, CareSummary summary, String reason) {
+    if (summary.authorId != actor.id || !summary.published) {
+      _deny(
+        actor,
+        'encerrar acesso ao resumo',
+        summary.recordTitle,
+        summary.childId,
+        'Só o autor encerra o acesso a um resumo compartilhado.',
+      );
+    }
+    final DateTime now = clock();
+    summary
+      ..status = CareSummaryStatus.encerrado
+      ..version = summary.version + 1
+      ..updatedAt = now;
+    summary.versions.add(
+      CareSummaryVersion(
+        version: summary.version,
+        at: now,
+        actorName: actor.name,
+        status: summary.status,
+        audience: summary.audience,
+        recipientNames: summary.recipientNames.values.toList(),
+        items: summary.items,
+        attachmentNames: <String>[
+          for (final CareAttachment a in attachments)
+            if (summary.attachmentIds.contains(a.id)) a.fileName,
+        ],
+        note: summary.note,
+        reason: reason,
+        aiAssisted: summary.aiAssisted,
+      ),
+    );
+    _log(
+      actor,
+      'encerrou acesso ao resumo de ${summary.recipientNames.values.join(', ')} '
+          '($reason)',
+      summary.recordTitle,
+      summary.childId,
+      clinicId: summary.clinicId,
+    );
+  }
+
+  void _recordAccess(CareActor actor, CareSummary s) {
+    if (s.authorId == actor.id) return;
+    final DateTime now = clock();
+    final bool repeated = s.accessLog.any(
+      (CareSummaryAccess a) =>
+          a.actorId == actor.id &&
+          a.version == s.version &&
+          now.difference(a.at).inSeconds.abs() < 60,
+    );
+    if (!repeated) {
+      s.accessLog.add(
+        CareSummaryAccess(
+          at: now,
+          actorId: actor.id,
+          actorName: actor.name,
+          version: s.version,
+        ),
+      );
+    }
+    _log(
+      actor,
+      'acessou resumo',
+      '${s.specialty.area} - ${s.authorName}: ${s.recordTitle} (versão '
+          '${s.version})',
+      s.childId,
+      clinicId: s.clinicId,
+    );
+  }
+
+  /// Resumos que o profissional pode ler: os que escreveu e os publicados
+  /// para ele. Mostrar um resumo ao destinatário conta como acesso.
+  List<CareSummary> summariesFor(CareActor actor, String childId) {
+    if (!actor.isProfessional || !canOpenChild(actor, childId)) {
+      _deny(
+        actor,
+        'abrir resumos da equipe',
+        'criança $childId',
+        childId,
+        'Resumos da equipe ficam só com o autor e os destinatários.',
+      );
+    }
+    final List<CareSummary> visible =
+        summaries
+            .where(
+              (CareSummary s) =>
+                  s.childId == childId &&
+                  CarePolicy.canReadSummary(actor, s, links),
+            )
+            .toList()
+          ..sort(
+            (CareSummary a, CareSummary b) =>
+                (b.updatedAt ?? b.createdAt).compareTo(a.updatedAt ?? a.createdAt),
+          );
+    for (final CareSummary s in visible) {
+      _recordAccess(actor, s);
+    }
+    return visible;
+  }
+
+  CareSummary openSummary(CareActor actor, String summaryId) {
+    final CareSummary s = summaries.firstWhere(
+      (CareSummary s) => s.id == summaryId,
+      orElse: () => throw const CareAccessDenied('Resumo inexistente.'),
+    );
+    if (!CarePolicy.canReadSummary(actor, s, links)) {
+      _deny(
+        actor,
+        'abrir resumo',
+        '${s.specialty.area} - ${s.authorName}',
+        s.childId,
+        s.published
+            ? 'Este resumo não foi compartilhado com você.'
+            : 'O autor encerrou o acesso a este resumo.',
+      );
+    }
+    _recordAccess(actor, s);
+    return s;
+  }
+
+  /// Anexos que o autor escolheu incluir no resumo, e só esses.
+  List<CareAttachment> summaryAttachments(CareActor actor, CareSummary s) {
+    if (!CarePolicy.canReadSummary(actor, s, links)) {
+      _deny(
+        actor,
+        'abrir anexos do resumo',
+        s.recordTitle,
+        s.childId,
+        'Anexos do resumo só para o autor e os destinatários.',
+      );
+    }
+    return attachments
+        .where((CareAttachment a) => s.attachmentIds.contains(a.id))
+        .toList();
+  }
+
+  /// Quem acessou: só o autor do resumo (a família e a gestão veem a trilha
+  /// geral).
+  List<CareSummaryAccess> accessesOf(CareActor actor, CareSummary s) {
+    if (s.authorId != actor.id) {
+      _deny(
+        actor,
+        'consultar acessos do resumo',
+        s.recordTitle,
+        s.childId,
+        'Só o autor consulta quem acessou o resumo.',
+      );
+    }
+    return s.accessLog.reversed.toList();
+  }
+
+  /// Itens que o autor marcou, já conferidos: a única entrada da IA ao
+  /// redigir um resumo.
+  List<CareShareItem> selectedItems(
+    CareActor actor,
+    CareRecord record,
+    CareSummaryDraft draft,
+  ) {
+    _requireAuthor(actor, record, 'sugerir resumo');
+    final Set<String> locked = <String>{
+      for (final CareSection s in record.lockedSections) s.id,
+    };
+    if (draft.itemIds.any(locked.contains)) {
+      _deny(
+        actor,
+        'sugerir resumo',
+        record.title,
+        record.childId,
+        'Anotação privada, transcrição e conversa não vão para a IA.',
+      );
+    }
+    return <CareShareItem>[
+      for (final CareShareItem i in record.shareableItems)
+        if (draft.itemIds.contains(i.id)) i,
+    ];
+  }
+
+  // --------------------------------------------- Plano terapêutico conjunto
+
+  CareLink _requirePlanMember(CareActor actor, String childId, String action) {
+    final CareLink link = _requireLink(actor, childId, action);
+    if (!CarePolicy.allows(link.specialty, CareAction.planoCompartilhado)) {
+      _deny(
+        actor,
+        action,
+        'plano terapêutico conjunto',
+        childId,
+        'Especialidade sem permissão para o plano conjunto.',
+      );
+    }
+    return link;
+  }
+
+  CarePlan? planFor(CareActor actor, String childId) {
+    final CareLink link = _requireLink(
+      actor,
+      childId,
+      'abrir plano terapêutico',
+    );
+    _log(
+      actor,
+      'visualizou plano terapêutico conjunto',
       'equipe',
       childId,
       clinicId: link.clinicId,
     );
-    return CareSharedView(
-      team: team(actor, childId),
-      plan: plans[planKey(childId, link.clinicId)],
-      items: items,
-    );
+    return plans[planKey(childId, link.clinicId)];
   }
 
-  CarePlan updatePlan(
+  CarePlan _planOf(CareLink link) => plans.putIfAbsent(
+    planKey(link.childId, link.clinicId),
+    () => CarePlan(childId: link.childId, clinicId: link.clinicId),
+  );
+
+  (CarePlan, CareLink) _goalContext(
+    CareActor actor,
+    CarePlanGoal goal,
+    String action,
+  ) {
+    for (final CarePlan p in plans.values) {
+      if (!p.goals.contains(goal)) continue;
+      final CareLink link = _requirePlanMember(actor, p.childId, action);
+      if (link.clinicId != p.clinicId) {
+        _deny(
+          actor,
+          action,
+          goal.objective,
+          p.childId,
+          'Plano de outra clínica.',
+        );
+      }
+      return (p, link);
+    }
+    throw const CareAccessDenied('Objetivo inexistente.');
+  }
+
+  CarePlanGoal addGoal(
     CareActor actor,
     String childId, {
-    required String text,
-    String? newGoal,
+    required String objective,
+    required String responsibleId,
+    required DateTime dueDate,
+    required DateTime reassessAt,
+    String firstAction = '',
   }) {
-    final CareLink link = _requireLink(actor, childId, 'editar plano');
-    if (!CarePolicy.allows(link.specialty, CareAction.planoCompartilhado)) {
-      _deny(
-        actor,
-        'editar plano',
-        'plano compartilhado',
-        childId,
-        'Especialidade sem permissão para editar o plano.',
+    final CareLink link = _requirePlanMember(actor, childId, 'criar objetivo');
+    final CareLink? responsible = responsibleId == actor.id
+        ? link
+        : colleaguesOf(actor, childId)
+              .where((CareLink l) => l.professionalId == responsibleId)
+              .firstOrNull;
+    if (responsible == null) {
+      throw const CareAccessDenied(
+        'O responsável precisa estar na equipe ativa da criança.',
       );
+    }
+    if (objective.trim().isEmpty) {
+      throw const CareAccessDenied('Descreva o objetivo.');
     }
     final DateTime now = clock();
-    final String key = planKey(childId, link.clinicId);
-    final CarePlan? current = plans[key];
-    final CarePlan plan =
-        current ??
-        CarePlan(
-          childId: childId,
-          clinicId: link.clinicId,
-          text: '',
-          updatedAt: now,
-          updatedBy: actor.name,
-          updatedBySpecialty: link.specialty,
-        );
-    if (current != null) {
-      plan.history.add(
-        CarePlanVersion(
-          at: plan.updatedAt,
-          actorName: plan.updatedBy,
-          specialty: plan.updatedBySpecialty,
-          text: plan.text,
-        ),
-      );
-    }
-    plan
-      ..text = text
-      ..updatedAt = now
-      ..updatedBy = actor.name
-      ..updatedBySpecialty = link.specialty;
-    final String goal = (newGoal ?? '').trim();
-    if (goal.isNotEmpty) {
-      plan.goals.add(
-        CarePlanGoal(
-          text: goal,
+    final CarePlan plan = _planOf(link);
+    final CarePlanGoal g = CarePlanGoal(
+      id: newId('o'),
+      objective: objective.trim(),
+      responsibleId: responsible.professionalId,
+      responsibleName: responsible.professionalName,
+      responsibleSpecialty: responsible.specialty,
+      dueDate: dueDate,
+      reassessAt: reassessAt,
+      createdBy: actor.name,
+      createdAt: now,
+    );
+    plan.goals.add(g);
+    if (firstAction.trim().isNotEmpty) {
+      g.contributions.add(
+        CarePlanContribution(
+          id: newId('c'),
+          authorId: actor.id,
+          authorName: actor.name,
           specialty: link.specialty,
-          ownerName: actor.name,
+          kind: CareContributionKind.acao,
+          text: firstAction.trim(),
+          at: now,
         ),
       );
     }
-    plans[key] = plan;
+    plan.history.add(
+      CarePlanChange(
+        at: now,
+        actorName: actor.name,
+        specialty: link.specialty,
+        description:
+            'Novo objetivo: ${g.objective} (responsável: '
+            '${g.responsibleName})',
+      ),
+    );
     _log(
       actor,
-      'alterou plano compartilhado',
+      'criou objetivo no plano terapêutico',
       link.specialty.area,
       childId,
       clinicId: link.clinicId,
     );
-    return plan;
+    return g;
+  }
+
+  /// O profissional escreve o que decide compartilhar no plano.
+  CarePlanContribution contribute(
+    CareActor actor,
+    CarePlanGoal goal, {
+    required CareContributionKind kind,
+    required String text,
+  }) {
+    final (CarePlan plan, CareLink link) = _goalContext(
+      actor,
+      goal,
+      'contribuir com o plano',
+    );
+    if (text.trim().isEmpty) {
+      throw const CareAccessDenied('Escreva a contribuição.');
+    }
+    final DateTime now = clock();
+    final CarePlanContribution c = CarePlanContribution(
+      id: newId('c'),
+      authorId: actor.id,
+      authorName: actor.name,
+      specialty: link.specialty,
+      kind: kind,
+      text: text.trim(),
+      at: now,
+    );
+    goal.contributions.add(c);
+    plan.history.add(
+      CarePlanChange(
+        at: now,
+        actorName: actor.name,
+        specialty: link.specialty,
+        description: '${kind.label} em "${goal.objective}"',
+      ),
+    );
+    _log(
+      actor,
+      'contribuiu com o plano (${kind.label.toLowerCase()})',
+      goal.objective,
+      plan.childId,
+      clinicId: plan.clinicId,
+    );
+    return c;
+  }
+
+  /// Reavaliação: só o profissional responsável pelo objetivo.
+  void reassess(
+    CareActor actor,
+    CarePlanGoal goal, {
+    required CareGoalStatus status,
+    required String note,
+    required DateTime nextReassessAt,
+  }) {
+    final (CarePlan plan, CareLink link) = _goalContext(
+      actor,
+      goal,
+      'reavaliar objetivo',
+    );
+    if (goal.responsibleId != actor.id) {
+      _deny(
+        actor,
+        'reavaliar objetivo',
+        goal.objective,
+        plan.childId,
+        'Só o profissional responsável reavalia o objetivo.',
+      );
+    }
+    final DateTime now = clock();
+    goal
+      ..status = status
+      ..reassessAt = nextReassessAt;
+    goal.reassessments.add(
+      CareReassessment(
+        at: now,
+        actorName: actor.name,
+        status: status,
+        note: note.trim(),
+        nextReassessAt: nextReassessAt,
+      ),
+    );
+    plan.history.add(
+      CarePlanChange(
+        at: now,
+        actorName: actor.name,
+        specialty: link.specialty,
+        description: 'Reavaliou "${goal.objective}": ${status.label}',
+      ),
+    );
+    _log(
+      actor,
+      'reavaliou objetivo (${status.label.toLowerCase()})',
+      goal.objective,
+      plan.childId,
+      clinicId: plan.clinicId,
+    );
   }
 
   // ------------------------------------------------------------ Comunicação
@@ -942,7 +1510,7 @@ class CareStore {
     return d;
   }
 
-  void _requireAuthor(CareActor actor, CareDocument d, String action) {
+  void _requireDocAuthor(CareActor actor, CareDocument d, String action) {
     if (d.authorId != actor.id || linkOf(actor, d.childId) == null) {
       _deny(
         actor,
@@ -955,7 +1523,7 @@ class CareStore {
   }
 
   void reviewDocument(CareActor actor, CareDocument d, {String? body}) {
-    _requireAuthor(actor, d, 'revisar documento');
+    _requireDocAuthor(actor, d, 'revisar documento');
     if (d.status == CareDocStatus.issued) {
       throw const CareAccessDenied('Documento emitido não muda.');
     }
@@ -965,7 +1533,7 @@ class CareStore {
   }
 
   void issueDocument(CareActor actor, CareDocument d) {
-    _requireAuthor(actor, d, 'emitir documento');
+    _requireDocAuthor(actor, d, 'emitir documento');
     if (d.status != CareDocStatus.reviewed) {
       throw const CareAccessDenied('Revise o documento antes de emitir.');
     }
@@ -975,7 +1543,7 @@ class CareStore {
   }
 
   void releaseDocument(CareActor actor, CareDocument d) {
-    _requireAuthor(actor, d, 'liberar documento');
+    _requireDocAuthor(actor, d, 'liberar documento');
     if (d.status != CareDocStatus.issued) {
       throw const CareAccessDenied('Só documento emitido vai para a família.');
     }
@@ -983,21 +1551,15 @@ class CareStore {
     _log(actor, 'liberou documento para a família', d.kind.label, d.childId);
   }
 
-  /// Autor vê os próprios; a equipe da mesma clínica vê os emitidos.
-  List<CareDocument> documentsFor(CareActor actor, String childId) {
-    final CareLink? link = linkOf(actor, childId);
-    return documents
-        .where(
-          (CareDocument d) =>
-              d.childId == childId &&
-              (d.authorId == actor.id ||
-                  (link != null &&
-                      d.clinicId == link.clinicId &&
-                      d.status == CareDocStatus.issued) ||
-                  (_isGuardian(actor, childId) && d.releasedAt != null)),
-        )
-        .toList();
-  }
+  /// Documentos são do autor; a família vê só os liberados.
+  List<CareDocument> documentsFor(CareActor actor, String childId) => documents
+      .where(
+        (CareDocument d) =>
+            d.childId == childId &&
+            ((actor.isProfessional && d.authorId == actor.id) ||
+                (_isGuardian(actor, childId) && d.releasedAt != null)),
+      )
+      .toList();
 
   // ---------------------------------------------------------------- Modelos
 
@@ -1060,7 +1622,8 @@ class CareStore {
         records
             .where(
               (CareRecord r) =>
-                  r.childId == childId && CarePolicy.canRead(actor, r, links),
+                  r.childId == childId &&
+                  CarePolicy.canRead(actor, r, links, grants),
             )
             .toList()
           ..sort(

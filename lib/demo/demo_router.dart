@@ -720,6 +720,17 @@ final GoRouter demoRouter = GoRouter(
               ),
         ),
         GoRoute(
+          path: '/cuidado/:id/resumo/:rid',
+          builder: (BuildContext context, GoRouterState state) =>
+              ScaffoldMessenger(
+                child: DemoCareSummaryScreen(
+                  key: ValueKey<String>(state.uri.toString()),
+                  childId: state.pathParameters['id']!,
+                  recordId: state.pathParameters['rid']!,
+                ),
+              ),
+        ),
+        GoRoute(
           path: '/profissional',
           builder: (BuildContext context, GoRouterState state) =>
               demoSession.profile == DemoProfile.profissional
