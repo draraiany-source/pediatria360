@@ -34,6 +34,49 @@ service firebase.storage {
       allow delete: if isOwner(uid);
     }
 
+    // Anexos do cuidado multidisciplinar: care/{criança}/{registro}/{arquivo}.
+    // Valem as mesmas regras do registro em care_teams (firestore.rules):
+    // reservado só o autor; equipe só com vínculo ativo na mesma clínica;
+    // família só o que foi liberado.
+    match /care/{childId}/{recordId}/{fileName} {
+      function recordPath() {
+        return /databases/(default)/documents/care_teams/$(childId)/records/$(recordId);
+      }
+
+      function rec() {
+        return firestore.get(recordPath()).data;
+      }
+
+      function memberPath() {
+        return /databases/(default)/documents/care_teams/$(childId)/members/$(request.auth.uid);
+      }
+
+      function activeMember() {
+        return firestore.exists(memberPath()) &&
+               firestore.get(memberPath()).data.status == 'active' &&
+               firestore.get(/databases/(default)/documents/users/$(request.auth.uid))
+                 .data.get('professionalVerified', false) == true;
+      }
+
+      function guardian() {
+        return firestore.get(/databases/(default)/documents/care_teams/$(childId))
+                 .data.ownerUid == request.auth.uid;
+      }
+
+      allow read: if signedIn() && firestore.exists(recordPath()) && (
+        rec().authorUid == request.auth.uid ||
+        (rec().visibility in ['equipe', 'familia'] && activeMember() &&
+         firestore.get(memberPath()).data.clinicId == rec().clinicId) ||
+        (rec().visibility == 'familia' &&
+         rec().get('releasedAt', null) != null && guardian()));
+      allow create: if signedIn() && firestore.exists(recordPath()) &&
+                       rec().authorUid == request.auth.uid && activeMember() &&
+                       request.resource.size < 10 * 1024 * 1024 &&
+                       (request.resource.contentType.matches('image/.*') ||
+                        request.resource.contentType == 'application/pdf');
+      allow update, delete: if false;
+    }
+
     // Capas de curso e imagens de artigo: leitura livre (aparecem antes do
     // login, na vitrine), escrita só por admin via console ou Function.
     match /public/{allPaths=**} {

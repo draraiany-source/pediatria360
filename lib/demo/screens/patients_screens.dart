@@ -14,6 +14,7 @@ import '../demo_data.dart';
 import '../demo_session.dart';
 import '../../shared/previsit/pre_visit.dart';
 import '../widgets/demo_widgets.dart';
+import 'care_team_screens.dart' show CareTab, carePath, careTileSubtitle;
 import 'pre_visit_screens.dart';
 import 'well_child_screen.dart';
 
@@ -271,6 +272,18 @@ class DemoPatientDetailScreen extends StatelessWidget {
                       ),
                     ],
                     const DemoSectionTitle('Ações'),
+                    if (!demoSession.isPediatrician &&
+                        demoSession.profile == DemoProfile.profissional)
+                      _ActionTile(
+                        icon: Icons.diversity_3_outlined,
+                        title: 'Cuidado multidisciplinar',
+                        subtitle:
+                            'Visão da equipe, área de '
+                            '${demoSession.careSpecialty?.area.toLowerCase() ?? 'atendimento'}'
+                            ', comunicação e documentos',
+                        highlight: true,
+                        onTap: () => context.go(carePath(p.id)),
+                      ),
                     if (demoSession.canUseClinicalTools)
                       _ActionTile(
                         icon: Icons.play_circle_outline_rounded,
@@ -299,6 +312,14 @@ class DemoPatientDetailScreen extends StatelessWidget {
                         subtitle: 'Consultas, evoluções e documentos',
                         onTap: () =>
                             context.go('/pacientes/${p.id}/prontuario'),
+                      ),
+                    if (demoSession.isPediatrician &&
+                        demoSession.care.canOpen(p.id))
+                      _ActionTile(
+                        icon: Icons.diversity_3_outlined,
+                        title: 'Cuidado multidisciplinar',
+                        subtitle: careTileSubtitle(p.id),
+                        onTap: () => context.go(carePath(p.id)),
                       ),
                     if (demoSession.workspace.canUseDiary) ...<Widget>[
                       _ActionTile(
@@ -369,6 +390,14 @@ class DemoPatientDetailScreen extends StatelessWidget {
                             context.go('/pacientes/${p.id}/crescimento'),
                       ),
                     if (isGuardian) ...<Widget>[
+                      _ActionTile(
+                        icon: Icons.diversity_3_outlined,
+                        title: 'Equipe e atividades',
+                        subtitle: careTileSubtitle(p.id),
+                        onTap: () => context.go(
+                          carePath(p.id, tab: CareTab.familia),
+                        ),
+                      ),
                       _ActionTile(
                         icon: Icons.favorite_border_rounded,
                         title: 'Saúde e desenvolvimento',
@@ -447,7 +476,7 @@ class DemoPatientDetailScreen extends StatelessWidget {
                         }(),
                         onTap: () => context.go(preVisitReviewUrl(p.id)),
                       ),
-                    if (demoSession.profile == DemoProfile.profissional)
+                    if (demoSession.isPediatrician)
                       if (demoSession.routineSharedWith(p.id)) ...<Widget>[
                         _ActionTile(
                           icon: Icons.summarize_outlined,

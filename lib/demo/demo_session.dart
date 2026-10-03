@@ -2,8 +2,10 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../shared/branding/brand_logo.dart';
+import '../shared/care/care_model.dart';
 import '../shared/clinical/audit_trail.dart';
 import '../shared/clinical/clinical_documents.dart';
+import '../shared/clinical/doc_templates.dart';
 import '../shared/clinical/dose_calculator.dart';
 import '../shared/clinical/family_release.dart';
 import '../shared/clinical/growth.dart';
@@ -11,18 +13,21 @@ import '../shared/clinical/lab_results.dart';
 import '../shared/clinical/orientation_templates.dart';
 import '../shared/clinical/rx_templates.dart';
 import '../shared/clinical/supplement_library.dart';
+import '../shared/clinical/template_library.dart';
 import '../shared/previsit/pre_visit.dart';
 import '../shared/previsit/pre_visit_guidance.dart';
 import '../shared/routine/child_routine.dart';
 import '../shared/wellchild/age_band.dart';
 import '../shared/wellchild/well_child_templates.dart';
 import '../shared/wellchild/well_child_visit.dart';
+import 'demo_care.dart';
 import 'demo_clinical.dart';
 import 'demo_data.dart';
 import 'demo_growth.dart';
 import 'demo_previsit_seed.dart';
 import 'demo_routine.dart';
 import 'demo_scheduling.dart';
+import 'demo_templates.dart';
 import 'demo_workspace.dart';
 
 /// Perfis da demonstracao — espelham as areas de trabalho do app real.
@@ -172,7 +177,10 @@ class DemoSession extends ChangeNotifier {
   late List<ClinicalDocRecord> documents;
   late List<OrientationTemplate> orientationTemplates;
   late List<RxTemplate> rxTemplates;
-  late Map<String, String> _rxTemplateOwner;
+  late List<DocTemplate> docTemplates;
+
+  /// Dono, escopo, pasta e arquivamento de todos os modelos de documento.
+  late TemplateLibrary templateLibrary;
   late List<WellChildTemplate> wellChildTemplates;
   late Map<String, String> _wcTemplateOwner;
   late BrandLogoStore logos;
@@ -212,11 +220,50 @@ class DemoSession extends ChangeNotifier {
     invoices = DemoSeed.invoices();
     consultations = DemoClinicalSeed.consultations(now);
     documents = DemoClinicalSeed.documents(patients, now);
-    orientationTemplates = DemoClinicalSeed.orientationTemplates(now);
-    rxTemplates = DemoClinicalSeed.rxTemplates(now);
-    _rxTemplateOwner = <String, String>{
-      for (final RxTemplate t in rxTemplates) t.id: DemoProfessional.id,
-    };
+    templateLibrary = TemplateLibrary();
+    orientationTemplates = <OrientationTemplate>[
+      ...DemoClinicalSeed.orientationTemplates(now),
+      DemoClinicalSeed.clinicOrientation(now),
+    ];
+    for (final OrientationTemplate t in orientationTemplates) {
+      templateLibrary.register(
+        t.ownerId == null
+            ? TemplateOrg(id: t.id, scope: TemplateScope.example, ownerId: '')
+            : TemplateOrg(
+                id: t.id,
+                scope: TemplateScope.clinic,
+                ownerId: t.ownerId!,
+              ),
+      );
+    }
+    rxTemplates = <RxTemplate>[
+      ...DemoClinicalSeed.rxTemplates(now),
+      DemoClinicalSeed.clinicRxTemplate(now),
+    ];
+    for (final RxTemplate t in rxTemplates) {
+      templateLibrary.register(
+        t.id == 'mc1'
+            ? const TemplateOrg(
+                id: 'mc1',
+                scope: TemplateScope.clinic,
+                ownerId: DemoProfessional.clinicId,
+              )
+            : TemplateOrg(
+                id: t.id,
+                scope: TemplateScope.personal,
+                ownerId: DemoProfessional.id,
+                folder: 'Receitas frequentes',
+              ),
+      );
+    }
+    docTemplates = <DocTemplate>[];
+    for (final (DocTemplate t, TemplateOrg o)
+        in DemoClinicalSeed.docTemplates(now)) {
+      docTemplates.add(t);
+      templateLibrary.register(o);
+    }
+    templates = DemoTemplates(this);
+    _accountEdits.clear();
     wellChildTemplates = DemoClinicalSeed.wellChildTemplates(
       author: DemoProfessional.name,
       now: now,
@@ -254,13 +301,48 @@ class DemoSession extends ChangeNotifier {
     preVisitGuidance = PreVisitGuidance();
     scheduling = DemoScheduling(this);
     workspace = DemoWorkspace(this);
+    appointments = <DemoAppointment>[
+      ...appointments,
+      ...DemoCare.appointments(now),
+    ];
+    care = DemoCare(this);
   }
+
+  /// Equipe multidisciplinar: vínculos, registros, plano e comunicação.
+  late DemoCare care;
+
+  /// Especialidade da conta profissional em uso.
+  CareSpecialty? get careSpecialty => _profile == DemoProfile.profissional
+      ? CareSpecialty.fromText(_account.specialty)
+      : null;
+
+  /// Prontuário pediátrico, consulta, receita, calculadora e suplementação
+  /// são da pediatria; psicologia e fisioterapia têm áreas próprias.
+  bool get isPediatrician => careSpecialty == CareSpecialty.pediatria;
 
   /// Acompanhamento, lembretes e agendamento assistido.
   late DemoScheduling scheduling;
 
   /// Diário, tarefas, observações, resumo, histórico e alterações.
   late DemoWorkspace workspace;
+
+  /// Biblioteca de modelos de documento.
+  late DemoTemplates templates;
+
+  /// Quem age sobre a biblioteca: a conta do profissional em uso ou a
+  /// gestão do Consultório Exemplo (perfil administrador).
+  TemplateActor get templateActor => _profile == DemoProfile.administrador
+      ? const TemplateActor(
+          accountId: DemoProfessional.managerId,
+          name: DemoProfessional.managerName,
+          clinicId: DemoProfessional.clinicId,
+          managesClinic: true,
+        )
+      : TemplateActor(
+          accountId: _account.id,
+          name: _account.name,
+          clinicId: _account.clinicId,
+        );
 
   /// Para os módulos auxiliares avisarem as telas.
   void changed() => notifyListeners();
@@ -331,19 +413,43 @@ class DemoSession extends ChangeNotifier {
         ],
       };
 
-  List<DemoModule> get modules =>
-      _profile == null ? const <DemoModule>[] : access[_profile]!;
+  /// Módulos só da pediatria (doses e suplementação) ficam fora para as
+  /// demais especialidades.
+  static const Set<DemoModule> pediatricModules = <DemoModule>{
+    DemoModule.calculadora,
+    DemoModule.suplementacao,
+    DemoModule.vacinacao,
+  };
+
+  List<DemoModule> get modules {
+    if (_profile == null) return const <DemoModule>[];
+    final List<DemoModule> all = access[_profile]!;
+    if (_profile == DemoProfile.profissional && !isPediatrician) {
+      return all
+          .where((DemoModule m) => !pediatricModules.contains(m))
+          .toList(growable: false);
+    }
+    return all;
+  }
 
   bool canOpen(DemoModule module) => modules.contains(module);
 
-  /// Prontuario e so do profissional; a recepcao ve cadastro, nao clinica.
-  bool get canSeeClinicalRecord => _profile == DemoProfile.profissional;
+  /// Prontuário pediátrico: só a pediatria. A recepção vê cadastro, não
+  /// clínica; psicologia e fisioterapia usam a ficha multidisciplinar.
+  bool get canSeeClinicalRecord => isPediatrician;
 
-  /// O responsavel ve apenas as criancas vinculadas a ele (ficticio: A).
+  /// O responsável vê apenas as crianças dele (fictício: A). O profissional,
+  /// só as crianças com vínculo ativo (ou com registros que ele mesmo fez).
   List<DemoPatient> get visiblePatients {
     if (_profile == DemoProfile.responsavel) {
       return patients
           .where((DemoPatient p) => p.guardianName == guardianOfDemo)
+          .toList(growable: false);
+    }
+    if (_profile == DemoProfile.profissional) {
+      final CareActor a = care.actor;
+      return patients
+          .where((DemoPatient p) => care.store.canOpenChild(a, p.id))
           .toList(growable: false);
     }
     return List<DemoPatient>.unmodifiable(patients);
@@ -402,8 +508,8 @@ class DemoSession extends ChangeNotifier {
 
   // ------------------------------------------------ Área clínica
 
-  /// Consultas, documentos, calculadora e suplementação: só o profissional.
-  bool get canUseClinicalTools => _profile == DemoProfile.profissional;
+  /// Consultas, documentos, calculadora e suplementação: só a pediatria.
+  bool get canUseClinicalTools => isPediatrician;
 
   String get currentAuthor => _account.name;
 
@@ -411,12 +517,36 @@ class DemoSession extends ChangeNotifier {
 
   DemoAccount _account = DemoProfessional.account;
 
+  /// Dados profissionais editados nesta aba, por conta.
+  final Map<String, DemoAccount> _accountEdits = <String, DemoAccount>{};
+
   /// Conta do profissional ou clínica em uso (a demonstração tem duas).
   DemoAccount get account => _account;
 
+  DemoAccount accountById(String id) =>
+      _accountEdits[id] ?? DemoProfessional.byId(id);
+
   void switchAccount(String accountId) {
-    final DemoAccount next = DemoProfessional.byId(accountId);
+    final DemoAccount next = accountById(accountId);
     if (next.id == _account.id) return;
+    _account = next;
+    notifyListeners();
+  }
+
+  /// Usado pelo redirect do roteador (link com `?conta=`).
+  void switchAccountSilently(String accountId) {
+    if (DemoProfessional.accounts.any((DemoAccount a) => a.id == accountId)) {
+      _account = accountById(accountId);
+    }
+  }
+
+  /// Dados que saem no cabeçalho e na assinatura dos documentos. Documentos
+  /// já emitidos guardam os dados da emissão e não mudam.
+  void updateProfessionalData(DemoAccount next) {
+    if (!canBrand || next.id != _account.id) {
+      throw StateError('Só o próprio profissional altera os seus dados.');
+    }
+    _accountEdits[next.id] = next;
     _account = next;
     notifyListeners();
   }
@@ -464,9 +594,12 @@ class DemoSession extends ChangeNotifier {
         issuedLogoId: version.logoId,
       );
 
-  /// Emite gravando a logomarca vigente de quem emite.
-  ClinicalDocRecord issueDocument(ClinicalDocRecord doc) =>
-      doc.issue(now: DateTime.now(), logoId: myLogo?.id);
+  /// Emite gravando a logomarca vigente de quem emite e os dados do
+  /// paciente e do profissional daquele momento.
+  ClinicalDocRecord issueDocument(
+    ClinicalDocRecord doc, {
+    DocContext? context,
+  }) => doc.issue(now: DateTime.now(), logoId: myLogo?.id, context: context);
 
   String _ownerOf(ClinicalDocRecord d) => d.ownerId ?? DemoProfessional.id;
 
@@ -597,36 +730,21 @@ class DemoSession extends ChangeNotifier {
     String body, {
     OrientationTopic topic = OrientationTopic.geral,
     ChildAgeBand? band,
-  }) {
-    final OrientationTemplate t = OrientationTemplate(
-      id: 't${_nextId++}',
-      title: title,
-      body: body,
-      author: currentAuthor,
-      updatedAt: DateTime.now(),
-      topic: topic,
-      band: band,
-      ownerId: _account.id,
-    );
-    orientationTemplates = <OrientationTemplate>[t, ...orientationTemplates];
-    notifyListeners();
-    return t;
-  }
+  }) => templates.createOrientation(
+    title: title,
+    body: body,
+    topic: topic,
+    band: band,
+  );
 
-  /// Exemplos (de todas as contas) e os modelos criados pela conta em uso.
+  /// Modelos de orientação que a conta em uso pode aplicar: os próprios, os
+  /// da clínica e os exemplos, sem os arquivados.
   List<OrientationTemplate> get myOrientationTemplates => orientationTemplates
-      .where(
-        (OrientationTemplate t) =>
-            t.ownerId == null || t.ownerId == _account.id,
-      )
+      .where((OrientationTemplate t) => templates.canUse(t.id))
       .toList(growable: false);
 
-  OrientationTemplate? orientationTemplateById(String id) {
-    for (final OrientationTemplate t in myOrientationTemplates) {
-      if (t.id == id) return t;
-    }
-    return null;
-  }
+  OrientationTemplate? orientationTemplateById(String id) =>
+      templates.orientation(id);
 
   // ------------------------------------------------ Puericultura
 
@@ -934,8 +1052,7 @@ class DemoSession extends ChangeNotifier {
   }
 
   /// Profissional ou clínica que emitiu o documento.
-  DemoAccount documentAccount(ClinicalDocRecord d) =>
-      DemoProfessional.byId(_ownerOf(d));
+  DemoAccount documentAccount(ClinicalDocRecord d) => accountById(_ownerOf(d));
 
   /// Logomarca gravada no documento emitido, para o PDF da família.
   BrandLogo? familyDocumentLogo(ClinicalDocRecord d) {
@@ -954,16 +1071,24 @@ class DemoSession extends ChangeNotifier {
 
   String newRxTemplateId() => 'm${_nextId++}';
 
-  bool _myTemplate(RxTemplate t) =>
-      (_rxTemplateOwner[t.id] ?? DemoProfessional.id) == _account.id;
+  /// Modelos que a conta em uso pode aplicar: os próprios e os da clínica,
+  /// sem os arquivados.
+  List<RxTemplate> get myRxTemplates => rxTemplates
+      .where((RxTemplate t) => templates.canUse(t.id))
+      .toList(growable: false);
 
-  /// Modelos da conta em uso.
-  List<RxTemplate> get myRxTemplates =>
-      rxTemplates.where(_myTemplate).toList(growable: false);
-
+  /// Modelo que a conta em uso pode editar.
   RxTemplate? rxTemplateById(String id) {
     for (final RxTemplate t in rxTemplates) {
-      if (t.id == id) return _myTemplate(t) ? t : null;
+      if (t.id == id) return templates.canManage(id) ? t : null;
+    }
+    return null;
+  }
+
+  /// Modelo que a conta em uso pode ver (inclusive os da clínica).
+  RxTemplate? rxTemplateVisible(String id) {
+    for (final RxTemplate t in rxTemplates) {
+      if (t.id == id) return templateLibrary.canSee(id, templateActor) ? t : null;
     }
     return null;
   }
@@ -976,8 +1101,10 @@ class DemoSession extends ChangeNotifier {
 
   void saveRxTemplate(RxTemplate t) {
     final bool exists = rxTemplates.any((RxTemplate x) => x.id == t.id);
-    if (exists && !_myTemplate(t)) return;
-    _rxTemplateOwner.putIfAbsent(t.id, () => _account.id);
+    if (exists && !templates.canManage(t.id)) return;
+    if (templateLibrary.orgOf(t.id) == null) {
+      templateLibrary.registerNew(t.id, templateActor);
+    }
     rxTemplates = <RxTemplate>[
       if (!exists) t,
       for (final RxTemplate x in rxTemplates) x.id == t.id ? t : x,
@@ -1019,8 +1146,7 @@ class DemoSession extends ChangeNotifier {
   /// Curvas: o profissional vê o detalhe; o responsável, a visão simples
   /// das crianças vinculadas a ele. Os demais perfis não veem.
   bool get canSeeGrowth =>
-      _profile == DemoProfile.profissional ||
-      _profile == DemoProfile.responsavel;
+      isPediatrician || _profile == DemoProfile.responsavel;
 
   bool get canEditGrowth => canUseClinicalTools;
 
@@ -1139,8 +1265,7 @@ class DemoSession extends ChangeNotifier {
   /// Responsável: as próprias crianças. Profissional: só as crianças cuja
   /// família autorizou o compartilhamento, e só para leitura.
   bool get canUseRoutine =>
-      _profile == DemoProfile.responsavel ||
-      _profile == DemoProfile.profissional;
+      _profile == DemoProfile.responsavel || isPediatrician;
 
   bool get canEditRoutine => _profile == DemoProfile.responsavel;
 
@@ -1149,7 +1274,7 @@ class DemoSession extends ChangeNotifier {
 
   DemoPatient? routinePatient(String patientId) {
     if (_profile == DemoProfile.responsavel) return patientById(patientId);
-    if (_profile == DemoProfile.profissional && routineSharedWith(patientId)) {
+    if (isPediatrician && routineSharedWith(patientId)) {
       return patientById(patientId);
     }
     return null;
@@ -1395,8 +1520,9 @@ class DemoSession extends ChangeNotifier {
     return null;
   }
 
-  /// Consultas de hoje em diante, ainda não concluídas, de uma criança que o
-  /// perfil atual pode ver.
+  /// Consultas pediátricas de hoje em diante, ainda não concluídas, de uma
+  /// criança que o perfil atual pode ver. Sessões de psicologia e
+  /// fisioterapia aparecem na área da família do cuidado multidisciplinar.
   List<DemoAppointment> upcomingAppointmentsFor(String patientId) {
     if (patientById(patientId) == null) return const <DemoAppointment>[];
     final DateTime t = now;
@@ -1405,6 +1531,8 @@ class DemoSession extends ChangeNotifier {
         .where(
           (DemoAppointment a) =>
               a.patientId == patientId &&
+              DemoCare.specialtyOf(a.professionalId) ==
+                  CareSpecialty.pediatria &&
               a.status != DemoAppointmentStatus.concluido &&
               a.status.holdsSlot &&
               !a.start.isBefore(today),

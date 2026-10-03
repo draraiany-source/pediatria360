@@ -165,6 +165,7 @@ class DemoDocHeader extends StatelessWidget {
     required this.account,
     required this.logo,
     required this.kindLabel,
+    this.issued,
     super.key,
   });
 
@@ -172,24 +173,34 @@ class DemoDocHeader extends StatelessWidget {
   final BrandLogo? logo;
   final String kindLabel;
 
+  /// Dados gravados na emissão; quando presentes, valem no lugar da conta.
+  final DocContext? issued;
+
   @override
   Widget build(BuildContext context) {
     final TextTheme t = Theme.of(context).textTheme;
+    final DocContext? i = issued;
     final Widget info = Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
         Text(
-          account.clinic,
+          i == null ? account.clinic : (i.clinicName ?? i.professionalName),
           style: t.titleSmall?.copyWith(
             color: AppColors.navy,
             fontWeight: FontWeight.w800,
           ),
         ),
         Text(
-          '${account.name} - ${account.registry} - ${account.specialty}',
+          i == null
+              ? '${account.name} - ${account.registry} - ${account.specialty}'
+              : <String>[
+                  i.professionalName,
+                  i.professionalRegistry,
+                  ?i.professionalSpecialty,
+                ].join(' - '),
           style: t.bodySmall,
         ),
-        Text(account.address, style: t.bodySmall),
+        Text(i == null ? account.address : (i.clinicAddress ?? ''), style: t.bodySmall),
       ],
     );
     final Widget kind = Text(

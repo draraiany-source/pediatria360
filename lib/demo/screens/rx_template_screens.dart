@@ -7,11 +7,13 @@ import '../../core/widgets/clinical_ui.dart';
 import '../../shared/clinical/clinical_documents.dart';
 import '../../shared/clinical/dose_calculator.dart';
 import '../../shared/clinical/rx_templates.dart';
+import '../../shared/clinical/template_library.dart';
 import '../demo_data.dart';
 import '../demo_session.dart';
 import '../widgets/demo_widgets.dart';
 import '../widgets/flow_widgets.dart';
 import 'documents_screens.dart';
+import 'template_library_screens.dart';
 
 const String rxTemplatesPath = '/modelos-receita';
 
@@ -148,14 +150,12 @@ class _DemoRxTemplatesScreenState extends State<DemoRxTemplatesScreen> {
   }
 
   void _duplicate(RxTemplate t) {
-    final RxTemplate copy = t.duplicate(
-      id: demoSession.newRxTemplateId(),
-      author: demoSession.currentAuthor,
-      now: DateTime.now(),
+    final String id = demoSession.templates.duplicate(t.id);
+    showDemoSnack(
+      context,
+      'Modelo duplicado em Meus modelos. Edite a cópia; o original não muda.',
     );
-    demoSession.saveRxTemplate(copy);
-    showDemoSnack(context, 'Modelo duplicado: "${copy.name}". Edite a cópia.');
-    context.go('$rxTemplatesPath/${copy.id}/editar');
+    context.go('$rxTemplatesPath/$id/editar');
   }
 
   @override
@@ -183,7 +183,20 @@ class _DemoRxTemplatesScreenState extends State<DemoRxTemplatesScreen> {
                     icon: const Icon(Icons.arrow_back_rounded),
                     onPressed: () => context.go(back),
                   ),
-            title: const Text('Meus modelos de receita'),
+            title: Text(
+              demoSession.templates.managesClinic
+                  ? 'Modelos de receita da clínica'
+                  : 'Meus modelos de receita',
+            ),
+            actions: <Widget>[
+              IconButton(
+                tooltip: 'Todos os modelos de documentos',
+                icon: const Icon(Icons.bookmarks_outlined),
+                onPressed: () => context.go(
+                  p == null ? templatesPath : '$templatesPath?paciente=${p.id}',
+                ),
+              ),
+            ],
           ),
           floatingActionButton: FloatingActionButton.extended(
             onPressed: () => context.go('$rxTemplatesPath/novo'),
@@ -255,10 +268,14 @@ class _DemoRxTemplatesScreenState extends State<DemoRxTemplatesScreen> {
                     for (final RxTemplate t in list)
                       _TemplateCard(
                         template: t,
+                        scope: demoSession.templateLibrary.orgOf(t.id)?.scope,
                         useLabel: p == null ? 'Usar' : 'Usar para ${p.name}',
-                        onUse: () => _use(t),
-                        onEdit: () =>
-                            context.go('$rxTemplatesPath/${t.id}/editar'),
+                        onUse: demoSession.canUseClinicalTools
+                            ? () => _use(t)
+                            : null,
+                        onEdit: demoSession.templates.canManage(t.id)
+                            ? () => context.go('$rxTemplatesPath/${t.id}/editar')
+                            : null,
                         onDuplicate: () => _duplicate(t),
                       ),
                   ],
@@ -275,6 +292,7 @@ class _DemoRxTemplatesScreenState extends State<DemoRxTemplatesScreen> {
 class _TemplateCard extends StatelessWidget {
   const _TemplateCard({
     required this.template,
+    required this.scope,
     required this.useLabel,
     required this.onUse,
     required this.onEdit,
@@ -282,9 +300,14 @@ class _TemplateCard extends StatelessWidget {
   });
 
   final RxTemplate template;
+  final TemplateScope? scope;
   final String useLabel;
-  final VoidCallback onUse;
-  final VoidCallback onEdit;
+
+  /// `null` quando o perfil não prescreve (administração da clínica).
+  final VoidCallback? onUse;
+
+  /// `null` para modelos que a conta não pode editar (da clínica).
+  final VoidCallback? onEdit;
   final VoidCallback onDuplicate;
 
   @override
@@ -310,7 +333,9 @@ class _TemplateCard extends StatelessWidget {
                   const ClinicalBadge(
                     label: 'Exemplo fictício',
                     color: AppColors.warning,
-                  ),
+                  )
+                else if (scope == TemplateScope.clinic)
+                  ClinicalBadge(label: scope!.label, color: AppColors.teal),
               ],
             ),
             const SizedBox(height: 4),
@@ -333,18 +358,20 @@ class _TemplateCard extends StatelessWidget {
               spacing: AppSpacing.sm,
               runSpacing: AppSpacing.xs,
               children: <Widget>[
-                FilledButton.tonalIcon(
-                  key: ValueKey<String>('usar-${m.id}'),
-                  onPressed: onUse,
-                  icon: const Icon(Icons.note_add_outlined),
-                  label: Text(useLabel),
-                ),
-                OutlinedButton.icon(
-                  key: ValueKey<String>('editar-${m.id}'),
-                  onPressed: onEdit,
-                  icon: const Icon(Icons.edit_outlined),
-                  label: const Text('Editar'),
-                ),
+                if (onUse != null)
+                  FilledButton.tonalIcon(
+                    key: ValueKey<String>('usar-${m.id}'),
+                    onPressed: onUse,
+                    icon: const Icon(Icons.note_add_outlined),
+                    label: Text(useLabel),
+                  ),
+                if (onEdit != null)
+                  OutlinedButton.icon(
+                    key: ValueKey<String>('editar-${m.id}'),
+                    onPressed: onEdit,
+                    icon: const Icon(Icons.edit_outlined),
+                    label: const Text('Editar'),
+                  ),
                 OutlinedButton.icon(
                   key: ValueKey<String>('duplicar-${m.id}'),
                   onPressed: onDuplicate,

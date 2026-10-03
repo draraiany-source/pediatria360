@@ -12,6 +12,7 @@ import '../../shared/clinical/clinical_documents.dart';
 import '../../shared/clinical/clinical_pdf.dart';
 import '../../shared/clinical/file_input.dart';
 import '../../shared/clinical/pdf_output.dart';
+import '../demo_clinical.dart';
 import '../demo_session.dart';
 import '../widgets/brand_widgets.dart';
 import '../widgets/demo_widgets.dart';
@@ -347,6 +348,8 @@ class _DemoLogoScreenState extends State<DemoLogoScreen> {
                         label: const Text('Ver PDF de exemplo'),
                       ),
                     ),
+                    const DemoSectionTitle('Dados profissionais nos documentos'),
+                    _ProfessionalDataCard(account: demoSession.account),
                     const SizedBox(height: AppSpacing.xl),
                   ],
                 ),
@@ -355,6 +358,177 @@ class _DemoLogoScreenState extends State<DemoLogoScreen> {
           ),
         );
       },
+    );
+  }
+}
+
+/// Nome, registro, especialidade e endereço que saem no cabeçalho e na
+/// assinatura dos documentos.
+class _ProfessionalDataCard extends StatelessWidget {
+  const _ProfessionalDataCard({required this.account});
+
+  final DemoAccount account;
+
+  Future<void> _edit(BuildContext context) async {
+    final DemoAccount? next = await showDialog<DemoAccount>(
+      context: context,
+      builder: (BuildContext c) => _ProfessionalDataDialog(account: account),
+    );
+    if (next == null || !context.mounted) return;
+    demoSession.updateProfessionalData(next);
+    showDemoSnack(
+      context,
+      'Dados profissionais atualizados. Valem para os próximos documentos; '
+      'os já emitidos mantêm os dados da emissão.',
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final TextTheme t = Theme.of(context).textTheme;
+    Widget row(String k, String v) => Padding(
+      padding: const EdgeInsets.only(bottom: 4),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          SizedBox(width: 120, child: Text(k, style: t.labelMedium)),
+          Expanded(child: Text(v.isEmpty ? '-' : v)),
+        ],
+      ),
+    );
+    return PremiumCard(
+      padding: const EdgeInsets.all(AppSpacing.md),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: <Widget>[
+          row('Nome', account.name),
+          row('Registro', account.registry),
+          row('Especialidade', account.specialty),
+          row('Clínica', account.clinic),
+          row('Endereço', account.address),
+          row('Cidade', account.city),
+          row('Telefone', account.phone),
+          const SizedBox(height: AppSpacing.sm),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: OutlinedButton.icon(
+              key: const ValueKey<String>('dados-profissionais-editar'),
+              onPressed: () => _edit(context),
+              icon: const Icon(Icons.edit_outlined),
+              label: const Text('Editar dados profissionais'),
+            ),
+          ),
+          const SizedBox(height: AppSpacing.xs),
+          Text(
+            'Documentos já emitidos guardam os dados da emissão e não mudam.',
+            style: t.bodySmall,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ProfessionalDataDialog extends StatefulWidget {
+  const _ProfessionalDataDialog({required this.account});
+
+  final DemoAccount account;
+
+  @override
+  State<_ProfessionalDataDialog> createState() =>
+      _ProfessionalDataDialogState();
+}
+
+class _ProfessionalDataDialogState extends State<_ProfessionalDataDialog> {
+  late final Map<String, TextEditingController> _c =
+      <String, TextEditingController>{
+        'name': TextEditingController(text: widget.account.name),
+        'registry': TextEditingController(text: widget.account.registry),
+        'specialty': TextEditingController(text: widget.account.specialty),
+        'clinic': TextEditingController(text: widget.account.clinic),
+        'address': TextEditingController(text: widget.account.address),
+        'city': TextEditingController(text: widget.account.city),
+        'phone': TextEditingController(text: widget.account.phone),
+      };
+  bool _tried = false;
+
+  static const Map<String, String> _labels = <String, String>{
+    'name': 'Nome *',
+    'registry': 'Registro profissional (CRM/UF) *',
+    'specialty': 'Especialidade',
+    'clinic': 'Clínica ou consultório',
+    'address': 'Endereço',
+    'city': 'Cidade/UF',
+    'phone': 'Telefone',
+  };
+
+  @override
+  void dispose() {
+    for (final TextEditingController c in _c.values) {
+      c.dispose();
+    }
+    super.dispose();
+  }
+
+  String _v(String k) => _c[k]!.text.trim();
+
+  bool get _valid => _v('name').length >= 3 && _v('registry').length >= 3;
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('Dados profissionais'),
+      content: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            for (final String k in _labels.keys)
+              Padding(
+                padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+                child: TextField(
+                  key: ValueKey<String>('dados-$k'),
+                  controller: _c[k],
+                  decoration: InputDecoration(
+                    labelText: _labels[k],
+                    errorText:
+                        _tried &&
+                            (k == 'name' || k == 'registry') &&
+                            _v(k).length < 3
+                        ? 'Campo obrigatório.'
+                        : null,
+                  ),
+                ),
+              ),
+          ],
+        ),
+      ),
+      actions: <Widget>[
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('Cancelar'),
+        ),
+        FilledButton(
+          key: const ValueKey<String>('dados-salvar'),
+          onPressed: () {
+            if (!_valid) {
+              setState(() => _tried = true);
+              return;
+            }
+            Navigator.of(context).pop(
+              widget.account.copyWith(
+                name: _v('name'),
+                registry: _v('registry'),
+                specialty: _v('specialty'),
+                clinic: _v('clinic'),
+                address: _v('address'),
+                city: _v('city'),
+                phone: _v('phone'),
+              ),
+            );
+          },
+          child: const Text('Salvar'),
+        ),
+      ],
     );
   }
 }

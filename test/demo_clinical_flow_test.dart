@@ -409,12 +409,28 @@ void main() {
         );
         await tester.pump();
         await tapText(tester, 'Salvar rascunho');
+        expect(find.text('Criar versão 3'), findsOneWidget);
+        await tester.tap(find.byKey(const ValueKey<String>('confirmar-versao')));
+        await tester.pumpAndSettle();
+        expect(find.textContaining('mínimo de 5 caracteres'), findsOneWidget);
+        expect(demoSession.documentById('d1')!.versions.length, 2);
+        await tester.enterText(
+          find.byKey(const ValueKey<String>('motivo-versao')),
+          'Período ajustado a pedido da escola',
+        );
+        await tester.tap(find.byKey(const ValueKey<String>('confirmar-versao')));
+        await tester.pumpAndSettle();
         final ClinicalDocRecord d = demoSession.documentById('d1')!;
         expect(d.versions.length, 3);
         expect(d.versions[1].status, DocStatus.issued);
         expect(d.current.status, DocStatus.draft);
         expect(d.current.body, contains('por 3 dias'));
         expect(d.versions[1].body, contains('por 2 dias'));
+        expect(
+          d.current.changeNote,
+          'Correção: Período ajustado a pedido da escola',
+        );
+        expect(d.current.author, demoSession.currentAuthor);
       },
     );
 

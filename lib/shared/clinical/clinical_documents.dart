@@ -130,6 +130,7 @@ class DocContext {
     this.clinicAddress,
     this.city,
     this.clinicalSummary,
+    this.consultationDate,
   });
 
   final String patientName;
@@ -151,6 +152,11 @@ class DocContext {
   /// Avaliação registrada na consulta, usada como ponto de partida do
   /// resumo clínico do encaminhamento.
   final String? clinicalSummary;
+
+  /// Data da consulta registrada a que o documento está vinculado. `null`
+  /// quando o documento foi criado fora de uma consulta: [date] é então só a
+  /// data do documento e não conta como dado confirmado do atendimento.
+  final DateTime? consultationDate;
 }
 
 /// Pontos que o prescritor confere, um a um, antes de emitir uma receita
@@ -410,6 +416,7 @@ class DocVersion {
     this.issuedAt,
     this.changeNote,
     this.logoId,
+    this.issuedContext,
   });
 
   final int number;
@@ -428,6 +435,10 @@ class DocVersion {
   /// Logomarca gravada na emissão; `null` é a identidade padrão.
   final String? logoId;
 
+  /// Dados do paciente, do profissional e da clínica como estavam na
+  /// emissão. Mudar o cadastro depois não altera o documento emitido.
+  final DocContext? issuedContext;
+
   DocVersion copyWith({
     DateTime? updatedAt,
     Map<String, String>? fields,
@@ -438,6 +449,7 @@ class DocVersion {
     String? reviewedBy,
     DateTime? issuedAt,
     String? logoId,
+    DocContext? issuedContext,
     bool clearReview = false,
   }) => DocVersion(
     number: number,
@@ -453,7 +465,18 @@ class DocVersion {
     issuedAt: issuedAt ?? this.issuedAt,
     changeNote: changeNote,
     logoId: logoId ?? this.logoId,
+    issuedContext: issuedContext ?? this.issuedContext,
   );
+
+  /// Modelo de documento de onde a versão saiu, quando houver.
+  String? get templateOrigin {
+    final String o = (fields[DocumentTemplates.originKey] ?? '').trim();
+    return o.isEmpty ? null : o;
+  }
+
+  /// Contexto para mostrar e imprimir esta versão: o gravado na emissão ou,
+  /// em rascunho, os dados atuais.
+  DocContext contextOr(DocContext live) => issuedContext ?? live;
 }
 
 class DocumentFlowException implements Exception {
@@ -633,9 +656,14 @@ class ClinicalDocRecord {
     ]);
   }
 
-  /// Emite a versão revisada. [logoId] é a logomarca vigente do dono no
-  /// momento da emissão e fica gravada na versão.
-  ClinicalDocRecord issue({required DateTime now, String? logoId}) {
+  /// Emite (finaliza) a versão revisada. [logoId] é a logomarca vigente do
+  /// dono e [context] os dados do paciente e do profissional no momento da
+  /// emissão; ambos ficam gravados na versão.
+  ClinicalDocRecord issue({
+    required DateTime now,
+    String? logoId,
+    DocContext? context,
+  }) {
     if (current.status != DocStatus.reviewed) {
       throw const DocumentFlowException(
         'O documento precisa ser revisado antes da emissão.',
@@ -648,6 +676,7 @@ class ClinicalDocRecord {
         issuedAt: now,
         updatedAt: now,
         logoId: logoId,
+        issuedContext: context,
       ),
     ]);
   }
@@ -673,11 +702,27 @@ DateTime? parseDocDate(String? text) {
 class DocumentTemplates {
   const DocumentTemplates._();
 
+  /// Texto do documento editado à mão. Quando preenchido, é o que sai no
+  /// documento no lugar do texto gerado pelos campos.
+  static const String freeTextKey = 'textoEditado';
+
+  /// Modelo de documento aplicado (nome e versão). Não aparece no texto.
+  static const String originKey = '_modelo';
+
+  /// Tipos cujo texto pode ser editado livremente. Orientações já são texto
+  /// livre; a receita sai dos itens.
+  static bool supportsFreeText(DocKind k) =>
+      k != DocKind.orientacoes && k != DocKind.receituario;
+
   static List<DocFieldSpec> fields(DocKind kind) => switch (kind) {
     DocKind.atestado => const <DocFieldSpec>[
       DocFieldSpec('dias', 'Dias de afastamento', required: true, hint: '1'),
       DocFieldSpec('inicio', 'A partir de', required: true, hint: 'dd/mm/aaaa'),
-      DocFieldSpec('finalidade', 'Atividades', hint: 'escolares'),
+      DocFieldSpec(
+        'finalidade',
+        'Finalidade (afastamento de quais atividades)',
+        hint: 'escolares',
+      ),
       DocFieldSpec(
         'incluirCid',
         'Incluir CID',
@@ -788,18 +833,22 @@ class DocumentTemplates {
     DocContext c,
     List<RxItem> items,
   ) {
+    final String free = (f[freeTextKey] ?? '').trim();
+    if (free.isNotEmpty && supportsFreeText(kind)) return free;
     switch (kind) {
       case DocKind.atestado:
         final String dias = _v(f, 'dias');
         final String plural = dias == '1' ? 'dia' : 'dias';
         final String fin = (f['finalidade'] ?? '').trim();
         final bool cid = f['incluirCid'] == 'Sim';
+        final DateTime? end = atestadoEnd(f);
         final StringBuffer b = StringBuffer()
           ..write(
             'Atesto, para os devidos fins, que ${_patientLine(c)}, foi '
             'atendido(a) por mim em ${formatDocDate(c.date)} e necessita de '
             'afastamento de suas atividades${fin.isEmpty ? '' : ' $fin'} por '
-            '$dias $plural, a partir de ${_v(f, 'inicio')}.',
+            '$dias $plural, a partir de ${_v(f, 'inicio')}'
+            '${end == null ? '' : ' (até ${formatDocDate(end)})'}.',
           );
         if (cid) {
           b.write(
@@ -888,8 +937,17 @@ class DocumentTemplates {
     }
   }
 
-  static final RegExp _placeholder = RegExp(
-    r'\[(preencher|[^\]]*a definir[^\]]*)\]',
+  /// Último dia do afastamento, quando dias e início são válidos.
+  static DateTime? atestadoEnd(Map<String, String> f) {
+    final int? dias = int.tryParse((f['dias'] ?? '').trim());
+    final DateTime? start = parseDocDate(f['inicio']);
+    if (dias == null || dias < 1 || dias > 90 || start == null) return null;
+    return DateTime(start.year, start.month, start.day + dias - 1);
+  }
+
+  /// Campo variável que ainda precisa ser preenchido ou conferido.
+  static final RegExp placeholder = RegExp(
+    r'\[(preencher[^\]]*|conferir[^\]]*|[^\]]*a definir[^\]]*)\]',
   );
 
   static List<String> missing(
@@ -958,7 +1016,7 @@ class DocumentTemplates {
       case DocKind.exames:
         break;
     }
-    if (_placeholder.hasMatch(body)) {
+    if (placeholder.hasMatch(body)) {
       out.add('Há campos entre colchetes a preencher');
     }
     return out;

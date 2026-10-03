@@ -1,12 +1,15 @@
 import '../shared/clinical/clinical_documents.dart';
+import '../shared/clinical/doc_templates.dart';
 import '../shared/clinical/dose_calculator.dart';
 import '../shared/clinical/family_release.dart';
 import '../shared/clinical/orientation_templates.dart';
 import '../shared/clinical/rx_templates.dart';
+import '../shared/clinical/template_library.dart';
 import '../shared/wellchild/guidance_examples.dart';
 import '../shared/wellchild/milestones.dart';
 import '../shared/wellchild/well_child_templates.dart';
 import '../shared/wellchild/well_child_visit.dart';
+import 'demo_care.dart' show DemoCareTeam;
 import 'demo_data.dart';
 
 /// Dados clínicos fictícios da demonstração: profissional, referências de
@@ -25,6 +28,8 @@ class DemoProfessional {
   static const String address = 'Rua Exemplo, 100 - Centro - Cidade Exemplo';
   static const String city = 'Cidade Exemplo';
 
+  static const String clinicId = 'clinica-a';
+
   static const DemoAccount account = DemoAccount(
     id: id,
     name: name,
@@ -34,6 +39,7 @@ class DemoProfessional {
     address: address,
     city: city,
     email: 'dra.exemplo@exemplo.invalid',
+    clinicId: clinicId,
   );
 
   /// Segunda conta fictícia, para conferir que a logomarca de uma conta não
@@ -47,9 +53,18 @@ class DemoProfessional {
     address: 'Avenida Exemplo, 200 - Bairro Exemplo - Cidade Exemplo',
     city: 'Cidade Exemplo',
     email: 'dr.colega@exemplo.invalid',
+    clinicId: 'clinica-b',
   );
 
-  static const List<DemoAccount> accounts = <DemoAccount>[account, colleague];
+  /// Gestão do Consultório Exemplo: mantém os modelos da clínica.
+  static const String managerId = 'gestao-a';
+  static const String managerName = 'Gestão do Consultório Exemplo';
+
+  static const List<DemoAccount> accounts = <DemoAccount>[
+    account,
+    colleague,
+    ...DemoCareTeam.accounts,
+  ];
 
   static DemoAccount byId(String? id) =>
       accounts.firstWhere((DemoAccount a) => a.id == id, orElse: () => account);
@@ -66,6 +81,8 @@ class DemoAccount {
     required this.address,
     required this.city,
     required this.email,
+    this.clinicId,
+    this.phone = '',
   });
 
   final String id;
@@ -76,6 +93,29 @@ class DemoAccount {
   final String address;
   final String city;
   final String email;
+  final String? clinicId;
+  final String phone;
+
+  DemoAccount copyWith({
+    String? name,
+    String? registry,
+    String? specialty,
+    String? clinic,
+    String? address,
+    String? city,
+    String? phone,
+  }) => DemoAccount(
+    id: id,
+    name: name ?? this.name,
+    registry: registry ?? this.registry,
+    specialty: specialty ?? this.specialty,
+    clinic: clinic ?? this.clinic,
+    address: address ?? this.address,
+    city: city ?? this.city,
+    email: email,
+    clinicId: clinicId,
+    phone: phone ?? this.phone,
+  );
 }
 
 class ConsultationAddendum {
@@ -409,10 +449,194 @@ class DemoClinicalSeed {
     ),
   ];
 
+  /// Modelo de receita compartilhado pela gestão do Consultório Exemplo.
+  static RxTemplate clinicRxTemplate(DateTime now) => RxTemplate.create(
+    id: 'mc1',
+    name: 'Lavagem nasal - padrão da clínica',
+    author: DemoProfessional.managerName,
+    now: now.subtract(const Duration(days: 30)),
+    isExample: true,
+    orientations:
+        'Fazer a lavagem antes das mamadas e das refeições. (Texto de '
+        'exemplo.)',
+    items: const <RxTemplateItem>[
+      RxTemplateItem(
+        drug: 'Solução Exemplo F (fictícia)',
+        presentation: 'Spray nasal (exemplo)',
+        mode: RxDoseMode.fixed,
+        fixedDose: '1 jato em cada narina',
+        fixedVolume: 'não se aplica (jato)',
+        route: 'via nasal',
+        frequency: 'até 4 vezes ao dia',
+        duration: '5 dias',
+        quantity: '1 frasco',
+      ),
+    ],
+  );
+
+  /// Orientação compartilhada pela gestão do Consultório Exemplo.
+  static OrientationTemplate clinicOrientation(DateTime now) =>
+      OrientationTemplate(
+        id: 'tc1',
+        title: 'Contato com a clínica e retorno',
+        body:
+            '{{responsavel}}, em caso de dúvida sobre {{crianca}}, fale com '
+            'a recepção do Consultório Exemplo pelos canais informados na '
+            'consulta. (Texto de exemplo.)\n\n'
+            'Retorno: [preencher: data ou prazo combinado].',
+        author: DemoProfessional.managerName,
+        updatedAt: now.subtract(const Duration(days: 25)),
+        ownerId: DemoProfessional.clinicId,
+      );
+
+  /// Modelos de atestado, declaração, encaminhamento e exames. Textos
+  /// fictícios, a revisar por quem for usar.
+  static List<(DocTemplate, TemplateOrg)> docTemplates(DateTime now) {
+    DocTemplate t(
+      String id,
+      DocKind kind,
+      String name,
+      Map<String, String> fields, {
+      String author = DemoProfessional.name,
+      int days = 10,
+    }) => DocTemplate.create(
+      id: id,
+      kind: kind,
+      name: name,
+      fields: fields,
+      author: author,
+      now: now.subtract(Duration(days: days)),
+      isExample: true,
+    );
+
+    return <(DocTemplate, TemplateOrg)>[
+      (
+        t(
+          'mt1',
+          DocKind.atestado,
+          'Atestado escolar - padrão da clínica',
+          const <String, String>{
+            'dias': '',
+            'inicio': '{{data_consulta}}',
+            'finalidade': 'escolares',
+          },
+          author: DemoProfessional.managerName,
+          days: 30,
+        ),
+        const TemplateOrg(
+          id: 'mt1',
+          scope: TemplateScope.clinic,
+          ownerId: DemoProfessional.clinicId,
+        ),
+      ),
+      (
+        t(
+          'mt2',
+          DocKind.comparecimento,
+          'Declaração para o trabalho do responsável',
+          const <String, String>{
+            'data': '{{data_consulta}}',
+            'acompanhante': '{{responsavel}}',
+            'finalidade': 'apresentação no trabalho',
+          },
+          author: DemoProfessional.managerName,
+          days: 30,
+        ),
+        const TemplateOrg(
+          id: 'mt2',
+          scope: TemplateScope.clinic,
+          ownerId: DemoProfessional.clinicId,
+        ),
+      ),
+      (
+        t(
+          'mt3',
+          DocKind.atestado,
+          'Atestado 1 dia - escola',
+          const <String, String>{
+            'dias': '1',
+            'inicio': '{{data_consulta}}',
+            'finalidade': 'escolares',
+            DocumentTemplates.freeTextKey:
+                'Atesto, para os devidos fins, que {{crianca}}, nascido(a) em '
+                '{{nascimento}}, foi atendido(a) por mim em {{data_consulta}} '
+                'e deve permanecer afastado(a) das atividades escolares por 1 '
+                'dia, a partir de {{data_consulta}}.\n\n'
+                'Retorno às atividades: [preencher: orientação para o '
+                'retorno].',
+          },
+          days: 6,
+        ),
+        const TemplateOrg(
+          id: 'mt3',
+          scope: TemplateScope.personal,
+          ownerId: DemoProfessional.id,
+          folder: 'Escola',
+        ),
+      ),
+      (
+        t(
+          'mt4',
+          DocKind.encaminhamento,
+          'Encaminhamento para avaliação da fala',
+          const <String, String>{
+            'especialidade': 'Fonoaudiologia (exemplo)',
+            'prioridade': 'Eletivo',
+            'motivo': '[preencher: o que foi observado na consulta]',
+          },
+          days: 8,
+        ),
+        const TemplateOrg(
+          id: 'mt4',
+          scope: TemplateScope.personal,
+          ownerId: DemoProfessional.id,
+          folder: 'Encaminhamentos',
+        ),
+      ),
+      (
+        t(
+          'mt5',
+          DocKind.exames,
+          'Exames de acompanhamento (exemplo)',
+          const <String, String>{
+            'exames': 'Exame de exemplo A\nExame de exemplo B',
+            'indicacao': '',
+            'observacoes': 'Jejum conforme orientação do laboratório.',
+          },
+          days: 14,
+        ),
+        const TemplateOrg(
+          id: 'mt5',
+          scope: TemplateScope.personal,
+          ownerId: DemoProfessional.id,
+        ),
+      ),
+      (
+        t(
+          'mt6',
+          DocKind.atestado,
+          'Atestado do Dr. Colega (exemplo)',
+          const <String, String>{
+            'dias': '2',
+            'inicio': '{{data_consulta}}',
+            'finalidade': 'escolares',
+          },
+          author: 'Dr. Exemplo Colega',
+        ),
+        const TemplateOrg(
+          id: 'mt6',
+          scope: TemplateScope.personal,
+          ownerId: 'prof-b',
+        ),
+      ),
+    ];
+  }
+
   static DocContext contextFor(
     DemoPatient p, {
     required DateTime date,
     String? clinicalSummary,
+    DateTime? consultationDate,
     DemoAccount account = DemoProfessional.account,
   }) => DocContext(
     patientName: p.name,
@@ -429,6 +653,7 @@ class DemoClinicalSeed {
     city: account.city,
     date: date,
     clinicalSummary: clinicalSummary,
+    consultationDate: consultationDate,
   );
 
   static List<DemoConsultation> consultations(DateTime now) =>
@@ -586,6 +811,7 @@ class DemoClinicalSeed {
       luna,
       date: DateTime(visit.year, visit.month, visit.day),
       clinicalSummary: 'Avaliação fictícia para testar o fluxo.',
+      consultationDate: DateTime(visit.year, visit.month, visit.day),
     );
 
     ClinicalDocRecord atestado = ClinicalDocRecord.createDraft(
@@ -600,7 +826,7 @@ class DemoClinicalSeed {
     );
     atestado = atestado
         .markReviewed(reviewer: DemoProfessional.name, now: visit)
-        .issue(now: visit);
+        .issue(now: visit, context: ctx);
     atestado = atestado.saveDraft(
       fields: <String, String>{...atestado.current.fields, 'dias': '2'},
       items: const <RxItem>[],
@@ -614,7 +840,7 @@ class DemoClinicalSeed {
           reviewer: DemoProfessional.name,
           now: visit.add(const Duration(hours: 1)),
         )
-        .issue(now: visit.add(const Duration(hours: 1)));
+        .issue(now: visit.add(const Duration(hours: 1)), context: ctx);
 
     final ClinicalDocRecord encaminhamento = ClinicalDocRecord.createDraft(
       id: 'd2',
@@ -661,13 +887,15 @@ class DemoClinicalSeed {
           quantity: '1 frasco',
         ),
       ],
-    ).markReviewed(reviewer: DemoProfessional.name, now: rxAt).issue(now: rxAt);
+    ).markReviewed(reviewer: DemoProfessional.name, now: rxAt)
+        .issue(now: rxAt, context: ctx);
 
     final DateTime wcDay = now.subtract(const Duration(days: 40));
     final DateTime wcAt = DateTime(wcDay.year, wcDay.month, wcDay.day, 9, 30);
     final DocContext wcCtx = contextFor(
       luna,
       date: DateTime(wcDay.year, wcDay.month, wcDay.day),
+      consultationDate: DateTime(wcDay.year, wcDay.month, wcDay.day),
     );
     final ClinicalDocRecord sleepGuide = ClinicalDocRecord.createDraft(
       id: 'd4',
@@ -692,7 +920,8 @@ class DemoClinicalSeed {
             '4. Ruído branco, aplicativos ou aparelhos para ninar não '
             'substituem as orientações de sono seguro.',
       },
-    ).markReviewed(reviewer: DemoProfessional.name, now: wcAt).issue(now: wcAt);
+    ).markReviewed(reviewer: DemoProfessional.name, now: wcAt)
+        .issue(now: wcAt, context: wcCtx);
     return <ClinicalDocRecord>[atestado, encaminhamento, receita, sleepGuide];
   }
 }

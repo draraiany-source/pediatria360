@@ -746,31 +746,33 @@ class DemoProfileScreen extends StatelessWidget {
       context: context,
       showDragHandle: true,
       builder: (BuildContext sheet) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: <Widget>[
-            const Padding(
-              padding: EdgeInsets.symmetric(horizontal: AppSpacing.lg),
-              child: Text(
-                'Contas fictícias de profissionais. Cada uma tem a sua '
-                'logomarca, os seus documentos e os seus modelos de receita.',
-              ),
-            ),
-            for (final DemoAccount a in DemoProfessional.accounts)
-              ListTile(
-                key: ValueKey<String>('conta-${a.id}'),
-                leading: Icon(
-                  a.id == demoSession.account.id
-                      ? Icons.radio_button_checked
-                      : Icons.radio_button_unchecked,
-                  color: AppColors.brand,
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              const Padding(
+                padding: EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+                child: Text(
+                  'Contas fictícias de profissionais. Cada uma tem a sua '
+                  'logomarca, os seus documentos e os seus modelos de receita.',
                 ),
-                title: Text(a.name),
-                subtitle: Text(a.clinic),
-                onTap: () => Navigator.of(sheet).pop(a.id),
               ),
-            const SizedBox(height: AppSpacing.sm),
-          ],
+              for (final DemoAccount a in DemoProfessional.accounts)
+                ListTile(
+                  key: ValueKey<String>('conta-${a.id}'),
+                  leading: Icon(
+                    a.id == demoSession.account.id
+                        ? Icons.radio_button_checked
+                        : Icons.radio_button_unchecked,
+                    color: AppColors.brand,
+                  ),
+                  title: Text(a.name),
+                  subtitle: Text(a.clinic),
+                  onTap: () => Navigator.of(sheet).pop(a.id),
+                ),
+              const SizedBox(height: AppSpacing.sm),
+            ],
+          ),
         ),
       ),
     );

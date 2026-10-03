@@ -8,6 +8,7 @@ import '../../core/theme/app_tokens.dart';
 import '../../core/widgets/clinical_ui.dart';
 import '../../shared/clinical/clinical_documents.dart';
 import '../../shared/clinical/clinical_pdf.dart';
+import '../../shared/clinical/doc_templates.dart';
 import '../../shared/clinical/dose_calculator.dart';
 import '../../shared/clinical/family_release.dart';
 import '../../shared/clinical/orientation_templates.dart';
@@ -22,6 +23,7 @@ import '../widgets/flow_widgets.dart';
 import '../widgets/brand_widgets.dart';
 import 'dose_screens.dart';
 import 'rx_template_screens.dart';
+import 'template_library_screens.dart';
 
 /// Contexto de preenchimento: dados atuais do paciente e da consulta ligada.
 DocContext demoDocContext(
@@ -39,6 +41,7 @@ DocContext demoDocContext(
     clinicalSummary: c == null || c.assessment.trim().isEmpty
         ? null
         : c.assessment.trim(),
+    consultationDate: c == null ? null : DateTime(d.year, d.month, d.day),
     account: demoSession.account,
   );
 }
@@ -192,7 +195,16 @@ class _DemoDocumentsScreenState extends State<DemoDocumentsScreen> {
           backgroundColor: AppColors.lightBackground,
           appBar: AppBar(
             title: const Text('Documentos'),
-            actions: <Widget>[DemoRecordShortcut(patientId: p.id)],
+            actions: <Widget>[
+              if (demoSession.templates.canOpen)
+                IconButton(
+                  tooltip: 'Modelos de documentos',
+                  icon: const Icon(Icons.bookmarks_outlined),
+                  onPressed: () =>
+                      context.go('$templatesPath?paciente=${p.id}'),
+                ),
+              DemoRecordShortcut(patientId: p.id),
+            ],
           ),
           floatingActionButton: FloatingActionButton.extended(
             onPressed: () => pickNewDocument(context, p.id),
@@ -261,12 +273,16 @@ class DemoDocumentEditorScreen extends StatefulWidget {
     this.docId,
     this.kind,
     this.consultationId,
+    this.templateId,
   });
 
   final String patientId;
   final String? docId;
   final DocKind? kind;
   final String? consultationId;
+
+  /// Modelo escolhido na biblioteca, aplicado ao abrir um documento novo.
+  final String? templateId;
 
   @override
   State<DemoDocumentEditorScreen> createState() =>
@@ -283,6 +299,17 @@ class _DemoDocumentEditorScreenState extends State<DemoDocumentEditorScreen> {
   List<RxItem> _items = <RxItem>[];
   bool _dirty = false;
   bool _ready = false;
+
+  /// Campos preenchidos com dado confirmado, e de onde veio cada um.
+  final Map<String, List<String>> _auto = <String, List<String>>{};
+
+  /// Campos que o profissional precisa preencher ou conferir.
+  final Map<String, List<String>> _review = <String, List<String>>{};
+
+  /// Modelo de origem (nome e versão), quando o documento veio de um.
+  String? _origin;
+  bool _freeText = false;
+  String? _appliedNotice;
 
   DemoPatient? get _patient => demoSession.patientById(widget.patientId);
 
@@ -310,8 +337,147 @@ class _DemoDocumentEditorScreenState extends State<DemoDocumentEditorScreen> {
           ..addListener(_markDirty);
       }
     }
+    if (DocumentTemplates.supportsFreeText(_kind)) {
+      final String free = values[DocumentTemplates.freeTextKey] ?? '';
+      _c[DocumentTemplates.freeTextKey] = TextEditingController(text: free)
+        ..addListener(_markDirty);
+      _freeText = free.trim().isNotEmpty;
+    }
+    final String origin = (values[DocumentTemplates.originKey] ?? '').trim();
+    _origin = origin.isEmpty ? null : origin;
+    if (_record == null) {
+      _notePrefill(_ctx(p));
+      if (widget.templateId != null) _applyFromLibrary(widget.templateId!, p);
+    }
     _ready = true;
     demoSession.addListener(_onSession);
+  }
+
+  /// Origem dos dados sugeridos num documento novo sem modelo.
+  void _notePrefill(DocContext c) {
+    void mark(String key, String? confirmedFrom, String otherwise) {
+      if ((_c[key]?.text ?? '').trim().isEmpty) return;
+      if (confirmedFrom != null) {
+        _auto[key] = <String>[confirmedFrom];
+      } else {
+        _review[key] = <String>[otherwise];
+      }
+    }
+
+    final bool linked = c.consultationDate != null;
+    switch (_kind) {
+      case DocKind.atestado:
+        mark(
+          'inicio',
+          linked ? 'data da consulta' : null,
+          'data de hoje sugerida: confirme o período',
+        );
+      case DocKind.comparecimento:
+        mark(
+          'data',
+          linked ? 'data da consulta' : null,
+          'data de hoje sugerida: confirme',
+        );
+        mark('acompanhante', 'responsável', '');
+      case DocKind.encaminhamento:
+        mark('resumo', 'avaliação registrada na consulta', '');
+      case DocKind.exames:
+        mark('indicacao', 'avaliação registrada na consulta', '');
+      case DocKind.orientacoes:
+      case DocKind.receituario:
+        break;
+    }
+  }
+
+  /// Aplica um modelo escolhido na biblioteca, se ainda estiver disponível.
+  void _applyFromLibrary(String id, DemoPatient p) {
+    if (!demoSession.templates.canUse(id)) {
+      _appliedNotice = 'O modelo escolhido não está disponível para você.';
+      return;
+    }
+    final DocTemplate? d = demoSession.templates.docTemplate(id);
+    if (d != null && d.kind == _kind) {
+      _applyDocTemplate(d, p, notify: false);
+      return;
+    }
+    final OrientationTemplate? o = demoSession.templates.orientation(id);
+    if (o != null && _kind == DocKind.orientacoes) {
+      _c['titulo']!.text = o.title.replaceFirst('Modelo de exemplo: ', '');
+      _c['texto']!.text = o.personalize(_ctx(p), DateTime.now());
+      _appliedNotice =
+          'Modelo "${o.title}" aplicado com os dados de ${p.name}. Revise o texto.';
+      _dirty = true;
+    }
+  }
+
+  void _applyDocTemplate(DocTemplate t, DemoPatient p, {bool notify = true}) {
+    final DocTemplateApplication a = DocTemplates.apply(
+      t,
+      _ctx(p),
+      DateTime.now(),
+    );
+    for (final MapEntry<String, String> e in a.fields.entries) {
+      if (_c.containsKey(e.key)) {
+        _c[e.key]!.text = e.value;
+      } else if (_options.containsKey(e.key)) {
+        _options[e.key] = e.value;
+      }
+    }
+    _freeText =
+        (a.fields[DocumentTemplates.freeTextKey] ?? '').trim().isNotEmpty;
+    _origin = t.originLabel;
+    _auto
+      ..clear()
+      ..addAll(a.autoFilled);
+    _review
+      ..clear()
+      ..addAll(a.toReview);
+    _dirty = true;
+    final int pending = a.toReview.length;
+    _appliedNotice =
+        'Modelo "${t.name}" aplicado com os dados confirmados de ${p.name}. '
+        '${pending == 0 ? 'Revise o documento.' : '$pending campo(s) marcado(s) para preencher ou conferir.'}';
+    if (notify) {
+      setState(() {});
+      showDemoSnack(context, _appliedNotice!);
+    }
+  }
+
+  Future<void> _pickDocTemplate(DemoPatient p) async {
+    final DocTemplate? t = await pickDocTemplate(context, _kind);
+    if (t == null || !mounted) return;
+    _applyDocTemplate(t, p);
+  }
+
+  /// Texto gerado pelos campos, ignorando a edição livre.
+  String _generated(DocContext ctx) => DocumentTemplates.render(
+    _kind,
+    <String, String>{..._fields, DocumentTemplates.freeTextKey: ''},
+    ctx,
+    _items,
+  );
+
+  /// Ajuda do campo: dado automático confirmado ou campo variável.
+  (String, Color)? _fieldNote(String key) {
+    final String text = _c[key]?.text ?? '';
+    if (DocumentTemplates.placeholder.hasMatch(text)) {
+      return (
+        'Campo variável: substitua o trecho entre colchetes.',
+        AppColors.warning,
+      );
+    }
+    final List<String>? review = _review[key];
+    if (review != null && review.any((String s) => s.isNotEmpty)) {
+      return (
+        'Conferir: ${review.where((String s) => s.isNotEmpty).join('; ')}',
+        AppColors.warning,
+      );
+    }
+    final List<String>? auto = _auto[key];
+    if (auto != null) {
+      return ('Automático (dado confirmado): ${auto.join(', ')}', AppColors.success);
+    }
+    return null;
   }
 
   @override
@@ -340,8 +506,11 @@ class _DemoDocumentEditorScreenState extends State<DemoDocumentEditorScreen> {
 
   Map<String, String> get _fields => <String, String>{
     for (final MapEntry<String, TextEditingController> e in _c.entries)
-      e.key: e.value.text,
+      e.key: e.key == DocumentTemplates.freeTextKey && !_freeText
+          ? ''
+          : e.value.text,
     ..._options,
+    if (_origin != null) DocumentTemplates.originKey: _origin!,
   };
 
   String get _backPath {
@@ -358,7 +527,17 @@ class _DemoDocumentEditorScreenState extends State<DemoDocumentEditorScreen> {
     if (await _canLeave() && mounted) context.go(_backPath);
   }
 
-  ClinicalDocRecord _save(DemoPatient p) {
+  Future<ClinicalDocRecord?> _save(DemoPatient p) async {
+    String? changeNote;
+    if (_record?.status == DocStatus.issued) {
+      final String? reason = await showDialog<String>(
+        context: context,
+        builder: (BuildContext c) =>
+            _VersionReasonDialog(next: _record!.current.number + 1),
+      );
+      if (reason == null || !mounted) return null;
+      changeNote = 'Correção: $reason';
+    }
     final DateTime now = DateTime.now();
     final ClinicalDocRecord r = _record == null
         ? ClinicalDocRecord.createDraft(
@@ -378,6 +557,7 @@ class _DemoDocumentEditorScreenState extends State<DemoDocumentEditorScreen> {
             context: _ctx(p),
             author: demoSession.currentAuthor,
             now: now,
+            changeNote: changeNote,
           );
     demoSession.saveDocument(r);
     setState(() {
@@ -387,16 +567,18 @@ class _DemoDocumentEditorScreenState extends State<DemoDocumentEditorScreen> {
     return r;
   }
 
-  void _saveDraft(DemoPatient p) {
-    final ClinicalDocRecord r = _save(p);
+  Future<void> _saveDraft(DemoPatient p) async {
+    final ClinicalDocRecord? r = await _save(p);
+    if (r == null || !mounted) return;
     showDemoSnack(
       context,
-      'Rascunho salvo (versão ${r.current.number}). Nada sai desta aba.',
+      'Rascunho salvo (versão ${r.current.number}). A família não vê rascunhos.',
     );
   }
 
-  void _saveAndReview(DemoPatient p) {
-    final ClinicalDocRecord r = _save(p);
+  Future<void> _saveAndReview(DemoPatient p) async {
+    final ClinicalDocRecord? r = await _save(p);
+    if (r == null || !mounted) return;
     context.go('${_docsPath(p.id)}/${r.id}');
   }
 
@@ -621,10 +803,66 @@ class _DemoDocumentEditorScreenState extends State<DemoDocumentEditorScreen> {
                     text: newVersion
                         ? 'Este documento já foi emitido. Salvar cria a versão '
                               '${_record!.current.number + 1}; a versão emitida fica preservada.'
-                        : 'Dados do paciente e do profissional preenchidos '
-                              'automaticamente. Revise tudo: a emissão só é liberada '
-                              'depois da revisão.',
+                        : 'Só dados confirmados do paciente, do responsável, do '
+                              'profissional e da consulta entram automaticamente. '
+                              'Campos variáveis ficam marcados para conferência; '
+                              'a emissão só é liberada depois da revisão.',
                   ),
+                  if (_appliedNotice != null) ...<Widget>[
+                    const SizedBox(height: AppSpacing.sm),
+                    DemoNotice(
+                      icon: Icons.bookmarks_outlined,
+                      color: _review.isEmpty
+                          ? AppColors.brand
+                          : AppColors.warning,
+                      text: _appliedNotice!,
+                    ),
+                  ],
+                  if (DocTemplates.supports(_kind) &&
+                      demoSession.templates.canOpen) ...<Widget>[
+                    const DemoSectionTitle('Modelo'),
+                    if (_origin != null)
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+                        child: Text(
+                          'Gerado de: $_origin. O documento é uma cópia: '
+                          'editar o modelo depois não altera este documento.',
+                          style: t.bodySmall,
+                        ),
+                      ),
+                    Wrap(
+                      spacing: AppSpacing.sm,
+                      runSpacing: AppSpacing.sm,
+                      children: <Widget>[
+                        OutlinedButton.icon(
+                          key: const ValueKey<String>('usar-modelo-doc'),
+                          onPressed: () => _pickDocTemplate(p),
+                          icon: const Icon(Icons.bookmarks_outlined),
+                          label: const Text('Usar modelo salvo'),
+                        ),
+                        TextButton.icon(
+                          key: const ValueKey<String>('salvar-como-modelo-doc'),
+                          onPressed: () => saveDocAsTemplate(
+                            context,
+                            kind: _kind,
+                            fields: _fields,
+                            docContext: ctx,
+                          ),
+                          icon: const Icon(Icons.bookmark_add_outlined),
+                          label: const Text('Salvar como modelo'),
+                        ),
+                      ],
+                    ),
+                  ],
+                  if (_kind == DocKind.atestado) ...<Widget>[
+                    const SizedBox(height: AppSpacing.sm),
+                    Text(
+                      'Diagnóstico e CID nunca entram automaticamente. O CID só '
+                      'aparece se você escolher "Sim" em "Incluir CID", com '
+                      'autorização do responsável.',
+                      style: t.bodySmall,
+                    ),
+                  ],
                   if (_kind == DocKind.receituario && _needsCheck) ...<Widget>[
                     const SizedBox(height: AppSpacing.sm),
                     DemoNotice(
@@ -675,20 +913,92 @@ class _DemoDocumentEditorScreenState extends State<DemoDocumentEditorScreen> {
                                 }),
                               ),
                             )
-                          : TextField(
-                              key: ValueKey<String>('campo-${f.key}'),
-                              controller: _c[f.key],
-                              minLines: f.lines,
-                              maxLines: f.lines == 1 ? 1 : f.lines + 4,
-                              onChanged: (_) => setState(() {}),
-                              decoration: InputDecoration(
-                                labelText:
-                                    '${f.label}${f.required ? ' *' : ''}',
-                                hintText: f.hint,
-                                alignLabelWithHint: f.lines > 1,
-                              ),
+                          : Builder(
+                              builder: (BuildContext _) {
+                                final (String, Color)? note = _fieldNote(
+                                  f.key,
+                                );
+                                return TextField(
+                                  key: ValueKey<String>('campo-${f.key}'),
+                                  controller: _c[f.key],
+                                  minLines: f.lines,
+                                  maxLines: f.lines == 1 ? 1 : f.lines + 4,
+                                  onChanged: (String v) => setState(() {
+                                    _auto.remove(f.key);
+                                    if (v.trim().isNotEmpty) {
+                                      _review.remove(f.key);
+                                    }
+                                  }),
+                                  decoration: InputDecoration(
+                                    labelText:
+                                        '${f.label}${f.required ? ' *' : ''}',
+                                    hintText: f.hint,
+                                    alignLabelWithHint: f.lines > 1,
+                                    helperText: note?.$1,
+                                    helperMaxLines: 3,
+                                    helperStyle: note == null
+                                        ? null
+                                        : t.bodySmall?.copyWith(
+                                            color: note.$2,
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                  ),
+                                );
+                              },
                             ),
                     ),
+                  if (DocumentTemplates.supportsFreeText(_kind)) ...<Widget>[
+                    const DemoSectionTitle('Texto do documento'),
+                    SwitchListTile(
+                      key: const ValueKey<String>('texto-livre'),
+                      contentPadding: EdgeInsets.zero,
+                      value: _freeText,
+                      title: const Text('Editar o texto livremente'),
+                      subtitle: Text(
+                        _freeText
+                            ? 'O texto abaixo é o que sai no documento; os '
+                                  'campos acima não mudam mais o texto.'
+                            : 'O texto é montado a partir dos campos acima.',
+                      ),
+                      onChanged: (bool on) => setState(() {
+                        if (on &&
+                            _c[DocumentTemplates.freeTextKey]!.text
+                                .trim()
+                                .isEmpty) {
+                          _c[DocumentTemplates.freeTextKey]!.text = _generated(
+                            ctx,
+                          );
+                        }
+                        _freeText = on;
+                        _dirty = true;
+                      }),
+                    ),
+                    if (_freeText) ...<Widget>[
+                      TextField(
+                        key: const ValueKey<String>('campo-textoEditado'),
+                        controller: _c[DocumentTemplates.freeTextKey],
+                        minLines: 6,
+                        maxLines: 16,
+                        onChanged: (_) => setState(() {}),
+                        decoration: const InputDecoration(
+                          labelText: 'Texto do documento',
+                          alignLabelWithHint: true,
+                        ),
+                      ),
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: TextButton.icon(
+                          onPressed: () => setState(() {
+                            _c[DocumentTemplates.freeTextKey]!.text = '';
+                            _freeText = false;
+                            _dirty = true;
+                          }),
+                          icon: const Icon(Icons.undo_rounded),
+                          label: const Text('Voltar ao texto gerado pelos campos'),
+                        ),
+                      ),
+                    ],
+                  ],
                   if (_kind == DocKind.receituario) ...<Widget>[
                     const DemoSectionTitle('Medicamentos'),
                     for (int i = 0; i < _items.length; i++)
@@ -753,7 +1063,7 @@ class _DemoDocumentEditorScreenState extends State<DemoDocumentEditorScreen> {
                     ),
                   ],
                   const DemoSectionTitle('Pré-visualização'),
-                  _Paper(text: preview),
+                  DocPaper(text: preview),
                   const SizedBox(height: AppSpacing.xl),
                 ],
               ),
@@ -761,6 +1071,78 @@ class _DemoDocumentEditorScreenState extends State<DemoDocumentEditorScreen> {
           ],
         ),
       ),
+    );
+  }
+}
+
+/// Motivo obrigatório para corrigir um documento já emitido.
+class _VersionReasonDialog extends StatefulWidget {
+  const _VersionReasonDialog({required this.next});
+
+  final int next;
+
+  @override
+  State<_VersionReasonDialog> createState() => _VersionReasonDialogState();
+}
+
+class _VersionReasonDialogState extends State<_VersionReasonDialog> {
+  final TextEditingController _c = TextEditingController();
+  bool _tried = false;
+
+  @override
+  void dispose() {
+    _c.dispose();
+    super.dispose();
+  }
+
+  bool get _valid => _c.text.trim().length >= 5;
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: Text('Criar versão ${widget.next}'),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          const Text(
+            'A versão emitida não é alterada. A correção vira uma nova versão '
+            'registrada com seu nome, a data e o motivo.',
+          ),
+          const SizedBox(height: AppSpacing.md),
+          TextField(
+            key: const ValueKey<String>('motivo-versao'),
+            controller: _c,
+            autofocus: true,
+            minLines: 2,
+            maxLines: 4,
+            onChanged: (_) => setState(() {}),
+            decoration: InputDecoration(
+              labelText: 'Motivo da correção *',
+              errorText: _tried && !_valid
+                  ? 'Descreva o motivo (mínimo de 5 caracteres).'
+                  : null,
+            ),
+          ),
+        ],
+      ),
+      actions: <Widget>[
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('Cancelar'),
+        ),
+        FilledButton(
+          key: const ValueKey<String>('confirmar-versao'),
+          onPressed: () {
+            if (!_valid) {
+              setState(() => _tried = true);
+              return;
+            }
+            Navigator.of(context).pop(_c.text.trim());
+          },
+          child: const Text('Salvar nova versão'),
+        ),
+      ],
     );
   }
 }
@@ -1317,13 +1699,33 @@ class _ManualItemDialogState extends State<_ManualItemDialog> {
   }
 }
 
-class _Paper extends StatelessWidget {
-  const _Paper({required this.text});
+/// Folha do documento. Campos variáveis ("[preencher: ...]", "[conferir:
+/// ...]") aparecem destacados.
+class DocPaper extends StatelessWidget {
+  const DocPaper({required this.text, super.key});
 
   final String text;
 
   @override
   Widget build(BuildContext context) {
+    final TextStyle? base = Theme.of(context).textTheme.bodyMedium;
+    final List<InlineSpan> spans = <InlineSpan>[];
+    int at = 0;
+    for (final RegExpMatch m in DocumentTemplates.placeholder.allMatches(text)) {
+      if (m.start > at) spans.add(TextSpan(text: text.substring(at, m.start)));
+      spans.add(
+        TextSpan(
+          text: m.group(0),
+          style: base?.copyWith(
+            backgroundColor: const Color(0xFFFFE7B3),
+            color: const Color(0xFF7A3E00),
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+      );
+      at = m.end;
+    }
+    if (at < text.length) spans.add(TextSpan(text: text.substring(at)));
     return Container(
       padding: const EdgeInsets.all(AppSpacing.lg),
       decoration: BoxDecoration(
@@ -1336,9 +1738,8 @@ class _Paper extends StatelessWidget {
         container: true,
         label: text,
         child: ExcludeSemantics(
-          child: SelectableText(
-            text,
-            style: Theme.of(context).textTheme.bodyMedium,
+          child: SelectableText.rich(
+            TextSpan(style: base, children: spans),
           ),
         ),
       ),
@@ -1527,18 +1928,20 @@ class _DemoDocumentViewerScreenState extends State<DemoDocumentViewerScreen> {
                       account: demoSession.account,
                       logo: demoSession.logoForDocument(doc, v),
                       kindLabel: doc.kind.label,
+                      issued: v.issuedContext,
                     ),
                     if (v.status == DocStatus.issued)
                       Padding(
                         padding: const EdgeInsets.only(top: AppSpacing.xs),
                         child: Text(
-                          'Cabeçalho gravado na emissão: trocar ou remover a '
-                          'logomarca depois não altera este documento.',
+                          'Cabeçalho e dados profissionais gravados na emissão: '
+                          'trocar a logomarca ou os dados depois não altera '
+                          'este documento.',
                           style: t.bodySmall,
                         ),
                       ),
                     const SizedBox(height: AppSpacing.sm),
-                    _Paper(text: v.body),
+                    DocPaper(text: v.body),
                     const SizedBox(height: AppSpacing.md),
                     Wrap(
                       spacing: AppSpacing.sm,
@@ -1673,7 +2076,7 @@ class _DemoDocumentViewerScreenState extends State<DemoDocumentViewerScreen> {
                                       doc.kind,
                                     ));
                             demoSession.saveDocument(
-                              demoSession.issueDocument(doc),
+                              demoSession.issueDocument(doc, context: ctx),
                             );
                             if (release) demoSession.releaseToFamily(doc.id);
                             setState(() => _releaseOnIssue = null);
@@ -1689,13 +2092,17 @@ class _DemoDocumentViewerScreenState extends State<DemoDocumentViewerScreen> {
                         ),
                         const SizedBox(height: AppSpacing.xs),
                         Text(
-                          'Emitir registra a versão final. Não aplica assinatura digital.',
+                          'Emitir finaliza o documento: a versão fica bloqueada e '
+                          'correções viram nova versão com autor, data e motivo. '
+                          'Não aplica assinatura digital.',
                           style: t.bodySmall,
                         ),
                       ],
                     ],
                     const DemoSectionTitle('Área da família'),
                     _FamilyReleaseCard(doc: doc),
+                    const DemoSectionTitle('Histórico de versões'),
+                    _VersionHistory(doc: doc),
                     const SizedBox(height: AppSpacing.xl),
                   ],
                 ),
@@ -1896,6 +2303,66 @@ class _RevokeDialogState extends State<_RevokeDialog> {
   }
 }
 
+/// Todas as versões do documento: quem criou, revisou, emitiu e por quê.
+class _VersionHistory extends StatelessWidget {
+  const _VersionHistory({required this.doc});
+
+  final ClinicalDocRecord doc;
+
+  @override
+  Widget build(BuildContext context) {
+    final TextTheme t = Theme.of(context).textTheme;
+    return PremiumCard(
+      padding: const EdgeInsets.all(AppSpacing.md),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          for (final DocVersion v in doc.versions.reversed)
+            Padding(
+              padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  Text(
+                    'Versão ${v.number} · ${v.status.label}',
+                    style: t.titleSmall,
+                  ),
+                  Text(
+                    'Criada por ${v.author} em ${formatDocDateTime(v.createdAt)}'
+                    '${v.updatedAt == v.createdAt ? '' : '; atualizada em ${formatDocDateTime(v.updatedAt)}'}',
+                    style: t.bodySmall,
+                  ),
+                  if (v.reviewedAt != null)
+                    Text(
+                      'Revisada por ${v.reviewedBy} em ${formatDocDateTime(v.reviewedAt!)}',
+                      style: t.bodySmall,
+                    ),
+                  if (v.issuedAt != null)
+                    Text(
+                      'Emitida (finalizada) em ${formatDocDateTime(v.issuedAt!)}'
+                      '${v.issuedContext == null ? '' : ' por ${v.issuedContext!.professionalName}'}',
+                      style: t.bodySmall,
+                    ),
+                  if (v.changeNote != null)
+                    Text(
+                      v.changeNote!,
+                      style: t.bodySmall?.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          Text(
+            'Versões emitidas não são alteradas: cada correção gera uma nova versão.',
+            style: t.bodySmall?.copyWith(color: AppColors.inkMuted),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _MetaCard extends StatelessWidget {
   const _MetaCard({required this.version, required this.doc});
 
@@ -1948,6 +2415,18 @@ class _MetaCard extends StatelessWidget {
               '${<String>{for (final RxItem i in v.items)
                     if (i.origin != null) i.origin!}.join(', ')} '
                   '(cópia própria: editar o modelo não altera esta receita)',
+            ),
+          if (v.templateOrigin != null)
+            row(
+              'Modelo de origem',
+              '${v.templateOrigin} (cópia própria: editar o modelo não altera '
+                  'este documento)',
+            ),
+          if (v.issuedContext != null)
+            row(
+              'Emitido por',
+              '${v.issuedContext!.professionalName} · '
+                  '${v.issuedContext!.professionalRegistry}',
             ),
           if (doc.consultationId != null)
             row(

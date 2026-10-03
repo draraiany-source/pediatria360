@@ -63,7 +63,23 @@ class ClinicalPdf {
     return b.toString();
   }
 
+  /// Versão emitida sai com os dados gravados na emissão; rascunho, com os
+  /// dados atuais em [context].
   static Future<Uint8List> build({
+    required ClinicalDocRecord doc,
+    required DocContext context,
+    required DateTime now,
+    Uint8List? logo,
+    bool demo = false,
+  }) => _build(
+    doc: doc,
+    context: doc.current.contextOr(context),
+    now: now,
+    logo: logo,
+    demo: demo,
+  );
+
+  static Future<Uint8List> _build({
     required ClinicalDocRecord doc,
     required DocContext context,
     required DateTime now,

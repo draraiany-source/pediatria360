@@ -59,8 +59,10 @@ void main() {
         'n2',
         'n1',
       ]);
+      // O colega de outra clínica não tem vínculo ativo com a Luna, então
+      // nem a nota que ele mesmo escreveu sobre ela abre.
       demoSession.switchAccount(DemoProfessional.colleague.id);
-      expect(ws.notesFor('p1').map((PatientNote n) => n.id), <String>['n4']);
+      expect(ws.notesFor('p1'), isEmpty);
       expect(
         () => ws.editNote('n1', text: 'x', visibility: NoteVisibility.interna),
         throwsA(isA<StateError>()),

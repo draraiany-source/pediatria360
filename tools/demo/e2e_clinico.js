@@ -79,6 +79,18 @@ async function labels(page) {
 
 async function has(page, text) { return (await labels(page)).includes(text); }
 
+async function scrollTo(page, text, tries = 14) {
+  const vw = page.viewportSize().width;
+  const vh = page.viewportSize().height;
+  for (let i = 0; i < tries; i++) {
+    if (await has(page, text)) return true;
+    await page.mouse.move(vw / 2 + (vw > 900 ? 110 : 0), vh / 2);
+    await page.mouse.wheel(0, 500);
+    await page.waitForTimeout(500);
+  }
+  return has(page, text);
+}
+
 async function waitText(page, text, timeout = 8000) {
   const end = Date.now() + timeout;
   while (Date.now() < end) {
@@ -385,8 +397,12 @@ const DOCS = [
     check('versoes: editar emitido cria a versao 3', await waitText(page, 'Salvar cria a versão 3'), '');
     await fill(page, 'Dias de afastamento *', '3');
     await tap(page, 'Salvar rascunho', { wait: 1500 });
+    check('versoes: correcao de emitido pede motivo', await waitText(page, 'Criar versão 3'), '');
+    await fill(page, 'Motivo da correção *', 'Período ajustado a pedido da escola');
+    await tap(page, 'Salvar nova versão', { wait: 1500 });
     await nav(page, '#/pacientes/p1/documentos/d1');
     check('versoes: v3 rascunho e anteriores preservadas', (await waitText(page, 'v3 · Rascunho')) && (await has(page, 'v2 · Emitido')), '');
+    check('versoes: historico registra autor e motivo', await has(page, 'Correção: Período ajustado a pedido da escola'), '');
     await shot(page, 'd11_versoes');
     await ctx.close();
   });
@@ -1043,7 +1059,11 @@ const DOCS = [
     await fill(page, 'Buscar modelo', 'febre', { touch: true });
     await tap(page, 'Usar para Maya', { touch: true, wait: 2500 });
     await waitText(page, 'Editar: Receitu\u00e1rio');
-    const l2 = await labels(page);
+    let l2 = await labels(page);
+    for (const want of ['Dose n\u00e3o calculada', 'Dose: n\u00e3o informado']) {
+      await scrollTo(page, want);
+      l2 += ' | ' + await labels(page);
+    }
     check('celular: sem peso, nenhuma dose copiada e calculo bloqueado', l2.includes('Dose n\u00e3o calculada') && l2.includes('Peso n\u00e3o registrado') && l2.includes('Dose: n\u00e3o informado'), '');
     await shot(page, 'mr14_celular_sem_peso');
 
@@ -2153,18 +2173,6 @@ const DOCS = [
   });
 
   // ------------------------------------------------ Etapa 1: familia e profissional
-  async function scrollTo(page, text, tries = 14) {
-    const vw = page.viewportSize().width;
-    const vh = page.viewportSize().height;
-    for (let i = 0; i < tries; i++) {
-      if (await has(page, text)) return true;
-      await page.mouse.move(vw / 2 + (vw > 900 ? 110 : 0), vh / 2);
-      await page.mouse.wheel(0, 500);
-      await page.waitForTimeout(500);
-    }
-    return has(page, text);
-  }
-
   await step('celular: etapa1 familia saude e documentos liberados', async () => {
     const { ctx, page } = await newPage(browser, MOBILE);
     await open(page, '#/pacientes/p1?perfil=responsavel');
@@ -2272,6 +2280,270 @@ const DOCS = [
       check('etapa1 permissoes: ' + perfil + ' bloqueado na area da familia', res.every(Boolean), res.join('/'));
       await ctx.close();
     }
+  });
+
+  await step('computador: modelos de documentos biblioteca criar editar', async () => {
+    const { ctx, page } = await newPage(browser, DESKTOP);
+    await open(page, '#/modelos?perfil=profissional');
+    const l0 = [await waitText(page, 'Modelos de documentos'), await has(page, 'Atestado 1 dia - escola'), await has(page, 'Escola'), !(await has(page, 'Atestado do Dr. Colega'))];
+    check('modelos doc: biblioteca com meus modelos em pastas', l0.every(Boolean), l0.join('/'));
+    await shot(page, 'dm01_biblioteca');
+    await tap(page, 'Da clínica', { wait: 1500 });
+    const l1 = [await waitText(page, 'Atestado escolar - padrão da clínica'), await has(page, 'Duplicar para meus modelos')];
+    check('modelos doc: modelos da clinica so para usar ou duplicar', l1.every(Boolean), l1.join('/'));
+    await shot(page, 'dm02_modelos_clinica');
+
+    await nav(page, '#/modelos/novo?tipo=atestado');
+    await waitText(page, 'Novo modelo: Atestado médico');
+    await fill(page, 'Nome do modelo *', 'Atestado 2 dias (e2e)');
+    await fill(page, 'Pasta', 'Escola');
+    await fill(page, 'Dias de afastamento', '2');
+    await fill(page, 'Texto do documento', 'Atesto que {{crianca}} foi atendido(a) em {{data_consulta}}. Peso: {{peso}}. [preencher: retorno]');
+    check('modelos doc: previa marca campos a conferir', await scrollTo(page, '[conferir: peso]'), '');
+    await shot(page, 'dm03_novo_modelo');
+    await tap(page, 'Salvar modelo', { wait: 2200 });
+    check('modelos doc: modelo criado aparece na lista', await waitText(page, 'Atestado 2 dias (e2e)'), '');
+
+    await nav(page, '#/modelos/mt3/editar');
+    await fill(page, 'Nome do modelo *', 'Atestado 1 dia - escola (rev. e2e)');
+    await fill(page, 'O que mudou', 'Ajuste de nome no teste e2e');
+    await tap(page, 'Salvar modelo', { wait: 2200 });
+    await nav(page, '#/modelos/mt3/editar');
+    check('modelos doc: editar cria a versao 2 e guarda a 1', (await scrollTo(page, 'v2 · Atestado 1 dia - escola (rev. e2e)')) && (await has(page, 'v1 · Atestado 1 dia - escola')), '');
+    await shot(page, 'dm04_versoes_modelo');
+    await ctx.close();
+  });
+
+  await step('computador: modelos de documentos duas criancas emitir pdf familia', async () => {
+    const { ctx, page } = await newPage(browser, DESKTOP);
+    await open(page, '#/pacientes/p1/documentos/novo?tipo=atestado&modelo=mt3&consulta=c1&perfil=profissional');
+    const a = [await waitText(page, 'Luna Exemplo Souza'), await has(page, 'Automático (dado confirmado)'), await has(page, 'Gerado de: Modelo')];
+    await shot(page, 'dm05_aplicado_luna');
+    a.push(await scrollTo(page, '[preencher: orientação para o retorno]', 20));
+    check('modelos doc: Luna com dados confirmados e campo variavel marcado', a.every(Boolean), a.join('/'));
+    check('modelos doc: atestado sem CID automatico', !(await has(page, 'CID:')), '');
+    await shot(page, 'dm05b_previa_luna');
+    await fill(page, 'Texto do documento', 'Atesto, para os devidos fins, que Luna Exemplo Souza foi atendida por mim e deve permanecer afastada das atividades escolares por 1 dia. Retorno às atividades no dia seguinte.');
+    await tap(page, 'Salvar e revisar', { wait: 1800 });
+    await tap(page, 'Revisei o conteúdo');
+    await tap(page, 'Marcar como revisado');
+    await tap(page, 'Emitir documento', { wait: 1800 });
+    const e = [await waitText(page, 'Emitido'), await scrollTo(page, 'Histórico de versões'), await has(page, 'Emitida (finalizada) em')];
+    check('modelos doc: emitido com historico de versoes', e.every(Boolean), e.join('/'));
+    check('modelos doc: familia nao ve antes de liberar', await scrollTo(page, 'A família ainda não vê este documento'), '');
+    await shot(page, 'dm06_emitido_historico');
+    const docHash = hash(page);
+    await page.waitForTimeout(3000);
+    const [dl] = await Promise.all([page.waitForEvent('download', { timeout: 15000 }), tap(page, 'Gerar PDF', { wait: 800 })]);
+    const pdf = await pdfFromDownload(dl);
+    check('modelos doc: PDF do documento de modelo', pdf.magic === '%PDF-' && pdf.size > 1500, pdf.name + ' ' + pdf.size + ' bytes');
+    fs.copyFileSync(await dl.path(), path.join(OUT, 'dm_' + pdf.name));
+    await page.waitForTimeout(2500);
+    await tap(page, 'Liberar para a família', { wait: 1500 });
+    await tap(page, 'Liberar', { exact: true, last: true, wait: 1800 });
+    check('modelos doc: liberado para a familia pelo profissional', await waitText(page, 'Liberado para a família'), '');
+    await nav(page, '#/rotina/p1/documentos?perfil=responsavel');
+    check('modelos doc: familia ve o atestado liberado', await waitText(page, 'Atestado médico'), '');
+    await shot(page, 'dm07_familia_documento');
+
+    await nav(page, docHash + '?perfil=profissional');
+    await tap(page, 'Criar nova versão', { wait: 2000 });
+    await fill(page, 'Dias de afastamento *', '2');
+    await tap(page, 'Salvar rascunho', { wait: 1500 });
+    check('modelos doc: correcao pede motivo', await waitText(page, 'Criar versão 2'), '');
+    await fill(page, 'Motivo da correção *', 'Período corrigido (teste e2e)');
+    await tap(page, 'Salvar nova versão', { wait: 1500 });
+    await nav(page, docHash);
+    const v = [await waitText(page, 'v2 · Rascunho'), await has(page, 'v1 · Emitido'), await scrollTo(page, 'Correção: Período corrigido (teste e2e)')];
+    check('modelos doc: nova versao com autor e motivo; emitida preservada', v.every(Boolean), v.join('/'));
+    await shot(page, 'dm08_nova_versao');
+
+    await nav(page, '#/pacientes/p3/documentos/novo?tipo=atestado&modelo=mt3');
+    const m = [await waitText(page, 'Maya'), !(await has(page, 'Luna Exemplo Souza'))];
+    await shot(page, 'dm09_aplicado_maya');
+    m.push(await scrollTo(page, '[conferir: data da consulta]', 20));
+    m.push(!(await has(page, 'Luna Exemplo Souza')));
+    check('modelos doc: Maya sem consulta, campos a conferir e nada da Luna', m.every(Boolean), m.join('/'));
+    await shot(page, 'dm09b_previa_maya');
+    await ctx.close();
+  });
+
+  await step('computador: modelos de documentos permissoes e dados profissionais', async () => {
+    for (const perfil of ['recepcao', 'financeiro', 'responsavel']) {
+      const { ctx, page } = await newPage(browser, DESKTOP);
+      await open(page, '#/modelos?perfil=' + perfil);
+      check('modelos doc: ' + perfil + ' sem acesso', await waitText(page, 'Acesso restrito'), '');
+      await ctx.close();
+    }
+    const { ctx, page } = await newPage(browser, DESKTOP);
+    await open(page, '#/modelos?perfil=administrador');
+    const g = [await waitText(page, 'Modelos da clínica'), await has(page, 'Atestado escolar - padrão da clínica'), !(await has(page, 'Atestado 1 dia - escola')), await has(page, 'Editar')];
+    check('modelos doc: gestao edita modelos da clinica e nao ve os pessoais', g.every(Boolean), g.join('/'));
+    await shot(page, 'dm10_gestao_clinica');
+    await nav(page, '#/perfil/logomarca?perfil=profissional');
+    await page.waitForTimeout(1500);
+    check('modelos doc: dados profissionais configuraveis', await scrollTo(page, 'Editar dados profissionais'), '');
+    await shot(page, 'dm11_dados_profissionais');
+    await ctx.close();
+  });
+
+  // ---------- Cuidado multidisciplinar (Luna: pediatra, psicologa e fisioterapeuta) ----------
+  const RESERVED = 'Anota\u00e7\u00e3o reservada (fict\u00edcia)';
+  const CARE = (aba, extra) => '#/cuidado/p1?aba=' + aba + (extra ? '&' + extra : '');
+  // Negativo: rola a tela inteira antes de afirmar que o texto nao aparece.
+  const absent = async (page, text) => !(await scrollTo(page, text, 10));
+
+  await step('computador: cuidado visao da equipe, areas, comunicacao e documentos', async () => {
+    const { ctx, page } = await newPage(browser, DESKTOP);
+    await open(page, CARE('equipe', 'perfil=profissional'));
+    const v = [await waitText(page, 'Profissionais envolvidos'), await has(page, 'Plano combinado'), await scrollTo(page, 'Pr\u00f3ximos atendimentos'), await scrollTo(page, 'Evolu\u00e7\u00e3o relevante')];
+    check('cuidado: visao compartilhada da equipe', v.every(Boolean), v.join('/'));
+    await page.mouse.wheel(0, -5000);
+    await page.waitForTimeout(600);
+    await shot(page, 'cm01_visao_equipe');
+    await tap(page, 'Resumo com IA', { wait: 1500 });
+    const ia = [await waitText(page, 'RASCUNHO DA IA (SIMULADO)'), await has(page, 'Revisei e confirmo o texto'), !(await has(page, RESERVED))];
+    check('cuidado: IA prepara rascunho identificado, sem reservado', ia.every(Boolean), ia.join('/'));
+    await shot(page, 'cm02_ia_rascunho');
+    await tap(page, 'Descartar rascunho', { wait: 1200 });
+
+    await nav(page, CARE('psicologia'));
+    const ped = [await waitText(page, 'Registros da psicologia'), await scrollTo(page, 'Plano terap\u00eautico'), await absent(page, RESERVED)];
+    check('cuidado: pediatra nao ve o reservado da psicologia', ped.every(Boolean), ped.join('/'));
+    await page.mouse.wheel(0, -5000);
+    await page.waitForTimeout(600);
+    await shot(page, 'cm03_psicologia_vista_pela_pediatra');
+
+    await nav(page, CARE('psicologia', 'conta=psi-a'));
+    const psi = [await waitText(page, 'Agenda da psicologia'), await scrollTo(page, RESERVED)];
+    check('cuidado: psicologa ve o proprio registro reservado', psi.every(Boolean), psi.join('/'));
+    await shot(page, 'cm04_psicologia_reservado');
+
+    await nav(page, CARE('fisioterapia', 'conta=fis-a'));
+    const fis = [await waitText(page, 'Agenda da fisioterapia'), await has(page, 'Medidas de acompanhamento'), await scrollTo(page, 'Avalia\u00e7\u00e3o funcional')];
+    check('cuidado: fisioterapia com agenda, medidas e avaliacao funcional', fis.every(Boolean), fis.join('/'));
+    await shot(page, 'cm05_fisioterapia');
+    await nav(page, CARE('psicologia'));
+    check('cuidado: fisioterapeuta nao ve o reservado da psicologia', await absent(page, RESERVED), '');
+
+    await nav(page, CARE('comunicacao'));
+    const com = [await waitText(page, 'Comunica\u00e7\u00e3o da equipe'), await scrollTo(page, 'SOLICITA\u00c7\u00c3O DE PARECER'), await scrollTo(page, 'ENCAMINHAMENTO INTERNO')];
+    check('cuidado: comunicacao com encaminhamento e parecer', com.every(Boolean), com.join('/'));
+    await page.mouse.wheel(0, -5000);
+    await page.waitForTimeout(600);
+    await shot(page, 'cm06_comunicacao');
+
+    await nav(page, CARE('documentos', 'conta=psi-a'));
+    await waitText(page, 'Documentos da equipe');
+    await tap(page, 'Novo documento', { wait: 1500 });
+    const doc = [await waitText(page, 'Relat\u00f3rio psicol\u00f3gico'), !(await has(page, 'Receitu\u00e1rio')), !(await has(page, 'Atestado m\u00e9dico'))];
+    check('cuidado: psicologa so prepara documentos da propria area', doc.every(Boolean), doc.join('/'));
+    await shot(page, 'cm07_documentos_psicologia');
+    await ctx.close();
+  });
+
+  await step('computador: cuidado perfil profissional, pacientes vinculados e ferramentas medicas', async () => {
+    const { ctx, page } = await newPage(browser, DESKTOP);
+    await open(page, '#/profissional?perfil=profissional&conta=psi-a');
+    const p = [await waitText(page, 'O que este perfil pode fazer'), await has(page, 'CRP'), await scrollTo(page, 'Pacientes vinculados'), await scrollTo(page, 'Modelos pr\u00f3prios')];
+    check('cuidado: perfil da psicologa com registro, pacientes e modelos', p.every(Boolean), p.join('/'));
+    await page.mouse.wheel(0, -5000);
+    await page.waitForTimeout(600);
+    await shot(page, 'cm08_perfil_psicologa');
+    await nav(page, '#/pacientes');
+    const l = [await waitText(page, 'Luna'), !(await has(page, 'Maya')), !(await has(page, 'Theo'))];
+    check('cuidado: psicologa so ve a crianca vinculada', l.every(Boolean), l.join('/'));
+    await shot(page, 'cm09_pacientes_vinculados');
+    const blocked = [];
+    for (const r of ['#/calculadora', '#/pacientes/p1/prontuario', '#/suplementacao']) {
+      await nav(page, r);
+      blocked.push(await waitText(page, 'Acesso restrito', 5000));
+    }
+    check('cuidado: psicologa sem calculadora, prontuario medico e suplementacao', blocked.every(Boolean), blocked.join('/'));
+    await nav(page, CARE('equipe', 'conta=psi-c'));
+    const none = [await waitText(page, 'Acesso restrito'), !(await has(page, RESERVED))];
+    check('cuidado: mesma clinica sem vinculo nao abre a ficha', none.every(Boolean), none.join('/'));
+    await shot(page, 'cm10_mesma_clinica_sem_vinculo');
+    await ctx.close();
+  });
+
+  await step('celular: cuidado area da familia e liberacao pela fisioterapeuta', async () => {
+    const { ctx, page } = await newPage(browser, MOBILE);
+    await open(page, CARE('familia', 'perfil=responsavel'));
+    const f = [await waitText(page, 'Pr\u00f3ximas sess\u00f5es'), await scrollTo(page, 'Brincadeira do flamingo'), await scrollTo(page, 'Rotina do sono em 3 passos'), await absent(page, 'Degraus alternados'), await absent(page, RESERVED)];
+    check('cuidado: familia ve so o liberado por cada profissional', f.every(Boolean), f.join('/'));
+    await page.mouse.wheel(0, -5000);
+    await page.waitForTimeout(600);
+    await shot(page, 'm_cm11_familia');
+    await nav(page, CARE('fisioterapia', 'perfil=profissional&conta=fis-a'));
+    await waitText(page, 'Registros da fisioterapia');
+    await tap(page, 'Liberar para a fam\u00edlia', { touch: true, wait: 1500 });
+    await nav(page, CARE('familia', 'perfil=responsavel'));
+    await waitText(page, 'Pr\u00f3ximas sess\u00f5es');
+    const r = [await scrollTo(page, 'Degraus alternados'), await absent(page, RESERVED)];
+    check('cuidado: exercicio liberado aparece para a familia', r.every(Boolean), r.join('/'));
+    await shot(page, 'm_cm12_familia_exercicio_liberado');
+    await ctx.close();
+  });
+
+  await step('computador: cuidado troca de profissional com autorizacao da familia', async () => {
+    const { ctx, page } = await newPage(browser, DESKTOP);
+    await open(page, CARE('equipe', 'perfil=administrador'));
+    const g = [await waitText(page, 'Designar profissional'), await absent(page, RESERVED)];
+    check('cuidado: gestao organiza a equipe sem ler registros', g.every(Boolean), g.join('/'));
+    await page.mouse.wheel(0, -5000);
+    await page.waitForTimeout(600);
+    await shot(page, 'cm13_gestao_equipe');
+    await tap(page, 'Encerrar v\u00ednculo de Psic\u00f3loga Exemplo Ramos', { wait: 1200 });
+    await fill(page, 'Motivo do encerramento *', 'Troca de profissional (e2e)');
+    await tap(page, 'Encerrar v\u00ednculo', { exact: true, last: true, wait: 1500 });
+    await tap(page, 'Designar profissional', { wait: 1200 });
+    await tap(page, 'Psic\u00f3logo Exemplo Teixeira', { contains: true, wait: 600 });
+    await fill(page, 'Motivo do encaminhamento *', 'Assume a psicologia (e2e)');
+    await tap(page, 'Designar', { exact: true, last: true, wait: 1500 });
+    check('cuidado: novo psicologo aguarda autorizacao', await scrollTo(page, 'AGUARDANDO AUTORIZA\u00c7\u00c3O DA FAM\u00cdLIA'), '');
+    await shot(page, 'cm14_designado_aguardando');
+    await nav(page, CARE('psicologia', 'perfil=profissional&conta=psi-c'));
+    check('cuidado: sem autorizacao da familia o novo psicologo nao entra', await waitText(page, 'Acesso restrito'), '');
+    await nav(page, CARE('familia', 'perfil=responsavel'));
+    await waitText(page, 'Autoriza\u00e7\u00f5es pendentes');
+    await shot(page, 'cm15_familia_autoriza');
+    await tap(page, 'Autorizar acesso', { wait: 1500 });
+    await nav(page, CARE('psicologia', 'perfil=profissional&conta=psi-c'));
+    const n = [await waitText(page, 'Registros da psicologia'), await scrollTo(page, 'Plano terap\u00eautico'), await absent(page, RESERVED)];
+    check('cuidado: novo psicologo ve o plano, nao o reservado da anterior', n.every(Boolean), n.join('/'));
+    await shot(page, 'cm16_novo_psicologo');
+    await nav(page, CARE('psicologia', 'conta=psi-a'));
+    const o = [await waitText(page, 'Seu v\u00ednculo com a crian\u00e7a foi encerrado'), await scrollTo(page, RESERVED), !(await has(page, 'Novo registro'))];
+    check('cuidado: psicologa anterior le so os proprios registros', o.every(Boolean), o.join('/'));
+    await shot(page, 'cm17_psicologa_anterior');
+    await nav(page, CARE('acessos', 'perfil=responsavel'));
+    const a = [await waitText(page, 'Registro de acessos e altera\u00e7\u00f5es'), await scrollTo(page, 'encerrou v\u00ednculo (Troca de profissional (e2e))'), await scrollTo(page, 'autorizou v\u00ednculo')];
+    check('cuidado: trilha de acessos e alteracoes para a familia', a.every(Boolean), a.join('/'));
+    await shot(page, 'cm18_trilha_acessos');
+    await ctx.close();
+  });
+
+  await step('computador: cuidado troca de clinica', async () => {
+    const { ctx, page } = await newPage(browser, DESKTOP);
+    await open(page, CARE('familia', 'perfil=responsavel'));
+    await tap(page, 'Trocar de cl\u00ednica', { wait: 1200 });
+    await tap(page, 'Confirmar troca', { wait: 1500 });
+    const t = [await scrollTo(page, 'Autoriza\u00e7\u00f5es pendentes'), await scrollTo(page, 'Brincadeira do flamingo')];
+    check('cuidado: troca de clinica encerra a equipe e mantem o liberado', t.every(Boolean), t.join('/'));
+    await page.mouse.wheel(0, -5000);
+    await page.waitForTimeout(600);
+    await tap(page, 'Autorizar acesso', { wait: 1500 });
+    await shot(page, 'cm19_troca_de_clinica');
+    await nav(page, CARE('equipe', 'perfil=profissional&conta=prof-b'));
+    const b = [await waitText(page, 'Profissionais envolvidos'), await absent(page, 'Fisioterapeuta Exemplo Moura'), await absent(page, RESERVED)];
+    check('cuidado: nova clinica nao ve a equipe nem os registros anteriores', b.every(Boolean), b.join('/'));
+    await page.mouse.wheel(0, -5000);
+    await page.waitForTimeout(600);
+    await shot(page, 'cm20_nova_clinica');
+    await nav(page, CARE('equipe', 'conta=fis-a'));
+    check('cuidado: fisioterapeuta da clinica anterior perde a visao da equipe', !(await waitText(page, 'Profissionais envolvidos', 3000)), '');
+    await ctx.close();
   });
 
   await browser.close();

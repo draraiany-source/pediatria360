@@ -15,6 +15,7 @@ import '../demo_session.dart';
 import '../widgets/brand_widgets.dart';
 import '../widgets/demo_widgets.dart';
 import 'booking_assistant_screens.dart';
+import 'care_team_screens.dart' show professionalProfilePath;
 import 'followup_screens.dart';
 import 'pre_visit_screens.dart';
 
@@ -112,6 +113,54 @@ class DemoHomeScreen extends StatelessWidget {
     );
   }
 
+  /// Início de psicologia, fisioterapia e demais especialidades: agenda
+  /// própria e crianças com vínculo ativo.
+  List<Widget> _careHome(BuildContext context, DemoSession s) {
+    final DateTime now = s.now;
+    final List<DemoAppointment> mine =
+        s.appointments
+            .where(
+              (DemoAppointment a) =>
+                  a.professionalId == s.account.id &&
+                  a.status.holdsSlot &&
+                  a.start.isAfter(now),
+            )
+            .toList()
+          ..sort(
+            (DemoAppointment a, DemoAppointment b) => a.start.compareTo(b.start),
+          );
+    return <Widget>[
+      DemoClinicPanelCard(account: s.account, logo: s.myLogo),
+      DemoSectionTitle(
+        'Próximas sessões',
+        trailing: TextButton(
+          onPressed: () => context.go('/agenda'),
+          child: const Text('Ver agenda'),
+        ),
+      ),
+      if (mine.isEmpty) const Text('Nenhuma sessão agendada.'),
+      for (final DemoAppointment a in mine.take(5))
+        _ConsultTile(appointment: a),
+      DemoSectionTitle(
+        'Pacientes vinculados',
+        trailing: TextButton(
+          onPressed: () => context.go('/pacientes'),
+          child: const Text('Ver todos'),
+        ),
+      ),
+      _PatientStrip(patients: s.visiblePatients),
+      const DemoSectionTitle('Atalhos'),
+      const _Shortcuts(
+        items: <(String, IconData, String)>[
+          ('Perfil profissional', Icons.badge_outlined, professionalProfilePath),
+          ('Agenda', Icons.calendar_month_outlined, '/agenda'),
+          ('Pacientes', Icons.people_outline, '/pacientes'),
+          ('Biblioteca', Icons.menu_book_outlined, '/biblioteca'),
+        ],
+      ),
+    ];
+  }
+
   List<Widget> _body(BuildContext context, DemoProfile profile) {
     final DemoSession s = demoSession;
     final List<DemoAppointment> today =
@@ -128,6 +177,8 @@ class DemoHomeScreen extends StatelessWidget {
           );
 
     switch (profile) {
+      case DemoProfile.profissional when !s.isPediatrician:
+        return _careHome(context, s);
       case DemoProfile.profissional:
         return <Widget>[
           DemoClinicPanelCard(account: s.account, logo: s.myLogo),
@@ -178,7 +229,7 @@ class DemoHomeScreen extends StatelessWidget {
               child: const Text('Ver todos'),
             ),
           ),
-          _PatientStrip(patients: s.patients),
+          _PatientStrip(patients: s.visiblePatients),
           const DemoSectionTitle('Atalhos'),
           const _Shortcuts(
             items: <(String, IconData, String)>[
@@ -186,6 +237,11 @@ class DemoHomeScreen extends StatelessWidget {
                 'Calculadora de doses',
                 Icons.calculate_outlined,
                 '/calculadora',
+              ),
+              (
+                'Modelos de documentos',
+                Icons.library_books_outlined,
+                '/modelos',
               ),
               (
                 'Meus modelos de receita',
@@ -200,6 +256,11 @@ class DemoHomeScreen extends StatelessWidget {
               ('Vacinação', Icons.vaccines_outlined, '/vacinacao'),
               ('Telemedicina', Icons.videocam_outlined, '/telemedicina'),
               ('Biblioteca', Icons.menu_book_outlined, '/biblioteca'),
+              (
+                'Perfil profissional',
+                Icons.badge_outlined,
+                professionalProfilePath,
+              ),
             ],
           ),
           const DemoSchedulingHomeCard(),
@@ -289,6 +350,11 @@ class DemoHomeScreen extends StatelessWidget {
             items: <(String, IconData, String)>[
               ('Relatórios', Icons.insights_outlined, '/relatorios'),
               ('Biblioteca', Icons.menu_book_outlined, '/biblioteca'),
+              (
+                'Modelos da clínica',
+                Icons.library_books_outlined,
+                '/modelos',
+              ),
             ],
           ),
           const DemoSchedulingHomeCard(),
@@ -296,7 +362,9 @@ class DemoHomeScreen extends StatelessWidget {
           const DemoNotice(
             text:
                 'Gestão de equipe, convites e auditoria existem apenas na '
-                'versão autenticada.',
+                'versão autenticada. Os modelos da clínica ficam disponíveis '
+                'para os profissionais do Consultório Exemplo; a gestão não '
+                'vê pacientes nem documentos.',
           ),
         ];
       case DemoProfile.responsavel:

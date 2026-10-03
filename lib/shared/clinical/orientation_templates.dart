@@ -86,4 +86,41 @@ class OrientationTemplate {
   /// Rótulo curto de tema e faixa para listas.
   String get tagLabel =>
       <String>[topic.label, if (band != null) band!.label].join(' · ');
+
+  /// Texto e classificação novos. Documentos já gerados guardam cópia
+  /// própria do texto e não mudam.
+  OrientationTemplate revise({
+    required String title,
+    required String body,
+    required OrientationTopic topic,
+    required ChildAgeBand? band,
+    required String author,
+    required DateTime now,
+  }) => OrientationTemplate(
+    id: id,
+    title: title.trim(),
+    body: body.trim(),
+    author: author,
+    updatedAt: now,
+    isExample: false,
+    topic: topic,
+    band: band,
+    ownerId: ownerId,
+  );
+
+  OrientationTemplate duplicate({
+    required String id,
+    required String ownerId,
+    required String author,
+    required DateTime now,
+  }) => OrientationTemplate(
+    id: id,
+    title: 'Cópia de ${title.replaceFirst('Modelo de exemplo: ', '')}',
+    body: body,
+    author: author,
+    updatedAt: now,
+    topic: topic,
+    band: band,
+    ownerId: ownerId,
+  );
 }

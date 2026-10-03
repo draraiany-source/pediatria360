@@ -186,7 +186,7 @@ class DemoWorkspace {
 
   // ------------------------------------------------------------ Permissões
 
-  bool get isProfessional => s.profile == DemoProfile.profissional;
+  bool get isProfessional => s.isPediatrician;
   bool get canUseDiary => isProfessional;
   bool get canWriteNotes => isProfessional;
 

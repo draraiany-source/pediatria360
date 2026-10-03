@@ -18,6 +18,7 @@ import 'consultation_summary_screen.dart' show consultationSummaryUrl;
 import 'documents_screens.dart';
 import 'pre_visit_screens.dart';
 import 'rx_template_screens.dart';
+import 'template_library_screens.dart' show templatesPath;
 
 enum ConsultationStep {
   consulta('consulta', 'Consulta'),
@@ -578,6 +579,15 @@ class _DemoConsultationScreenState extends State<DemoConsultationScreen> {
             },
             icon: const Icon(Icons.manage_search_rounded),
             label: const Text('Ver e buscar modelos'),
+          ),
+          TextButton.icon(
+            key: const ValueKey<String>('consulta-modelos-documentos'),
+            onPressed: () {
+              if (c.isDraft && !_save(silent: true)) return;
+              context.go('$templatesPath?paciente=${p.id}&consulta=${c.id}');
+            },
+            icon: const Icon(Icons.library_books_outlined),
+            label: const Text('Modelos de atestado, encaminhamento e mais'),
           ),
         ],
       ),

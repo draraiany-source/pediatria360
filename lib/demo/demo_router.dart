@@ -10,6 +10,7 @@ import 'screens/followup_screens.dart';
 import 'screens/brand_screens.dart';
 import 'screens/business_screens.dart';
 import 'screens/care_screens.dart';
+import 'screens/care_team_screens.dart';
 import 'screens/consultation_screen.dart';
 import 'screens/consultation_summary_screen.dart';
 import 'screens/diary_screens.dart';
@@ -33,6 +34,7 @@ import 'screens/routine_screens.dart';
 import 'screens/routine_summary_screens.dart';
 import 'screens/rx_template_screens.dart';
 import 'screens/supplement_screens.dart';
+import 'screens/template_library_screens.dart';
 import 'screens/welcome_screen.dart';
 import 'screens/well_child_screen.dart';
 import 'widgets/demo_shell.dart';
@@ -46,6 +48,12 @@ Widget _guard(DemoModule module, Widget child) =>
 /// O ScaffoldMessenger proprio faz os avisos aparecerem acima da barra de
 /// acoes do fluxo, e nao sobre ela.
 Widget _clinical(String title, Widget child) => demoSession.canUseClinicalTools
+    ? ScaffoldMessenger(child: child)
+    : DemoRestrictedScreen(module: DemoModule.pacientes, title: title);
+
+/// Modelos de documentos: o profissional (modelos pessoais) e a
+/// administração (modelos da clínica). Recepção, financeiro e família não.
+Widget _templates(String title, Widget child) => demoSession.templates.canOpen
     ? ScaffoldMessenger(child: child)
     : DemoRestrictedScreen(module: DemoModule.pacientes, title: title);
 
@@ -142,6 +150,9 @@ final GoRouter demoRouter = GoRouter(
       state.uri.queryParameters['perfil'],
     );
     if (fromLink != null) demoSession.enterSilently(fromLink);
+    // `?conta=psi-a` abre já na conta de outro profissional da equipe.
+    final String? account = state.uri.queryParameters['conta'];
+    if (account != null) demoSession.switchAccountSilently(account);
 
     final bool atWelcome = state.matchedLocation == '/';
     if (demoSession.profile == null && !atWelcome) return '/';
@@ -428,7 +439,7 @@ final GoRouter demoRouter = GoRouter(
                 GoRoute(
                   path: 'observacoes',
                   builder: (BuildContext context, GoRouterState state) =>
-                      demoSession.profile == DemoProfile.profissional ||
+                      demoSession.isPediatrician ||
                           demoSession.profile == DemoProfile.responsavel
                       ? ScaffoldMessenger(
                           child: DemoPatientNotesScreen(
@@ -463,6 +474,7 @@ final GoRouter demoRouter = GoRouter(
                               ),
                               consultationId:
                                   state.uri.queryParameters['consulta'],
+                              templateId: state.uri.queryParameters['modelo'],
                             ),
                           ),
                     ),
@@ -697,6 +709,27 @@ final GoRouter demoRouter = GoRouter(
               ),
         ),
         GoRoute(
+          path: '/cuidado/:id',
+          builder: (BuildContext context, GoRouterState state) =>
+              ScaffoldMessenger(
+                child: DemoCareScreen(
+                  key: ValueKey<String>(state.uri.toString()),
+                  childId: state.pathParameters['id']!,
+                  tab: state.uri.queryParameters['aba'],
+                ),
+              ),
+        ),
+        GoRoute(
+          path: '/profissional',
+          builder: (BuildContext context, GoRouterState state) =>
+              demoSession.profile == DemoProfile.profissional
+              ? const ScaffoldMessenger(child: DemoProfessionalProfileScreen())
+              : const DemoRestrictedScreen(
+                  module: DemoModule.perfil,
+                  title: 'Perfil profissional',
+                ),
+        ),
+        GoRoute(
           path: '/diario',
           builder: (BuildContext context, GoRouterState state) => _workspace(
             'Diário de atendimentos',
@@ -763,8 +796,44 @@ final GoRouter demoRouter = GoRouter(
                 ),
         ),
         GoRoute(
+          path: templatesPath,
+          builder: (BuildContext context, GoRouterState state) => _templates(
+            'Modelos de documentos',
+            DemoTemplateLibraryScreen(
+              key: ValueKey<String>(state.uri.toString()),
+              patientId: state.uri.queryParameters['paciente'],
+              consultationId: state.uri.queryParameters['consulta'],
+              kind: DocKind.fromSlug(state.uri.queryParameters['tipo']),
+            ),
+          ),
+          routes: <RouteBase>[
+            GoRoute(
+              path: 'novo',
+              builder: (BuildContext context, GoRouterState state) =>
+                  _templates(
+                    'Modelos de documentos',
+                    DemoTemplateEditorScreen(
+                      key: ValueKey<String>(state.uri.toString()),
+                      kind: DocKind.fromSlug(state.uri.queryParameters['tipo']),
+                    ),
+                  ),
+            ),
+            GoRoute(
+              path: ':tid/editar',
+              builder: (BuildContext context, GoRouterState state) =>
+                  _templates(
+                    'Modelos de documentos',
+                    DemoTemplateEditorScreen(
+                      key: ValueKey<String>(state.uri.toString()),
+                      templateId: state.pathParameters['tid'],
+                    ),
+                  ),
+            ),
+          ],
+        ),
+        GoRoute(
           path: rxTemplatesPath,
-          builder: (BuildContext context, GoRouterState state) => _clinical(
+          builder: (BuildContext context, GoRouterState state) => _templates(
             'Modelos de receita',
             DemoRxTemplatesScreen(
               key: ValueKey<String>(state.uri.toString()),
@@ -775,14 +844,14 @@ final GoRouter demoRouter = GoRouter(
           routes: <RouteBase>[
             GoRoute(
               path: 'novo',
-              builder: (BuildContext context, GoRouterState state) => _clinical(
+              builder: (BuildContext context, GoRouterState state) => _templates(
                 'Modelos de receita',
                 const DemoRxTemplateEditorScreen(),
               ),
             ),
             GoRoute(
               path: ':tid/editar',
-              builder: (BuildContext context, GoRouterState state) => _clinical(
+              builder: (BuildContext context, GoRouterState state) => _templates(
                 'Modelos de receita',
                 DemoRxTemplateEditorScreen(
                   key: ValueKey<String>(state.uri.toString()),
