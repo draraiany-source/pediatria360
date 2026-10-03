@@ -34,6 +34,89 @@ service firebase.storage {
       allow delete: if isOwner(uid);
     }
 
+    // Arquivos do cuidado multidisciplinar. Valem as regras de care_teams
+    // (firestore.rules). Cada regra faz no máximo duas leituras no Firestore,
+    // o limite do Storage por requisição.
+    //
+    //   care/{criança}/registros/{autor}/{registro}/{arquivo}  anexo privado
+    //   care/{criança}/familia/{registro}/{arquivo}            liberado à família
+    //   care/{criança}/resumos/{registro}/{versão}/{arquivo}   cópia no resumo
+    match /care/{childId} {
+      function memberPath() {
+        return /databases/(default)/documents/care_teams/$(childId)/members/$(request.auth.uid);
+      }
+
+      // Arquivo gravado não é substituído: resource == null nas criações.
+      function careFile() {
+        return request.resource.size < 10 * 1024 * 1024 &&
+               (request.resource.contentType.matches('image/.*') ||
+                request.resource.contentType == 'application/pdf');
+      }
+
+      // Anexo do registro completo: o autor (o caminho já diz quem é) e quem
+      // recebeu acesso justificado, não retirado, com vínculo ativo na clínica
+      // do registro. Anexos não entram em resumo sem uma cópia escolhida.
+      match /registros/{authorUid}/{recordId}/{fileName} {
+        function grantedReader() {
+          let g = firestore.get(/databases/(default)/documents/care_teams/$(childId)/records/$(recordId)/grants/$(request.auth.uid)).data;
+          let m = firestore.get(memberPath()).data;
+          return g.get('revokedAt', null) == null &&
+                 m.status == 'active' &&
+                 m.clinicId == g.clinicId;
+        }
+
+        allow read: if signedIn() &&
+                       (request.auth.uid == authorUid || grantedReader());
+        allow create: if signedIn() && resource == null &&
+                         request.auth.uid == authorUid &&
+                         firestore.get(/databases/(default)/documents/care_teams/$(childId)/records/$(recordId)).data.authorUid == authorUid &&
+                         firestore.get(memberPath()).data.status == 'active' &&
+                         careFile();
+        allow update, delete: if false;
+      }
+
+      // Material liberado à família: o autor e o responsável titular.
+      match /familia/{recordId}/{fileName} {
+        function rec() {
+          return firestore.get(/databases/(default)/documents/care_teams/$(childId)/records/$(recordId)).data;
+        }
+
+        allow read: if signedIn() && (
+          rec().authorUid == request.auth.uid ||
+          (rec().visibility == 'familia' &&
+           rec().get('releasedAt', null) != null &&
+           firestore.get(/databases/(default)/documents/care_teams/$(childId))
+             .data.ownerUid == request.auth.uid));
+        allow create: if signedIn() && resource == null &&
+                         rec().authorUid == request.auth.uid &&
+                         rec().visibility == 'familia' &&
+                         firestore.get(memberPath()).data.status == 'active' &&
+                         careFile();
+        allow update, delete: if false;
+      }
+
+      // Anexo copiado para um resumo: o autor; o destinatário só enquanto o
+      // resumo está publicado, na versão em vigor e se o arquivo foi escolhido.
+      match /resumos/{recordId}/{version}/{fileName} {
+        function summary() {
+          return firestore.get(/databases/(default)/documents/care_teams/$(childId)/summaries/$(recordId)).data;
+        }
+
+        allow read: if signedIn() && (
+          summary().authorUid == request.auth.uid ||
+          (summary().status == 'publicado' &&
+           request.auth.uid in summary().recipients &&
+           string(summary().version) == version &&
+           fileName in summary().attachments &&
+           firestore.get(memberPath()).data.status == 'active' &&
+           firestore.get(memberPath()).data.clinicId == summary().clinicId));
+        allow create: if signedIn() && resource == null &&
+                         firestore.get(/databases/(default)/documents/care_teams/$(childId)/records/$(recordId)).data.authorUid == request.auth.uid &&
+                         firestore.get(memberPath()).data.status == 'active' &&
+                         careFile();
+        allow update, delete: if false;
+      }
+    }
     // Capas de curso e imagens de artigo: leitura livre (aparecem antes do
     // login, na vitrine), escrita só por admin via console ou Function.
     match /public/{allPaths=**} {

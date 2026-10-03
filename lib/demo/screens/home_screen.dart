@@ -7,9 +7,64 @@ import '../../core/theme/app_tokens.dart';
 import '../../core/widgets/capi_illustration.dart';
 import '../../core/widgets/child_avatar.dart';
 import '../../core/widgets/clinical_ui.dart';
+import '../../shared/clinical/dose_calculator.dart';
+import '../../shared/clinical/visit_diary.dart';
+import '../demo_clinical.dart';
 import '../demo_data.dart';
 import '../demo_session.dart';
+import '../widgets/brand_widgets.dart';
 import '../widgets/demo_widgets.dart';
+import 'booking_assistant_screens.dart';
+import 'care_team_screens.dart' show professionalProfilePath;
+import 'followup_screens.dart';
+import 'pre_visit_screens.dart';
+
+/// Pendências do diário e tarefas para hoje, com acesso ao diário.
+class _DiaryCard extends StatelessWidget {
+  const _DiaryCard({required this.session});
+
+  final DemoSession session;
+
+  @override
+  Widget build(BuildContext context) {
+    final Map<VisitOutcome, int> counts = session.workspace.diaryCounts(
+      period: DiaryPeriod.mes,
+    );
+    final int pending = counts[VisitOutcome.pendente]!;
+    final int tasks = session.workspace.tasksDueNow;
+    return Padding(
+      padding: const EdgeInsets.only(top: AppSpacing.sm),
+      child: PremiumCard(
+        onTap: () => context.go('/diario'),
+        child: Row(
+          children: <Widget>[
+            const Icon(Icons.menu_book_outlined, color: AppColors.brand),
+            const SizedBox(width: AppSpacing.md),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  Text(
+                    'Diário de atendimentos',
+                    style: Theme.of(context).textTheme.titleSmall,
+                  ),
+                  Text(
+                    '$pending atendimento(s) pendente(s) de registro - '
+                    '$tasks tarefa(s) para hoje ou atrasada(s)',
+                  ),
+                ],
+              ),
+            ),
+            TextButton(
+              onPressed: () => context.go('/diario'),
+              child: const Text('Abrir diário'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
 
 /// Inicio por perfil — cada area ve atalhos e resumo proprios.
 class DemoHomeScreen extends StatelessWidget {
@@ -58,55 +113,185 @@ class DemoHomeScreen extends StatelessWidget {
     );
   }
 
+  /// Início de psicologia, fisioterapia e demais especialidades: agenda
+  /// própria e crianças com vínculo ativo.
+  List<Widget> _careHome(BuildContext context, DemoSession s) {
+    final DateTime now = s.now;
+    final List<DemoAppointment> mine =
+        s.appointments
+            .where(
+              (DemoAppointment a) =>
+                  a.professionalId == s.account.id &&
+                  a.status.holdsSlot &&
+                  a.start.isAfter(now),
+            )
+            .toList()
+          ..sort(
+            (DemoAppointment a, DemoAppointment b) => a.start.compareTo(b.start),
+          );
+    return <Widget>[
+      DemoClinicPanelCard(account: s.account, logo: s.myLogo),
+      DemoSectionTitle(
+        'Próximas sessões',
+        trailing: TextButton(
+          onPressed: () => context.go('/agenda'),
+          child: const Text('Ver agenda'),
+        ),
+      ),
+      if (mine.isEmpty) const Text('Nenhuma sessão agendada.'),
+      for (final DemoAppointment a in mine.take(5))
+        _ConsultTile(appointment: a),
+      DemoSectionTitle(
+        'Pacientes vinculados',
+        trailing: TextButton(
+          onPressed: () => context.go('/pacientes'),
+          child: const Text('Ver todos'),
+        ),
+      ),
+      _PatientStrip(patients: s.visiblePatients),
+      const DemoSectionTitle('Atalhos'),
+      const _Shortcuts(
+        items: <(String, IconData, String)>[
+          ('Perfil profissional', Icons.badge_outlined, professionalProfilePath),
+          ('Agenda', Icons.calendar_month_outlined, '/agenda'),
+          ('Pacientes', Icons.people_outline, '/pacientes'),
+          ('Biblioteca', Icons.menu_book_outlined, '/biblioteca'),
+        ],
+      ),
+    ];
+  }
+
   List<Widget> _body(BuildContext context, DemoProfile profile) {
     final DemoSession s = demoSession;
-    final List<DemoAppointment> today = s.appointments
-        .where((DemoAppointment a) => DateUtils.isSameDay(a.start, DateTime.now()))
-        .toList()
-      ..sort((DemoAppointment a, DemoAppointment b) => a.start.compareTo(b.start));
+    final List<DemoAppointment> today =
+        s.appointments
+            .where(
+              (DemoAppointment a) =>
+                  a.status.holdsSlot &&
+                  DateUtils.isSameDay(a.start, DateTime.now()),
+            )
+            .toList()
+          ..sort(
+            (DemoAppointment a, DemoAppointment b) =>
+                a.start.compareTo(b.start),
+          );
 
     switch (profile) {
+      case DemoProfile.profissional when !s.isPediatrician:
+        return _careHome(context, s);
       case DemoProfile.profissional:
         return <Widget>[
-          _MetricsRow(items: <(String, String, IconData, Color)>[
-            ('Consultas hoje', '${today.length}', Icons.event_outlined,
-                AppColors.brand),
-            ('Pacientes', '${s.patients.length}', Icons.people_outline,
-                AppColors.teal),
-            ('Aguardando', '${today.where((DemoAppointment a) => a.status == DemoAppointmentStatus.chegou).length}',
-                Icons.hourglass_top_rounded, AppColors.warning),
-          ]),
+          DemoClinicPanelCard(account: s.account, logo: s.myLogo),
+          _MetricsRow(
+            items: <(String, String, IconData, Color)>[
+              (
+                'Consultas hoje',
+                '${today.length}',
+                Icons.event_outlined,
+                AppColors.brand,
+              ),
+              (
+                'Pacientes',
+                '${s.patients.length}',
+                Icons.people_outline,
+                AppColors.teal,
+              ),
+              (
+                'Aguardando',
+                '${today.where((DemoAppointment a) => a.status == DemoAppointmentStatus.chegou).length}',
+                Icons.hourglass_top_rounded,
+                AppColors.warning,
+              ),
+            ],
+          ),
           DemoSectionTitle(
-            'Próximos atendimentos',
+            'Consultas de hoje',
             trailing: TextButton(
               onPressed: () => context.go('/agenda'),
               child: const Text('Ver agenda'),
             ),
           ),
-          for (final DemoAppointment a in today.take(3))
-            _AppointmentTile(appointment: a),
+          for (final DemoAppointment a in today) _ConsultTile(appointment: a),
+          _DiaryCard(session: s),
+          if (s.consultations.any(
+            (DemoConsultation c) => c.isDraft,
+          )) ...<Widget>[
+            const DemoSectionTitle('Consultas em andamento'),
+            for (final DemoConsultation c in s.consultations.where(
+              (DemoConsultation c) => c.isDraft,
+            ))
+              _DraftConsultTile(consultation: c),
+          ],
+          DemoSectionTitle(
+            'Pacientes',
+            trailing: TextButton(
+              onPressed: () => context.go('/pacientes'),
+              child: const Text('Ver todos'),
+            ),
+          ),
+          _PatientStrip(patients: s.visiblePatients),
           const DemoSectionTitle('Atalhos'),
-          const _Shortcuts(items: <(String, IconData, String)>[
-            ('Pacientes', Icons.people_outline, '/pacientes'),
-            ('Vacinação', Icons.vaccines_outlined, '/vacinacao'),
-            ('Telemedicina', Icons.videocam_outlined, '/telemedicina'),
-            ('Biblioteca', Icons.menu_book_outlined, '/biblioteca'),
-          ]),
+          const _Shortcuts(
+            items: <(String, IconData, String)>[
+              (
+                'Calculadora de doses',
+                Icons.calculate_outlined,
+                '/calculadora',
+              ),
+              (
+                'Modelos de documentos',
+                Icons.library_books_outlined,
+                '/modelos',
+              ),
+              (
+                'Meus modelos de receita',
+                Icons.bookmarks_outlined,
+                '/modelos-receita',
+              ),
+              (
+                'Suplementação',
+                Icons.medication_liquid_outlined,
+                '/suplementacao',
+              ),
+              ('Vacinação', Icons.vaccines_outlined, '/vacinacao'),
+              ('Telemedicina', Icons.videocam_outlined, '/telemedicina'),
+              ('Biblioteca', Icons.menu_book_outlined, '/biblioteca'),
+              (
+                'Perfil profissional',
+                Icons.badge_outlined,
+                professionalProfilePath,
+              ),
+            ],
+          ),
+          const DemoSchedulingHomeCard(),
         ];
       case DemoProfile.recepcao:
         return <Widget>[
-          _MetricsRow(items: <(String, String, IconData, Color)>[
-            ('Agendados hoje', '${today.length}', Icons.event_outlined,
-                AppColors.brand),
-            ('Chegaram', '${today.where((DemoAppointment a) => a.status == DemoAppointmentStatus.chegou).length}',
-                Icons.how_to_reg_outlined, AppColors.teal),
-          ]),
+          _MetricsRow(
+            items: <(String, String, IconData, Color)>[
+              (
+                'Agendados hoje',
+                '${today.length}',
+                Icons.event_outlined,
+                AppColors.brand,
+              ),
+              (
+                'Chegaram',
+                '${today.where((DemoAppointment a) => a.status == DemoAppointmentStatus.chegou).length}',
+                Icons.how_to_reg_outlined,
+                AppColors.teal,
+              ),
+            ],
+          ),
           const DemoSectionTitle('Agenda do dia'),
-          for (final DemoAppointment a in today) _AppointmentTile(appointment: a),
+          for (final DemoAppointment a in today)
+            _AppointmentTile(appointment: a),
+          const DemoSchedulingHomeCard(),
           const SizedBox(height: AppSpacing.md),
           const DemoNotice(
             icon: Icons.shield_outlined,
-            text: 'A recepção vê agenda e cadastro, mas não o prontuário. '
+            text:
+                'A recepção vê agenda e cadastro, mas não o prontuário. '
                 'No app real essa restrição também é aplicada nas regras do '
                 'Firebase.',
           ),
@@ -116,40 +301,70 @@ class DemoHomeScreen extends StatelessWidget {
             .where((DemoInvoice i) => i.status != DemoInvoiceStatus.pago)
             .fold<double>(0, (double sum, DemoInvoice i) => sum + i.amount);
         return <Widget>[
-          _MetricsRow(items: <(String, String, IconData, Color)>[
-            ('Em aberto (fictício)', demoMoney(open),
-                Icons.receipt_long_outlined, AppColors.warning),
-            ('Lançamentos', '${s.invoices.length}', Icons.list_alt_rounded,
-                AppColors.brand),
-          ]),
+          _MetricsRow(
+            items: <(String, String, IconData, Color)>[
+              (
+                'Em aberto (fictício)',
+                demoMoney(open),
+                Icons.receipt_long_outlined,
+                AppColors.warning,
+              ),
+              (
+                'Lançamentos',
+                '${s.invoices.length}',
+                Icons.list_alt_rounded,
+                AppColors.brand,
+              ),
+            ],
+          ),
           const DemoSectionTitle('Atalhos'),
-          const _Shortcuts(items: <(String, IconData, String)>[
-            ('Financeiro', Icons.payments_outlined, '/financeiro'),
-            ('Relatórios', Icons.insights_outlined, '/relatorios'),
-          ]),
+          const _Shortcuts(
+            items: <(String, IconData, String)>[
+              ('Financeiro', Icons.payments_outlined, '/financeiro'),
+              ('Relatórios', Icons.insights_outlined, '/relatorios'),
+            ],
+          ),
           const SizedBox(height: AppSpacing.md),
           const DemoNotice(
             icon: Icons.shield_outlined,
-            text: 'O financeiro não acessa dados clínicos. Valores desta tela '
+            text:
+                'O financeiro não acessa dados clínicos. Valores desta tela '
                 'são fictícios.',
           ),
         ];
       case DemoProfile.administrador:
         return <Widget>[
-          _MetricsRow(items: <(String, String, IconData, Color)>[
-            ('Conteúdos', '${s.articles.length}', Icons.menu_book_outlined,
-                AppColors.moduleLibrary),
-            ('Perfis de equipe', '4', Icons.groups_outlined, AppColors.brand),
-          ]),
+          _MetricsRow(
+            items: <(String, String, IconData, Color)>[
+              (
+                'Conteúdos',
+                '${s.articles.length}',
+                Icons.menu_book_outlined,
+                AppColors.moduleLibrary,
+              ),
+              ('Perfis de equipe', '4', Icons.groups_outlined, AppColors.brand),
+            ],
+          ),
           const DemoSectionTitle('Atalhos'),
-          const _Shortcuts(items: <(String, IconData, String)>[
-            ('Relatórios', Icons.insights_outlined, '/relatorios'),
-            ('Biblioteca', Icons.menu_book_outlined, '/biblioteca'),
-          ]),
+          const _Shortcuts(
+            items: <(String, IconData, String)>[
+              ('Relatórios', Icons.insights_outlined, '/relatorios'),
+              ('Biblioteca', Icons.menu_book_outlined, '/biblioteca'),
+              (
+                'Modelos da clínica',
+                Icons.library_books_outlined,
+                '/modelos',
+              ),
+            ],
+          ),
+          const DemoSchedulingHomeCard(),
           const SizedBox(height: AppSpacing.md),
           const DemoNotice(
-            text: 'Gestão de equipe, convites e auditoria existem apenas na '
-                'versão autenticada.',
+            text:
+                'Gestão de equipe, convites e auditoria existem apenas na '
+                'versão autenticada. Os modelos da clínica ficam disponíveis '
+                'para os profissionais do Consultório Exemplo; a gestão não '
+                'vê pacientes nem documentos.',
           ),
         ];
       case DemoProfile.responsavel:
@@ -176,10 +391,14 @@ class DemoHomeScreen extends StatelessWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: <Widget>[
-                          Text(p.name,
-                              style: Theme.of(context).textTheme.titleSmall),
-                          Text(p.ageLabel,
-                              style: Theme.of(context).textTheme.bodySmall),
+                          Text(
+                            p.name,
+                            style: Theme.of(context).textTheme.titleSmall,
+                          ),
+                          Text(
+                            p.ageLabel,
+                            style: Theme.of(context).textTheme.bodySmall,
+                          ),
                         ],
                       ),
                     ),
@@ -188,12 +407,18 @@ class DemoHomeScreen extends StatelessWidget {
                 ),
               ),
             ),
+          const DemoFamilySchedulingCard(),
+          const DemoSectionTitle('Próximas consultas'),
+          const DemoFamilyUpcomingVisits(),
           const DemoSectionTitle('Atalhos'),
-          const _Shortcuts(items: <(String, IconData, String)>[
-            ('Vacinação', Icons.vaccines_outlined, '/vacinacao'),
-            ('Biblioteca', Icons.menu_book_outlined, '/biblioteca'),
-            ('Telemedicina', Icons.videocam_outlined, '/telemedicina'),
-          ]),
+          const _Shortcuts(
+            items: <(String, IconData, String)>[
+              ('Rotina e diário', Icons.event_note_outlined, '/rotina'),
+              ('Vacinação', Icons.vaccines_outlined, '/vacinacao'),
+              ('Biblioteca', Icons.menu_book_outlined, '/biblioteca'),
+              ('Telemedicina', Icons.videocam_outlined, '/telemedicina'),
+            ],
+          ),
         ];
     }
   }
@@ -220,20 +445,22 @@ class _Greeting extends StatelessWidget {
               children: <Widget>[
                 Text(
                   'Olá! Você está como',
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: AppColors.inkMuted,
-                      ),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodyMedium?.copyWith(color: AppColors.inkMuted),
                 ),
                 Text(
                   profile.label,
                   style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                        color: AppColors.navy,
-                        fontWeight: FontWeight.w800,
-                      ),
+                    color: AppColors.navy,
+                    fontWeight: FontWeight.w800,
+                  ),
                 ),
                 const SizedBox(height: AppSpacing.xs),
-                Text(profile.description,
-                    style: Theme.of(context).textTheme.bodySmall),
+                Text(
+                  profile.description,
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
               ],
             ),
           ),
@@ -292,10 +519,17 @@ class _Shortcuts extends StatelessWidget {
       runSpacing: AppSpacing.sm,
       children: <Widget>[
         for (final (String, IconData, String) i in items)
-          ActionChip(
-            avatar: Icon(i.$2, size: 18, color: AppColors.brand),
-            label: Text(i.$1),
-            onPressed: () => context.go(i.$3),
+          // O ActionChip e anunciado como caixa de selecao no Flutter Web.
+          Semantics(
+            button: true,
+            label: i.$1,
+            excludeSemantics: true,
+            onTap: () => context.go(i.$3),
+            child: ActionChip(
+              avatar: Icon(i.$2, size: 18, color: AppColors.brand),
+              label: Text(i.$1),
+              onPressed: () => context.go(i.$3),
+            ),
           ),
       ],
     );
@@ -322,25 +556,225 @@ class _AppointmentTile extends StatelessWidget {
             Text(
               demoTime(appointment.start),
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    color: AppColors.brand,
-                    fontWeight: FontWeight.w800,
-                  ),
+                color: AppColors.brand,
+                fontWeight: FontWeight.w800,
+              ),
             ),
             const SizedBox(width: AppSpacing.md),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
-                  Text(p?.name ?? 'Paciente',
-                      style: Theme.of(context).textTheme.titleSmall),
-                  Text(appointment.reason,
-                      style: Theme.of(context).textTheme.bodySmall),
+                  Text(
+                    p?.name ?? 'Paciente',
+                    style: Theme.of(context).textTheme.titleSmall,
+                  ),
+                  Text(
+                    appointment.reason,
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
                 ],
               ),
             ),
             DemoStatusChip(status: appointment.status),
           ],
         ),
+      ),
+    );
+  }
+}
+
+/// Abre a consulta em rascunho do paciente ou inicia uma nova.
+void openConsultationFor(BuildContext context, String patientId) {
+  final DemoConsultation c =
+      demoSession
+          .consultationsFor(patientId)
+          .where((DemoConsultation c) => c.isDraft && !c.isWellChild)
+          .firstOrNull ??
+      demoSession.startConsultation(patientId);
+  context.go('/pacientes/$patientId/consulta/${c.id}');
+}
+
+/// Consulta do dia em destaque: horário em bloco escuro e ação de atender.
+class _ConsultTile extends StatelessWidget {
+  const _ConsultTile({required this.appointment});
+
+  final DemoAppointment appointment;
+
+  @override
+  Widget build(BuildContext context) {
+    final TextTheme t = Theme.of(context).textTheme;
+    final DemoPatient? p = demoSession.patients
+        .where((DemoPatient x) => x.id == appointment.patientId)
+        .firstOrNull;
+    final bool narrow = MediaQuery.sizeOf(context).width < 520;
+    final Widget action = FilledButton.icon(
+      onPressed: p == null ? null : () => openConsultationFor(context, p.id),
+      icon: const Icon(Icons.play_arrow_rounded, size: 18),
+      label: const Text('Atender'),
+    );
+    return Padding(
+      padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+      child: PremiumCard(
+        padding: const EdgeInsets.all(AppSpacing.sm),
+        onTap: () => context.go('/agenda/${appointment.id}'),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: <Widget>[
+            Row(
+              children: <Widget>[
+                Container(
+                  width: 64,
+                  padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
+                  decoration: const BoxDecoration(
+                    color: AppColors.navy,
+                    borderRadius: AppRadius.mdAll,
+                  ),
+                  child: Text(
+                    demoTime(appointment.start),
+                    textAlign: TextAlign.center,
+                    style: t.titleMedium?.copyWith(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: AppSpacing.md),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: <Widget>[
+                      Text(
+                        p?.name ?? 'Paciente',
+                        style: t.titleMedium?.copyWith(color: AppColors.navy),
+                      ),
+                      Text(
+                        '${appointment.reason}${p == null ? '' : ' · ${p.ageLabel}'}',
+                        style: t.bodySmall,
+                      ),
+                    ],
+                  ),
+                ),
+                DemoStatusChip(status: appointment.status),
+                if (!narrow) ...<Widget>[
+                  const SizedBox(width: AppSpacing.sm),
+                  action,
+                ],
+              ],
+            ),
+            if (narrow) ...<Widget>[
+              const SizedBox(height: AppSpacing.sm),
+              action,
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _DraftConsultTile extends StatelessWidget {
+  const _DraftConsultTile({required this.consultation});
+
+  final DemoConsultation consultation;
+
+  @override
+  Widget build(BuildContext context) {
+    final DemoPatient? p = demoSession.patients
+        .where((DemoPatient x) => x.id == consultation.patientId)
+        .firstOrNull;
+    return Padding(
+      padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+      child: PremiumCard(
+        padding: const EdgeInsets.all(AppSpacing.md),
+        borderColor: AppColors.warning,
+        onTap: () => context.go(
+          '/pacientes/${consultation.patientId}/consulta/${consultation.id}',
+        ),
+        child: Row(
+          children: <Widget>[
+            const Icon(Icons.pending_actions_rounded, color: AppColors.warning),
+            const SizedBox(width: AppSpacing.md),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  Text(
+                    p?.name ?? 'Paciente',
+                    style: Theme.of(context).textTheme.titleSmall,
+                  ),
+                  Text(
+                    consultation.complaint.isEmpty
+                        ? 'Rascunho sem motivo registrado'
+                        : consultation.complaint,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                ],
+              ),
+            ),
+            const Text('Continuar'),
+            const Icon(Icons.chevron_right_rounded),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _PatientStrip extends StatelessWidget {
+  const _PatientStrip({required this.patients});
+
+  final List<DemoPatient> patients;
+
+  @override
+  Widget build(BuildContext context) {
+    final TextTheme t = Theme.of(context).textTheme;
+    return SizedBox(
+      height: 132,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        itemCount: patients.length,
+        separatorBuilder: (_, __) => const SizedBox(width: AppSpacing.sm),
+        itemBuilder: (BuildContext context, int i) {
+          final DemoPatient p = patients[i];
+          return SizedBox(
+            width: 168,
+            child: PremiumCard(
+              padding: const EdgeInsets.all(AppSpacing.md),
+              onTap: () => context.go('/pacientes/${p.id}'),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  ChildAvatarImage(
+                    name: p.name,
+                    seed: p.id,
+                    radius: 18,
+                    photoUrl: p.avatarAsset == null
+                        ? null
+                        : ChildAvatarRef.encode(p.avatarAsset!),
+                  ),
+                  const SizedBox(height: AppSpacing.xs),
+                  Text(
+                    p.name,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: t.titleSmall,
+                  ),
+                  Text(
+                    p.weightKg == null
+                        ? '${p.ageLabel} · sem peso'
+                        : '${p.ageLabel} · ${formatDoseNumber(p.weightKg!)} kg',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: t.bodySmall,
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
       ),
     );
   }
@@ -359,6 +793,9 @@ class DemoStatusChip extends StatelessWidget {
       DemoAppointmentStatus.confirmado => ('Confirmado', AppColors.brand),
       DemoAppointmentStatus.chegou => ('Chegou', AppColors.warning),
       DemoAppointmentStatus.concluido => ('Concluído', AppColors.tealDeep),
+      DemoAppointmentStatus.reagendar => ('Reagendar', AppColors.raspberry),
+      DemoAppointmentStatus.cancelado => ('Cancelado', AppColors.danger),
+      DemoAppointmentStatus.falta => ('Falta', AppColors.badgeBronze),
     };
     return ClinicalBadge(label: label, color: color);
   }

@@ -6,9 +6,17 @@ import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_tokens.dart';
 import '../../core/widgets/child_avatar.dart';
 import '../../core/widgets/clinical_ui.dart';
+import '../../shared/clinical/clinical_tasks.dart';
+import '../../shared/clinical/dose_calculator.dart';
+import '../../shared/clinical/lab_results.dart';
+import '../demo_clinical.dart';
 import '../demo_data.dart';
 import '../demo_session.dart';
+import '../../shared/previsit/pre_visit.dart';
 import '../widgets/demo_widgets.dart';
+import 'care_team_screens.dart' show CareTab, carePath, careTileSubtitle;
+import 'pre_visit_screens.dart';
+import 'well_child_screen.dart';
 
 String? _avatarUrl(DemoPatient p) =>
     p.avatarAsset == null ? null : ChildAvatarRef.encode(p.avatarAsset!);
@@ -33,8 +41,7 @@ class _DemoPatientsScreenState extends State<DemoPatientsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final bool isGuardian =
-        demoSession.profile == DemoProfile.responsavel;
+    final bool isGuardian = demoSession.profile == DemoProfile.responsavel;
     return Scaffold(
       backgroundColor: AppColors.lightBackground,
       appBar: AppBar(
@@ -56,14 +63,20 @@ class _DemoPatientsScreenState extends State<DemoPatientsScreen> {
             final List<DemoPatient> list = q.isEmpty
                 ? all
                 : all
-                    .where((DemoPatient p) => p.name.toLowerCase().contains(q))
-                    .toList();
+                      .where(
+                        (DemoPatient p) => p.name.toLowerCase().contains(q),
+                      )
+                      .toList();
             return DemoContent(
               child: Column(
                 children: <Widget>[
                   Padding(
                     padding: const EdgeInsets.fromLTRB(
-                        AppSpacing.lg, AppSpacing.md, AppSpacing.lg, 0),
+                      AppSpacing.lg,
+                      AppSpacing.md,
+                      AppSpacing.lg,
+                      0,
+                    ),
                     child: TextField(
                       controller: _search,
                       onChanged: (String v) => setState(() => _query = v),
@@ -97,8 +110,12 @@ class _DemoPatientsScreenState extends State<DemoPatientsScreen> {
                                 : CapiPose.lupa,
                           )
                         : ListView.separated(
-                            padding: const EdgeInsets.fromLTRB(AppSpacing.lg,
-                                AppSpacing.md, AppSpacing.lg, 96),
+                            padding: const EdgeInsets.fromLTRB(
+                              AppSpacing.lg,
+                              AppSpacing.md,
+                              AppSpacing.lg,
+                              96,
+                            ),
                             itemCount: list.length,
                             separatorBuilder: (_, __) =>
                                 const SizedBox(height: AppSpacing.sm),
@@ -138,10 +155,14 @@ class _PatientTile extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
-                Text(patient.name,
-                    style: Theme.of(context).textTheme.titleSmall),
-                Text('${patient.ageLabel} - ${patient.sexLabel}',
-                    style: Theme.of(context).textTheme.bodySmall),
+                Text(
+                  patient.name,
+                  style: Theme.of(context).textTheme.titleSmall,
+                ),
+                Text(
+                  '${patient.ageLabel} - ${patient.sexLabel}',
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
               ],
             ),
           ),
@@ -174,15 +195,15 @@ class DemoPatientDetailScreen extends StatelessWidget {
             appBar: AppBar(title: const Text('Paciente')),
             body: DemoEmpty(
               title: 'Paciente não encontrado',
-              message: 'Este registro não existe ou não pertence ao perfil '
+              message:
+                  'Este registro não existe ou não pertence ao perfil '
                   'atual.',
               actionLabel: 'Voltar para a lista',
               onAction: () => context.go('/pacientes'),
             ),
           );
         }
-        final bool isGuardian =
-            demoSession.profile == DemoProfile.responsavel;
+        final bool isGuardian = demoSession.profile == DemoProfile.responsavel;
         return Scaffold(
           backgroundColor: AppColors.lightBackground,
           appBar: AppBar(title: Text(p.name)),
@@ -210,9 +231,7 @@ class DemoPatientDetailScreen extends StatelessWidget {
                               children: <Widget>[
                                 Text(
                                   p.name,
-                                  style: Theme.of(context)
-                                      .textTheme
-                                      .titleLarge
+                                  style: Theme.of(context).textTheme.titleLarge
                                       ?.copyWith(
                                         color: AppColors.navy,
                                         fontWeight: FontWeight.w800,
@@ -220,12 +239,24 @@ class DemoPatientDetailScreen extends StatelessWidget {
                                 ),
                                 const SizedBox(height: 2),
                                 Text('${p.ageLabel} - ${p.sexLabel}'),
-                                Text('Nascimento: ${demoDate(p.birthDate)}',
-                                    style:
-                                        Theme.of(context).textTheme.bodySmall),
-                                Text('Responsável: ${p.guardianName}',
-                                    style:
-                                        Theme.of(context).textTheme.bodySmall),
+                                Text(
+                                  'Nascimento: ${demoDate(p.birthDate)}',
+                                  style: Theme.of(context).textTheme.bodySmall,
+                                ),
+                                Text(
+                                  'Responsável: ${p.guardianName}',
+                                  style: Theme.of(context).textTheme.bodySmall,
+                                ),
+                                if (demoSession.canSeeClinicalRecord)
+                                  Text(
+                                    p.weightKg == null
+                                        ? 'Peso: não registrado'
+                                        : 'Peso: ${formatDoseNumber(p.weightKg!)} kg '
+                                              '(${demoDate(p.weighedAt!)})',
+                                    style: Theme.of(
+                                      context,
+                                    ).textTheme.bodySmall,
+                                  ),
                               ],
                             ),
                           ),
@@ -241,14 +272,271 @@ class DemoPatientDetailScreen extends StatelessWidget {
                       ),
                     ],
                     const DemoSectionTitle('Ações'),
+                    if (!demoSession.isPediatrician &&
+                        demoSession.profile == DemoProfile.profissional)
+                      _ActionTile(
+                        icon: Icons.diversity_3_outlined,
+                        title: 'Cuidado multidisciplinar',
+                        subtitle:
+                            'Visão da equipe, área de '
+                            '${demoSession.careSpecialty?.area.toLowerCase() ?? 'atendimento'}'
+                            ', comunicação e documentos',
+                        highlight: true,
+                        onTap: () => context.go(carePath(p.id)),
+                      ),
+                    if (demoSession.canUseClinicalTools)
+                      _ActionTile(
+                        icon: Icons.play_circle_outline_rounded,
+                        title: 'Iniciar consulta',
+                        subtitle: 'Consulta, avaliação, conduta e documentos',
+                        highlight: true,
+                        onTap: () {
+                          final DemoConsultation c = demoSession
+                              .startConsultation(p.id);
+                          context.go('/pacientes/${p.id}/consulta/${c.id}');
+                        },
+                      ),
+                    if (demoSession.canUseWellChild)
+                      _ActionTile(
+                        icon: Icons.child_care_rounded,
+                        title: 'Consulta de puericultura',
+                        subtitle:
+                            'Modelo com crescimento, marcos, dúvidas, plano '
+                            'e resumo em PDF',
+                        onTap: () => openWellChildFor(context, p.id),
+                      ),
                     if (demoSession.canSeeClinicalRecord)
                       _ActionTile(
                         icon: Icons.description_outlined,
                         title: 'Prontuário',
-                        subtitle: 'Evoluções e nova consulta',
+                        subtitle: 'Consultas, evoluções e documentos',
                         onTap: () =>
                             context.go('/pacientes/${p.id}/prontuario'),
                       ),
+                    if (demoSession.isPediatrician &&
+                        demoSession.care.canOpen(p.id))
+                      _ActionTile(
+                        icon: Icons.diversity_3_outlined,
+                        title: 'Cuidado multidisciplinar',
+                        subtitle: careTileSubtitle(p.id),
+                        onTap: () => context.go(carePath(p.id)),
+                      ),
+                    if (demoSession.workspace.canUseDiary) ...<Widget>[
+                      _ActionTile(
+                        icon: Icons.timeline_rounded,
+                        title: 'Histórico de consultas',
+                        subtitle:
+                            'Linha do tempo, comparação, crescimento e '
+                            'desenvolvimento',
+                        onTap: () => context.go('/pacientes/${p.id}/historico'),
+                      ),
+                      _ActionTile(
+                        icon: Icons.sticky_note_2_outlined,
+                        title: 'Observações',
+                        subtitle:
+                            '${demoSession.workspace.notesFor(p.id).length} '
+                            'registro(s): internas e visíveis ao responsável',
+                        onTap: () =>
+                            context.go('/pacientes/${p.id}/observacoes'),
+                      ),
+                      _ActionTile(
+                        icon: Icons.task_alt_rounded,
+                        title: 'Tarefas do paciente',
+                        subtitle:
+                            '${demoSession.workspace.tasksFor(patientId: p.id).where((ClinicalTask t) => !t.done).length} '
+                            'em aberto',
+                        onTap: () => context.go('/diario?paciente=${p.id}'),
+                      ),
+                    ],
+                    if (isGuardian &&
+                        demoSession.workspace.notesFor(p.id).isNotEmpty)
+                      _ActionTile(
+                        icon: Icons.mark_email_read_outlined,
+                        title: 'Recados da equipe',
+                        subtitle:
+                            '${demoSession.workspace.notesFor(p.id).length} '
+                            'recado(s) do pediatra',
+                        onTap: () =>
+                            context.go('/pacientes/${p.id}/observacoes'),
+                      ),
+                    if (demoSession.canUseClinicalTools) ...<Widget>[
+                      _ActionTile(
+                        icon: Icons.folder_open_outlined,
+                        title: 'Documentos',
+                        subtitle:
+                            '${demoSession.documentsFor(p.id).length} no histórico',
+                        onTap: () =>
+                            context.go('/pacientes/${p.id}/documentos'),
+                      ),
+                      _ActionTile(
+                        icon: Icons.calculate_outlined,
+                        title: 'Calculadora de doses',
+                        subtitle: p.weightKg == null
+                            ? 'Sem peso registrado: cálculo bloqueado'
+                            : 'Peso ${formatDoseNumber(p.weightKg!)} kg em '
+                                  '${demoDate(p.weighedAt!)}',
+                        onTap: () =>
+                            context.go('/calculadora?paciente=${p.id}'),
+                      ),
+                    ],
+                    if (demoSession.canSeeGrowth)
+                      _ActionTile(
+                        icon: Icons.show_chart_rounded,
+                        title: 'Crescimento',
+                        subtitle: demoSession.canEditGrowth
+                            ? 'Curvas da OMS, escore Z, percentil e PDF'
+                            : 'Curvas de peso e altura (visão simples)',
+                        onTap: () =>
+                            context.go('/pacientes/${p.id}/crescimento'),
+                      ),
+                    if (isGuardian) ...<Widget>[
+                      _ActionTile(
+                        icon: Icons.diversity_3_outlined,
+                        title: 'Equipe e atividades',
+                        subtitle: careTileSubtitle(p.id),
+                        onTap: () => context.go(
+                          carePath(p.id, tab: CareTab.familia),
+                        ),
+                      ),
+                      _ActionTile(
+                        icon: Icons.favorite_border_rounded,
+                        title: 'Saúde e desenvolvimento',
+                        subtitle:
+                            'Consultas, crescimento, vacinas, marcos e '
+                            'orientações',
+                        highlight: true,
+                        onTap: () => context.go('/rotina/${p.id}/saude'),
+                      ),
+                      _ActionTile(
+                        icon: Icons.folder_shared_outlined,
+                        title: 'Documentos da consulta',
+                        subtitle:
+                            '${demoSession.familyDocuments(p.id).length} '
+                            'liberado(s) pelo profissional',
+                        onTap: () => context.go('/rotina/${p.id}/documentos'),
+                      ),
+                    ],
+                    if (isGuardian)
+                      _ActionTile(
+                        icon: Icons.event_note_outlined,
+                        title: 'Rotina e diário',
+                        subtitle: 'Calendário, diário e resumo para o pediatra',
+                        highlight: true,
+                        onTap: () => context.go('/rotina/${p.id}'),
+                      ),
+                    if (isGuardian) ...<Widget>[
+                      _ActionTile(
+                        icon: Icons.bedtime_outlined,
+                        title: 'Sono',
+                        subtitle: 'Noite, cochilos, despertares e resumo',
+                        onTap: () => context.go('/rotina/${p.id}?vista=sono'),
+                      ),
+                      _ActionTile(
+                        icon: Icons.menu_book_outlined,
+                        title: 'Orientações da clínica',
+                        subtitle:
+                            '${demoSession.familyOrientations(p.id).length} '
+                            'orientação(ões) liberada(s)',
+                        onTap: () => context.go('/rotina/${p.id}/orientacoes'),
+                      ),
+                      for (final DemoAppointment a
+                          in demoSession.upcomingAppointmentsFor(p.id))
+                        _ActionTile(
+                          icon: Icons.assignment_outlined,
+                          title:
+                              'Pré-consulta de ${demoDate(a.start)} às '
+                              '${demoTime(a.start)}',
+                          subtitle: familyPreVisitStatus(
+                            demoSession.preVisits[a.id],
+                          ).$1,
+                          onTap: () => context.go(
+                            preVisitFamilyUrl(a.id, from: 'paciente'),
+                          ),
+                        ),
+                    ],
+                    if (demoSession.canReviewPreVisits)
+                      _ActionTile(
+                        icon: Icons.assignment_outlined,
+                        title: 'Pré-consulta enviada pela família',
+                        subtitle: () {
+                          final int n = demoSession
+                              .sentPreVisitsFor(p.id)
+                              .length;
+                          final int files = demoSession
+                              .sentPreVisitsFor(p.id)
+                              .fold<int>(
+                                0,
+                                (int s, (DemoAppointment, PreVisit) e) =>
+                                    s + e.$2.sentAttachments.length,
+                              );
+                          return n == 0
+                              ? 'Nenhuma enviada'
+                              : '$n enviada(s), $files anexo(s) - '
+                                    'informado pela família';
+                        }(),
+                        onTap: () => context.go(preVisitReviewUrl(p.id)),
+                      ),
+                    if (demoSession.isPediatrician)
+                      if (demoSession.routineSharedWith(p.id)) ...<Widget>[
+                        _ActionTile(
+                          icon: Icons.summarize_outlined,
+                          title: 'Resumos enviados pela família',
+                          subtitle:
+                              '${demoSession.sharedSummariesFor(p.id).length} '
+                              'resumo(s) - informado pela família',
+                          onTap: () => context.go('/rotina/${p.id}/resumos'),
+                        ),
+                        _ActionTile(
+                          icon: Icons.event_note_outlined,
+                          title: 'Rotina e diário da família',
+                          subtitle: 'Calendário e diário, somente leitura',
+                          onTap: () => context.go('/rotina/${p.id}'),
+                        ),
+                        _ActionTile(
+                          icon: Icons.bedtime_outlined,
+                          title: 'Diário do sono da família',
+                          subtitle:
+                              'Linha do tempo e resumo; registrar avaliação',
+                          onTap: () => context.go('/rotina/${p.id}?vista=sono'),
+                        ),
+                      ] else
+                        _ActionTile(
+                          icon: Icons.lock_outline_rounded,
+                          title: 'Rotina e diário da família',
+                          subtitle: 'A família não compartilhou a rotina',
+                          onTap: () => showDemoSnack(
+                            context,
+                            'A família ainda não autorizou o compartilhamento '
+                            'da rotina com a clínica.',
+                          ),
+                        ),
+                    if (demoSession.canUseClinicalTools) ...<Widget>[
+                      _ActionTile(
+                        icon: Icons.biotech_outlined,
+                        title: 'Exames laboratoriais',
+                        subtitle: () {
+                          final int pending = demoSession
+                              .labsFor(p.id)
+                              .where((LabResult r) => r.isPending)
+                              .length;
+                          final int total = demoSession
+                              .labsFor(p.id)
+                              .where((LabResult r) => r.inRecord)
+                              .length;
+                          return '$total conferidos'
+                              '${pending == 0 ? '' : ' - $pending pendente(s) de conferência'}';
+                        }(),
+                        onTap: () => context.go('/pacientes/${p.id}/exames'),
+                      ),
+                      _ActionTile(
+                        icon: Icons.medication_liquid_outlined,
+                        title: 'Suplementação do paciente',
+                        subtitle:
+                            'Decisões por nutriente, exames e receituário',
+                        onTap: () =>
+                            context.go('/pacientes/${p.id}/suplementacao'),
+                      ),
+                    ],
                     if (demoSession.canOpen(DemoModule.vacinacao))
                       _ActionTile(
                         icon: Icons.vaccines_outlined,
@@ -268,7 +556,8 @@ class DemoPatientDetailScreen extends StatelessWidget {
                     if (!demoSession.canSeeClinicalRecord && !isGuardian)
                       const DemoNotice(
                         icon: Icons.shield_outlined,
-                        text: 'Este perfil vê apenas o cadastro. Prontuário e '
+                        text:
+                            'Este perfil vê apenas o cadastro. Prontuário e '
                             'restrito aos profissionais de saúde.',
                       ),
                   ],
@@ -291,7 +580,11 @@ class DemoPatientDetailScreen extends StatelessWidget {
         builder: (BuildContext context, StateSetter setSheet) => SafeArea(
           child: SingleChildScrollView(
             padding: const EdgeInsets.fromLTRB(
-                AppSpacing.lg, 0, AppSpacing.lg, AppSpacing.lg),
+              AppSpacing.lg,
+              0,
+              AppSpacing.lg,
+              AppSpacing.lg,
+            ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: <Widget>[
@@ -313,10 +606,14 @@ class DemoPatientDetailScreen extends StatelessWidget {
                       child: FilledButton(
                         onPressed: () {
                           demoSession.setAvatar(
-                              p, ChildAvatarRef.pathFrom(selected));
+                            p,
+                            ChildAvatarRef.pathFrom(selected),
+                          );
                           Navigator.of(sheet).pop();
-                          showDemoSnack(context,
-                              'Avatar atualizado só nesta demonstração.');
+                          showDemoSnack(
+                            context,
+                            'Avatar atualizado só nesta demonstração.',
+                          );
                         },
                         child: const Text('Aplicar'),
                       ),
@@ -338,6 +635,7 @@ class _ActionTile extends StatelessWidget {
     required this.title,
     required this.subtitle,
     required this.onTap,
+    this.highlight = false,
   });
 
   final IconData icon;
@@ -345,30 +643,61 @@ class _ActionTile extends StatelessWidget {
   final String subtitle;
   final VoidCallback onTap;
 
+  /// Ação principal do profissional, em cor sólida.
+  final bool highlight;
+
   @override
   Widget build(BuildContext context) {
+    final TextTheme t = Theme.of(context).textTheme;
+    final Widget row = Row(
+      children: <Widget>[
+        Icon(icon, color: highlight ? Colors.white : AppColors.brand),
+        const SizedBox(width: AppSpacing.md),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              Text(
+                title,
+                style: highlight
+                    ? t.titleSmall?.copyWith(color: Colors.white)
+                    : t.titleSmall,
+              ),
+              Text(
+                subtitle,
+                style: highlight
+                    ? t.bodySmall?.copyWith(color: const Color(0xFFDCE6FF))
+                    : t.bodySmall,
+              ),
+            ],
+          ),
+        ),
+        Icon(
+          Icons.chevron_right_rounded,
+          color: highlight ? Colors.white : null,
+        ),
+      ],
+    );
     return Padding(
       padding: const EdgeInsets.only(bottom: AppSpacing.sm),
-      child: PremiumCard(
-        padding: const EdgeInsets.all(AppSpacing.md),
-        onTap: onTap,
-        child: Row(
-          children: <Widget>[
-            Icon(icon, color: AppColors.brand),
-            const SizedBox(width: AppSpacing.md),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: <Widget>[
-                  Text(title, style: Theme.of(context).textTheme.titleSmall),
-                  Text(subtitle, style: Theme.of(context).textTheme.bodySmall),
-                ],
+      child: highlight
+          ? Material(
+              color: AppColors.brand,
+              borderRadius: AppRadius.xlAll,
+              child: InkWell(
+                onTap: onTap,
+                borderRadius: AppRadius.xlAll,
+                child: Padding(
+                  padding: const EdgeInsets.all(AppSpacing.md),
+                  child: row,
+                ),
               ),
+            )
+          : PremiumCard(
+              padding: const EdgeInsets.all(AppSpacing.md),
+              onTap: onTap,
+              child: row,
             ),
-            const Icon(Icons.chevron_right_rounded),
-          ],
-        ),
-      ),
     );
   }
 }
@@ -461,8 +790,10 @@ class _DemoPatientFormScreenState extends State<DemoPatientFormScreen> {
       guardianName: _guardian.text.trim(),
       avatarAsset: ChildAvatarRef.pathFrom(_avatar),
     );
-    showDemoSnack(context,
-        '${p.name} adicionado nesta demonstração (some ao recarregar).');
+    showDemoSnack(
+      context,
+      '${p.name} adicionado nesta demonstração (some ao recarregar).',
+    );
     context.go('/pacientes/${p.id}');
   }
 
@@ -495,15 +826,17 @@ class _DemoPatientFormScreenState extends State<DemoPatientFormScreen> {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: <Widget>[
                     const DemoNotice(
-                      text: 'Use apenas nomes fictícios. O cadastro fica só '
+                      text:
+                          'Use apenas nomes fictícios. O cadastro fica só '
                           'nesta aba e não é enviado a nenhum servidor.',
                     ),
                     const SizedBox(height: AppSpacing.lg),
                     TextFormField(
                       controller: _name,
                       textCapitalization: TextCapitalization.words,
-                      decoration:
-                          const InputDecoration(labelText: 'Nome completo *'),
+                      decoration: const InputDecoration(
+                        labelText: 'Nome completo *',
+                      ),
                       validator: (String? v) {
                         final String t = (v ?? '').trim();
                         if (t.isEmpty) return 'Informe o nome.';
@@ -517,23 +850,32 @@ class _DemoPatientFormScreenState extends State<DemoPatientFormScreen> {
                     OutlinedButton.icon(
                       onPressed: _pickDate,
                       icon: const Icon(Icons.cake_outlined),
-                      label: Text(_birth == null
-                          ? 'Data de nascimento *'
-                          : 'Nascimento: ${demoDate(_birth!)}'),
+                      label: Text(
+                        _birth == null
+                            ? 'Data de nascimento *'
+                            : 'Nascimento: ${demoDate(_birth!)}',
+                      ),
                     ),
                     const SizedBox(height: AppSpacing.md),
-                    DropdownButtonFormField<String>(
-                      initialValue: _sex,
-                      decoration: const InputDecoration(labelText: 'Sexo *'),
-                      items: const <DropdownMenuItem<String>>[
-                        DropdownMenuItem<String>(
-                            value: 'Menina', child: Text('Feminino')),
-                        DropdownMenuItem<String>(
-                            value: 'Menino', child: Text('Masculino')),
-                      ],
-                      onChanged: (String? v) => setState(() => _sex = v),
-                      validator: (String? v) =>
-                          v == null ? 'Selecione o sexo.' : null,
+                    Semantics(
+                      container: true,
+                      child: DropdownButtonFormField<String>(
+                        initialValue: _sex,
+                        decoration: const InputDecoration(labelText: 'Sexo *'),
+                        items: const <DropdownMenuItem<String>>[
+                          DropdownMenuItem<String>(
+                            value: 'Menina',
+                            child: Text('Feminino'),
+                          ),
+                          DropdownMenuItem<String>(
+                            value: 'Menino',
+                            child: Text('Masculino'),
+                          ),
+                        ],
+                        onChanged: (String? v) => setState(() => _sex = v),
+                        validator: (String? v) =>
+                            v == null ? 'Selecione o sexo.' : null,
+                      ),
                     ),
                     if (!_isGuardian) ...<Widget>[
                       const SizedBox(height: AppSpacing.md),
@@ -541,7 +883,8 @@ class _DemoPatientFormScreenState extends State<DemoPatientFormScreen> {
                         controller: _guardian,
                         textCapitalization: TextCapitalization.words,
                         decoration: const InputDecoration(
-                            labelText: 'Nome do responsável *'),
+                          labelText: 'Nome do responsável *',
+                        ),
                         validator: (String? v) => (v ?? '').trim().isEmpty
                             ? 'Informe o responsável.'
                             : null,
@@ -572,7 +915,9 @@ class _DemoPatientFormScreenState extends State<DemoPatientFormScreen> {
                                     width: 18,
                                     height: 18,
                                     child: CircularProgressIndicator(
-                                        strokeWidth: 2, color: Colors.white),
+                                      strokeWidth: 2,
+                                      color: Colors.white,
+                                    ),
                                   )
                                 : const Text('Salvar'),
                           ),

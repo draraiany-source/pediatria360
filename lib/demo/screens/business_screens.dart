@@ -5,8 +5,10 @@ import '../../core/config/capi_pose.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_tokens.dart';
 import '../../core/widgets/clinical_ui.dart';
+import '../demo_clinical.dart';
 import '../demo_data.dart';
 import '../demo_session.dart';
+import '../widgets/brand_widgets.dart';
 import '../widgets/demo_widgets.dart';
 
 /// Biblioteca: lista filtravel de conteudos ilustrativos.
@@ -23,8 +25,10 @@ class _DemoLibraryScreenState extends State<DemoLibraryScreen> {
   @override
   Widget build(BuildContext context) {
     final List<DemoArticle> all = demoSession.articles;
-    final List<String> categories =
-        all.map((DemoArticle a) => a.category).toSet().toList();
+    final List<String> categories = all
+        .map((DemoArticle a) => a.category)
+        .toSet()
+        .toList();
     final List<DemoArticle> list = _category == null
         ? all
         : all.where((DemoArticle a) => a.category == _category).toList();
@@ -85,8 +89,9 @@ class _DemoLibraryScreenState extends State<DemoLibraryScreen> {
                                         borderRadius: AppRadius.mdAll,
                                       ),
                                       child: const Icon(
-                                          Icons.menu_book_outlined,
-                                          color: AppColors.moduleLibrary),
+                                        Icons.menu_book_outlined,
+                                        color: AppColors.moduleLibrary,
+                                      ),
                                     ),
                                     const SizedBox(width: AppSpacing.md),
                                     Expanded(
@@ -94,15 +99,18 @@ class _DemoLibraryScreenState extends State<DemoLibraryScreen> {
                                         crossAxisAlignment:
                                             CrossAxisAlignment.start,
                                         children: <Widget>[
-                                          Text(a.title,
-                                              style: Theme.of(context)
-                                                  .textTheme
-                                                  .titleSmall),
                                           Text(
-                                              '${a.category} - ${a.minutes} min',
-                                              style: Theme.of(context)
-                                                  .textTheme
-                                                  .bodySmall),
+                                            a.title,
+                                            style: Theme.of(
+                                              context,
+                                            ).textTheme.titleSmall,
+                                          ),
+                                          Text(
+                                            '${a.category} - ${a.minutes} min',
+                                            style: Theme.of(
+                                              context,
+                                            ).textTheme.bodySmall,
+                                          ),
                                         ],
                                       ),
                                     ),
@@ -159,31 +167,32 @@ class DemoArticleScreen extends StatelessWidget {
                 Text(
                   a.title,
                   style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                        color: AppColors.navy,
-                        fontWeight: FontWeight.w800,
-                      ),
+                    color: AppColors.navy,
+                    fontWeight: FontWeight.w800,
+                  ),
                 ),
                 const SizedBox(height: AppSpacing.xs),
-                Text('${a.minutes} min de leitura',
-                    style: Theme.of(context).textTheme.bodySmall),
+                Text(
+                  '${a.minutes} min de leitura',
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
                 const SizedBox(height: AppSpacing.lg),
                 const DemoNotice(
-                  text: 'Texto ilustrativo. Os conteúdos reais passam por '
+                  text:
+                      'Texto ilustrativo. Os conteúdos reais passam por '
                       'revisão profissional antes de publicados.',
                 ),
                 const SizedBox(height: AppSpacing.lg),
-                Text(a.summary,
-                    style: Theme.of(context).textTheme.bodyLarge),
+                Text(a.summary, style: Theme.of(context).textTheme.bodyLarge),
                 const SizedBox(height: AppSpacing.md),
                 Text(
                   'Parágrafo de exemplo para avaliar tipografia, largura de '
                   'linha e espaçamento da leitura. Este texto não contém '
                   'orientação de saúde e existe apenas para demonstrar o '
                   'layout da tela de conteúdo no celular e no computador.',
-                  style: Theme.of(context)
-                      .textTheme
-                      .bodyLarge
-                      ?.copyWith(height: 1.6),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodyLarge?.copyWith(height: 1.6),
                 ),
               ],
             ),
@@ -208,8 +217,9 @@ class DemoReportsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final int total =
-        _weekly.fold<double>(0, (double s, (String, double) e) => s + e.$2).round();
+    final int total = _weekly
+        .fold<double>(0, (double s, (String, double) e) => s + e.$2)
+        .round();
     return Scaffold(
       backgroundColor: AppColors.lightBackground,
       appBar: AppBar(
@@ -228,7 +238,8 @@ class DemoReportsScreen extends StatelessWidget {
                   const DemoNotice(
                     icon: Icons.science_outlined,
                     color: AppColors.warning,
-                    text: 'Todos os números desta tela são fictícios, apenas '
+                    text:
+                        'Todos os números desta tela são fictícios, apenas '
                         'para avaliar o layout dos gráficos.',
                   ),
                   const SizedBox(height: AppSpacing.lg),
@@ -261,8 +272,10 @@ class DemoReportsScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: AppSpacing.lg),
                   OutlinedButton.icon(
-                    onPressed: () => showDemoSnack(context,
-                        'Exportação só pode ser testada na versão autenticada.'),
+                    onPressed: () => showDemoSnack(
+                      context,
+                      'Exportação só pode ser testada na versão autenticada.',
+                    ),
                     icon: const Icon(Icons.download_outlined),
                     label: const Text('Exportar relatório'),
                   ),
@@ -296,8 +309,10 @@ class _BarChart extends StatelessWidget {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: <Widget>[
-                  Text(v.$2.toStringAsFixed(0),
-                      style: Theme.of(context).textTheme.labelSmall),
+                  Text(
+                    v.$2.toStringAsFixed(0),
+                    style: Theme.of(context).textTheme.labelSmall,
+                  ),
                   const SizedBox(height: 4),
                   Flexible(
                     child: FractionallySizedBox(
@@ -306,7 +321,8 @@ class _BarChart extends StatelessWidget {
                         decoration: const BoxDecoration(
                           gradient: AppColors.warmGradient,
                           borderRadius: BorderRadius.vertical(
-                              top: Radius.circular(8)),
+                            top: Radius.circular(8),
+                          ),
                         ),
                       ),
                     ),
@@ -361,7 +377,8 @@ class _DemoFinanceScreenState extends State<DemoFinanceScreen> {
                   const DemoNotice(
                     icon: Icons.credit_card_off_outlined,
                     color: AppColors.danger,
-                    text: 'Valores fictícios. Cobrança e pagamento online estão '
+                    text:
+                        'Valores fictícios. Cobrança e pagamento online estão '
                         'INDISPONÍVEIS nesta demonstração e desativados no '
                         'app real.',
                   ),
@@ -398,8 +415,7 @@ class _DemoFinanceScreenState extends State<DemoFinanceScreen> {
                             width: w,
                             child: MetricCard(
                               label: 'Em atraso',
-                              value:
-                                  demoMoney(sum(DemoInvoiceStatus.atrasado)),
+                              value: demoMoney(sum(DemoInvoiceStatus.atrasado)),
                               icon: Icons.error_outline_rounded,
                               color: AppColors.danger,
                             ),
@@ -417,7 +433,8 @@ class _DemoFinanceScreenState extends State<DemoFinanceScreen> {
                         selected: _filter == null,
                         onSelected: (_) => setState(() => _filter = null),
                       ),
-                      for (final DemoInvoiceStatus s in DemoInvoiceStatus.values)
+                      for (final DemoInvoiceStatus s
+                          in DemoInvoiceStatus.values)
                         ChoiceChip(
                           label: Text(_statusLabel(s)),
                           selected: _filter == s,
@@ -446,27 +463,32 @@ class _DemoFinanceScreenState extends State<DemoFinanceScreen> {
                             children: <Widget>[
                               Expanded(
                                 child: Column(
-                                  crossAxisAlignment:
-                                      CrossAxisAlignment.start,
+                                  crossAxisAlignment: CrossAxisAlignment.start,
                                   children: <Widget>[
-                                    Text(i.description,
-                                        style: Theme.of(context)
-                                            .textTheme
-                                            .titleSmall),
-                                    Text('Vencimento ${demoDate(i.due)}',
-                                        style: Theme.of(context)
-                                            .textTheme
-                                            .bodySmall),
+                                    Text(
+                                      i.description,
+                                      style: Theme.of(
+                                        context,
+                                      ).textTheme.titleSmall,
+                                    ),
+                                    Text(
+                                      'Vencimento ${demoDate(i.due)}',
+                                      style: Theme.of(
+                                        context,
+                                      ).textTheme.bodySmall,
+                                    ),
                                   ],
                                 ),
                               ),
                               Column(
                                 crossAxisAlignment: CrossAxisAlignment.end,
                                 children: <Widget>[
-                                  Text(demoMoney(i.amount),
-                                      style: Theme.of(context)
-                                          .textTheme
-                                          .titleSmall),
+                                  Text(
+                                    demoMoney(i.amount),
+                                    style: Theme.of(
+                                      context,
+                                    ).textTheme.titleSmall,
+                                  ),
                                   ClinicalBadge(
                                     label: _statusLabel(i.status),
                                     color: _statusColor(i.status),
@@ -493,13 +515,19 @@ class _DemoFinanceScreenState extends State<DemoFinanceScreen> {
       builder: (BuildContext sheet) => SafeArea(
         child: Padding(
           padding: const EdgeInsets.fromLTRB(
-              AppSpacing.lg, 0, AppSpacing.lg, AppSpacing.lg),
+            AppSpacing.lg,
+            0,
+            AppSpacing.lg,
+            AppSpacing.lg,
+          ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: <Widget>[
-              Text(i.description,
-                  style: Theme.of(context).textTheme.titleLarge),
+              Text(
+                i.description,
+                style: Theme.of(context).textTheme.titleLarge,
+              ),
               const SizedBox(height: AppSpacing.xs),
               Text('${demoMoney(i.amount)} - vence ${demoDate(i.due)}'),
               const SizedBox(height: AppSpacing.lg),
@@ -520,16 +548,16 @@ class _DemoFinanceScreenState extends State<DemoFinanceScreen> {
   }
 
   static String _statusLabel(DemoInvoiceStatus s) => switch (s) {
-        DemoInvoiceStatus.aberto => 'Em aberto',
-        DemoInvoiceStatus.pago => 'Pago',
-        DemoInvoiceStatus.atrasado => 'Atrasado',
-      };
+    DemoInvoiceStatus.aberto => 'Em aberto',
+    DemoInvoiceStatus.pago => 'Pago',
+    DemoInvoiceStatus.atrasado => 'Atrasado',
+  };
 
   static Color _statusColor(DemoInvoiceStatus s) => switch (s) {
-        DemoInvoiceStatus.aberto => AppColors.brand,
-        DemoInvoiceStatus.pago => AppColors.tealDeep,
-        DemoInvoiceStatus.atrasado => AppColors.danger,
-      };
+    DemoInvoiceStatus.aberto => AppColors.brand,
+    DemoInvoiceStatus.pago => AppColors.tealDeep,
+    DemoInvoiceStatus.atrasado => AppColors.danger,
+  };
 }
 
 /// Perfil da sessao de demonstracao: troca de perfil, sair, simulacoes.
@@ -543,6 +571,7 @@ class DemoProfileScreen extends StatelessWidget {
       builder: (BuildContext context, _) {
         final DemoProfile? profile = demoSession.profile;
         if (profile == null) return const SizedBox.shrink();
+        final bool brand = demoSession.canBrand;
         return Scaffold(
           backgroundColor: AppColors.lightBackground,
           appBar: AppBar(
@@ -561,8 +590,10 @@ class DemoProfileScreen extends StatelessWidget {
                       child: Row(
                         children: <Widget>[
                           PersonAvatar(
-                            name: 'Usuário Demonstração',
-                            seed: profile.name,
+                            name: brand
+                                ? demoSession.account.name
+                                : 'Usuário Demonstração',
+                            seed: brand ? demoSession.account.id : profile.name,
                             radius: 28,
                           ),
                           const SizedBox(width: AppSpacing.md),
@@ -570,27 +601,84 @@ class DemoProfileScreen extends StatelessWidget {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: <Widget>[
-                                Text('Usuário Demonstração',
-                                    style: Theme.of(context)
-                                        .textTheme
-                                        .titleMedium),
-                                Text(profile.label,
-                                    style:
-                                        Theme.of(context).textTheme.bodySmall),
-                                Text('demo@exemplo.invalid',
-                                    style:
-                                        Theme.of(context).textTheme.bodySmall),
+                                Text(
+                                  brand
+                                      ? demoSession.account.name
+                                      : 'Usuário Demonstração',
+                                  style: Theme.of(
+                                    context,
+                                  ).textTheme.titleMedium,
+                                ),
+                                Text(
+                                  brand
+                                      ? '${profile.label} · ${demoSession.account.clinic}'
+                                      : profile.label,
+                                  style: Theme.of(context).textTheme.bodySmall,
+                                ),
+                                Text(
+                                  brand
+                                      ? demoSession.account.email
+                                      : 'demo@exemplo.invalid',
+                                  style: Theme.of(context).textTheme.bodySmall,
+                                ),
                               ],
                             ),
                           ),
                         ],
                       ),
                     ),
+                    if (brand) ...<Widget>[
+                      const DemoSectionTitle('Identidade da clínica'),
+                      Card(
+                        margin: EdgeInsets.zero,
+                        child: ListTile(
+                          key: const ValueKey<String>('perfil-logomarca'),
+                          leading: SizedBox(
+                            width: 72,
+                            child: Align(
+                              alignment: Alignment.centerLeft,
+                              child: DemoBrandMark(
+                                logo: demoSession.myLogo,
+                                height: 32,
+                              ),
+                            ),
+                          ),
+                          title: const Text(
+                            'Logomarca da clínica ou profissional',
+                          ),
+                          subtitle: Text(
+                            demoSession.myLogo == null
+                                ? 'Não cadastrada: usando a identidade padrão '
+                                      'do Pediatria360'
+                                : 'Cadastrada: ${demoSession.myLogo!.fileName}',
+                          ),
+                          trailing: const Icon(Icons.chevron_right_rounded),
+                          onTap: () => context.go('/perfil/logomarca'),
+                        ),
+                      ),
+                    ],
                     const DemoSectionTitle('Conta'),
                     Card(
                       margin: EdgeInsets.zero,
                       child: Column(
                         children: <Widget>[
+                          if (brand) ...<Widget>[
+                            ListTile(
+                              key: const ValueKey<String>('trocar-conta'),
+                              leading: const Icon(
+                                Icons.manage_accounts_outlined,
+                              ),
+                              title: const Text(
+                                'Trocar de conta (demonstração)',
+                              ),
+                              subtitle: Text(
+                                'Em uso: ${demoSession.account.name}',
+                              ),
+                              trailing: const Icon(Icons.chevron_right_rounded),
+                              onTap: () => _switchAccount(context),
+                            ),
+                            const Divider(height: 1),
+                          ],
                           ListTile(
                             leading: const Icon(Icons.switch_account_outlined),
                             title: const Text('Trocar perfil'),
@@ -602,9 +690,12 @@ class DemoProfileScreen extends StatelessWidget {
                             leading: const Icon(Icons.privacy_tip_outlined),
                             title: const Text('Privacidade e termos'),
                             subtitle: const Text(
-                                'Disponível na versão autenticada'),
-                            onTap: () => showDemoSnack(context,
-                                'Política e termos ficam no app autenticado.'),
+                              'Disponível na versão autenticada',
+                            ),
+                            onTap: () => showDemoSnack(
+                              context,
+                              'Política e termos ficam no app autenticado.',
+                            ),
                           ),
                           const Divider(height: 1),
                           ListTile(
@@ -622,8 +713,9 @@ class DemoProfileScreen extends StatelessWidget {
                         secondary: const Icon(Icons.wifi_off_rounded),
                         title: const Text('Simular falha de conexão'),
                         subtitle: const Text(
-                            'Listas passam a mostrar a tela de erro com '
-                            'botão Recarregar.'),
+                          'Listas passam a mostrar a tela de erro com '
+                          'botão Recarregar.',
+                        ),
                         value: demoSession.simulateOffline,
                         onChanged: demoSession.setSimulateOffline,
                       ),
@@ -649,13 +741,54 @@ class DemoProfileScreen extends StatelessWidget {
     );
   }
 
+  Future<void> _switchAccount(BuildContext context) async {
+    final String? id = await showModalBottomSheet<String>(
+      context: context,
+      showDragHandle: true,
+      builder: (BuildContext sheet) => SafeArea(
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              const Padding(
+                padding: EdgeInsets.symmetric(horizontal: AppSpacing.lg),
+                child: Text(
+                  'Contas fictícias de profissionais. Cada uma tem a sua '
+                  'logomarca, os seus documentos e os seus modelos de receita.',
+                ),
+              ),
+              for (final DemoAccount a in DemoProfessional.accounts)
+                ListTile(
+                  key: ValueKey<String>('conta-${a.id}'),
+                  leading: Icon(
+                    a.id == demoSession.account.id
+                        ? Icons.radio_button_checked
+                        : Icons.radio_button_unchecked,
+                    color: AppColors.brand,
+                  ),
+                  title: Text(a.name),
+                  subtitle: Text(a.clinic),
+                  onTap: () => Navigator.of(sheet).pop(a.id),
+                ),
+              const SizedBox(height: AppSpacing.sm),
+            ],
+          ),
+        ),
+      ),
+    );
+    if (id == null || !context.mounted) return;
+    demoSession.switchAccount(id);
+    showDemoSnack(context, 'Conta em uso: ${demoSession.account.name}.');
+  }
+
   Future<void> _confirmLeave(BuildContext context) async {
     final bool? ok = await showDialog<bool>(
       context: context,
       builder: (BuildContext c) => AlertDialog(
         title: const Text('Sair da demonstração?'),
         content: const Text(
-            'Os dados que você adicionou nesta aba serão descartados.'),
+          'Os dados que você adicionou nesta aba serão descartados.',
+        ),
         actions: <Widget>[
           TextButton(
             onPressed: () => Navigator.of(c).pop(false),
