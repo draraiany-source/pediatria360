@@ -155,6 +155,16 @@ void main() {
       expect(s.processReminders().total, 0, reason: 'não repete o envio');
     });
 
+    test('rodada inclui sessões de psicologia sem interromper as demais', () {
+      final DemoScheduling s = fresh(DemoProfile.recepcao, at: todayAt(16));
+      final DemoReminderRun run = s.processReminders();
+      final ReminderRecord mp1 = s.remindersFor('mp1').single;
+      expect(mp1.offsetHours, 48);
+      expect(mp1.text, contains(DemoScheduling.unitOf('prof-a').name));
+      expect(DemoScheduling.unitOf('psi-a').id, 'clinica-a');
+      expect(run.total, greaterThan(1));
+    });
+
     test('falha de envio vira pendência de contato manual', () {
       final DemoScheduling s = fresh(DemoProfile.recepcao);
       final ReminderRecord r = s.remindersFor('a3').single;

@@ -25,6 +25,8 @@ function check(name, ok, detail) {
 
 async function newPage(browser, opts) {
   const ctx = await browser.newContext({ ...opts, locale: 'pt-BR', acceptDownloads: true });
+  // FAKE_NOW fixa o relogio da pagina: horarios livres e prazos dependem da hora da execucao.
+  if (process.env.FAKE_NOW) await ctx.clock.setFixedTime(new Date(process.env.FAKE_NOW));
   const page = await ctx.newPage();
   // Registra os Blobs criados (para ler o PDF sem fetch, que a CSP bloqueia) e
   // troca apenas a chamada final de print() do quadro: o navegador automatizado
@@ -107,7 +109,13 @@ async function find(page, label, opts = {}) {
     const sel = opts.input ? 'input, textarea' : 'flt-semantics';
     const els = [...document.querySelectorAll(sel)].filter((e) => opts.input || roles.includes(e.getAttribute('role')) || e.hasAttribute('flt-tappable'));
     const text = (e) => (e.getAttribute('aria-label') || e.textContent || '').replace(/\s+/g, ' ').trim();
-    const matches = els.filter((e) => (opts.exact ? text(e) === label : opts.contains ? text(e).includes(label) : text(e).startsWith(label)));
+    let matches = els.filter((e) => (opts.exact ? text(e) === label : opts.contains ? text(e).includes(label) : text(e).startsWith(label)));
+    // after: so vale o botao que vem depois do no mais interno com esse texto.
+    if (opts.after) {
+      const all = [...document.querySelectorAll('flt-semantics')].filter((e) => text(e).includes(opts.after));
+      const anchor = all.find((a) => !all.some((b) => b !== a && a.contains(b)));
+      matches = anchor ? matches.filter((e) => anchor.compareDocumentPosition(e) & Node.DOCUMENT_POSITION_FOLLOWING) : [];
+    }
     const el = opts.last ? matches[matches.length - 1] : matches[0];
     if (!el) return null;
     const r = el.getBoundingClientRect();
@@ -1247,7 +1255,7 @@ const DOCS = [
     await nav(page, '#/pacientes/p1/documentos/d1');
     check('conta: documento da primeira conta nao abre', await waitText(page, 'Registro n\u00e3o encontrado'), '');
     await shot(page, 'lg16_outra_conta_documento');
-    await nav(page, '#/pacientes/p1/documentos/novo?tipo=orientacoes');
+    await nav(page, '#/pacientes/p7/documentos/novo?tipo=orientacoes');
     await fill(page, 'T\u00edtulo *', 'Da segunda conta');
     await fill(page, 'Orienta\u00e7\u00f5es *', 'Texto fict\u00edcio.');
     await tap(page, 'Salvar e revisar', { wait: 1500 });
@@ -1767,7 +1775,8 @@ const DOCS = [
     const pb = await waitText(p.page, 'Esta conta \u00e9 de outra cl\u00ednica');
     await shot(p.page, 'pc20_outra_clinica');
     await nav(p.page, '#/pacientes/p1/consulta/c1');
-    const pc = (await waitText(p.page, 'Motivo da consulta')) && !(await has(p.page, PV + ' enviada pela fam\u00edlia'));
+    // Sem vinculo com a Luna, a consulta nem abre para o colega.
+    const pc = (await waitText(p.page, 'Consulta n\u00e3o encontrada')) && !(await has(p.page, PV + ' enviada pela fam\u00edlia'));
     check('permissoes: profissional nao usa a tela da familia e outra clinica nao ve anexos', pa && pb && pc, [pa, pb, pc].join('/'));
     await p.ctx.close();
   });
@@ -1938,7 +1947,8 @@ const DOCS = [
     check('cancelar: familia cancela pelo assistente dentro do prazo', await waitText(page, 'Consulta cancelada'), 'a6');
     await shot(page, 'ag16_familia_cancelou');
     await nav(page, '#/mensagens');
-    await tap(page, 'Cancelar', { exact: true, wait: 1500 });
+    // a4 (Alice, hoje 14:30). A familia tambem recebe lembretes das sessoes de psicologia e fisioterapia da Luna.
+    await tap(page, 'Cancelar', { exact: true, after: 'Alice tem hor\u00e1rio marcado', wait: 1500 });
     check('cancelar: pedido fora do prazo vai para a recepcao', await waitText(page, 'Como falta pouco para a consulta'), 'a4');
     await nav(page, '#/lembretes?perfil=recepcao');
     const k1 = await agSee(page, 'Cancelou - hor\u00e1rio liberado');

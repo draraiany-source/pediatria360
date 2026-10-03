@@ -1,6 +1,6 @@
 # Cuidado multidisciplinar: relatório de homologação
 
-Branch `feat/area-profissional`, 02/10/2026. Todos os nomes, registros profissionais e conteúdos clínicos usados nos testes e nas capturas são fictícios.
+Branch `feat/area-profissional`, 02 e 03/10/2026. Todos os nomes, registros profissionais e conteúdos clínicos usados nos testes e nas capturas são fictícios.
 
 **Situação:** o módulo está pronto na camada de domínio (`lib/shared/care/`), nas regras do Firestore e do Storage e na demonstração. No aplicativo real, as telas ainda não foram construídas: o acesso aos dados já é controlado pelas regras do banco e dos anexos, mas falta a interface. Nada foi publicado em produção nem no GitHub Pages.
 
@@ -31,7 +31,7 @@ Levantamento feito no commit `c75e667`, antes desta entrega.
 
 | Parte | Onde |
 |---|---|
-| Especialidades (pediatria, psicologia, fisioterapia ativas; fonoaudiologia, terapia ocupacional e nutrição preparadas), conselho do registro | `lib/shared/care/care_model.dart` |
+| Especialidades (pediatria, psicologia, fisioterapia ativas; fono, terapia ocupacional e nutrição preparadas), com o conselho do registro | `lib/shared/care/care_model.dart` |
 | Vínculo do profissional com a criança: pendente → autorizado pela família → encerrado | `care_model.dart`, `care_store.dart` |
 | Registros com visibilidade (reservado, equipe, família), revisões e origem (autor, especialidade, data) | `care_store.dart` |
 | Visão compartilhada da equipe e plano combinado com histórico de versões | `care_store.dart` |
@@ -152,7 +152,7 @@ A criança fictícia **Luna Exemplo Souza** é atendida no Consultório Exemplo 
 - **Psicóloga Exemplo Ramos:** CRP fictício;
 - **Fisioterapeuta Exemplo Moura:** CREFITO fictício.
 
-Na troca de profissional, o **Psicólogo Exemplo Teixeira** assume a psicologia. Também há o **Dr. Exemplo Colega**, pediatra da mesma clínica sem vínculo com a Luna.
+Na troca de profissional, o **Psicólogo Exemplo Teixeira** assume a psicologia. Também há o **Dr. Exemplo Colega**, pediatra de outra unidade, sem vínculo com a Luna.
 
 | Item pedido | Como foi verificado | Resultado |
 |---|---|---|
@@ -163,30 +163,48 @@ Na troca de profissional, o **Psicólogo Exemplo Teixeira** assume a psicologia.
 | Orientação liberada para a família | O exercício da fisioterapeuta aparece para a família só depois de liberado; anotações reservadas não aparecem | Aprovado (domínio, regras, navegador no celular) |
 | Troca de profissional | Gestão encerra a psicóloga e designa o novo psicólogo; ele aguarda a família; depois de autorizado, vê o plano e o resumo, mas não o reservado da anterior; a anterior lê só o que escreveu | Aprovado (domínio, regras, navegador) |
 | Troca de clínica | A família troca de clínica; todos os vínculos são encerrados; a nova equipe não vê os registros anteriores; a família mantém o que foi liberado; a fisioterapeuta antiga perde a visão da equipe | Aprovado (domínio, regras, navegador) |
-| Mesma clínica sem vínculo | O Dr. Exemplo Colega não abre a ficha multidisciplinar da Luna | Aprovado (domínio, regras, navegador) |
+| Mesma clínica sem vínculo | O Psicólogo Exemplo Teixeira, da mesma clínica e ainda sem vínculo, não abre a ficha da Luna; o Dr. Exemplo Colega, de outra unidade, não abre a consulta dela | Aprovado (domínio, regras, navegador) |
 | Documentos por especialidade | A psicóloga não prepara atestado médico nem receituário; a fisioterapeuta prepara o plano de exercícios | Aprovado (domínio, regras, navegador) |
 
 ## 6. Resultados dos testes
 
-Todos executados em 02/10/2026 nesta máquina.
+Todos executados nesta máquina entre a noite de 02/10/2026 e a madrugada de 03/10/2026.
 
 | Suíte | Resultado |
 |---|---|
 | `test/care_team_test.dart` (domínio: política, vínculos, reservado, família, comunicação, documentos, IA, trilha) | 27/27 aprovados |
 | `test/demo_care_flow_test.dart` (telas da demonstração) | 6/6 aprovados |
+| `test/demo_scheduling_test.dart` (inclui o novo teste da rodada de lembretes com sessões de psicologia) | todos aprovados |
 | Regras no emulador (`test/rules`, Firestore + Storage) | 182/182 aprovados, dos quais 37 novos em `care_rules.test.js` |
-| `flutter test` (suíte completa) | 837/837 aprovados |
+| `flutter test` (suíte completa), 02/10 às 23h21 | 837/837 aprovados |
+| `flutter test` (suíte completa), 03/10 à 1h10, depois da correção dos lembretes | 837 de 838 aprovados. A falha é o teste "agenda: dia, semana e mês", anterior a esta entrega, que usa o relógio real (ver 6.1) |
 | `flutter analyze` | 0 erros, 0 avisos (restam 132 sugestões de estilo em testes antigos) |
-| Navegador (Chrome, build local): fluxo multidisciplinar | 23/23 verificações aprovadas |
-| Navegador: suíte completa | ver a seção 6.1 |
+| Navegador (Chrome, build local): fluxo multidisciplinar | 23/23 verificações aprovadas, duas vezes (antes e depois da correção) |
+| Navegador: suíte completa | 457 de 469; detalhes e reexecuções na seção 6.1 |
 
 Os 37 testes de regras cobrem: reservado; equipe e família; tipos por especialidade, inclusive especialidade falsificada e IA sem revisão; revisão obrigatória na edição; vínculo autorizado pela família, inclusive tentativa de autoativação; profissional não verificado ou de especialidade diferente; outra clínica; troca de profissional; troca de clínica; comunicação; documentos por especialidade; trilha sem alteração; modelos e `careSpecialty` gravado só pelo servidor; anexos no Storage.
 
 ### 6.1 Suíte completa no navegador
 
-A suíte completa (todos os fluxos da demonstração, inclusive os 23 do cuidado multidisciplinar) foi iniciada às 23h22 de 02/10/2026 sobre a build desta entrega. O resultado será registrado aqui quando a execução terminar.
+**Execução completa (02/10, 23h22, até 03/10, 0h40), build do commit `22519c5`: 457 de 469 verificações aprovadas.** As 12 falhas se dividem em três grupos.
 
-Na execução anterior (02/10, 21h20, antes do módulo multidisciplinar) foram 447 de 450 verificações aprovadas. Duas falhas dependem do relógio: a contagem de horários livres da semana considera só horários futuros, e na sexta à noite não sobra nenhum. A terceira era do próprio script e já foi corrigida (detalhes em `docs/homologacao/documentos-consulta/RELATORIO.md`).
+1. **Erro real, corrigido: 8 falhas no fluxo de lembretes, confirmação e remarcação.** A rodada de lembretes percorre todas as consultas. Ao chegar às sessões de psicologia e fisioterapia da Luna, ela não encontrava a unidade dessas profissionais e parava no meio, então o lembrete da consulta marcada pela família não saía. Correção em `lib/demo/demo_scheduling.dart`: o profissional fora da agenda de puericultura usa a unidade da clínica da própria conta. Também foi incluído um teste de regressão em `test/demo_scheduling_test.dart`.
+2. **Script desatualizado pela nova regra de vínculo: 2 falhas.**
+   - "Logomarca só da própria conta": o pediatra colega tentava criar um documento para a Luna, com quem não tem vínculo. Agora usa o paciente dele (p7).
+   - "Permissões da pré-consulta": o teste esperava que o colega abrisse a consulta da Luna. Agora confere que a consulta nem abre ("Consulta não encontrada") e que a pré-consulta da família não aparece.
+3. **Dependentes do relógio: 2 falhas.** "Agenda: semana com contagem de livres" e "celular: agenda da semana". A contagem só considera horários futuros com a antecedência mínima, e na sexta à noite ou no sábado de madrugada não sobra horário na semana.
+
+**Reexecução dos passos afetados na build corrigida (03/10, 0h45): 97 de 101 aprovadas.** Ela inclui os 23 passos do cuidado multidisciplinar, o fluxo de agendamento e lembretes, o painel de acompanhamento, as permissões e as agendas. As 4 falhas dependem do relógio:
+
+- as 2 da agenda da semana, descritas acima;
+- "cancelar: pedido fora do prazo vai para a recepção" e "recepção recebe os avisos". A família pode cancelar sozinha até 12 h antes. A consulta da Alice é hoje às 14h30 e, à 0h51, ainda faltavam 13,6 h, então o app cancelou direto, como deve fazer. O teste só se aplica entre 2h30 e 14h30.
+
+**Com o relógio da página fixado** (variável `FAKE_NOW` do script, que só afeta o navegador de teste):
+
+- fluxo completo de agendamento, lembretes, confirmação, remarcação e cancelamento, às 10h de sábado, 03/10: **28/28**;
+- passos da agenda da semana, às 10h de quinta, 01/10: **18/18**.
+
+A suíte completa não foi executada de novo inteira depois da correção; foram reexecutados apenas os passos afetados, listados acima.
 
 ## 7. Capturas
 
@@ -203,7 +221,7 @@ Geradas pelo teste de navegador, na build local da demonstração.
 | `cm07_documentos_psicologia.png` | Documentos que a psicóloga pode preparar (sem atestado médico nem receituário) |
 | `cm08_perfil_psicologa.png` | Perfil profissional: registro, pacientes vinculados, modelos e documentos |
 | `cm09_pacientes_vinculados.png` | A psicóloga vê só a criança vinculada |
-| `cm10_mesma_clinica_sem_vinculo.png` | Pediatra da mesma clínica sem vínculo: ficha bloqueada |
+| `cm10_mesma_clinica_sem_vinculo.png` | Psicólogo da mesma clínica, ainda sem vínculo: ficha bloqueada |
 | `m_cm11_familia.png` | Área da família no celular: próximas sessões e orientações liberadas |
 | `m_cm12_familia_exercicio_liberado.png` | Exercício liberado pela fisioterapeuta aparecendo para a família |
 | `cm13_gestao_equipe.png` | Gestão organizando a equipe, sem acesso aos registros |
@@ -220,7 +238,9 @@ Geradas pelo teste de navegador, na build local da demonstração.
 - Domínio e telas: `flutter test test/care_team_test.dart test/demo_care_flow_test.dart`
 - Regras (requer Java e Firebase CLI), a partir da raiz do app:
   `firebase emulators:exec --only "firestore,storage" --project pediatria360-rules-test "cd test\rules && node_modules\.bin\jest.cmd --runInBand"`
-- Navegador: gerar a build com `tools\demo\build_demo.ps1`, servir `build/web` localmente e rodar `node tools/demo/e2e_clinico.js` com `BASE` apontando para a build. A variável `ONLY=cuidado` restringe ao fluxo multidisciplinar.
+- Navegador: gerar a build com `tools\demo\build_demo.ps1`, servir `build/web` localmente e rodar `node tools/demo/e2e_clinico.js`, com `BASE` apontando para a build. Variáveis opcionais:
+  - `ONLY=cuidado`: restringe ao fluxo multidisciplinar;
+  - `FAKE_NOW=2026-10-01T10:00:00`: fixa o relógio da página para os passos de agenda e prazos.
 
 ## 9. Pendências
 
@@ -231,5 +251,7 @@ Geradas pelo teste de navegador, na build local da demonstração.
 5. **Fonoaudiologia, terapia ocupacional e nutrição.** Perfis, registros, documentos e regras estão prontos, mas as áreas próprias na ficha não foram ativadas.
 6. **IA simulada.** O rascunho é montado a partir da visão compartilhada; não há modelo real conectado.
 7. **Dados da demonstração em memória.** Recarregar a página volta ao estado inicial.
-8. **GitHub Pages não atualizado.** A demonstração publicada ainda não tem este módulo; publicar depende da sua autorização.
-9. **Revisão jurídica e ética.** Antes do uso real, a regra de guarda (o autor continua lendo o que escreveu após o fim do vínculo) e o conteúdo mínimo do resumo da psicologia devem ser conferidos com as normas do CFP, do COFFITO e do CFM e com a LGPD.
+8. **Testes dependentes do relógio.** O teste de widget "agenda: dia, semana e mês" e três passos de navegador (agenda da semana e cancelamento fora do prazo) usam a hora real e falham em certos horários. O script de navegador ganhou `FAKE_NOW`; o teste de widget ainda precisa de um relógio fixo.
+9. **Suíte completa no navegador depois da correção.** Só os passos afetados foram reexecutados; vale rodar a suíte inteira de novo em horário comercial.
+10. **GitHub Pages não atualizado.** A demonstração publicada ainda não tem este módulo; publicar depende da sua autorização.
+11. **Revisão jurídica e ética.** Antes do uso real, a regra de guarda (o autor continua lendo o que escreveu após o fim do vínculo) e o conteúdo mínimo do resumo da psicologia devem ser conferidos com as normas do CFP, do COFFITO e do CFM e com a LGPD.

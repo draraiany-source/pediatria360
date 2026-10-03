@@ -154,8 +154,17 @@ class DemoScheduling {
     ]),
   ];
 
+  /// Psicologia e fisioterapia atendem na clínica da conta, mas não entram
+  /// na agenda de puericultura da unidade.
   static DemoUnit unitOf(String professionalId) => units.firstWhere(
     (DemoUnit u) => u.professionalIds.contains(professionalId),
+    orElse: () {
+      final String? clinicId = DemoProfessional.byId(professionalId).clinicId;
+      return units.firstWhere(
+        (DemoUnit u) => u.id == clinicId,
+        orElse: () => units.first,
+      );
+    },
   );
 
   static String professionalName(String id) => DemoProfessional.byId(id).name;
