@@ -25,6 +25,16 @@ import * as admin from "firebase-admin";
 import { FieldValue, Timestamp } from "firebase-admin/firestore";
 import * as logger from "firebase-functions/logger";
 import { createHash, randomBytes } from "crypto";
+import {
+  childOwnerUid,
+  familyAppointmentGrant,
+  grantAllows,
+  grantRef,
+  isFamilyRequestFor,
+  requireChildAccess,
+  revocationBlocksRequest,
+  ACTIVE_APPOINTMENT_STATUSES,
+} from "./childAccess";
 
 const REGION = "southamerica-east1";
 const db = () => admin.firestore();
@@ -131,6 +141,8 @@ export const signEncounter = onCall({ region: REGION }, async (request) => {
       );
     }
 
+    await requireChildAccess(actor.uid, e.patientId, "chartWrite", e.clinicId ?? null);
+
     if (e.status !== "draft") {
       throw new HttpsError(
         "failed-precondition",
@@ -214,6 +226,7 @@ export const amendEncounter = onCall({ region: REGION }, async (request) => {
       "Só quem conduziu o atendimento pode retificá-lo."
     );
   }
+  await requireChildAccess(actor.uid, e.patientId, "chartWrite", e.clinicId ?? null);
   if (e.status === "draft") {
     throw new HttpsError(
       "failed-precondition",
@@ -323,6 +336,7 @@ export const issueClinicalDocument = onCall(
     if (e.professionalId !== actor.uid) {
       throw new HttpsError("permission-denied", "Atendimento de outro profissional.");
     }
+    await requireChildAccess(actor.uid, e.patientId, "chartWrite", e.clinicId ?? null);
     if (e.status === "draft") {
       throw new HttpsError(
         "failed-precondition",
@@ -487,36 +501,32 @@ export const verifyDocument = onCall({ region: REGION }, async (request) => {
 });
 
 /**
- * Concede a um profissional verificado a leitura do resumo de segurança de
- * uma criança (nome, idade, alergia) — não do prontuário clínico completo.
+ * Registra o vínculo do profissional com a criança a partir de consulta
+ * PEDIDA PELA FAMÍLIA.
  *
  * ## Por que isto precisa ser Function, não escrita direta do cliente
  *
- * `EncounterRepository.create` grava direto no Firestore, sem passar por
- * Function — e só recebe `childId`, nunca o uid do responsável. Um
- * profissional não tem como escrever
- * `users/{ownerId}/children/{childId}/authorized_professionals/{seuUid}`
- * porque não sabe `ownerId`, e não tem como descobrir sem já ter a
- * permissão que está tentando conceder a si mesmo — circular.
+ * O profissional não grava a própria concessão (as regras recusam), e não
+ * sabe o uid do responsável. Rodando com Admin SDK, esta Function acha o
+ * dono pelo child_registry e grava a concessão no lugar dele, mas só com
+ * prova do pedido da família.
  *
- * Rodando com Admin SDK, esta Function ignora as regras do cliente e
- * localiza a criança por busca de collection group, direto pelo id do
- * documento — não precisa de índice composto, é igualdade simples.
+ * ## O que conta como pedido da família
  *
- * ## Vinculo obrigatorio com agendamento ativo
+ * Consulta deste profissional para esta criança, com `patientId` e
+ * `requestedBy` iguais ao titular do child_registry, em status ativo. As
+ * regras só deixam o próprio titular gravar `requestedBy` (e
+ * `bookAppointment` grava o uid de quem pediu); a equipe não grava, e
+ * nenhum perfil troca esses ids depois. Ser verificado, ser dono de
+ * clínica, conhecer os ids ou ter criado uma consulta não bastam.
  *
- * Exige um documento em `appointments` ligando este profissional a esta
- * crianca (`patientId` OU `childId` igual ao childId solicitado) com
- * status em `confirmed` | `inProgress` | `requested`. Sem esse vinculo,
- * retorna permission-denied — evita auto-concessao ampla so por ser
- * profissional verificado. A escrita da concessao continua so via Admin
- * SDK (o cliente nao escreve mais authorized_professionals).
+ * ## O que é concedido
  *
- * ## O que isto NÃO concede
- *
- * Só a leitura do documento da criança em si (nome, idade, sexo, alergia,
- * condição, foto). Não dá acesso a `growth_records`, `vaccine_doses`, nem a
- * mais nada da família — essas subcoleções continuam exclusivas do dono.
+ * Escopos `summary` (cadastro: nome, idade, alergias) e `chartWrite`
+ * (registros clínicos desta criança), por FAMILY_GRANT_DAYS dias. Não dá
+ * acesso a `growth_records`, `vaccine_doses` nem a outra subcoleção da
+ * família. Concessão ativa do responsável não é sobrescrita, e concessão
+ * revogada só volta com pedido feito depois da revogação.
  */
 export const grantChildSummaryAccess = onCall(
   { region: REGION },
@@ -524,39 +534,59 @@ export const grantChildSummaryAccess = onCall(
     const actor = await requireVerifiedProfessional(request.auth?.uid);
     const { childId } = request.data as { childId?: string };
 
-    if (!childId) {
+    if (!childId || typeof childId !== "string") {
       throw new HttpsError("invalid-argument", "childId não informado.");
     }
 
-    // Agendamento ativo ligando profissional ↔ criança (patientId ou childId).
-    const allowedStatuses = ["confirmed", "inProgress", "requested"];
-    const byChild = await db()
-      .collection("appointments")
-      .where("professionalId", "==", actor.uid)
-      .where("childId", "==", childId)
-      .where("status", "in", allowedStatuses)
-      .limit(1)
-      .get();
-
-    if (byChild.empty) {
-      throw new HttpsError(
-        "permission-denied",
-        "É necessário um agendamento ativo (confirmado, em andamento ou solicitado) com esta criança."
-      );
-    }
-
-    // O dono vem do child_registry (gravado junto com a crianca) e precisa ser
-    // o responsavel do agendamento: um agendamento criado pela equipe com o
-    // childId de outra familia nao abre o cadastro dela.
-    const registry = await db().collection("child_registry").doc(childId).get();
-    const ownerId = registry.get("ownerUid") as string | undefined;
+    const ownerId = await childOwnerUid(childId);
     if (!ownerId) {
       throw new HttpsError("not-found", "Criança não encontrada.");
     }
-    if (byChild.docs[0].get("patientId") !== ownerId) {
+
+    const ref = grantRef(ownerId, childId, actor.uid);
+    const existing = (await ref.get()).data();
+    const now = Date.now();
+
+    if (grantAllows(existing, "chartWrite", now)) {
+      return { ok: true, alreadyGranted: true };
+    }
+    if (existing?.source === "guardian" && grantAllows(existing, "summary", now)) {
+      // O responsável escolheu o escopo; o pedido de consulta não amplia.
+      return { ok: true, alreadyGranted: true };
+    }
+
+    const candidates = await db()
+      .collection("appointments")
+      .where("professionalId", "==", actor.uid)
+      .where("childId", "==", childId)
+      .where("status", "in", ACTIVE_APPOINTMENT_STATUSES)
+      .limit(20)
+      .get();
+
+    const familyRequest = candidates.docs.find((d) =>
+      isFamilyRequestFor(d.data(), {
+        ownerUid: ownerId,
+        childId,
+        professionalUid: actor.uid,
+      })
+    );
+
+    if (!familyRequest) {
+      logger.warn("Vínculo com criança recusado: sem pedido da família", {
+        professional: actor.uid,
+        childId,
+      });
       throw new HttpsError(
         "permission-denied",
-        "O agendamento não pertence ao responsável por esta criança."
+        "É necessário um pedido de consulta feito pelo responsável por esta criança."
+      );
+    }
+
+    const requestedAt = familyRequest.get("createdAt") as Timestamp | undefined;
+    if (revocationBlocksRequest(existing, requestedAt?.toMillis() ?? null)) {
+      throw new HttpsError(
+        "permission-denied",
+        "O responsável revogou este acesso. É preciso um novo pedido ou nova autorização."
       );
     }
 
@@ -569,16 +599,36 @@ export const grantChildSummaryAccess = onCall(
       throw new HttpsError("not-found", "Criança não encontrada.");
     }
 
-    await childRef
-      .collection("authorized_professionals")
-      .doc(actor.uid)
-      .set({ grantedAt: FieldValue.serverTimestamp() });
+    const grant = familyAppointmentGrant({
+      ownerUid: ownerId,
+      appointmentId: familyRequest.id,
+      nowMs: now,
+    });
+    const { expiresAtMs, ...fields } = grant;
 
-    logger.info("Acesso ao resumo de criança concedido", {
-      professional: actor.uid,
-      childId,
+    await ref.set({
+      ...fields,
+      grantedAt: FieldValue.serverTimestamp(),
+      expiresAt: Timestamp.fromMillis(expiresAtMs),
     });
 
-    return { ok: true };
+    await db().collection("audit_log").add({
+      action: "child_access_granted",
+      childId,
+      professionalUid: actor.uid,
+      appointmentId: familyRequest.id,
+      scopes: fields.scopes,
+      source: fields.source,
+      expiresAt: Timestamp.fromMillis(expiresAtMs),
+      createdAt: FieldValue.serverTimestamp(),
+    });
+
+    logger.info("Vínculo com criança concedido por pedido da família", {
+      professional: actor.uid,
+      childId,
+      appointmentId: familyRequest.id,
+    });
+
+    return { ok: true, alreadyGranted: false };
   }
 );

@@ -30,6 +30,7 @@ import { defineSecret } from "firebase-functions/params";
 import * as admin from "firebase-admin";
 import { FieldValue, Timestamp } from "firebase-admin/firestore";
 import * as logger from "firebase-functions/logger";
+import { requireChildAccess } from "./childAccess";
 
 const REGION = "southamerica-east1";
 const ANTHROPIC_API_KEY = defineSecret("ANTHROPIC_API_KEY");
@@ -188,6 +189,8 @@ async function buildContext(
     }
 
     ownedPatientId = typeof e.patientId === "string" ? e.patientId : undefined;
+    // O contexto inclui exames da criança, não só este atendimento.
+    await requireChildAccess(uid, ownedPatientId, "chartWrite", e.clinicId ?? null);
 
     const a = e.anamnesis ?? {};
     const v = e.vitals ?? {};

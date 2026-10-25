@@ -19,6 +19,7 @@ import * as admin from "firebase-admin";
 import { FieldValue, Timestamp } from "firebase-admin/firestore";
 import * as logger from "firebase-functions/logger";
 import { hasActiveBookingConflict, isPastAppointmentTime } from "./booking";
+import { childOwnerUid } from "./childAccess";
 
 const REGION = "southamerica-east1";
 const db = () => admin.firestore();
@@ -401,6 +402,11 @@ export const bookAppointment = onCall({ region: REGION }, async (request) => {
 
   let childName: string | null = null;
   if (childId) {
+    // A consulta pedida aqui é a prova de pedido da família que
+    // grantChildSummaryAccess aceita: só para criança do próprio titular.
+    if ((await childOwnerUid(childId)) !== uid) {
+      throw new HttpsError("permission-denied", "Criança não encontrada.");
+    }
     const childDoc = await db()
       .collection("users")
       .doc(uid)
@@ -436,6 +442,7 @@ export const bookAppointment = onCall({ region: REGION }, async (request) => {
 
     tx.set(appointmentRef, {
       patientId: uid,
+      requestedBy: uid,
       professionalId,
       professionalName: professional.name ?? "",
       specialty: professional.specialty ?? null,

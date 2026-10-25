@@ -118,6 +118,19 @@ class EncounterRepository {
         final String id = _uuid.v4();
         final DateTime now = DateTime.now();
 
+        // As regras só aceitam o atendimento com concessão `chartWrite` do
+        // responsável para esta criança. A Function registra o vínculo a
+        // partir do pedido de consulta da família; sem pedido nem
+        // autorização, ela recusa e a gravação abaixo também é recusada.
+        // Já existindo concessão ativa, ela só confirma.
+        try {
+          await _functions
+              .httpsCallable('grantChildSummaryAccess')
+              .call(<String, dynamic>{'childId': patientId});
+        } on FirebaseFunctionsException {
+          // A decisão é das regras, na gravação abaixo.
+        }
+
         await _encounters.doc(id).set(<String, dynamic>{
           'patientId': patientId,
           'professionalId': professionalId,
@@ -142,18 +155,6 @@ class EncounterRepository {
           'attachmentIds': <String>[],
           'updatedAt': FieldValue.serverTimestamp(),
         });
-
-        // Concede a leitura do resumo de segurança da criança (nome, idade,
-        // alergia) — não bloqueia a criação do atendimento se falhar. O
-        // atendimento em si já está gravado e é o que importa; a concessão é
-        // um extra de UX (mostrar o card de segurança na linha do tempo),
-        // não um requisito para atender.
-        unawaited(
-          _functions
-              .httpsCallable('grantChildSummaryAccess')
-              .call(<String, dynamic>{'childId': patientId})
-              .then((_) {}, onError: (_) {}),
-        );
 
         return Encounter(
           id: id,

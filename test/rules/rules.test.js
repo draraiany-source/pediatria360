@@ -41,6 +41,7 @@ const {
   where,
   serverTimestamp,
   writeBatch,
+  Timestamp,
 } = require("firebase/firestore");
 const {
   ref,
@@ -250,6 +251,33 @@ function as(uid) {
 }
 function anon() {
   return testEnv.unauthenticatedContext().firestore();
+}
+
+// Concessão válida da Ana a um profissional (escopo e validade), no formato
+// que o app do responsável e a Function grantChildSummaryAccess gravam.
+function concessaoValida(scopes = ["summary", "chartWrite"]) {
+  return {
+    scopes,
+    source: "guardian",
+    authorizedBy: ANA,
+    grantedAt: Timestamp.now(),
+    expiresAt: Timestamp.fromMillis(Date.now() + 30 * 24 * 60 * 60 * 1000),
+    revokedAt: null,
+    clinicId: null,
+  };
+}
+
+async function concederAcesso(profUid, scopes) {
+  await testEnv.withSecurityRulesDisabled(async (context) => {
+    await setDoc(
+      doc(
+        context.firestore(),
+        "users", ANA, "children", "filha",
+        "authorized_professionals", profUid
+      ),
+      concessaoValida(scopes)
+    );
+  });
 }
 function asStorage(uid) {
   return testEnv.authenticatedContext(uid).storage();
@@ -1001,6 +1029,13 @@ describe("children — concessão de acesso do profissional", () => {
   });
 
   test("profissional COM concessão lê a criança", async () => {
+    await concederAcesso(DRA, ["summary"]);
+    await assertSucceeds(
+      getDoc(doc(as(DRA), "users", ANA, "children", "filha"))
+    );
+  });
+
+  test("concessão no formato antigo (só grantedAt) NÃO abre a criança", async () => {
     await testEnv.withSecurityRulesDisabled(async (context) => {
       await setDoc(
         doc(
@@ -1011,7 +1046,7 @@ describe("children — concessão de acesso do profissional", () => {
         { grantedAt: serverTimestamp() }
       );
     });
-    await assertSucceeds(
+    await assertFails(
       getDoc(doc(as(DRA), "users", ANA, "children", "filha"))
     );
   });
@@ -1033,6 +1068,19 @@ describe("children — concessão de acesso do profissional", () => {
 
   test("responsável concede acesso a um profissional", async () => {
     await assertSucceeds(
+      setDoc(
+        doc(
+          as(ANA),
+          "users", ANA, "children", "filha",
+          "authorized_professionals", DRA
+        ),
+        { ...concessaoValida(["summary"]), grantedAt: serverTimestamp() }
+      )
+    );
+  });
+
+  test("responsável NÃO grava concessão sem escopo nem validade", async () => {
+    await assertFails(
       setDoc(
         doc(
           as(ANA),
@@ -1073,16 +1121,7 @@ describe("children — concessão de acesso do profissional", () => {
   test("concessão continua sem dar acesso a growth_records/vaccine_doses", async () => {
     // A concessão é só para o documento da criança em si — dado clínico
     // nas subcoleções continua exclusivo do dono, mesmo com a concessão.
-    await testEnv.withSecurityRulesDisabled(async (context) => {
-      await setDoc(
-        doc(
-          context.firestore(),
-          "users", ANA, "children", "filha",
-          "authorized_professionals", DRA
-        ),
-        { grantedAt: serverTimestamp() }
-      );
-    });
+    await concederAcesso(DRA);
     await assertFails(
       getDoc(
         doc(
@@ -1205,6 +1244,10 @@ describe("pre_visit_questionnaires", () => {
 // mesma série.
 
 describe("visit_summaries", () => {
+  beforeEach(async () => {
+    await concederAcesso(DRA);
+  });
+
   test("profissional cria rascunho", async () => {
     await assertSucceeds(
       setDoc(doc(as(DRA), "visit_summaries", "atendimento-1"), {
@@ -1571,6 +1614,22 @@ describe("registros clinicos — sem sequestro na atualizacao", () => {
         professionalId: DRA,
       });
     });
+    await concederAcesso(DRA);
+  });
+
+  test("autor sem concessão ativa NAO atualiza o proprio registro", async () => {
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      await deleteDoc(
+        doc(
+          context.firestore(),
+          "users", ANA, "children", "filha",
+          "authorized_professionals", DRA
+        )
+      );
+    });
+    await assertFails(
+      setDoc(doc(as(DRA), "triage_records", "t1"), { nota: "revisado" }, { merge: true })
+    );
   });
 
   const alvos = [

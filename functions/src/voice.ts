@@ -10,6 +10,7 @@ import { defineSecret } from "firebase-functions/params";
 import * as admin from "firebase-admin";
 import { FieldValue } from "firebase-admin/firestore";
 import * as logger from "firebase-functions/logger";
+import { requireChildAccess } from "./childAccess";
 
 const REGION = "southamerica-east1";
 const ANTHROPIC_API_KEY = defineSecret("ANTHROPIC_API_KEY");
@@ -234,6 +235,16 @@ export const startVoiceConsultation = onCall(
     if (!childId) {
       throw new HttpsError("invalid-argument", "childId e obrigatorio.");
     }
+
+    let clinicId: string | null = null;
+    if (encounterId) {
+      const enc = (await db().collection("encounters").doc(encounterId).get()).data();
+      if (!enc || enc.professionalId !== actor.uid || enc.patientId !== childId) {
+        throw new HttpsError("permission-denied", "Atendimento de outro profissional ou de outra crianca.");
+      }
+      clinicId = (enc.clinicId as string | undefined) ?? null;
+    }
+    await requireChildAccess(actor.uid, childId, "chartWrite", clinicId);
 
     const ref = db().collection("voice_sessions").doc();
     const now = FieldValue.serverTimestamp();
@@ -526,6 +537,7 @@ export const applyVoiceDraftToEncounter = onCall(
     let kept: string[] = [];
 
     if (!encounterId) {
+      await requireChildAccess(actor.uid, childId, "chartWrite", null);
       const encRef = db().collection("encounters").doc();
       encounterId = encRef.id;
       const patch = buildClinicalPatch(draft, {}, ignored);
@@ -556,10 +568,10 @@ export const applyVoiceDraftToEncounter = onCall(
         throw new HttpsError("not-found", "Atendimento nao encontrado.");
       }
       const enc = encSnap.data() ?? {};
-      if (enc.professionalId !== actor.uid) {
+      if (enc.professionalId !== actor.uid || enc.patientId !== childId) {
         throw new HttpsError(
           "permission-denied",
-          "Atendimento de outro profissional."
+          "Atendimento de outro profissional ou de outra crianca."
         );
       }
       if (enc.status !== "draft") {
@@ -568,6 +580,12 @@ export const applyVoiceDraftToEncounter = onCall(
           "So e permitido aplicar rascunho em atendimento draft."
         );
       }
+      await requireChildAccess(
+        actor.uid,
+        childId,
+        "chartWrite",
+        (enc.clinicId as string | undefined) ?? null
+      );
 
       const patch = buildClinicalPatch(draft, enc, ignored);
       kept = patch.kept;
