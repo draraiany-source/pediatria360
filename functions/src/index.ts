@@ -62,8 +62,21 @@ export {
   issueClinicalDocument,
   cancelClinicalDocument,
   verifyDocument,
-  grantChildSummaryAccess,
+  checkChildAccess,
 } from "./emr";
+
+// Fluxo da clínica: solicitação de paciente novo, convite ao responsável
+// e equipe. Ver o cabeçalho de clinicFlow.ts.
+export {
+  createClinicIntake,
+  cancelClinicIntake,
+  renewClinicIntakeCode,
+  previewClinicIntake,
+  acceptClinicIntake,
+  lookupProfessional,
+  addClinicMember,
+  setClinicMemberStatus,
+} from "./clinicFlow";
 
 // Consultório 360 — consulta por voz / Prontuário IA.
 export {

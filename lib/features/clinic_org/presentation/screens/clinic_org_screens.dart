@@ -60,6 +60,18 @@ class ClinicOrgHubScreen extends ConsumerWidget {
             ),
           ),
           const SizedBox(height: AppSpacing.lg),
+          ListTile(
+            key: const Key('clinic-team-entry'),
+            contentPadding: EdgeInsets.zero,
+            leading: const Icon(Icons.groups_outlined, color: AppColors.brand),
+            title: const Text('Equipe da clinica'),
+            subtitle: const Text(
+              'Incluir recepcao, financeiro e profissionais (so a gestao).',
+            ),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => context.push(Routes.clinicTeamPath),
+          ),
+          const SizedBox(height: AppSpacing.sm),
           activeClinicAsync.when(
             loading: () => const LoadingState(label: 'Carregando clinica...'),
             error: (Object e, StackTrace _) => AppCard(

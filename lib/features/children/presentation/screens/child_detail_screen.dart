@@ -16,6 +16,7 @@ import '../../../../shared/domain/entities/child.dart';
 import '../../../../shared/domain/entities/visit_summary.dart';
 import '../../../growth/domain/who_reference.dart';
 import '../providers/children_providers.dart';
+import 'child_access_screen.dart';
 import 'child_guardians_screen.dart';
 import 'visit_summaries_screen.dart';
 
@@ -234,6 +235,17 @@ class ChildDetailScreen extends ConsumerWidget {
                         onTap: () => Navigator.of(context).push(
                           MaterialPageRoute<void>(
                             builder: (_) => ChildGuardiansScreen(child: child),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: AppSpacing.md),
+                      QuickActionTile(
+                        label: 'Profissionais autorizados',
+                        icon: Icons.verified_user_outlined,
+                        color: AppColors.violet,
+                        onTap: () => Navigator.of(context).push(
+                          MaterialPageRoute<void>(
+                            builder: (_) => ChildAccessScreen(child: child),
                           ),
                         ),
                       ),

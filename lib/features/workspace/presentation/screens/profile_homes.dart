@@ -259,9 +259,10 @@ class _AdminHome extends ConsumerWidget {
               const SizedBox(height: AppSpacing.sm),
               const FeatureOffBanner(
                 text:
-                    'Convite de funcionarios e gestao de unidades dependem de '
-                    'configuracao administrativa na clinica. Indicadores so '
-                    'aparecem quando houver dados no Firebase.',
+                    'A equipe de cada clinica e incluida pela gestao dela, em '
+                    'Minha clinica > Equipe. Gestao de unidades depende de '
+                    'configuracao administrativa. Indicadores so aparecem '
+                    'quando houver dados no Firebase.',
               ),
               const SizedBox(height: AppSpacing.xxl),
             ],
@@ -542,6 +543,13 @@ class _ReceptionHome extends ConsumerWidget {
                     onTap: () => context.push(Routes.clinicReceptionPath),
                   ),
                   _QuickSquare(
+                    title: 'Paciente novo',
+                    subtitle: 'Solicitacoes',
+                    icon: Icons.person_add_alt_1_outlined,
+                    color: AppColors.violet,
+                    onTap: () => context.push(Routes.clinicIntakesPath),
+                  ),
+                  _QuickSquare(
                     title: 'Pendencias',
                     subtitle: 'Fila',
                     icon: Icons.inbox_outlined,
@@ -769,6 +777,14 @@ class _PatientHome extends ConsumerWidget {
                 icon: Icons.notifications_outlined,
                 color: AppColors.navy,
                 onTap: () => context.push(Routes.notificationsPath),
+              ),
+              const SizedBox(height: AppSpacing.sm),
+              _NavTile(
+                title: 'Convite da clinica',
+                subtitle: 'Confirmar consulta com o codigo recebido',
+                icon: Icons.mark_email_read_outlined,
+                color: AppColors.violet,
+                onTap: () => context.push(Routes.clinicInvitePath),
               ),
               const SizedBox(height: AppSpacing.md),
               const FeatureOffBanner(

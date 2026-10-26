@@ -96,7 +96,7 @@ String? resolveRouteRedirect({
           _under(location, Routes.biPath) ||
           _under(location, Routes.clinicOrgPath);
       if (!adminAllowed) return Routes.homePath;
-    } else {
+    } else if (!_staffAreaForNonProfessional(location, workspace, clinicMembership)) {
       return Routes.homePath;
     }
   }
@@ -145,6 +145,39 @@ String? resolveRouteRedirect({
   }
 
   return null;
+}
+
+/// Conta comum com papel de recepcao ou financeiro na clinica (perfil
+/// concedido por WorkspaceAccess): so as telas daquele papel. Prontuario,
+/// pacientes, IA e suplementacao ficam de fora. As regras do Firestore
+/// conferem o papel de novo em cada leitura e escrita. A gestao (clinicAdmin)
+/// tambem entra na administracao da clinica (equipe, salas), sem prontuario.
+bool _staffAreaForNonProfessional(
+  String location,
+  WorkspaceProfile? workspace,
+  ClinicMembership? membership,
+) {
+  if (membership != null &&
+      membership.active &&
+      membership.role == ClinicRole.clinicAdmin &&
+      _under(location, Routes.clinicOrgPath)) {
+    return true;
+  }
+  switch (workspace) {
+    case WorkspaceProfile.receptionist:
+      return _under(location, Routes.agendaPath) ||
+          _under(location, Routes.clinicReceptionPath) ||
+          _under(location, Routes.clinicIntakesPath) ||
+          _under(location, Routes.clinicPendingPath);
+    case WorkspaceProfile.finance:
+      return _under(location, Routes.financePath) ||
+          _under(location, Routes.billingPath);
+    case WorkspaceProfile.admin:
+    case WorkspaceProfile.professional:
+    case WorkspaceProfile.patient:
+    case null:
+      return false;
+  }
 }
 
 /// `/bi` cobre `/bi` e `/bi/...`, mas nao `/biblioteca`.

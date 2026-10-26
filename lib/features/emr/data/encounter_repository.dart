@@ -119,16 +119,29 @@ class EncounterRepository {
         final DateTime now = DateTime.now();
 
         // As regras só aceitam o atendimento com concessão `chartWrite` do
-        // responsável para esta criança. A Function registra o vínculo a
-        // partir do pedido de consulta da família; sem pedido nem
-        // autorização, ela recusa e a gravação abaixo também é recusada.
-        // Já existindo concessão ativa, ela só confirma.
+        // responsável para esta criança (valendo nesta clínica). Consulta
+        // marcada não concede nada: quem autoriza é o responsável, na tela
+        // de autorizações ou ao aceitar o convite da clínica. A consulta
+        // abaixo só antecipa a recusa com uma mensagem clara.
+        bool? authorized;
         try {
-          await _functions
-              .httpsCallable('grantChildSummaryAccess')
-              .call(<String, dynamic>{'childId': patientId});
+          final HttpsCallableResult<dynamic> res = await _functions
+              .httpsCallable('checkChildAccess')
+              .call(<String, dynamic>{
+            'childId': patientId,
+            'clinicId': clinicId,
+          });
+          final Object? data = res.data;
+          if (data is Map) authorized = data['chartWrite'] == true;
         } on FirebaseFunctionsException {
-          // A decisão é das regras, na gravação abaixo.
+          // Sem resposta, a decisão fica com as regras, na gravação abaixo.
+        }
+        if (authorized == false) {
+          throw const PermissionFailure(
+            'O responsável ainda não autorizou o acesso ao prontuário desta '
+            'criança para você (ou a autorização venceu ou foi revogada). '
+            'Peça a autorização pelo app da família.',
+          );
         }
 
         await _encounters.doc(id).set(<String, dynamic>{

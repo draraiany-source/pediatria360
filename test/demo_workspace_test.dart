@@ -6,6 +6,7 @@ import 'package:pediatria360/demo/demo_data.dart';
 import 'package:pediatria360/demo/demo_router.dart';
 import 'package:pediatria360/demo/demo_session.dart';
 import 'package:pediatria360/demo/demo_workspace.dart';
+import 'package:pediatria360/demo/screens/agenda_screens.dart';
 import 'package:pediatria360/demo/screens/restricted_screen.dart';
 import 'package:pediatria360/shared/clinical/audit_trail.dart';
 import 'package:pediatria360/shared/clinical/clinical_tasks.dart';
@@ -392,7 +393,13 @@ void main() {
       WidgetTester tester,
     ) async {
       await pumpDemo(tester, DemoProfile.profissional);
-      await goTo(tester, '/agenda');
+      // A profissional atende de segunda a sexta: no fim de semana o dia de
+      // hoje nao tem horario livre, entao o teste abre o proximo dia util.
+      final DateTime hoje = todayAt(7);
+      final DateTime diaUtil = hoje.weekday >= DateTime.saturday
+          ? hoje.add(Duration(days: 8 - hoje.weekday))
+          : hoje;
+      await goTo(tester, agendaUrl(day: diaUtil));
       expect(find.textContaining('Horário livre'), findsWidgets);
       await tap(tester, find.text('Semana'));
       expect(find.textContaining('horário(s) livre(s)'), findsWidgets);

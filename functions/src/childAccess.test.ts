@@ -1,10 +1,4 @@
-import {
-  familyAppointmentGrant,
-  FAMILY_GRANT_DAYS,
-  grantAllows,
-  isFamilyRequestFor,
-  revocationBlocksRequest,
-} from "./childAccess";
+import { grantAllows, grantState, GRANT_SOURCES } from "./childAccess";
 
 const DIA = 24 * 60 * 60 * 1000;
 const AGORA = Date.UTC(2026, 9, 25, 12, 0, 0);
@@ -47,6 +41,16 @@ describe("grantAllows", () => {
     expect(grantAllows(concessao({ source: "clinic" }), "summary", AGORA)).toBe(false);
   });
 
+  it("concessão automática por consulta (familyAppointment) não vale mais", () => {
+    expect(GRANT_SOURCES).not.toContain("familyAppointment");
+    expect(grantAllows(concessao({ source: "familyAppointment" }), "summary", AGORA)).toBe(false);
+    expect(grantAllows(concessao({ source: "familyAppointment" }), "chartWrite", AGORA)).toBe(false);
+  });
+
+  it("aceite do convite pelo responsável (guardianInvite) vale como a da tela", () => {
+    expect(grantAllows(concessao({ source: "guardianInvite" }), "chartWrite", AGORA)).toBe(true);
+  });
+
   it("restrita a uma clínica só vale nela", () => {
     const restrita = concessao({ clinicId: "clinica-a" });
     expect(grantAllows(restrita, "chartWrite", AGORA, "clinica-a")).toBe(true);
@@ -55,59 +59,18 @@ describe("grantAllows", () => {
   });
 });
 
-describe("isFamilyRequestFor", () => {
-  const pedido = {
-    patientId: "uid_ana",
-    requestedBy: "uid_ana",
-    childId: "filha",
-    professionalId: "uid_dra",
-    status: "requested",
-  };
-  const alvo = { ownerUid: "uid_ana", childId: "filha", professionalUid: "uid_dra" };
-
-  it("pedido da família para este profissional e esta criança", () => {
-    expect(isFamilyRequestFor(pedido, alvo)).toBe(true);
+describe("grantState", () => {
+  it("classifica ativa, vencida, revogada, inválida e ausente", () => {
+    expect(grantState(concessao(), AGORA)).toBe("active");
+    expect(grantState(concessao({ expiresAt: ts(AGORA - 1) }), AGORA)).toBe("expired");
+    expect(grantState(concessao({ revokedAt: ts(AGORA - DIA) }), AGORA)).toBe("revoked");
+    expect(grantState({ grantedAt: ts(AGORA - DIA) }, AGORA)).toBe("invalid");
+    expect(grantState(concessao({ source: "familyAppointment" }), AGORA)).toBe("invalid");
+    expect(grantState(undefined, AGORA)).toBe("none");
   });
 
-  it("consulta marcada pela equipe (sem requestedBy) não cria vínculo", () => {
-    const semPedido: Record<string, unknown> = { ...pedido };
-    delete semPedido.requestedBy;
-    expect(isFamilyRequestFor(semPedido, alvo)).toBe(false);
-  });
-
-  it("consulta de outra família, outra criança ou outro profissional não serve", () => {
-    expect(isFamilyRequestFor({ ...pedido, patientId: "uid_invasor", requestedBy: "uid_invasor" }, alvo)).toBe(false);
-    expect(isFamilyRequestFor({ ...pedido, childId: "outra" }, alvo)).toBe(false);
-    expect(isFamilyRequestFor({ ...pedido, professionalId: "uid_invasor" }, alvo)).toBe(false);
-  });
-
-  it("consulta cancelada ou concluída não serve", () => {
-    expect(isFamilyRequestFor({ ...pedido, status: "cancelled" }, alvo)).toBe(false);
-    expect(isFamilyRequestFor({ ...pedido, status: "completed" }, alvo)).toBe(false);
-  });
-});
-
-describe("revocationBlocksRequest", () => {
-  it("sem revogação, não bloqueia", () => {
-    expect(revocationBlocksRequest(concessao(), AGORA)).toBe(false);
-    expect(revocationBlocksRequest(undefined, AGORA)).toBe(false);
-  });
-
-  it("revogada: só pedido feito depois da revogação reabre", () => {
-    const revogada = concessao({ revokedAt: ts(AGORA - DIA) });
-    expect(revocationBlocksRequest(revogada, AGORA - 2 * DIA)).toBe(true);
-    expect(revocationBlocksRequest(revogada, AGORA)).toBe(false);
-    expect(revocationBlocksRequest(revogada, null)).toBe(true);
-  });
-});
-
-describe("familyAppointmentGrant", () => {
-  it("escopo de atendimento, validade limitada e sem restrição de clínica", () => {
-    const g = familyAppointmentGrant({ ownerUid: "uid_ana", appointmentId: "c1", nowMs: AGORA });
-    expect(g.scopes).toEqual(["summary", "chartWrite"]);
-    expect(g.source).toBe("familyAppointment");
-    expect(g.authorizedBy).toBe("uid_ana");
-    expect(g.expiresAtMs).toBe(AGORA + FAMILY_GRANT_DAYS * DIA);
-    expect(g.revokedAt).toBeNull();
+  it("revogada continua revogada mesmo depois de vencer", () => {
+    const g = concessao({ revokedAt: ts(AGORA - 2 * DIA), expiresAt: ts(AGORA - DIA) });
+    expect(grantState(g, AGORA)).toBe("revoked");
   });
 });

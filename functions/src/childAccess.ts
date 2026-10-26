@@ -7,10 +7,13 @@
  *
  * - a concessão fica em
  *   users/{dono}/children/{criança}/authorized_professionals/{profissional};
- * - só vale com escopo, validade e sem revogação. Concessão antiga (só
- *   `grantedAt`) não vale;
- * - `summary` lê o cadastro; `chartWrite` grava no prontuário. Um não
- *   implica o outro;
+ * - nasce só de escolha explícita do titular: pelo app (`guardian`) ou ao
+ *   aceitar o convite da clínica (`guardianInvite`). Existir consulta não
+ *   concede nada; concessão antiga (só `grantedAt`) e a automática por
+ *   consulta (`familyAppointment`) não valem;
+ * - só vale com escopo, validade e sem revogação;
+ * - `summary` lê o cadastro; `chartWrite` grava no prontuário e libera as
+ *   funções de IA e documentos. Um não implica o outro;
  * - o dono da criança é o do child_registry, nunca um campo enviado pelo
  *   cliente.
  *
@@ -24,15 +27,7 @@ import * as admin from "firebase-admin";
 export type GrantScope = "summary" | "chartWrite";
 
 export const GRANT_SCOPES: readonly GrantScope[] = ["summary", "chartWrite"];
-export const GRANT_SOURCES = ["guardian", "familyAppointment"] as const;
-
-/** Validade da concessão criada a partir de consulta pedida pela família. */
-export const FAMILY_GRANT_DAYS = 180;
-
-/** Status em que uma consulta pedida pela família ainda autoriza o vínculo. */
-export const ACTIVE_APPOINTMENT_STATUSES = ["requested", "confirmed", "inProgress"];
-
-const DAY_MS = 24 * 60 * 60 * 1000;
+export const GRANT_SOURCES = ["guardian", "guardianInvite"] as const;
 
 interface TimestampLike {
   toMillis(): number;
@@ -71,56 +66,24 @@ export function grantAllows(
   return true;
 }
 
-/**
- * A consulta prova pedido da família para este profissional e esta criança?
- *
- * `requestedBy` só é gravado pelo próprio titular (regra de criação) ou por
- * `bookAppointment`, e não muda depois. Consulta marcada pela equipe não
- * conta: marcar consulta não cria vínculo.
- */
-export function isFamilyRequestFor(
-  appointment: Record<string, unknown> | undefined | null,
-  params: { ownerUid: string; childId: string; professionalUid: string }
-): boolean {
-  if (!appointment) return false;
-  return (
-    appointment.patientId === params.ownerUid &&
-    appointment.requestedBy === params.ownerUid &&
-    appointment.childId === params.childId &&
-    appointment.professionalId === params.professionalUid &&
-    ACTIVE_APPOINTMENT_STATUSES.includes(appointment.status as string)
-  );
-}
+export type GrantState = "active" | "expired" | "revoked" | "invalid" | "none";
 
-/**
- * Concessão revogada pelo responsável só volta com pedido novo da família,
- * feito depois da revogação.
- */
-export function revocationBlocksRequest(
-  existing: Record<string, unknown> | undefined | null,
-  appointmentCreatedMs: number | null
-): boolean {
-  if (!existing || existing.revokedAt == null) return false;
-  const revokedMs = millisOf(existing.revokedAt);
-  if (revokedMs === null || appointmentCreatedMs === null) return true;
-  return appointmentCreatedMs <= revokedMs;
-}
-
-/** Concessão gravada pela Function a partir do pedido da família. */
-export function familyAppointmentGrant(params: {
-  ownerUid: string;
-  appointmentId: string;
-  nowMs: number;
-}) {
-  return {
-    scopes: ["summary", "chartWrite"] as GrantScope[],
-    source: "familyAppointment" as const,
-    authorizedBy: params.ownerUid,
-    appointmentId: params.appointmentId,
-    expiresAtMs: params.nowMs + FAMILY_GRANT_DAYS * DAY_MS,
-    revokedAt: null,
-    clinicId: null,
-  };
+/** Situação da concessão, para a tela e o diagnóstico. */
+export function grantState(
+  grant: Record<string, unknown> | undefined | null,
+  nowMs: number
+): GrantState {
+  if (!grant) return "none";
+  if (
+    !GRANT_SOURCES.includes(grant.source as (typeof GRANT_SOURCES)[number]) ||
+    !Array.isArray(grant.scopes) ||
+    millisOf(grant.expiresAt) === null
+  ) {
+    return "invalid";
+  }
+  if (grant.revokedAt != null) return "revoked";
+  if ((millisOf(grant.expiresAt) as number) <= nowMs) return "expired";
+  return "active";
 }
 
 export function grantRef(ownerUid: string, childId: string, professionalUid: string) {

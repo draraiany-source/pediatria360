@@ -59,10 +59,12 @@ service cloud.firestore {
     // Concessao do responsavel a um profissional, em
     // users/{dono}/children/{c}/authorized_professionals/{prof}.
     // So vale com escopo, validade e sem revogacao. Ser verificado, ser dono
-    // de clinica, conhecer os ids ou ter criado uma consulta nao basta: a
-    // concessao nasce do titular (pelo app) ou da Function
-    // grantChildSummaryAccess, a partir de consulta pedida pela familia.
-    // Concessao antiga (so `grantedAt`) nao vale mais.
+    // de clinica, conhecer os ids ou existir uma consulta nao basta: a
+    // concessao nasce de escolha explicita do titular, pelo app (`guardian`)
+    // ou ao aceitar o convite da clinica (`guardianInvite`, gravada pela
+    // Function acceptClinicIntake com o titular autenticado).
+    // Concessao antiga (so `grantedAt`) e a automatica por consulta
+    // (`familyAppointment`) nao valem.
     //   summary    -> le o cadastro da crianca (nome, idade, alergias)
     //   chartWrite -> grava registros clinicos da crianca
     function grantPath(ownerUid, childId, profUid) {
@@ -70,7 +72,7 @@ service cloud.firestore {
     }
 
     function grantIsActive(g) {
-      return g.get('source', '') in ['guardian', 'familyAppointment'] &&
+      return g.get('source', '') in ['guardian', 'guardianInvite'] &&
              g.get('scopes', null) is list &&
              g.get('expiresAt', null) is timestamp &&
              g.expiresAt > request.time &&
@@ -127,7 +129,7 @@ service cloud.firestore {
     function isValidGuardianGrant(uid) {
       return request.resource.data.keys().hasOnly(
                ['scopes', 'source', 'authorizedBy', 'grantedAt', 'expiresAt',
-                'revokedAt', 'clinicId', 'professionalName']) &&
+                'revokedAt', 'clinicId', 'professionalName', 'clinicName']) &&
              request.resource.data.keys().hasAll(
                ['scopes', 'source', 'authorizedBy', 'grantedAt', 'expiresAt']) &&
              request.resource.data.scopes is list &&
@@ -307,8 +309,8 @@ service cloud.firestore {
         // consta no child_registry grava, com escopo e validade de ate um
         // ano, e depois so revoga. O profissional NAO cria, amplia, estende
         // nem desfaz revogacao da propria concessao; a outra origem e a
-        // Function grantChildSummaryAccess (Admin SDK), a partir de consulta
-        // pedida pela familia.
+        // Function acceptClinicIntake (Admin SDK), com o titular autenticado
+        // escolhendo o escopo ao aceitar o convite.
         match /authorized_professionals/{profId} {
           allow read: if isOwner(uid) ||
                          (isVerifiedProfessional() && request.auth.uid == profId);
@@ -571,10 +573,12 @@ service cloud.firestore {
     // Ids que amarram a consulta a familia, crianca, profissional e clinica.
     // Nao mudam pelo app; troca legitima precisa de operacao propria no
     // servidor, validada e auditada.
+    // `origin` e `intakeId` registram de onde a consulta veio (pedido da
+    // familia, equipe, convite aceito) e tambem nao mudam.
     function appointmentIdsUnchanged() {
       return !request.resource.data.diff(resource.data).affectedKeys().hasAny(
                ['patientId', 'childId', 'professionalId', 'clinicId',
-                'requestedBy', 'createdBy', 'createdAt']);
+                'requestedBy', 'createdBy', 'createdAt', 'origin', 'intakeId']);
     }
 
     // O que profissional da consulta e recepcao/gestao alteram: andamento,
@@ -593,7 +597,8 @@ service cloud.firestore {
       return d.keys().hasAll(
                ['patientId', 'childId', 'professionalId', 'startsAt', 'status',
                 'clinicId']) &&
-             !d.keys().hasAny(['requestedBy', 'paid']) &&
+             !d.keys().hasAny(['requestedBy', 'paid', 'intakeId']) &&
+             d.get('origin', 'clinicStaff') == 'clinicStaff' &&
              d.get('createdBy', request.auth.uid) == request.auth.uid &&
              d.clinicId is string &&
              d.childId is string &&
@@ -601,11 +606,14 @@ service cloud.firestore {
              d.professionalId is string;
     }
 
+    // Recepcao e gestao valem pelo papel no vinculo com a clinica, sem a
+    // marca de profissional verificado; o profissional que marca para si
+    // continua precisando dela.
     function isStaffAppointmentCreate(d) {
       return isStaffAppointmentShape(d) &&
-             isVerifiedProfessional() &&
              (isClinicReceptionOrAdmin(d.clinicId) ||
               (d.professionalId == request.auth.uid &&
+               isVerifiedProfessional() &&
                isClinicAgendaStaff(d.clinicId))) &&
              get(childRegistryPath(d.childId)).data.ownerUid == d.patientId &&
              isClinicCareMember(d.clinicId, d.professionalId) &&
@@ -631,15 +639,19 @@ service cloud.firestore {
       allow create: if signedIn() && (
                       // Familia: so solicitacao, em nome proprio, sem campos de
                       // clinica/cobranca e para crianca propria. `requestedBy`
-                      // so pode ser o proprio titular: e o que a Function
-                      // grantChildSummaryAccess aceita como pedido da familia.
+                      // so pode ser o proprio titular. Pedir consulta nao
+                      // autoriza acesso clinico: isso e escolha separada do
+                      // titular (authorized_professionals).
                       (request.resource.data.patientId == request.auth.uid &&
                        request.resource.data.get('status', '') == 'requested' &&
                        request.resource.data.get('requestedBy', request.auth.uid) ==
                          request.auth.uid &&
+                       request.resource.data.get('origin', 'familyRequest') ==
+                         'familyRequest' &&
                        !request.resource.data.keys().hasAny(
                          ['clinicId', 'unitId', 'paid', 'priceCents', 'amountCents',
-                          'workflowStatus', 'confirmedAt', 'createdBy']) &&
+                          'workflowStatus', 'confirmedAt', 'createdBy',
+                          'intakeId']) &&
                        (!('childId' in request.resource.data) ||
                         ownsChild(request.resource.data.childId))) ||
                       // Equipe da clinica: so para crianca cujo titular ja
@@ -666,13 +678,11 @@ service cloud.firestore {
                           && resource.data.professionalId == request.auth.uid
                           && request.resource.data.diff(resource.data).affectedKeys()
                                .hasOnly(appointmentCareFields()))
-                      || (isVerifiedProfessional()
-                          && resource.data.get('clinicId', null) != null
+                      || (resource.data.get('clinicId', null) != null
                           && isClinicReceptionOrAdmin(resource.data.clinicId)
                           && request.resource.data.diff(resource.data).affectedKeys()
                                .hasOnly(appointmentCareFields()))
-                      || (isVerifiedProfessional()
-                          && resource.data.get('clinicId', null) != null
+                      || (resource.data.get('clinicId', null) != null
                           && financeWriteRole(resource.data.clinicId)
                           && request.resource.data.diff(resource.data).affectedKeys()
                                .hasOnly(['paid', 'updatedAt'])));
@@ -694,6 +704,22 @@ service cloud.firestore {
                          isClinicAgendaStaff(get(/databases/$(database)/documents/appointments/$(appointmentId)).data.clinicId)));
         allow update, delete: if false;
       }
+    }
+
+    // Solicitacao de atendimento de paciente novo, registrada pela recepcao
+    // (ou pelo profissional para si). E provisoria e administrativa: nome,
+    // nascimento e contato informados pela clinica, horario pedido e
+    // situacao do convite. Nao tem id de crianca nem dado clinico, nao cria
+    // vinculo e nao abre prontuario. Vira consulta so quando o responsavel,
+    // autenticado e com o codigo do convite, a aceita para uma crianca dele
+    // (Function acceptClinicIntake). O codigo fica em colecao do servidor.
+    match /clinic_intakes/{intakeId} {
+      allow read: if signedIn() &&
+                     ((resource.data.get('clinicId', null) != null &&
+                       isClinicAgendaStaff(resource.data.clinicId)) ||
+                      resource.data.get('professionalId', '') == request.auth.uid ||
+                      resource.data.get('createdBy', '') == request.auth.uid);
+      allow write: if false;
     }
 
     // O responsável preenche antes da consulta; profissional lê o que foi
@@ -1079,11 +1105,12 @@ service cloud.firestore {
              clinicRole(clinicId) in ['clinicAdmin', 'finance'];
     }
 
+    // Na clinica vale o papel do vinculo (o financeiro nao e profissional de
+    // saude e nao tem registro a conferir). Fora de clinica, o livro proprio
+    // do profissional continua exigindo a verificacao (isLegacyOwner*).
     function canReadLedger() {
-      return isVerifiedProfessional() && (
-        isLegacyOwnerLedgerRead() ||
-        (ledgerDocClinicId() != null && financeReadRole(ledgerDocClinicId()))
-      );
+      return isLegacyOwnerLedgerRead() ||
+             (ledgerDocClinicId() != null && financeReadRole(ledgerDocClinicId()));
     }
 
     // Guias, lotes e glosas carregam diagnostico (CID): fora da recepcao/tecnico.
@@ -1094,16 +1121,13 @@ service cloud.firestore {
     }
 
     function canReadBillingClinicalLedger() {
-      return isVerifiedProfessional() && (
-        isLegacyOwnerLedgerRead() ||
-        (ledgerDocClinicId() != null &&
-         billingClinicalReadRole(ledgerDocClinicId()))
-      );
+      return isLegacyOwnerLedgerRead() ||
+             (ledgerDocClinicId() != null &&
+              billingClinicalReadRole(ledgerDocClinicId()));
     }
 
     function canWriteFinanceLedger() {
-      return isVerifiedProfessional() &&
-             ledgerClinicIdUnchanged() &&
+      return ledgerClinicIdUnchanged() &&
              ledgerOwnerMatches() && (
         isLegacyOwnerLedgerWrite() ||
         (ledgerReqClinicId() != null &&
@@ -1112,8 +1136,7 @@ service cloud.firestore {
     }
 
     function canWriteBillingLedger() {
-      return isVerifiedProfessional() &&
-             ledgerClinicIdUnchanged() &&
+      return ledgerClinicIdUnchanged() &&
              ledgerOwnerMatches() && (
         isLegacyOwnerLedgerWrite() ||
         (ledgerReqClinicId() != null &&
@@ -1122,8 +1145,7 @@ service cloud.firestore {
     }
 
     function canWriteInventoryLedger() {
-      return isVerifiedProfessional() &&
-             ledgerClinicIdUnchanged() &&
+      return ledgerClinicIdUnchanged() &&
              ledgerOwnerMatches() && (
         isLegacyOwnerLedgerWrite() ||
         (ledgerReqClinicId() != null &&
@@ -1132,20 +1154,18 @@ service cloud.firestore {
     }
 
     function canReadInventoryLedger() {
-      return isVerifiedProfessional() && (
-        isLegacyOwnerLedgerRead() ||
-        (ledgerDocClinicId() != null &&
-         inventoryReadRole(ledgerDocClinicId()))
-      );
+      return isLegacyOwnerLedgerRead() ||
+             (ledgerDocClinicId() != null &&
+              inventoryReadRole(ledgerDocClinicId()));
     }
 
     function canCreateFinanceAudit() {
-      return isVerifiedProfessional() &&
+      return signedIn() &&
              request.resource.data.ownerId == request.auth.uid &&
-             ledgerClinicIdUnchanged() && (
-        request.resource.data.get('clinicId', null) == null ||
-        financeWriteRole(request.resource.data.clinicId)
-      );
+             ledgerClinicIdUnchanged() &&
+             (request.resource.data.get('clinicId', null) == null
+                ? isVerifiedProfessional()
+                : financeWriteRole(request.resource.data.clinicId));
     }
 
     match /clinics/{clinicId} {
@@ -1322,16 +1342,18 @@ service cloud.firestore {
     match /security_audit_logs/{id} {
       allow read: if isAdmin()
                   || (signedIn() && resource.data.actorUid == request.auth.uid)
-                  || (isVerifiedProfessional()
-                      && resource.data.clinicId != null
+                  || (resource.data.get('clinicId', null) != null
                       && isClinicAdmin(resource.data.clinicId));
+      // Equipe da clinica (inclusive recepcao e financeiro, sem registro
+      // profissional) registra eventos na propria clinica; fora de clinica,
+      // so profissional verificado.
       allow create: if signedIn()
                     && request.resource.data.actorUid == request.auth.uid
                     && request.resource.data.keys().hasAll(['actorUid', 'action', 'module', 'at'])
-                    && (isVerifiedProfessional() || isAdmin())
                     && (isAdmin()
-                        || request.resource.data.get('clinicId', null) == null
-                        || isClinicMember(request.resource.data.clinicId));
+                        || (request.resource.data.get('clinicId', null) == null
+                              ? isVerifiedProfessional()
+                              : isClinicMember(request.resource.data.clinicId)));
       allow update, delete: if false;
     }
 

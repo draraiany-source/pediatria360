@@ -13,7 +13,7 @@
  *   validade (`expiresAt`) e revogação (`revokedAt`). Concessão antiga, sem
  *   escopo ou sem validade, não vale.
  * - Só o responsável titular grava a concessão pelo app; a Function
- *   grantChildSummaryAccess grava a partir de consulta pedida pela família.
+ *   Function acceptClinicIntake grava quando o titular aceita o convite da clínica.
  * - Registros clínicos exigem `chartWrite` ativo para a criança.
  * - Ids de criança, responsável, profissional e clínica de uma consulta não
  *   mudam pelo app.

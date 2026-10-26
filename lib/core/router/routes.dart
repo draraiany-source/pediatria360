@@ -137,6 +137,8 @@ class Routes {
   static const String clinicName = 'clinic';
   static const String clinicReceptionPath = '/consultorio/recepcao';
   static const String clinicReceptionName = 'clinic-reception';
+  static const String clinicIntakesPath = '/consultorio/solicitacoes';
+  static const String clinicIntakesName = 'clinic-intakes';
   static const String clinicPendingPath = '/consultorio/pendencias';
   static const String clinicPendingName = 'clinic-pending';
   static const String clinicCrmPath = '/consultorio/crm';
@@ -311,6 +313,12 @@ class Routes {
   static const String clinicOrgName = 'clinic-org';
   static const String clinicOrgCreatePath = '/clinica/nova';
   static const String clinicOrgCreateName = 'clinic-org-create';
+  static const String clinicTeamPath = '/clinica/equipe';
+  static const String clinicTeamName = 'clinic-team';
+
+  // Convite da clínica (responsável).
+  static const String clinicInvitePath = '/convite-clinica';
+  static const String clinicInviteName = 'clinic-invite';
 
   // Conta
   static const String settingsPath = '/ajustes';

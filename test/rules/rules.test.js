@@ -254,7 +254,7 @@ function anon() {
 }
 
 // Concessão válida da Ana a um profissional (escopo e validade), no formato
-// que o app do responsável e a Function grantChildSummaryAccess gravam.
+// que o app do responsável e a Function acceptClinicIntake (convite aceito) gravam.
 function concessaoValida(scopes = ["summary", "chartWrite"]) {
   return {
     scopes,
@@ -1009,7 +1009,7 @@ describe("lab_results — isolamento, incluindo o bug de precedência corrigido"
 // children/{childId} — concessão de acesso ao resumo de segurança
 // ===========================================================================
 //
-// `grantChildSummaryAccess` (Cloud Function, roda com Admin SDK) escreve a
+// `acceptClinicIntake` (Cloud Function, roda com Admin SDK) escreve a
 // concessão — o cliente nunca escreve isto diretamente para outro uid que
 // não o próprio. Os testes abaixo confirmam a regra que protege essa
 // concessão, não a Function em si (que exigiria emulador de Functions,
@@ -1053,7 +1053,7 @@ describe("children — concessão de acesso do profissional", () => {
 
   test("profissional NÃO escreve a própria concessão (só o responsável ou Function)", async () => {
     // Auto-concessão pelo cliente foi removida — risco LGPD. O vínculo
-    // passa por grantChildSummaryAccess (Admin SDK) ou pelo dono.
+    // passa pelo dono (app) ou pelo convite aceito (acceptClinicIntake).
     await assertFails(
       setDoc(
         doc(

@@ -402,8 +402,8 @@ export const bookAppointment = onCall({ region: REGION }, async (request) => {
 
   let childName: string | null = null;
   if (childId) {
-    // A consulta pedida aqui é a prova de pedido da família que
-    // grantChildSummaryAccess aceita: só para criança do próprio titular.
+    // Só para criança do próprio titular. Pedir consulta não autoriza
+    // acesso clínico: isso é escolha separada do responsável.
     if ((await childOwnerUid(childId)) !== uid) {
       throw new HttpsError("permission-denied", "Criança não encontrada.");
     }
@@ -440,9 +440,23 @@ export const bookAppointment = onCall({ region: REGION }, async (request) => {
       );
     }
 
+    // Horário reservado por solicitação da clínica aguardando o responsável.
+    const reserved = await tx.get(
+      db()
+        .collection("clinic_intakes")
+        .where("professionalId", "==", professionalId)
+        .where("requestedStartsAt", "==", timestamp)
+        .where("status", "==", "pendingGuardian")
+        .limit(1)
+    );
+    if (!reserved.empty) {
+      throw new HttpsError("already-exists", "Este horário não está disponível. Escolha outro.");
+    }
+
     tx.set(appointmentRef, {
       patientId: uid,
       requestedBy: uid,
+      origin: "familyBooking",
       professionalId,
       professionalName: professional.name ?? "",
       specialty: professional.specialty ?? null,

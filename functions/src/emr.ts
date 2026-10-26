@@ -27,13 +27,10 @@ import * as logger from "firebase-functions/logger";
 import { createHash, randomBytes } from "crypto";
 import {
   childOwnerUid,
-  familyAppointmentGrant,
   grantAllows,
   grantRef,
-  isFamilyRequestFor,
   requireChildAccess,
-  revocationBlocksRequest,
-  ACTIVE_APPOINTMENT_STATUSES,
+  grantState,
 } from "./childAccess";
 
 const REGION = "southamerica-east1";
@@ -501,38 +498,21 @@ export const verifyDocument = onCall({ region: REGION }, async (request) => {
 });
 
 /**
- * Registra o vínculo do profissional com a criança a partir de consulta
- * PEDIDA PELA FAMÍLIA.
+ * Situação da autorização do responsável para este profissional nesta
+ * criança. Só consulta: não concede nada.
  *
- * ## Por que isto precisa ser Function, não escrita direta do cliente
- *
- * O profissional não grava a própria concessão (as regras recusam), e não
- * sabe o uid do responsável. Rodando com Admin SDK, esta Function acha o
- * dono pelo child_registry e grava a concessão no lugar dele, mas só com
- * prova do pedido da família.
- *
- * ## O que conta como pedido da família
- *
- * Consulta deste profissional para esta criança, com `patientId` e
- * `requestedBy` iguais ao titular do child_registry, em status ativo. As
- * regras só deixam o próprio titular gravar `requestedBy` (e
- * `bookAppointment` grava o uid de quem pediu); a equipe não grava, e
- * nenhum perfil troca esses ids depois. Ser verificado, ser dono de
- * clínica, conhecer os ids ou ter criado uma consulta não bastam.
- *
- * ## O que é concedido
- *
- * Escopos `summary` (cadastro: nome, idade, alergias) e `chartWrite`
- * (registros clínicos desta criança), por FAMILY_GRANT_DAYS dias. Não dá
- * acesso a `growth_records`, `vaccine_doses` nem a outra subcoleção da
- * família. Concessão ativa do responsável não é sobrescrita, e concessão
- * revogada só volta com pedido feito depois da revogação.
+ * Até a etapa 1, esta era `grantChildSummaryAccess`, que concedia acesso a
+ * partir de consulta pedida pela família. Existir consulta não é
+ * autorização: a concessão agora nasce só de escolha explícita do titular
+ * (tela de autorizações ou aceite do convite da clínica). Versões antigas
+ * do app que chamarem o nome antigo recebem "not-found" e seguem sem
+ * concessão.
  */
-export const grantChildSummaryAccess = onCall(
+export const checkChildAccess = onCall(
   { region: REGION },
   async (request) => {
     const actor = await requireVerifiedProfessional(request.auth?.uid);
-    const { childId } = request.data as { childId?: string };
+    const { childId, clinicId } = request.data as { childId?: string; clinicId?: string | null };
 
     if (!childId || typeof childId !== "string") {
       throw new HttpsError("invalid-argument", "childId não informado.");
@@ -540,95 +520,16 @@ export const grantChildSummaryAccess = onCall(
 
     const ownerId = await childOwnerUid(childId);
     if (!ownerId) {
-      throw new HttpsError("not-found", "Criança não encontrada.");
+      return { summary: false, chartWrite: false, state: "none" };
     }
 
-    const ref = grantRef(ownerId, childId, actor.uid);
-    const existing = (await ref.get()).data();
+    const grant = (await grantRef(ownerId, childId, actor.uid).get()).data();
     const now = Date.now();
-
-    if (grantAllows(existing, "chartWrite", now)) {
-      return { ok: true, alreadyGranted: true };
-    }
-    if (existing?.source === "guardian" && grantAllows(existing, "summary", now)) {
-      // O responsável escolheu o escopo; o pedido de consulta não amplia.
-      return { ok: true, alreadyGranted: true };
-    }
-
-    const candidates = await db()
-      .collection("appointments")
-      .where("professionalId", "==", actor.uid)
-      .where("childId", "==", childId)
-      .where("status", "in", ACTIVE_APPOINTMENT_STATUSES)
-      .limit(20)
-      .get();
-
-    const familyRequest = candidates.docs.find((d) =>
-      isFamilyRequestFor(d.data(), {
-        ownerUid: ownerId,
-        childId,
-        professionalUid: actor.uid,
-      })
-    );
-
-    if (!familyRequest) {
-      logger.warn("Vínculo com criança recusado: sem pedido da família", {
-        professional: actor.uid,
-        childId,
-      });
-      throw new HttpsError(
-        "permission-denied",
-        "É necessário um pedido de consulta feito pelo responsável por esta criança."
-      );
-    }
-
-    const requestedAt = familyRequest.get("createdAt") as Timestamp | undefined;
-    if (revocationBlocksRequest(existing, requestedAt?.toMillis() ?? null)) {
-      throw new HttpsError(
-        "permission-denied",
-        "O responsável revogou este acesso. É preciso um novo pedido ou nova autorização."
-      );
-    }
-
-    const childRef = db()
-      .collection("users")
-      .doc(ownerId)
-      .collection("children")
-      .doc(childId);
-    if (!(await childRef.get()).exists) {
-      throw new HttpsError("not-found", "Criança não encontrada.");
-    }
-
-    const grant = familyAppointmentGrant({
-      ownerUid: ownerId,
-      appointmentId: familyRequest.id,
-      nowMs: now,
-    });
-    const { expiresAtMs, ...fields } = grant;
-
-    await ref.set({
-      ...fields,
-      grantedAt: FieldValue.serverTimestamp(),
-      expiresAt: Timestamp.fromMillis(expiresAtMs),
-    });
-
-    await db().collection("audit_log").add({
-      action: "child_access_granted",
-      childId,
-      professionalUid: actor.uid,
-      appointmentId: familyRequest.id,
-      scopes: fields.scopes,
-      source: fields.source,
-      expiresAt: Timestamp.fromMillis(expiresAtMs),
-      createdAt: FieldValue.serverTimestamp(),
-    });
-
-    logger.info("Vínculo com criança concedido por pedido da família", {
-      professional: actor.uid,
-      childId,
-      appointmentId: familyRequest.id,
-    });
-
-    return { ok: true, alreadyGranted: false };
+    const clinic = typeof clinicId === "string" && clinicId ? clinicId : null;
+    return {
+      summary: grantAllows(grant, "summary", now, clinic),
+      chartWrite: grantAllows(grant, "chartWrite", now, clinic),
+      state: grantState(grant, now),
+    };
   }
 );

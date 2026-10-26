@@ -16,9 +16,7 @@ import '../../../../core/theme/app_icons.dart';
 import '../../../../core/widgets/app_icon.dart';
 import '../../../../core/theme/app_tokens.dart';
 import '../../../../core/utils/clinical_access.dart';
-import '../../../../core/utils/result.dart';
 import '../../../../core/utils/validators.dart';
-import '../../../../core/widgets/app_widgets.dart';
 import '../../../../core/widgets/brand_ui.dart';
 import '../../../../core/widgets/clinical_ui.dart';
 import '../../../../core/widgets/skeleton.dart';
@@ -26,7 +24,7 @@ import '../../../../core/widgets/state_views.dart';
 import '../../../../shared/domain/entities/clinical_record.dart';
 import '../../../../shared/domain/entities/encounter.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
-import '../../../clinic_org/presentation/providers/clinic_org_providers.dart';
+import '../../../clinic_intake/presentation/clinic_intakes_screen.dart';
 import '../../../notifications/presentation/notification_center_screen.dart';
 import 'patient_timeline_screen.dart';
 
@@ -551,23 +549,11 @@ class _ProfessionalPatientsScreenState
     );
   }
 
-  /// Cadastro rápido de paciente, para quem chega sem conta no app.
-  ///
-  /// O prontuário é indexado pelo uid do responsável. Quando a família ainda
-  /// não tem conta, criamos um identificador provisório — o vínculo é feito
-  /// depois, quando o responsável se cadastrar com o mesmo e-mail.
+  // Paciente novo vira solicitacao provisoria (sem id de crianca nem
+  // prontuario). O atendimento so comeca depois que o responsavel aceita o
+  // convite e autoriza o acesso.
   Future<void> _newPatientSheet(BuildContext context) =>
-      showModalBottomSheet<void>(
-        context: context,
-        isScrollControlled: true,
-        useSafeArea: true,
-        builder: (BuildContext context) => Padding(
-          padding: EdgeInsets.only(
-            bottom: MediaQuery.viewInsetsOf(context).bottom,
-          ),
-          child: const _NewPatientSheet(),
-        ),
-      );
+      Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => const NewIntakeScreen()));
 }
 
 class _PatientCard extends ConsumerWidget {
@@ -663,164 +649,6 @@ class _PatientCard extends ConsumerWidget {
             color: AppColors.inkMuted.withValues(alpha: 0.85),
           ),
         ],
-      ),
-    );
-  }
-}
-
-/// Cadastro rápido no consultório.
-class _NewPatientSheet extends ConsumerStatefulWidget {
-  const _NewPatientSheet();
-
-  @override
-  ConsumerState<_NewPatientSheet> createState() => _NewPatientSheetState();
-}
-
-class _NewPatientSheetState extends ConsumerState<_NewPatientSheet> {
-  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
-  final TextEditingController _name = TextEditingController();
-  final TextEditingController _guardianEmail = TextEditingController();
-
-  DateTime? _birthDate;
-  bool _saving = false;
-
-  @override
-  void dispose() {
-    _name.dispose();
-    _guardianEmail.dispose();
-    super.dispose();
-  }
-
-  Future<void> _pickBirthDate() async {
-    final DateTime now = DateTime.now();
-    final DateTime? picked = await showDatePicker(
-      context: context,
-      initialDate: _birthDate ?? now,
-      firstDate: DateTime(now.year - 25),
-      lastDate: now,
-      helpText: 'Data de nascimento',
-      locale: const Locale('pt', 'BR'),
-    );
-    if (picked != null) setState(() => _birthDate = picked);
-  }
-
-  Future<void> _submit() async {
-    if (!_formKey.currentState!.validate()) return;
-
-    if (_birthDate == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Informe a data de nascimento.')),
-      );
-      return;
-    }
-
-    setState(() => _saving = true);
-
-    final String? uid = ref.read(currentUserProvider)?.uid;
-    if (uid == null) return;
-
-    // Identificador provisório do paciente. Quando o responsável criar conta
-    // com este e-mail, uma Function faz o vínculo e migra o prontuário.
-    final String provisionalId =
-        'pending_${_guardianEmail.text.trim().toLowerCase().hashCode.abs()}';
-
-    final Result<Encounter> created =
-        await ref.read(encounterRepositoryProvider).create(
-              patientId: provisionalId,
-              professionalId: uid,
-              professionalName: ref.read(currentUserProvider)?.name ?? '',
-              professionalCrm: ref.read(currentUserProvider)?.crm,
-              patientName: _name.text.trim(),
-              patientBirthDate: _birthDate,
-              type: EncounterType.routine,
-              clinicId: ref.read(activeClinicIdProvider).valueOrNull,
-            );
-
-    if (!mounted) return;
-    setState(() => _saving = false);
-
-    created.fold(
-      (Encounter e) {
-        Navigator.of(context).pop();
-        Navigator.of(context).push(
-          MaterialPageRoute<void>(
-            builder: (_) => PatientTimelineScreen(
-              patientId: provisionalId,
-              patientName: _name.text.trim(),
-            ),
-          ),
-        );
-      },
-      (Failure failure) => ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(failure.message)),
-      ),
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final ThemeData theme = Theme.of(context);
-
-    return Padding(
-      padding: const EdgeInsets.all(AppSpacing.xl),
-      child: Form(
-        key: _formKey,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: <Widget>[
-            Text('Novo paciente', style: theme.textTheme.headlineSmall),
-            const SizedBox(height: AppSpacing.lg),
-            AppTextField(
-              label: 'Nome da criança',
-              controller: _name,
-              textCapitalization: TextCapitalization.words,
-              validator: Validators.name,
-            ),
-            const SizedBox(height: AppSpacing.lg),
-            InkWell(
-              onTap: _pickBirthDate,
-              borderRadius: AppRadius.mdAll,
-              child: InputDecorator(
-                decoration: InputDecoration(
-                  labelText: 'Data de nascimento',
-                  prefixIcon: const Icon(Icons.cake_outlined, size: 20),
-                  helperText: _birthDate == null
-                      ? null
-                      : Formatters.pediatricAge(_birthDate!),
-                ),
-                child: Text(
-                  _birthDate == null
-                      ? 'Selecionar'
-                      : Formatters.date(_birthDate!),
-                  style: theme.textTheme.bodyLarge,
-                ),
-              ),
-            ),
-            const SizedBox(height: AppSpacing.lg),
-            AppTextField(
-              label: 'E-mail do responsável',
-              controller: _guardianEmail,
-              keyboardType: TextInputType.emailAddress,
-              helper: 'Usado para vincular o prontuário quando a família '
-                  'criar conta no aplicativo.',
-              validator: Validators.email,
-            ),
-            const SizedBox(height: AppSpacing.xl),
-            AppButton(
-              label: 'Cadastrar e iniciar atendimento',
-              isLoading: _saving,
-              onPressed: _submit,
-            ),
-            const SizedBox(height: AppSpacing.md),
-            Text(
-              'O prontuário fica vinculado à conta do responsável. Enquanto '
-              'ela não existir, o registro segue acessível a você.',
-              style: theme.textTheme.bodySmall,
-              textAlign: TextAlign.center,
-            ),
-          ],
-        ),
       ),
     );
   }

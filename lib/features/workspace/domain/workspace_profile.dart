@@ -51,7 +51,31 @@ class WorkspaceAccess {
       return <WorkspaceProfile>{WorkspaceProfile.admin};
     }
     if (user.role == UserRole.parent) {
-      return <WorkspaceProfile>{WorkspaceProfile.patient};
+      // Recepção e financeiro não são profissionais de saúde: entram pela
+      // conta comum, com o papel dado pela gestão da clínica. Papel clínico
+      // em conta comum não abre nada (exige conta de profissional).
+      final Set<WorkspaceProfile> granted = <WorkspaceProfile>{
+        WorkspaceProfile.patient,
+      };
+      for (final ClinicMembership m in memberships) {
+        if (!m.active) continue;
+        switch (m.role) {
+          case ClinicRole.receptionist:
+          case ClinicRole.technician:
+            granted.add(WorkspaceProfile.receptionist);
+          case ClinicRole.finance:
+            granted.add(WorkspaceProfile.finance);
+          case ClinicRole.clinicAdmin:
+            granted.add(WorkspaceProfile.receptionist);
+            granted.add(WorkspaceProfile.finance);
+          case ClinicRole.physician:
+          case ClinicRole.healthProfessional:
+          case ClinicRole.nursing:
+          case ClinicRole.patient:
+            break;
+        }
+      }
+      return granted;
     }
     if (user.role != UserRole.professional) {
       return <WorkspaceProfile>{};

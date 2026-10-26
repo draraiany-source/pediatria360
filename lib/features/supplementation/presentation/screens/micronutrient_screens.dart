@@ -5,7 +5,6 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/router/routes.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_tokens.dart';
-import '../../../../core/utils/result.dart';
 import '../../../../core/widgets/brand_ui.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../domain/supplement_catalog.dart';
@@ -214,28 +213,16 @@ class _MicronutrientDetailScreenState
               OutlinedButton.icon(
                 onPressed: uid == null
                     ? null
-                    : () async {
-                        final String text = _note.text.trim().isEmpty
-                            ? 'Anotacao sobre ${m.name}'
-                            : _note.text.trim();
-                        final Result<String> res =
-                            await ref.read(supplementRepositoryProvider).saveClinicalNote(
-                                  childId: 'pending_patient',
-                                  professionalId: uid,
-                                  title: 'Nota — ${m.name}',
-                                  body: text,
-                                );
-                        if (!context.mounted) return;
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
+                    // A nota so pode ser gravada no prontuario de uma
+                    // crianca real com autorizacao do responsavel; nunca em
+                    // um id provisorio.
+                    : () => ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
                             content: Text(
-                              res.isSuccess
-                                  ? 'Nota preparada para prontuario (vincule o paciente).'
-                                  : 'Falha ao salvar nota.',
+                              'Abra o prontuario do paciente (com autorizacao do responsavel) para registrar esta nota.',
                             ),
                           ),
-                        );
-                      },
+                        ),
                 icon: const Icon(Icons.note_add_outlined),
                 label: const Text('Adicionar ao prontuario'),
               ),

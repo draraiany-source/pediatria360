@@ -44,7 +44,10 @@ import '../../features/clinic/presentation/screens/voice_final_review_screen.dar
 import '../../features/clinic/presentation/screens/voice_home_screen.dart';
 import '../../features/clinic/presentation/screens/voice_live_screen.dart';
 import '../../features/clinic/presentation/screens/voice_review_screen.dart';
+import '../../features/clinic_intake/presentation/accept_invite_screen.dart';
+import '../../features/clinic_intake/presentation/clinic_intakes_screen.dart';
 import '../../features/clinic_org/presentation/screens/clinic_org_screens.dart';
+import '../../features/clinic_org/presentation/screens/clinic_team_screen.dart';
 import '../../features/supplementation/presentation/screens/calculator_prescription_screens.dart';
 import '../../features/supplementation/presentation/screens/lab_screens.dart';
 import '../../features/supplementation/presentation/screens/micronutrient_screens.dart';
@@ -347,6 +350,21 @@ final Provider<GoRouter> routerProvider = Provider<GoRouter>((Ref ref) {
         builder: (BuildContext context, GoRouterState state) =>
             const CreateClinicScreen(),
       ),
+      GoRoute(
+        path: Routes.clinicTeamPath,
+        name: Routes.clinicTeamName,
+        builder: (BuildContext context, GoRouterState state) =>
+            const ClinicTeamScreen(),
+      ),
+
+      // Convite da clínica: o responsável confirma a solicitação e escolhe
+      // o acesso.
+      GoRoute(
+        path: Routes.clinicInvitePath,
+        name: Routes.clinicInviteName,
+        builder: (BuildContext context, GoRouterState state) =>
+            const AcceptInviteScreen(),
+      ),
 
       // Suplementacao Pediatrica (profissional - fora do shell).
       GoRoute(
@@ -489,6 +507,12 @@ final Provider<GoRouter> routerProvider = Provider<GoRouter>((Ref ref) {
         name: Routes.clinicReceptionName,
         builder: (BuildContext context, GoRouterState state) =>
             const ClinicReceptionScreen(),
+      ),
+      GoRoute(
+        path: Routes.clinicIntakesPath,
+        name: Routes.clinicIntakesName,
+        builder: (BuildContext context, GoRouterState state) =>
+            const ClinicIntakesScreen(),
       ),
       GoRoute(
         path: Routes.clinicPendingPath,
