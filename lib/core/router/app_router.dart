@@ -36,6 +36,11 @@ import '../../features/security/presentation/screens/permission_matrix_screen.da
 import '../../features/clinic/presentation/screens/clinic_reception_screen.dart';
 import '../../features/pending/domain/pending_item.dart';
 import '../../features/pending/presentation/screens/crm_screen.dart';
+import '../../features/management/presentation/ai_hub_screen.dart';
+import '../../features/management/presentation/anamnesis_screens.dart';
+import '../../features/management/presentation/communication_screens.dart';
+import '../../features/management/presentation/management_hub_screen.dart';
+import '../../features/management/presentation/marketing_crm_settings_screens.dart';
 import '../../features/pending/presentation/screens/pending_center_screen.dart';
 import '../../features/clinic/presentation/screens/clinic_triage_screen.dart';
 import '../../features/clinic/presentation/screens/patient_360_screen.dart';
@@ -539,6 +544,62 @@ final Provider<GoRouter> routerProvider = Provider<GoRouter>((Ref ref) {
         name: Routes.clinicCrmName,
         builder: (BuildContext context, GoRouterState state) =>
             const ClinicCrmScreen(),
+      ),
+      GoRoute(
+        path: Routes.managementPath,
+        name: Routes.managementName,
+        builder: (BuildContext context, GoRouterState state) =>
+            const ManagementHubScreen(),
+      ),
+      GoRoute(
+        path: Routes.managementCrmPath,
+        name: Routes.managementCrmName,
+        builder: (BuildContext context, GoRouterState state) =>
+            const ManagementCrmScreen(),
+      ),
+      GoRoute(
+        path: Routes.managementAnamnesisPath,
+        name: Routes.managementAnamnesisName,
+        builder: (BuildContext context, GoRouterState state) =>
+            const AnamnesisReviewScreen(),
+      ),
+      GoRoute(
+        path: Routes.managementCommunicationPath,
+        name: Routes.managementCommunicationName,
+        builder: (BuildContext context, GoRouterState state) =>
+            const CommunicationScreen(),
+      ),
+      GoRoute(
+        path: Routes.managementAutomationsPath,
+        name: Routes.managementAutomationsName,
+        builder: (BuildContext context, GoRouterState state) =>
+            const AutomationsScreen(),
+      ),
+      GoRoute(
+        path: Routes.managementMarketingPath,
+        name: Routes.managementMarketingName,
+        builder: (BuildContext context, GoRouterState state) =>
+            const MarketingScreen(),
+      ),
+      GoRoute(
+        path: Routes.managementAiPath,
+        name: Routes.managementAiName,
+        builder: (BuildContext context, GoRouterState state) =>
+            const AiHubScreen(),
+      ),
+      GoRoute(
+        path: Routes.managementSettingsPath,
+        name: Routes.managementSettingsName,
+        builder: (BuildContext context, GoRouterState state) =>
+            const ManagementSettingsScreen(),
+      ),
+      GoRoute(
+        path: Routes.familyAnamnesisPath,
+        name: Routes.familyAnamnesisName,
+        builder: (BuildContext context, GoRouterState state) =>
+            FamilyAnamnesisScreen(
+          appointmentId: state.pathParameters['appointmentId'] ?? '',
+        ),
       ),
       GoRoute(
         path: Routes.financePath,

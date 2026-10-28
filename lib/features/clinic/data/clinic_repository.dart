@@ -17,8 +17,6 @@ class ClinicRepository {
         _functions = functions;
 
   final FirebaseFirestore _firestore;
-  // Reservado para callables futuros (check-in avancado, faturamento).
-  // ignore: unused_field
   final FirebaseFunctions _functions;
 
   CollectionReference<Map<String, dynamic>> get _appointments =>
@@ -60,17 +58,35 @@ class ClinicRepository {
   }
 
   /// Atualiza o fluxo operacional e, quando aplicavel, o status legado.
+  ///
+  /// Cancelamento e falta passam pela Function `setAppointmentStatus`, que
+  /// libera as travas de horário, cancela lembretes, registra o motivo e
+  /// oferece o horário à lista de espera; aqui só fica o fluxo da recepção.
   Future<Result<void>> updateWorkflowStatus(
     String appointmentId,
-    ClinicWorkflowStatus status,
-  ) =>
+    ClinicWorkflowStatus status, {
+    String? reason,
+  }) =>
       guard(() async {
         final Map<String, dynamic> patch = <String, dynamic>{
           'workflowStatus': status.name,
           'workflowUpdatedAt': FieldValue.serverTimestamp(),
         };
         final String? legacy = status.toAppointmentStatusName();
-        if (legacy != null) {
+        if (legacy == 'cancelled' || legacy == 'noShow') {
+          final String fallback = status == ClinicWorkflowStatus.rescheduled
+              ? 'Remarcação pela recepção'
+              : 'Registrado pela recepção';
+          await _functions.httpsCallable('setAppointmentStatus').call(
+            <String, dynamic>{
+              'appointmentId': appointmentId,
+              'status': legacy,
+              'reason': (reason == null || reason.trim().isEmpty)
+                  ? fallback
+                  : reason.trim(),
+            },
+          );
+        } else if (legacy != null) {
           patch['status'] = legacy;
         }
         if (status == ClinicWorkflowStatus.arrived) {

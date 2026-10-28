@@ -271,11 +271,11 @@ describe("consulta existente — identificadores protegidos", () => {
     await assertFails(updateDoc(ref(REC), { [campo]: valor }));
   });
 
-  test("profissional da consulta confirma e remarca", async () => {
+  test("profissional da consulta confirma; remarcar direto pelo app é negado", async () => {
     await assertSucceeds(
       updateDoc(ref(DRA), { status: "confirmed", confirmedAt: serverTimestamp(), confirmedBy: DRA })
     );
-    await assertSucceeds(
+    await assertFails(
       updateDoc(ref(DRA), {
         startsAt: Timestamp.fromMillis(Date.now() + 2 * DIA), durationMinutes: 40,
         rescheduledAt: serverTimestamp(), rescheduledBy: DRA,
@@ -317,9 +317,9 @@ describe("criação de consulta pela equipe", () => {
     await assertFails(setDoc(doc(as(REC), "appointments", "sem-vinculo"), nova()));
   });
 
-  test("recepção marca para criança com vínculo autorizado do profissional", async () => {
+  test("recepção NÃO grava direto nem com vínculo autorizado (só pela Function)", async () => {
     await conceder(DRA, ["summary"]);
-    await assertSucceeds(setDoc(doc(as(REC), "appointments", "com-vinculo"), nova()));
+    await assertFails(setDoc(doc(as(REC), "appointments", "com-vinculo"), nova()));
   });
 
   test("vínculo restrito a outra clínica não vale nesta", async () => {

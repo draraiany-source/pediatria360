@@ -14,7 +14,10 @@ import '../../domain/finance_models.dart';
 
 final Provider<FinanceRepository> financeRepositoryProvider =
     Provider<FinanceRepository>(
-  (Ref ref) => FinanceRepository(firestore: ref.watch(firestoreProvider)),
+  (Ref ref) => FinanceRepository(
+    firestore: ref.watch(firestoreProvider),
+    functions: ref.watch(firebaseFunctionsProvider),
+  ),
 );
 
 final StateProvider<FinancePeriodFilter> financePeriodFilterProvider =

@@ -111,6 +111,91 @@ export {
   unregisterDevice,
 } from "./notifications";
 
+// Agenda inteligente: horários reais, reserva com travas, remarcação, status,
+// lista de espera e configuração. Ver o cabeçalho de scheduling.ts.
+export {
+  getScheduleSlots,
+  scheduleAppointment,
+  rescheduleAppointment,
+  setAppointmentStatus,
+  joinWaitlist,
+  respondWaitlistOffer,
+  expireWaitlistOffers,
+  saveSchedulingSettings,
+  saveProfessionalSchedule,
+} from "./scheduling";
+
+// Central de automações, fila de mensagens e WhatsApp (sem envio simulado).
+export {
+  dispatchMessageQueue,
+  processMessageQueueNow,
+  saveAutomationRule,
+  setClinicAutomationsPaused,
+  saveWhatsAppSettings,
+  getWhatsAppStatus,
+  cancelQueuedMessage,
+  saveCommunicationPreferences,
+  whatsappWebhook,
+  updateInboxItem,
+} from "./automations";
+
+// Financeiro integrado: cobrança da consulta, operações idempotentes, webhook.
+export {
+  createCharge,
+  recordPayment,
+  applyDiscount,
+  refundPayment,
+  cancelCharge,
+  paymentWebhook,
+  getFinanceSummary,
+} from "./finance";
+
+// Anamnese e pré-consulta versionadas.
+export {
+  listAnamnesisTemplates,
+  saveAnamnesisTemplate,
+  startAnamnesis,
+  saveAnamnesisDraft,
+  submitAnamnesis,
+  amendAnamnesis,
+  getAnamnesisForVisit,
+  reviewAnamnesis,
+} from "./anamnesis";
+
+// CRM administrativo (sem conteúdo clínico).
+export {
+  onAppointmentWrittenCrm,
+  saveCrmCriteria,
+  getCrmContact,
+  addCrmNote,
+  saveCrmTask,
+  findCrmDuplicates,
+  requestCrmMerge,
+  reviewCrmMerge,
+  getCrmIndicators,
+} from "./crm";
+
+// Central de IA da gestão e propostas do assistente (com confirmação).
+export {
+  getManagementInsights,
+  askManagementAssistant,
+  prepareAssistantProposal,
+  confirmAssistantProposal,
+} from "./insights";
+
+// Marketing com consentimento, supressão e aprovação.
+export {
+  saveCampaignDraft,
+  previewCampaign,
+  approveCampaign,
+  cancelCampaign,
+  getCampaignMetrics,
+  unsubscribeMarketing,
+} from "./marketing";
+
+// Limites de uso e custo estimado.
+export { saveUsageLimits, getUsageDashboard } from "./usage";
+
 const REGION = "southamerica-east1";
 const ANTHROPIC_API_KEY = defineSecret("ANTHROPIC_API_KEY");
 

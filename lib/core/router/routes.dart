@@ -320,6 +320,30 @@ class Routes {
   static const String clinicInvitePath = '/convite-clinica';
   static const String clinicInviteName = 'clinic-invite';
 
+  // Gestao integrada (Etapa 3)
+  static const String managementPath = '/gestao';
+  static const String managementName = 'management';
+  static const String managementCrmPath = '/gestao/crm';
+  static const String managementCrmName = 'management-crm';
+  static const String managementAnamnesisPath = '/gestao/anamnese';
+  static const String managementAnamnesisName = 'management-anamnesis';
+  static const String managementCommunicationPath = '/gestao/comunicacao';
+  static const String managementCommunicationName = 'management-communication';
+  static const String managementAutomationsPath = '/gestao/automacoes';
+  static const String managementAutomationsName = 'management-automations';
+  static const String managementMarketingPath = '/gestao/marketing';
+  static const String managementMarketingName = 'management-marketing';
+  static const String managementAiPath = '/gestao/ia';
+  static const String managementAiName = 'management-ai';
+  static const String managementSettingsPath = '/gestao/configuracoes';
+  static const String managementSettingsName = 'management-settings';
+
+  // Pre-consulta da familia (anamnese), por consulta.
+  static const String familyAnamnesisPath = '/pre-consulta/:appointmentId';
+  static const String familyAnamnesisName = 'family-anamnesis';
+  static String familyAnamnesis(String appointmentId) =>
+      '/pre-consulta/$appointmentId';
+
   // Conta
   static const String settingsPath = '/ajustes';
   static const String settingsName = 'settings';

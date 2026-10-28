@@ -1,3 +1,4 @@
+import '../../features/management/domain/management_modules.dart';
 import '../../features/security/domain/permission_matrix.dart';
 import '../../features/workspace/domain/workspace_profile.dart';
 import '../../shared/domain/entities/app_user.dart';
@@ -69,6 +70,25 @@ String? resolveRouteRedirect({
   // 6. Area administrativa CMS exige papel de admin de plataforma.
   if (_under(location, Routes.adminPath) && !user.role.isAdmin) {
     return Routes.homePath;
+  }
+
+  // 6b. Gestao integrada: cada modulo pelo papel no vinculo ativo com a
+  // clinica (gestao nao abre anamnese/atendimento so por ser gestao).
+  if (_under(location, Routes.managementPath)) {
+    final ClinicRole? role = clinicMembership != null && clinicMembership.active
+        ? clinicMembership.role
+        : null;
+    return managementRouteAllowed(location, role) ? null : Routes.homePath;
+  }
+
+  // 6b. Gestao integrada: cada modulo pelo papel ativo na clinica. Ser
+  // gestao nao abre area clinica; as Functions conferem o papel de novo.
+  if (_under(location, Routes.managementPath)) {
+    final ClinicRole? role =
+        clinicMembership != null && clinicMembership.active
+            ? clinicMembership.role
+            : null;
+    return managementRouteAllowed(location, role) ? null : Routes.homePath;
   }
 
   // 7. Areas de equipe (clinica / financeiro / BI).

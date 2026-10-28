@@ -289,6 +289,9 @@ export const checkAppointmentReminders = onSchedule(
     for (const doc of soon.docs) {
       const a = doc.data();
       if (a.reminderSentOneHour === true) continue;
+      // Consultas da agenda nova têm lembretes na fila (automations.ts), com
+      // versão da agenda e preferências; aqui ficam só as antigas.
+      if (a.remindersManaged === true) continue;
 
       const time = (a.startsAt as Timestamp)
         .toDate()

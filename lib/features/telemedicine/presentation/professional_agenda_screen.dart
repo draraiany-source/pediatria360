@@ -98,27 +98,46 @@ class _ProfessionalAgendaScreenState
   }
 
   Future<void> _cancel(Appointment a) async {
-    final bool? confirmed = await showDialog<bool>(
+    final TextEditingController reasonCtrl = TextEditingController();
+    final String? reason = await showDialog<String>(
       context: context,
       builder: (BuildContext context) => AlertDialog(
         title: const Text('Cancelar esta consulta?'),
-        content: Text(
-          '${a.childName ?? 'Paciente'}, '
-          '${_timeLabel(a.startsAt)}. Isto avisa o responsável.',
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            Text(
+              '${a.childName ?? 'Paciente'}, '
+              '${_timeLabel(a.startsAt)}. Isto avisa o responsável.',
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: reasonCtrl,
+              maxLength: 300,
+              decoration: const InputDecoration(
+                labelText: 'Motivo (administrativo, sem dados clínicos)',
+              ),
+            ),
+          ],
         ),
         actions: <Widget>[
           TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
+            onPressed: () => Navigator.of(context).pop(),
             child: const Text('Voltar'),
           ),
           FilledButton(
-            onPressed: () => Navigator.of(context).pop(true),
+            onPressed: () {
+              final String r = reasonCtrl.text.trim();
+              if (r.isNotEmpty) Navigator.of(context).pop(r);
+            },
             child: const Text('Cancelar consulta'),
           ),
         ],
       ),
     );
-    if (!(confirmed ?? false) || !mounted) return;
+    reasonCtrl.dispose();
+    if (reason == null || !mounted) return;
 
     setState(() => _busy = true);
     final String? uid = ref.read(currentUserProvider)?.uid;
@@ -129,6 +148,7 @@ class _ProfessionalAgendaScreenState
         : await ref.read(telemedicineRepositoryProvider).cancelWithAudit(
               appointmentId: a.id,
               actorUid: uid,
+              reason: reason,
             );
     if (!mounted) return;
     setState(() => _busy = false);
@@ -462,6 +482,7 @@ class _AppointmentCard extends StatelessWidget {
 
   Color _statusColor(ColorScheme scheme) => switch (appointment.status) {
         AppointmentStatus.requested => AppColors.warning,
+        AppointmentStatus.awaitingConfirmation => AppColors.warning,
         AppointmentStatus.confirmed => AppColors.success,
         AppointmentStatus.inProgress => AppColors.brand,
         AppointmentStatus.completed => scheme.onSurfaceVariant,
@@ -471,6 +492,7 @@ class _AppointmentCard extends StatelessWidget {
 
   IconData _statusIcon(AppointmentStatus status) => switch (status) {
         AppointmentStatus.requested => Icons.schedule_rounded,
+        AppointmentStatus.awaitingConfirmation => Icons.schedule_rounded,
         AppointmentStatus.confirmed => Icons.check_circle_outline_rounded,
         AppointmentStatus.inProgress => Icons.play_circle_outline_rounded,
         AppointmentStatus.completed => Icons.event_available_outlined,
@@ -480,6 +502,7 @@ class _AppointmentCard extends StatelessWidget {
 
   String _statusAsset(AppointmentStatus status) => switch (status) {
         AppointmentStatus.requested => AppIcons.followUpPending,
+        AppointmentStatus.awaitingConfirmation => AppIcons.followUpPending,
         AppointmentStatus.confirmed => AppIcons.appointmentConfirmed,
         AppointmentStatus.inProgress => AppIcons.schedule,
         AppointmentStatus.completed => AppIcons.followUp,
@@ -491,6 +514,7 @@ class _AppointmentCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final ThemeData theme = Theme.of(context);
     final bool isActive = appointment.status == AppointmentStatus.requested ||
+        appointment.status == AppointmentStatus.awaitingConfirmation ||
         appointment.status == AppointmentStatus.confirmed;
 
     return PremiumCard(

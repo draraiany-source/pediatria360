@@ -477,12 +477,64 @@ class _AppointmentCard extends ConsumerWidget {
                       style: TextButton.styleFrom(
                         foregroundColor: AppColors.brand,
                       ),
-                      onPressed: () => ref
-                          .read(telemedicineRepositoryProvider)
-                          .cancel(appointment.id),
+                      onPressed: () async {
+                        final Result<void> r = await ref
+                            .read(telemedicineRepositoryProvider)
+                            .cancel(appointment.id);
+                        if (!context.mounted) return;
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(
+                              r.fold(
+                                (_) => 'Consulta cancelada.',
+                                (Failure f) => f.message,
+                              ),
+                            ),
+                          ),
+                        );
+                      },
                       child: const Text('Cancelar'),
                     ),
                 ],
+              ),
+            if (appointment.status == AppointmentStatus.awaitingConfirmation)
+              Padding(
+                padding: const EdgeInsets.only(top: AppSpacing.sm),
+                child: FilledButton.icon(
+                  onPressed: () async {
+                    final Result<void> r = await ref
+                        .read(telemedicineRepositoryProvider)
+                        .confirm(appointment.id);
+                    if (!context.mounted) return;
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(
+                          r.fold(
+                            (_) => 'Presença confirmada.',
+                            (Failure f) => f.message,
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                  icon: const Icon(Icons.check_rounded, size: 18),
+                  label: const Text('Confirmar presença'),
+                ),
+              ),
+            // Consulta da clínica: pré-consulta com modelo por especialidade
+            // e idade, rascunho e versões (Function startAnamnesis).
+            if (appointment.childId != null &&
+                appointment.clinicId != null &&
+                appointment.status.isActive &&
+                appointment.status != AppointmentStatus.inProgress)
+              Padding(
+                padding: const EdgeInsets.only(top: AppSpacing.sm),
+                child: OutlinedButton.icon(
+                  onPressed: () =>
+                      context.push(Routes.familyAnamnesis(appointment.id)),
+                  icon: const Icon(Icons.assignment_outlined, size: 18),
+                  label: const Text('Pré-consulta (anamnese)'),
+                ),
               ),
             // Só enquanto a regra do servidor ainda aceita escrita — a
             // mesma janela (requested/confirmed) que
@@ -490,6 +542,7 @@ class _AppointmentCard extends ConsumerWidget {
             // o botão fora dessa janela levaria a um envio que a regra
             // rejeitaria, sem explicação nenhuma pra família.
             if (appointment.childId != null &&
+                appointment.clinicId == null &&
                 (appointment.status == AppointmentStatus.requested ||
                     appointment.status == AppointmentStatus.confirmed))
               Padding(

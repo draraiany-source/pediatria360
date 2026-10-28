@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 import '../../../../core/config/app_assets.dart';
 import '../../../../core/config/app_config.dart';
 import '../../../../core/config/capi_pose.dart';
+import '../../../../core/router/route_access.dart';
 import '../../../../core/router/routes.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_tokens.dart';
@@ -386,6 +387,14 @@ class _ProfessionalHome extends ConsumerWidget {
                     color: AppColors.navy,
                     onTap: () => context.go(Routes.clinicPath),
                   ),
+                  if (canOpenRoute(ref, Routes.managementPath))
+                    _QuickSquare(
+                      title: 'Gestão',
+                      subtitle: 'Módulos da clínica',
+                      icon: Icons.dashboard_customize_outlined,
+                      color: AppColors.brand,
+                      onTap: () => context.push(Routes.managementPath),
+                    ),
                   _QuickSquare(
                     title: 'Prontuario',
                     subtitle: 'Pacientes',
@@ -563,6 +572,14 @@ class _ReceptionHome extends ConsumerWidget {
                     color: AppColors.honey,
                     onTap: () => context.push(Routes.notificationsPath),
                   ),
+                  if (canOpenRoute(ref, Routes.managementPath))
+                    _QuickSquare(
+                      title: 'Gestão',
+                      subtitle: 'CRM e WhatsApp',
+                      icon: Icons.dashboard_customize_outlined,
+                      color: AppColors.navy,
+                      onTap: () => context.push(Routes.managementPath),
+                    ),
                 ],
               ),
               const SizedBox(height: AppSpacing.lg),
@@ -675,6 +692,16 @@ class _FinanceHome extends ConsumerWidget {
                 onTap: () => context.push(Routes.financePath),
               ),
               const SizedBox(height: AppSpacing.sm),
+              if (canOpenRoute(ref, Routes.managementPath)) ...<Widget>[
+                _NavTile(
+                  title: 'Gestão e Central de IA',
+                  subtitle: 'Indicadores agregados com fonte',
+                  icon: Icons.insights_outlined,
+                  color: AppColors.brand,
+                  onTap: () => context.push(Routes.managementPath),
+                ),
+                const SizedBox(height: AppSpacing.sm),
+              ],
               _NavTile(
                 title: 'Contas a receber',
                 subtitle: 'Pagamentos e status',

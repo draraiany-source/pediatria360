@@ -207,9 +207,10 @@ describe("origem da concessão", () => {
 // ===========================================================================
 
 describe("recepção (conta comum, papel receptionist)", () => {
-  test("marca consulta quando o titular já autorizou o profissional", async () => {
+  test("NÃO marca consulta direto pelo app, nem com autorização (só pela Function com travas)", async () => {
+    // O caminho autorizado é scheduleAppointment, coberto no e2e do emulador.
     await conceder(DRA, ["summary"]);
-    await assertSucceeds(setDoc(doc(as(REC), "appointments", "rec-ok"), consultaEquipe()));
+    await assertFails(setDoc(doc(as(REC), "appointments", "rec-ok"), consultaEquipe()));
   });
 
   test("NÃO marca consulta sem autorização do titular", async () => {
@@ -238,12 +239,40 @@ describe("recepção (conta comum, papel receptionist)", () => {
     await assertFails(setDoc(doc(as(REC), "appointments", "rec-b"), consultaEquipe({ clinicId: CLIN_B })));
   });
 
-  test("faz check-in e remarca a consulta da clínica", async () => {
+  test("faz check-in; remarcar direto pelo app é negado (só pela Function)", async () => {
     const ref = doc(as(REC), "appointments", "consulta-clinica");
     await assertSucceeds(updateDoc(ref, { workflowStatus: "arrived", arrivedAt: serverTimestamp() }));
-    await assertSucceeds(
+    await assertFails(
       updateDoc(ref, { startsAt: Timestamp.fromMillis(Date.now() + 2 * DIA), rescheduledBy: REC })
     );
+    await assertFails(updateDoc(ref, { durationMinutes: 90 }));
+    await assertFails(updateDoc(ref, { roomId: "sala-2" }));
+  });
+
+  test("NÃO reativa consulta cancelada direto pelo app", async () => {
+    await seed((db) =>
+      updateDoc(doc(db, "appointments", "consulta-clinica"), { status: "cancelled" })
+    );
+    const ref = doc(as(REC), "appointments", "consulta-clinica");
+    await assertFails(updateDoc(ref, { status: "confirmed" }));
+    await assertFails(updateDoc(doc(as(DRA), "appointments", "consulta-clinica"), { status: "confirmed" }));
+  });
+
+  test("família NÃO cancela consulta da clínica direto (vale o prazo da Function)", async () => {
+    await assertFails(
+      updateDoc(doc(as(ANA), "appointments", "consulta-clinica"), { status: "cancelled" })
+    );
+  });
+
+  test("família NÃO cria pedido já com horário ou travas", async () => {
+    const base = { patientId: ANA, childId: "filha", status: "requested", origin: "familyRequest" };
+    await assertSucceeds(setDoc(doc(as(ANA), "appointments", "pedido-sem-horario"), base));
+    await assertFails(setDoc(doc(as(ANA), "appointments", "pedido-com-horario"), {
+      ...base, startsAt: Timestamp.fromMillis(Date.now() + DIA),
+    }));
+    await assertFails(setDoc(doc(as(ANA), "appointments", "pedido-com-trava"), {
+      ...base, lockIds: ["prof_x_1"], scheduleVersion: 1,
+    }));
   });
 
   test("NÃO marca como pago, NÃO troca origem nem solicitação", async () => {

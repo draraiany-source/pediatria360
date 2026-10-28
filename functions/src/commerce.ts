@@ -18,8 +18,11 @@ import { onCall, HttpsError } from "firebase-functions/v2/https";
 import * as admin from "firebase-admin";
 import { FieldValue, Timestamp } from "firebase-admin/firestore";
 import * as logger from "firebase-functions/logger";
-import { hasActiveBookingConflict, isPastAppointmentTime } from "./booking";
+import { isPastAppointmentTime } from "./booking";
 import { childOwnerUid } from "./childAccess";
+import { clinicRoleOf } from "./clinicFlow";
+import { CARE_ROLES } from "./intake";
+import { loadSchedulingConfig, reserveAppointment } from "./scheduling";
 
 const REGION = "southamerica-east1";
 const db = () => admin.firestore();
@@ -416,63 +419,38 @@ export const bookAppointment = onCall({ region: REGION }, async (request) => {
     childName = (childDoc.data()?.name as string) ?? null;
   }
 
-  const appointmentRef = db().collection("appointments").doc();
-  const timestamp = Timestamp.fromDate(start);
-
-  await db().runTransaction(async (tx) => {
-    // Relê o horário dentro da transação: entre a consulta da agenda e o
-    // toque em "agendar", outra pessoa pode ter reservado.
-    const conflicting = await tx.get(
-      db()
-        .collection("appointments")
-        .where("professionalId", "==", professionalId)
-        .where("startsAt", "==", timestamp)
-    );
-
-    const active = conflicting.docs.filter((d) =>
-      hasActiveBookingConflict([d.data().status])
-    );
-
-    if (active.length > 0) {
-      throw new HttpsError(
-        "already-exists",
-        "Este horário acabou de ser ocupado. Escolha outro."
-      );
+  // Mesma reserva da agenda da clínica: duração, sobreposição, sala e travas
+  // por recurso, tudo revalidado em transação (scheduling.ts).
+  const clinicId = typeof request.data?.clinicId === "string" && request.data.clinicId ? (request.data.clinicId as string) : null;
+  if (clinicId) {
+    const role = await clinicRoleOf(clinicId, professionalId);
+    if (!role || !CARE_ROLES.includes(role)) {
+      throw new HttpsError("not-found", "Profissional não disponível nesta clínica.");
     }
-
-    // Horário reservado por solicitação da clínica aguardando o responsável.
-    const reserved = await tx.get(
-      db()
-        .collection("clinic_intakes")
-        .where("professionalId", "==", professionalId)
-        .where("requestedStartsAt", "==", timestamp)
-        .where("status", "==", "pendingGuardian")
-        .limit(1)
-    );
-    if (!reserved.empty) {
-      throw new HttpsError("already-exists", "Este horário não está disponível. Escolha outro.");
-    }
-
-    tx.set(appointmentRef, {
-      patientId: uid,
-      requestedBy: uid,
-      origin: "familyBooking",
-      professionalId,
-      professionalName: professional.name ?? "",
-      specialty: professional.specialty ?? null,
-      startsAt: timestamp,
-      durationMinutes: Number(professional.consultationMinutes ?? 30),
-      priceCents: Number(professional.consultationPriceCents ?? 0),
-      status: "requested",
-      paid: false,
-      childId: childId ?? null,
-      childName,
-      reason: reason?.slice(0, 500) ?? null,
-      createdAt: FieldValue.serverTimestamp(),
-    });
+  }
+  const appointmentType = typeof request.data?.appointmentType === "string" ? (request.data.appointmentType as string) : "presencial";
+  const { policy } = await loadSchedulingConfig(clinicId);
+  const appointmentId = await reserveAppointment({
+    clinicId,
+    professionalId,
+    startMs: start.getTime(),
+    type: appointmentType,
+    serviceId: null,
+    roomId: null,
+    roomLabel: null,
+    equipmentIds: [],
+    patientId: uid,
+    childId: childId ?? null,
+    childName,
+    reason: reason?.slice(0, 500) ?? null,
+    status: policy.familyBookingStatus,
+    origin: "familyBooking",
+    createdBy: uid,
+    enforceLead: true,
+    fallbackPriceCents: Number(professional.consultationPriceCents ?? 0),
   });
 
-  return { appointmentId: appointmentRef.id };
+  return { appointmentId };
 });
 
 /**

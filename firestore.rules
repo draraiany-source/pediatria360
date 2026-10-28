@@ -215,7 +215,7 @@ service cloud.firestore {
       // registra no cuidado multidisciplinar, então só o servidor grava.
       return ['plan', 'planExpiresAt', 'xp', 'streakDays', 'longestStreak',
               'lastStreakDate', 'professionalVerified', 'role', 'fcmTokens',
-              'careSpecialty'];
+              'careSpecialty', 'communicationPrefs', 'lastMarketingAt'];
     }
 
     function notTouchingServerFields() {
@@ -267,7 +267,8 @@ service cloud.firestore {
                     && request.resource.data.get('xp', 0) == 0
                     && request.resource.data.get('streakDays', 0) == 0
                     && !request.resource.data.keys().hasAny(
-                         ['longestStreak', 'lastStreakDate', 'planExpiresAt'])
+                         ['longestStreak', 'lastStreakDate', 'planExpiresAt',
+                          'communicationPrefs', 'lastMarketingAt'])
                     && request.resource.data.get('role', 'parent') in ['parent', 'professional'];
 
       // Atualização: o dono pode editar o perfil, mas nunca os campos de
@@ -386,6 +387,13 @@ service cloud.firestore {
       // que ele autorizou e quando. Escrita só pela Function, senão o
       // histórico deixaria de provar qualquer coisa.
       match /consents/{consentId} {
+        allow read: if isOwner(uid);
+        allow write: if false;
+      }
+
+      // Historico de autorizacao de WhatsApp e de marketing (Function
+      // saveCommunicationPreferences / unsubscribeMarketing).
+      match /communication_consents/{entryId} {
         allow read: if isOwner(uid);
         allow write: if false;
       }
@@ -584,8 +592,11 @@ service cloud.firestore {
     // O que profissional da consulta e recepcao/gestao alteram: andamento,
     // horario, sala e registros de confirmacao, check-in e cancelamento.
     // Pagamento fica com o financeiro.
+    // Horario, duracao e sala NAO estao aqui: remarcar passa pela Function
+    // rescheduleAppointment, que trava profissional/sala/equipamento em
+    // transacao. Gravar direto do aparelho furaria o controle de conflito.
     function appointmentCareFields() {
-      return ['status', 'startsAt', 'durationMinutes', 'roomId', 'roomLabel',
+      return ['status',
               'unitId', 'type', 'reason', 'notes', 'rescheduledAt',
               'rescheduledBy', 'previousStartsAt', 'confirmedAt',
               'confirmedBy', 'cancelledAt', 'cancelledBy', 'cancelReason',
@@ -593,33 +604,12 @@ service cloud.firestore {
               'arrivedAt', 'checkInNotes', 'triageRecordId', 'updatedAt'];
     }
 
-    function isStaffAppointmentShape(d) {
-      return d.keys().hasAll(
-               ['patientId', 'childId', 'professionalId', 'startsAt', 'status',
-                'clinicId']) &&
-             !d.keys().hasAny(['requestedBy', 'paid', 'intakeId']) &&
-             d.get('origin', 'clinicStaff') == 'clinicStaff' &&
-             d.get('createdBy', request.auth.uid) == request.auth.uid &&
-             d.clinicId is string &&
-             d.childId is string &&
-             d.patientId is string &&
-             d.professionalId is string;
-    }
-
-    // Recepcao e gestao valem pelo papel no vinculo com a clinica, sem a
-    // marca de profissional verificado; o profissional que marca para si
-    // continua precisando dela.
-    function isStaffAppointmentCreate(d) {
-      return isStaffAppointmentShape(d) &&
-             (isClinicReceptionOrAdmin(d.clinicId) ||
-              (d.professionalId == request.auth.uid &&
-               isVerifiedProfessional() &&
-               isClinicAgendaStaff(d.clinicId))) &&
-             get(childRegistryPath(d.childId)).data.ownerUid == d.patientId &&
-             isClinicCareMember(d.clinicId, d.professionalId) &&
-             grantAllowsInClinic(
-               get(grantPath(d.patientId, d.childId, d.professionalId)).data,
-               'summary', d.clinicId);
+    // Consulta cancelada ou com falta libera as travas de horario; reativar
+    // direto do aparelho poderia sobrepor outra reserva. Volta so remarcando
+    // pela Function.
+    function appointmentNotRevived() {
+      return !(resource.data.get('status', '') in ['cancelled', 'noShow']) ||
+             request.resource.data.get('status', '') == resource.data.get('status', '');
     }
 
     // ------------------------------------------------------- Telemedicina
@@ -651,35 +641,38 @@ service cloud.firestore {
                        !request.resource.data.keys().hasAny(
                          ['clinicId', 'unitId', 'paid', 'priceCents', 'amountCents',
                           'workflowStatus', 'confirmedAt', 'createdBy',
-                          'intakeId']) &&
+                          'intakeId', 'startsAt', 'durationMinutes', 'roomId',
+                          'equipmentIds', 'lockIds', 'scheduleVersion']) &&
                        (!('childId' in request.resource.data) ||
-                        ownsChild(request.resource.data.childId))) ||
-                      // Equipe da clinica: so para crianca cujo titular ja
-                      // autorizou o profissional da consulta (concessao ativa,
-                      // valendo nesta clinica), com o titular como responsavel
-                      // e o profissional vinculado a clinica. Marcar consulta
-                      // nao cria vinculo.
-                      isStaffAppointmentCreate(request.resource.data)
+                        ownsChild(request.resource.data.childId)))
+                      // Consulta com horario (familia ou equipe) so nasce pelas
+                      // Functions bookAppointment/scheduleAppointment, que
+                      // validam agenda, conflitos e a autorizacao do titular.
                     );
 
       // Campos editaveis por perfil, sempre sem trocar os ids
-      // (appointmentIdsUnchanged): familia so cancela; profissional da
-      // consulta e recepcao/gestao mexem no andamento e no horario
+      // (appointmentIdsUnchanged): familia so cancela pedido avulso (sem
+      // clinica; na clinica vale a politica de prazo da Function);
+      // profissional da consulta e recepcao/gestao mexem no andamento
       // (appointmentCareFields); financeiro so marca como pago.
       allow update: if appointmentIdsUnchanged() && (
                       isAdmin()
                       || (signedIn()
                           && resource.data.patientId == request.auth.uid
+                          && resource.data.get('clinicId', null) == null
+                          && resource.data.get('scheduleVersion', null) == null
                           && request.resource.data.status == 'cancelled'
                           && request.resource.data.diff(resource.data).affectedKeys()
                                .hasOnly(['status', 'cancelledAt', 'cancelledBy',
                                          'cancelReason', 'updatedAt']))
                       || (isVerifiedProfessional()
                           && resource.data.professionalId == request.auth.uid
+                          && appointmentNotRevived()
                           && request.resource.data.diff(resource.data).affectedKeys()
                                .hasOnly(appointmentCareFields()))
                       || (resource.data.get('clinicId', null) != null
                           && isClinicReceptionOrAdmin(resource.data.clinicId)
+                          && appointmentNotRevived()
                           && request.resource.data.diff(resource.data).affectedKeys()
                                .hasOnly(appointmentCareFields()))
                       || (resource.data.get('clinicId', null) != null
@@ -747,7 +740,7 @@ service cloud.firestore {
                     && request.resource.data.professionalId ==
                        get(/databases/$(database)/documents/appointments/$(appointmentId)).data.professionalId
                     && get(/databases/$(database)/documents/appointments/$(appointmentId)).data.status
-                       in ['requested', 'confirmed'];
+                       in ['requested', 'awaitingConfirmation', 'confirmed'];
 
       allow delete: if false;
     }
@@ -1222,6 +1215,141 @@ service cloud.firestore {
       match /audit_logs/{logId} {
         allow read: if isClinicAdmin(clinicId) || isAdmin();
         allow write: if false;
+      }
+
+      // Gestao integrada (scheduling/automations/crm/anamnesis/marketing.ts).
+      // Tudo gravado pelas Functions, que validam papel e parametros; o
+      // cliente so le o que o papel permite. Nada aqui tem conteudo clinico,
+      // exceto os modelos de anamnese (perguntas, sem respostas).
+      match /settings/{docId} {
+        allow read: if isClinicMember(clinicId);
+        allow write: if false;
+      }
+      match /professional_schedules/{profId} {
+        allow read: if isClinicAgendaStaff(clinicId);
+        allow write: if false;
+      }
+      // Servicos e equipamentos: cadastro da gestao, com formato conferido.
+      match /services/{serviceId} {
+        allow read: if isClinicMember(clinicId);
+        allow create, update: if isClinicAdmin(clinicId) &&
+          request.resource.data.keys().hasOnly(
+            ['name', 'appointmentType', 'durationMinutes', 'priceCents',
+             'active', 'unitId', 'updatedAt']) &&
+          request.resource.data.name is string &&
+          request.resource.data.name.size() <= 120 &&
+          request.resource.data.durationMinutes is int &&
+          request.resource.data.durationMinutes >= 10 &&
+          request.resource.data.durationMinutes <= 240 &&
+          request.resource.data.durationMinutes % 5 == 0 &&
+          request.resource.data.priceCents is int &&
+          request.resource.data.priceCents >= 0 &&
+          request.resource.data.active is bool;
+        allow delete: if false;
+      }
+      match /equipment/{equipmentId} {
+        allow read: if isClinicAgendaStaff(clinicId);
+        allow create, update: if isClinicAdmin(clinicId) &&
+          request.resource.data.keys().hasOnly(['name', 'unitId', 'active']) &&
+          request.resource.data.name is string &&
+          request.resource.data.name.size() <= 120;
+        allow delete: if false;
+      }
+      match /waitlist/{entryId} {
+        allow read: if isClinicReceptionOrAdmin(clinicId) ||
+                       (signedIn() && resource.data.patientId == request.auth.uid);
+        allow write: if false;
+      }
+      match /automations/{kind} {
+        allow read: if isClinicReceptionOrAdmin(clinicId);
+        allow write: if false;
+      }
+      match /automation_runs/{runId} {
+        allow read: if isClinicAdmin(clinicId);
+        allow write: if false;
+      }
+      match /whatsapp_inbox/{itemId} {
+        allow read: if isClinicReceptionOrAdmin(clinicId);
+        allow write: if false;
+      }
+      match /anamnesis_templates/{templateId} {
+        allow read: if isClinicMember(clinicId);
+        allow write: if false;
+        match /versions/{version} {
+          allow read: if isClinicMember(clinicId);
+          allow write: if false;
+        }
+      }
+      match /crm_contacts/{contactKey} {
+        allow read: if isClinicReceptionOrAdmin(clinicId);
+        allow write: if false;
+        match /notes/{noteId} {
+          allow read: if isClinicReceptionOrAdmin(clinicId);
+          allow write: if false;
+        }
+      }
+      match /crm_tasks/{taskId} {
+        allow read: if isClinicReceptionOrAdmin(clinicId);
+        allow write: if false;
+      }
+      match /crm_merge_requests/{requestId} {
+        allow read: if isClinicReceptionOrAdmin(clinicId);
+        allow write: if false;
+      }
+      match /campaigns/{campaignId} {
+        allow read: if isClinicAdmin(clinicId);
+        allow write: if false;
+      }
+      match /ai_hub_log/{logId} {
+        allow read: if isClinicAdmin(clinicId);
+        allow write: if false;
+      }
+    }
+
+    // Controle interno do servidor (travas de agenda, convites, eventos de
+    // provedores, contadores, propostas do assistente, supressao).
+    match /schedule_locks/{id} { allow read, write: if false; }
+    match /schedule_holds/{id} { allow read, write: if false; }
+    match /message_rate/{id} { allow read, write: if false; }
+    match /automation_runs/{id} { allow read, write: if false; }
+    match /whatsapp_events/{id} { allow read, write: if false; }
+    match /payment_events/{id} { allow read, write: if false; }
+    match /usage_events/{id} { allow read, write: if false; }
+    match /usage_counters/{id} { allow read, write: if false; }
+    match /assistant_proposals/{id} { allow read, write: if false; }
+    match /marketing_suppression/{id} { allow read, write: if false; }
+
+    match /appointment_series/{id} {
+      allow read: if signedIn() && isClinicReceptionOrAdmin(resource.data.clinicId);
+      allow write: if false;
+    }
+
+    // Fila de mensagens: o destinatario ve as proprias; recepcao/gestao veem
+    // as da clinica (so tipo, canal, status e variaveis administrativas).
+    match /message_queue/{id} {
+      allow read: if signedIn() &&
+                     (resource.data.recipientUid == request.auth.uid ||
+                      (resource.data.clinicId != null &&
+                       isClinicReceptionOrAdmin(resource.data.clinicId)));
+      allow write: if false;
+    }
+
+    match /finance_operations/{id} {
+      allow read: if signedIn() && resource.data.clinicId != null &&
+                     financeWriteRole(resource.data.clinicId);
+      allow write: if false;
+    }
+
+    // Anamnese: a familia ve as proprias; o profissional da consulta ve o
+    // que foi enviado (nunca rascunho). Recepcao e gestao nao leem.
+    match /anamnesis_responses/{responseId} {
+      allow read: if signedIn() &&
+                     (resource.data.ownerUid == request.auth.uid ||
+                      (resource.data.professionalId == request.auth.uid &&
+                       resource.data.status in ['submitted', 'reviewed']));
+      allow write: if false;
+      match /revisions/{rev} {
+        allow read, write: if false;
       }
     }
 

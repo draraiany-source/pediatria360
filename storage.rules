@@ -119,6 +119,28 @@ service firebase.storage {
     }
     // Capas de curso e imagens de artigo: leitura livre (aparecem antes do
     // login, na vitrine), escrita só por admin via console ou Function.
+    // Anexos da anamnese (exames, carteira de vacina). O titular envia
+    // enquanto a resposta e rascunho; depois de enviada nada e trocado. O
+    // profissional da consulta le so o que foi enviado; recepcao, nao.
+    match /anamnesis/{ownerUid}/{responseId}/{fileName} {
+      function resp() {
+        return firestore.get(/databases/(default)/documents/anamnesis_responses/$(responseId)).data;
+      }
+
+      allow read: if signedIn() && resp().ownerUid == ownerUid && (
+        request.auth.uid == ownerUid ||
+        (resp().professionalId == request.auth.uid &&
+         resp().status in ['submitted', 'reviewed'])
+      );
+      allow create: if isOwner(ownerUid) &&
+        resource == null &&
+        resp().ownerUid == ownerUid &&
+        resp().status == 'draft' &&
+        (isImage() || request.resource.contentType == 'application/pdf') &&
+        withinSizeLimit();
+      allow update, delete: if false;
+    }
+
     match /public/{allPaths=**} {
       allow read: if true;
       allow write: if false;
