@@ -23,6 +23,25 @@ export const MESSAGE_KINDS = [
 ] as const;
 export type MessageKind = (typeof MESSAGE_KINDS)[number];
 
+/**
+ * Rota do app aberta pelo aviso. Precisa existir no roteador e ser permitida
+ * ao responsável, que é quem recebe estes avisos.
+ */
+export function notificationRoute(kind: MessageKind, appointmentId?: string | null): string {
+  switch (kind) {
+    case "preVisitForm":
+      return appointmentId ? `/pre-consulta/${appointmentId}` : "/telemedicina";
+    case "appointmentReminder":
+    case "appointmentChange":
+    case "waitlistOffer":
+    case "returnReminder":
+    case "noShowFollowUp":
+      return "/telemedicina";
+    default:
+      return "/avisos";
+  }
+}
+
 export const CHANNELS = ["inApp", "whatsapp"] as const;
 export type Channel = (typeof CHANNELS)[number];
 

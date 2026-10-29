@@ -222,6 +222,7 @@ final Provider<GoRouter> routerProvider = Provider<GoRouter>((Ref ref) {
             name: Routes.childDetailName,
             builder: (BuildContext context, GoRouterState state) =>
                 ChildDetailScreen(
+              key: ValueKey<String>(state.matchedLocation),
               childId: state.pathParameters['childId']!,
             ),
             routes: <RouteBase>[
@@ -230,6 +231,7 @@ final Provider<GoRouter> routerProvider = Provider<GoRouter>((Ref ref) {
                 name: Routes.growthName,
                 builder: (BuildContext context, GoRouterState state) =>
                     GrowthScreen(
+                  key: ValueKey<String>(state.matchedLocation),
                   childId: state.pathParameters['childId']!,
                 ),
               ),
@@ -238,6 +240,7 @@ final Provider<GoRouter> routerProvider = Provider<GoRouter>((Ref ref) {
                 name: Routes.vaccinesName,
                 builder: (BuildContext context, GoRouterState state) =>
                     VaccinesScreen(
+                  key: ValueKey<String>(state.matchedLocation),
                   childId: state.pathParameters['childId']!,
                 ),
               ),
@@ -416,6 +419,7 @@ final Provider<GoRouter> routerProvider = Provider<GoRouter>((Ref ref) {
         name: Routes.supplementLabDetailName,
         builder: (BuildContext context, GoRouterState state) =>
             LabExamDetailScreen(
+          key: ValueKey<String>(state.matchedLocation),
           examId: state.pathParameters['examId']!,
           childId: state.uri.queryParameters['childId'],
         ),
@@ -441,6 +445,7 @@ final Provider<GoRouter> routerProvider = Provider<GoRouter>((Ref ref) {
         name: Routes.supplementPrescriptionViewName,
         builder: (BuildContext context, GoRouterState state) =>
             SupplementPrescriptionViewScreen(
+          key: ValueKey<String>(state.matchedLocation),
           prescriptionId: state.pathParameters['rxId']!,
         ),
       ),
@@ -598,6 +603,7 @@ final Provider<GoRouter> routerProvider = Provider<GoRouter>((Ref ref) {
         name: Routes.familyAnamnesisName,
         builder: (BuildContext context, GoRouterState state) =>
             FamilyAnamnesisScreen(
+          key: ValueKey<String>(state.matchedLocation),
           appointmentId: state.pathParameters['appointmentId'] ?? '',
         ),
       ),
@@ -804,6 +810,7 @@ final Provider<GoRouter> routerProvider = Provider<GoRouter>((Ref ref) {
         name: Routes.clinicTriageName,
         builder: (BuildContext context, GoRouterState state) =>
             ClinicTriageScreen(
+          key: ValueKey<String>(state.matchedLocation),
           appointmentId: state.pathParameters['appointmentId']!,
         ),
       ),
@@ -812,6 +819,7 @@ final Provider<GoRouter> routerProvider = Provider<GoRouter>((Ref ref) {
         name: Routes.clinicPatient360Name,
         builder: (BuildContext context, GoRouterState state) =>
             Patient360Screen(
+          key: ValueKey<String>(state.matchedLocation),
           childId: state.pathParameters['childId']!,
         ),
       ),
@@ -857,6 +865,7 @@ final Provider<GoRouter> routerProvider = Provider<GoRouter>((Ref ref) {
                 );
               }
               return VoiceLiveScreen(
+                key: ValueKey<String>(state.matchedLocation),
                 sessionId: state.pathParameters['sessionId']!,
               );
             },
@@ -873,6 +882,7 @@ final Provider<GoRouter> routerProvider = Provider<GoRouter>((Ref ref) {
                 );
               }
               return VoiceReviewScreen(
+                key: ValueKey<String>(state.matchedLocation),
                 sessionId: state.pathParameters['sessionId']!,
               );
             },
@@ -889,6 +899,7 @@ final Provider<GoRouter> routerProvider = Provider<GoRouter>((Ref ref) {
                 );
               }
               return VoiceFinalReviewScreen(
+                key: ValueKey<String>(state.matchedLocation),
                 sessionId: state.pathParameters['sessionId']!,
               );
             },

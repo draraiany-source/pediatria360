@@ -41,7 +41,10 @@ final StreamProviderFamily<List<Appointment>, String>
     StreamProvider.family<List<Appointment>, String>((Ref ref, String childId) {
   return ref
       .watch(telemedicineRepositoryProvider)
-      .watchChildAppointments(childId);
+      .watchChildAppointments(
+        childId,
+        professionalId: ref.watch(clinicalAuthorFilterProvider),
+      );
 });
 
 /// Hub Paciente 360 — resume dados reais e aponta para módulos existentes.

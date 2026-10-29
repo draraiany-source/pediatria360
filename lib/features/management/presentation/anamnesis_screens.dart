@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/error/failures.dart';
 import '../../../core/widgets/state_views.dart';
+import '../../../core/widgets/unsaved_changes_guard.dart';
 import '../../telemedicine/data/telemedicine_repository.dart';
 import '../../telemedicine/presentation/telemedicine_screen.dart'
     show myAgendaProvider;
@@ -40,7 +41,13 @@ class _FamilyAnamnesisScreenState extends ConsumerState<FamilyAnamnesisScreen> {
   final Set<String> _confirmedReuse = <String>{};
   bool _busy = false;
   bool _submitted = false;
+  bool _dirty = false;
   List<String> _missing = const <String>[];
+
+  Future<void> _saveAndLeave() async {
+    await _save();
+    if (mounted && !_dirty) await Navigator.of(context).maybePop();
+  }
 
   @override
   void initState() {
@@ -86,6 +93,7 @@ class _FamilyAnamnesisScreenState extends ConsumerState<FamilyAnamnesisScreen> {
           .toList();
       return true;
     }, (_) => false);
+    if (ok) _dirty = false;
     if (ok && submit) {
       final sent = await repo.submitAnamnesis(id);
       if (!mounted) return;
@@ -139,7 +147,10 @@ class _FamilyAnamnesisScreenState extends ConsumerState<FamilyAnamnesisScreen> {
           in (_data!['reuseSuggestions'] as List<dynamic>?) ?? const <dynamic>[])
         '${(s as Map)['field']}': Map<String, dynamic>.from(s),
     };
-    return Scaffold(
+    return UnsavedChangesGuard(
+      isDirty: () => _dirty,
+      onSave: _saveAndLeave,
+      child: Scaffold(
       appBar: AppBar(title: Text('${tpl['name'] ?? 'Pré-consulta'}')),
       body: ManagementBody(
         children: <Widget>[
@@ -166,10 +177,12 @@ class _FamilyAnamnesisScreenState extends ConsumerState<FamilyAnamnesisScreen> {
                       onChanged: (Object? v) => setState(() {
                         _answers['${f['id']}'] = v;
                         _confirmedReuse.remove(f['id']);
+                        _dirty = true;
                       }),
                       onUseSuggestion: () => setState(() {
                         _answers['${f['id']}'] = reuse[f['id']]!['value'];
                         _confirmedReuse.add('${f['id']}');
+                        _dirty = true;
                       }),
                     ),
               ],
@@ -190,6 +203,7 @@ class _FamilyAnamnesisScreenState extends ConsumerState<FamilyAnamnesisScreen> {
           ),
           const SizedBox(height: 24),
         ],
+      ),
       ),
     );
   }

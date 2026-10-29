@@ -81,16 +81,6 @@ String? resolveRouteRedirect({
     return managementRouteAllowed(location, role) ? null : Routes.homePath;
   }
 
-  // 6b. Gestao integrada: cada modulo pelo papel ativo na clinica. Ser
-  // gestao nao abre area clinica; as Functions conferem o papel de novo.
-  if (_under(location, Routes.managementPath)) {
-    final ClinicRole? role =
-        clinicMembership != null && clinicMembership.active
-            ? clinicMembership.role
-            : null;
-    return managementRouteAllowed(location, role) ? null : Routes.homePath;
-  }
-
   // 7. Areas de equipe (clinica / financeiro / BI).
   final bool isStaffArea =
       _under(location, Routes.patientsPath) ||
@@ -125,7 +115,8 @@ String? resolveRouteRedirect({
   if (user.role == UserRole.professional && clinicMembership != null) {
     final bool isChartArea =
         _under(location, Routes.patientsPath) ||
-        _under(location, Routes.clinicVoicePath);
+        _under(location, Routes.clinicVoicePath) ||
+        _isPatientChartRoute(location);
     if (isChartArea &&
         !PermissionMatrix.allows(
           user: user,
@@ -142,7 +133,8 @@ String? resolveRouteRedirect({
     final bool isChart =
         _under(location, Routes.patientsPath) ||
         _under(location, Routes.clinicVoicePath) ||
-        _under(location, Routes.supplementPath);
+        _under(location, Routes.supplementPath) ||
+        _isPatientChartRoute(location);
     final bool isFinance =
         _under(location, Routes.financePath) ||
         _under(location, Routes.billingPath) ||
@@ -199,6 +191,11 @@ bool _staffAreaForNonProfessional(
       return false;
   }
 }
+
+/// Paciente 360 e triagem ficam sob `/consultorio`, mas sao dados clinicos.
+bool _isPatientChartRoute(String location) =>
+    location.startsWith('${Routes.clinicPath}/paciente/') ||
+    location.startsWith('${Routes.clinicPath}/triagem/');
 
 /// `/bi` cobre `/bi` e `/bi/...`, mas nao `/biblioteca`.
 bool _under(String location, String base) =>

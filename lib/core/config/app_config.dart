@@ -65,6 +65,11 @@ class AppConfig {
   static const String emulatorHost =
       String.fromEnvironment('EMULATOR_HOST', defaultValue: 'localhost');
 
+  /// Projeto usado só com os emuladores (ex.: `demo-pediatria360`). Projetos
+  /// `demo-*` não alcançam recursos reais do Google (segredos, envio).
+  static const String emulatorProjectId =
+      String.fromEnvironment('EMULATOR_PROJECT_ID');
+
   // -------------------------------------------------------------- Bunny.net
   /// Id da biblioteca do Bunny Stream (videos, lives, podcasts).
   static const String bunnyStreamLibraryId =

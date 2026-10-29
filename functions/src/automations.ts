@@ -26,6 +26,7 @@ import {
   MESSAGE_TEMPLATES,
   MessageKind,
   normalizeRule,
+  notificationRoute,
   QueueJob,
   rateKey,
   renderTemplate,
@@ -52,18 +53,6 @@ function secretValue(s: { value(): string }): string {
     return "";
   }
 }
-
-const ROUTES: Record<MessageKind, string> = {
-  appointmentReminder: "/telemedicina",
-  preVisitForm: "/pre-consulta",
-  appointmentChange: "/telemedicina",
-  waitlistOffer: "/telemedicina",
-  returnReminder: "/telemedicina",
-  noShowFollowUp: "/telemedicina",
-  paymentReminder: "/financeiro",
-  satisfactionSurvey: "/notificacoes",
-  campaign: "/notificacoes",
-};
 
 interface DispatchStats {
   sent: number;
@@ -187,7 +176,7 @@ async function processJob(ref: FirebaseFirestore.DocumentReference, nowMs: numbe
     if (job.channel === "inApp") {
       // Id = id do job: repetir o despacho não duplica o aviso.
       await db().collection("users").doc(job.recipientUid).collection("notifications").doc(ref.id).set({
-        type: job.kind, title, body, route: ROUTES[job.kind], read: false,
+        type: job.kind, title, body, route: notificationRoute(job.kind, job.appointmentId), read: false,
         source: "automation", createdAt: FieldValue.serverTimestamp(),
       });
     } else {

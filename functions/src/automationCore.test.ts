@@ -2,7 +2,9 @@ import {
   dispatchDecision,
   DispatchContext,
   nextAllowedTime,
+  MESSAGE_KINDS,
   normalizeRule,
+  notificationRoute,
   QueueJob,
   renderTemplate,
   retryDelayMs,
@@ -98,5 +100,22 @@ describe("regras e modelos", () => {
     expect(nextAllowedTime(TEN, { allowedFromHour: 8, allowedToHour: 20 })).toBe(TEN);
     expect(retryDelayMs(1)).toBe(5 * 60_000);
     expect(retryDelayMs(10)).toBe(6 * H);
+  });
+});
+
+describe("notificationRoute", () => {
+  const routes = ["/telemedicina", "/avisos"];
+
+  it("leva a pré-consulta para a consulta certa", () => {
+    expect(notificationRoute("preVisitForm", "appt-1")).toBe("/pre-consulta/appt-1");
+    expect(notificationRoute("preVisitForm", null)).toBe("/telemedicina");
+  });
+
+  it("nunca aponta para área restrita da equipe", () => {
+    for (const kind of MESSAGE_KINDS) {
+      const r = notificationRoute(kind, null);
+      expect(routes).toContain(r);
+    }
+    expect(notificationRoute("paymentReminder")).toBe("/avisos");
   });
 });

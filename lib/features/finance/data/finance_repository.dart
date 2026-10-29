@@ -84,8 +84,10 @@ class FinanceRepository {
   CollectionReference<Map<String, dynamic>> get _appointments =>
       _firestore.collection('appointments');
 
-  Stream<List<FinanceReceivable>> watchReceivables(String ownerId) => _receivables
-      .where('ownerId', isEqualTo: ownerId)
+  Stream<List<FinanceReceivable>> watchReceivables(String ownerId, {String? clinicId}) =>
+      (clinicId != null
+              ? _receivables.where('clinicId', isEqualTo: clinicId)
+              : _receivables.where('ownerId', isEqualTo: ownerId))
       .limit(500)
       .snapshots()
       .map(
@@ -94,8 +96,10 @@ class FinanceRepository {
             .toList(growable: false),
       );
 
-  Stream<List<FinancePayable>> watchPayables(String ownerId) => _payables
-      .where('ownerId', isEqualTo: ownerId)
+  Stream<List<FinancePayable>> watchPayables(String ownerId, {String? clinicId}) =>
+      (clinicId != null
+              ? _payables.where('clinicId', isEqualTo: clinicId)
+              : _payables.where('ownerId', isEqualTo: ownerId))
       .limit(500)
       .snapshots()
       .map(
@@ -103,8 +107,10 @@ class FinanceRepository {
             snap.docs.map(FinancePayable.fromFirestore).toList(growable: false),
       );
 
-  Stream<List<FinanceReceipt>> watchReceipts(String ownerId) => _receipts
-      .where('ownerId', isEqualTo: ownerId)
+  Stream<List<FinanceReceipt>> watchReceipts(String ownerId, {String? clinicId}) =>
+      (clinicId != null
+              ? _receipts.where('clinicId', isEqualTo: clinicId)
+              : _receipts.where('ownerId', isEqualTo: ownerId))
       .limit(500)
       .snapshots()
       .map(

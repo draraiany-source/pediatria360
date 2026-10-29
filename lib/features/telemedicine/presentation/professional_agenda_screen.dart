@@ -326,7 +326,7 @@ class _ProfessionalAgendaScreenState
           Padding(
             padding: const EdgeInsets.only(right: AppSpacing.sm),
             child: FilledButton.icon(
-              onPressed: () => _openAvailabilitySheet(context),
+              onPressed: () => _primaryAction(context),
               style: FilledButton.styleFrom(
                 backgroundColor: AppColors.brand,
                 foregroundColor: Colors.white,
@@ -340,7 +340,7 @@ class _ProfessionalAgendaScreenState
                 size: 18,
                 fallback: Icons.add_rounded,
               ),
-              label: const Text('+ Novo atendimento'),
+              label: Text(_primaryLabel),
             ),
           ),
         ],
@@ -426,8 +426,8 @@ class _ProfessionalAgendaScreenState
               message:
                   'Quando houver atendimentos agendados, eles aparecem aqui '
                   'com horário e paciente.',
-              actionLabel: 'Novo atendimento',
-              onAction: () => _openAvailabilitySheet(context),
+              actionLabel: _primaryLabel,
+              onAction: () => _primaryAction(context),
             );
           }
           return ListView.separated(
@@ -442,12 +442,28 @@ class _ProfessionalAgendaScreenState
               onConfirm: () => _confirm(list[i]),
               onCancel: () => _cancel(list[i]),
               onReschedule: () => _reschedule(list[i]),
-              onStart: () => _startEncounter(list[i]),
+              onStart: _isStaffAgenda ? null : () => _startEncounter(list[i]),
             ),
           );
         },
       ),
     );
+  }
+
+  /// Quem não atende não tem disponibilidade própria: a ação da equipe é
+  /// abrir a solicitação de novo paciente.
+  bool get _isStaffAgenda =>
+      !(ref.read(currentUserProvider)?.role.isProfessional ?? false);
+
+  String get _primaryLabel =>
+      _isStaffAgenda ? 'Novo paciente' : 'Disponibilidade';
+
+  void _primaryAction(BuildContext context) {
+    if (_isStaffAgenda) {
+      context.push(Routes.clinicIntakesPath);
+    } else {
+      _openAvailabilitySheet(context);
+    }
   }
 
   void _openAvailabilitySheet(BuildContext context) {
@@ -478,7 +494,7 @@ class _AppointmentCard extends StatelessWidget {
   final VoidCallback onConfirm;
   final VoidCallback onCancel;
   final VoidCallback onReschedule;
-  final VoidCallback onStart;
+  final VoidCallback? onStart;
 
   Color _statusColor(ColorScheme scheme) => switch (appointment.status) {
         AppointmentStatus.requested => AppColors.warning,
@@ -576,14 +592,16 @@ class _AppointmentCard extends StatelessWidget {
                   ),
                 if (appointment.status == AppointmentStatus.requested)
                   const SizedBox(width: AppSpacing.sm),
-                if (appointment.status == AppointmentStatus.confirmed)
+                if (appointment.status == AppointmentStatus.confirmed &&
+                    onStart != null)
                   Expanded(
                     child: FilledButton(
                       onPressed: busy ? null : onStart,
                       child: const Text('Iniciar atendimento'),
                     ),
                   ),
-                if (appointment.status == AppointmentStatus.confirmed)
+                if (appointment.status == AppointmentStatus.confirmed &&
+                    onStart != null)
                   const SizedBox(width: AppSpacing.sm),
                 IconButton(
                   onPressed: busy ? null : onReschedule,

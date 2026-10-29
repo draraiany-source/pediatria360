@@ -50,9 +50,14 @@ class EncounterRepository {
   // ------------------------------------------------------------- Leitura
 
   /// Atendimentos de um paciente, do mais recente para o mais antigo.
-  Stream<List<Encounter>> watchPatientEncounters(String patientId) =>
-      _encounters
-          .where('patientId', isEqualTo: patientId)
+  Stream<List<Encounter>> watchPatientEncounters(
+    String patientId, {
+    String? professionalId,
+  }) =>
+      _byAuthor(
+        _encounters.where('patientId', isEqualTo: patientId),
+        professionalId,
+      )
           .orderBy('startedAt', descending: true)
           .limit(100)
           .snapshots()
@@ -62,6 +67,16 @@ class EncounterRepository {
           );
 
   /// Atendimentos que o profissional conduziu.
+  /// As regras só liberam ao profissional o que ele mesmo registrou; sem este
+  /// filtro a consulta inteira é recusada, mesmo havendo autorização.
+  Query<Map<String, dynamic>> _byAuthor(
+    Query<Map<String, dynamic>> query,
+    String? professionalId,
+  ) =>
+      professionalId == null
+          ? query
+          : query.where('professionalId', isEqualTo: professionalId);
+
   Stream<List<Encounter>> watchProfessionalEncounters(String professionalId) =>
       _encounters
           .where('professionalId', isEqualTo: professionalId)
@@ -285,9 +300,14 @@ class EncounterRepository {
                 s.docs.map(_documentFrom).toList(growable: false),
           );
 
-  Stream<List<ClinicalDocument>> watchPatientDocuments(String patientId) =>
-      _documents
-          .where('patientId', isEqualTo: patientId)
+  Stream<List<ClinicalDocument>> watchPatientDocuments(
+    String patientId, {
+    String? professionalId,
+  }) =>
+      _byAuthor(
+        _documents.where('patientId', isEqualTo: patientId),
+        professionalId,
+      )
           .orderBy('issuedAt', descending: true)
           .limit(100)
           .snapshots()
@@ -406,9 +426,16 @@ class EncounterRepository {
 
   // -------------------------------------------------------------- Exames
 
-  Stream<List<LabResult>> watchLabResults(String patientId) => _firestore
-      .collection('lab_results')
-      .where('patientId', isEqualTo: patientId)
+  Stream<List<LabResult>> watchLabResults(
+    String patientId, {
+    String? professionalId,
+  }) =>
+      _byAuthor(
+        _firestore
+            .collection('lab_results')
+            .where('patientId', isEqualTo: patientId),
+        professionalId,
+      )
       .orderBy('collectedAt', descending: true)
       .limit(200)
       .snapshots()

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/error/failures.dart';
+import '../../../../core/providers/core_providers.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_tokens.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
@@ -35,6 +36,37 @@ class _ClinicTriageScreenState extends ConsumerState<ClinicTriageScreen> {
   final TextEditingController _childId = TextEditingController();
   bool _saving = false;
   String? _error;
+  String? _childName;
+  String? _clinicId;
+  bool _childFromAppointment = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadAppointmentChild();
+  }
+
+  /// A crianca vem da consulta: digitar o ID permite registrar sinais vitais
+  /// no paciente errado.
+  Future<void> _loadAppointmentChild() async {
+    try {
+      final snap = await ref
+          .read(firestoreProvider)
+          .collection('appointments')
+          .doc(widget.appointmentId)
+          .get();
+      final String childId = '${snap.data()?['childId'] ?? ''}'.trim();
+      if (!mounted || childId.isEmpty) return;
+      setState(() {
+        _childId.text = childId;
+        _childName = '${snap.data()?['childName'] ?? ''}'.trim();
+        _clinicId = snap.data()?['clinicId'] as String?;
+        _childFromAppointment = true;
+      });
+    } catch (_) {
+      // Sem leitura da consulta o campo continua editavel.
+    }
+  }
 
   @override
   void dispose() {
@@ -67,6 +99,7 @@ class _ClinicTriageScreenState extends ConsumerState<ClinicTriageScreen> {
       professionalId: uid,
       recordedBy: uid,
       recordedAt: DateTime.now(),
+      clinicId: _clinicId,
       weightKg: _d(_weight),
       heightCm: _d(_height),
       headCircumferenceCm: _d(_pc),
@@ -84,21 +117,33 @@ class _ClinicTriageScreenState extends ConsumerState<ClinicTriageScreen> {
     if (!mounted) return;
     await result.fold(
       (_) async {
-        await ref.read(clinicRepositoryProvider).updateWorkflowStatus(
-              widget.appointmentId,
-              ClinicWorkflowStatus.waitingDoctor,
-            );
+        final status =
+            await ref.read(clinicRepositoryProvider).updateWorkflowStatus(
+                  widget.appointmentId,
+                  ClinicWorkflowStatus.waitingDoctor,
+                );
         if (!mounted) return;
         setState(() => _saving = false);
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Triagem salva. Paciente aguardando medico.')),
+          SnackBar(
+            content: Text(
+              status.isSuccess
+                  ? 'Triagem salva. Paciente aguardando medico.'
+                  : 'Triagem salva, mas o status da fila nao foi atualizado. '
+                      'Atualize pela recepcao.',
+            ),
+          ),
         );
         await Navigator.of(context).maybePop();
       },
       (Failure f) async {
         setState(() {
           _saving = false;
-          _error = f.message;
+          _error = f is PermissionFailure
+              ? 'Sem autorização para registrar no prontuário desta criança. '
+                  'A família precisa conceder "Resumo e prontuário" válido '
+                  'nesta clínica.'
+              : f.message;
         });
       },
     );
@@ -132,9 +177,16 @@ class _ClinicTriageScreenState extends ConsumerState<ClinicTriageScreen> {
           const SizedBox(height: AppSpacing.md),
           TextField(
             controller: _childId,
-            decoration: const InputDecoration(
-              labelText: 'ID da crianca',
-              border: OutlineInputBorder(),
+            readOnly: _childFromAppointment,
+            decoration: InputDecoration(
+              labelText: _childFromAppointment
+                  ? 'Crianca da consulta'
+                  : 'ID da crianca',
+              helperText: _childFromAppointment &&
+                      (_childName ?? '').isNotEmpty
+                  ? _childName
+                  : null,
+              border: const OutlineInputBorder(),
             ),
           ),
           const SizedBox(height: AppSpacing.sm),

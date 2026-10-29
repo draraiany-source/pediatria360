@@ -19,6 +19,7 @@ import '../../../../core/widgets/child_avatar.dart';
 import '../../../../core/widgets/clinical_ui.dart';
 import '../../../../core/widgets/skeleton.dart';
 import '../../../../core/widgets/state_views.dart';
+import '../../../../shared/domain/entities/app_user.dart';
 import '../../../../shared/domain/entities/child.dart';
 import '../../../../shared/domain/entities/clinical_record.dart';
 import '../../../../shared/domain/entities/encounter.dart';
@@ -45,11 +46,23 @@ final Provider<EncounterRepository> encounterRepositoryProvider =
   ),
 );
 
+/// O profissional só enxerga o que registrou; o responsável lê tudo da
+/// própria criança.
+final Provider<String?> clinicalAuthorFilterProvider = Provider<String?>(
+  (Ref ref) {
+    final AppUser? user = ref.watch(currentUserProvider);
+    return user != null && user.role.isProfessional ? user.uid : null;
+  },
+);
+
 final StreamProviderFamily<List<Encounter>, String> patientEncountersProvider =
     StreamProvider.family<List<Encounter>, String>(
   (Ref ref, String patientId) => ref
       .watch(encounterRepositoryProvider)
-      .watchPatientEncounters(patientId),
+      .watchPatientEncounters(
+        patientId,
+        professionalId: ref.watch(clinicalAuthorFilterProvider),
+      ),
 );
 
 final StreamProviderFamily<List<ClinicalDocument>, String>
@@ -57,13 +70,19 @@ final StreamProviderFamily<List<ClinicalDocument>, String>
     StreamProvider.family<List<ClinicalDocument>, String>(
   (Ref ref, String patientId) => ref
       .watch(encounterRepositoryProvider)
-      .watchPatientDocuments(patientId),
+      .watchPatientDocuments(
+        patientId,
+        professionalId: ref.watch(clinicalAuthorFilterProvider),
+      ),
 );
 
 final StreamProviderFamily<List<LabResult>, String> patientLabsProvider =
     StreamProvider.family<List<LabResult>, String>(
   (Ref ref, String patientId) =>
-      ref.watch(encounterRepositoryProvider).watchLabResults(patientId),
+      ref.watch(encounterRepositoryProvider).watchLabResults(
+            patientId,
+            professionalId: ref.watch(clinicalAuthorFilterProvider),
+          ),
 );
 
 /// Filtro da linha do tempo — `null` significa "todos os tipos". Um

@@ -7,8 +7,8 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_tokens.dart';
 import '../../../../core/utils/validators.dart';
 import '../../../../core/widgets/app_widgets.dart';
-import '../../../../core/widgets/back_or_home_button.dart';
 import '../../../../core/widgets/child_avatar.dart';
+import '../../../../core/widgets/unsaved_changes_guard.dart';
 import '../../../../shared/domain/entities/child.dart';
 import '../providers/children_providers.dart';
 
@@ -47,6 +47,9 @@ class _ChildFormScreenState extends ConsumerState<ChildFormScreen> {
   int? _gestationalWeeks;
   String? _photoUrl;
   bool _loaded = false;
+  bool _dirty = false;
+
+  void _markDirty() => _dirty = true;
 
   bool get _isEditing => widget.childId != null;
 
@@ -87,6 +90,7 @@ class _ChildFormScreenState extends ConsumerState<ChildFormScreen> {
     _cpf.text = child.cpf ?? '';
     _insurance.text = child.insurance ?? '';
     _photoUrl = child.photoUrl;
+    _dirty = false;
   }
 
   Future<void> _pickBirthDate() async {
@@ -99,7 +103,10 @@ class _ChildFormScreenState extends ConsumerState<ChildFormScreen> {
       helpText: 'Data de nascimento',
       locale: const Locale('pt', 'BR'),
     );
-    if (picked != null) setState(() => _birthDate = picked);
+    if (picked != null) {
+      setState(() => _birthDate = picked);
+      _markDirty();
+    }
   }
 
   List<String> _splitList(String raw) => raw
@@ -159,6 +166,7 @@ class _ChildFormScreenState extends ConsumerState<ChildFormScreen> {
     if (!mounted) return;
 
     if (saved != null) {
+      _dirty = false;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
@@ -198,11 +206,15 @@ class _ChildFormScreenState extends ConsumerState<ChildFormScreen> {
       }
     });
 
-    return Scaffold(
+    return UnsavedChangesGuard(
+      isDirty: () => _dirty,
+      onSave: _submit,
+      child: Scaffold(
       appBar: AppBar(
         title: Text(_isEditing ? 'Editar criança' : 'Nova criança'),
         leading: IconButton(
-          onPressed: () => context.popOrHome(),
+          onPressed: () =>
+              leaveWithConfirmation(context, dirty: _dirty, onSave: _submit),
           icon: const Icon(Icons.close_rounded),
           tooltip: 'Cancelar',
         ),
@@ -213,6 +225,7 @@ class _ChildFormScreenState extends ConsumerState<ChildFormScreen> {
           maxWidth: 560,
           child: Form(
             key: _formKey,
+            onChanged: _markDirty,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: <Widget>[
@@ -267,7 +280,10 @@ class _ChildFormScreenState extends ConsumerState<ChildFormScreen> {
                       .toList(),
                   selected: <ChildSex>{_sex},
                   onSelectionChanged: (Set<ChildSex> value) =>
-                      setState(() => _sex = value.first),
+                      setState(() {
+                        _sex = value.first;
+                        _dirty = true;
+                      }),
                 ),
                 const SizedBox(height: AppSpacing.xs),
                 Text(
@@ -442,7 +458,10 @@ class _ChildFormScreenState extends ConsumerState<ChildFormScreen> {
                         child: Text(type),
                       ),
                   ],
-                  onChanged: (String? v) => setState(() => _bloodType = v),
+                  onChanged: (String? v) {
+                    setState(() => _bloodType = v);
+                    _markDirty();
+                  },
                 ),
                 const SizedBox(height: AppSpacing.lg),
                 AppTextField(
@@ -482,6 +501,7 @@ class _ChildFormScreenState extends ConsumerState<ChildFormScreen> {
             ),
           ),
         ),
+      ),
       ),
     );
   }

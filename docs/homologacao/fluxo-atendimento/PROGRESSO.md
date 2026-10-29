@@ -229,3 +229,23 @@ R$ 100 de IA, R$ 48 de áudio, R$ 7,50 de armazenamento e R$ 240 de WhatsApp.
 5. Revisar a matriz e as pendências antes de qualquer uso real.
 
 Commit local; não houve push nem publicação.
+
+## Auditoria tela por tela (28/10/2026)
+
+Relatório completo: `docs/homologacao/auditoria-telas/RELATORIO.md`
+(matriz em `INVENTARIO.md`, capturas em `evidencias/`).
+
+- Corrigidos e retestados pela interface: perda de dados da criança na web,
+  mistura de estado entre consultas, Paciente 360 recusado para o médico
+  autorizado, triagem com criança digitada e sem clínica, financeiro com
+  permissão negada, contas a pagar sem confirmação, agenda vazia para a
+  recepção, botão "Novo atendimento" enganoso, aviso de alterações não salvas.
+- Corrigidos com teste automatizado ou só no código: recepção com conta de
+  profissional no prontuário, rotas dos avisos automáticos, contas a receber,
+  nome da clínica nos documentos.
+- Principais pendências: agendar paciente já da clínica e agendamento pela
+  família não têm tela; atendimento, documentos e transcrição não exercitados
+  pela interface.
+- Testes: Flutter 887 aprovados; Functions 104/104; regras não alteradas.
+
+Commit local; não houve push nem publicação.

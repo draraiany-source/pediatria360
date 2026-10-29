@@ -76,6 +76,14 @@ final Provider<ClinicMembership?> activeClinicMembershipProvider =
   return null;
 });
 
+/// Nome no cabeçalho de documentos e recibos: o da clínica ativa; sem
+/// clínica (profissional autônomo ou família), o do aplicativo.
+final Provider<String> documentClinicNameProvider = Provider<String>((Ref ref) {
+  final String name =
+      ref.watch(activeClinicMembershipProvider)?.clinicName.trim() ?? '';
+  return name.isEmpty ? 'Pediatria 360' : name;
+});
+
 final FutureProvider<ClinicOrganization?> activeClinicProvider =
     FutureProvider<ClinicOrganization?>((Ref ref) async {
   final String? id = await ref.watch(activeClinicIdProvider.future);

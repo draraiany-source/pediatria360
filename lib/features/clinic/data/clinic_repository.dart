@@ -113,10 +113,15 @@ class ClinicRepository {
         await _appointments.doc(appointmentId).update(patch);
       });
 
+  /// Uma triagem por consulta: salvar de novo atualiza o mesmo registro em vez
+  /// de criar outro. O avanço da fila fica com quem chama
+  /// ([updateWorkflowStatus]), para a falha dele não esconder a triagem gravada.
   Future<Result<void>> saveTriage(TriageRecord record) => guard(() async {
-        final String id = record.id.isEmpty
-            ? _triage.doc().id
-            : record.id;
+        final String id = record.id.isNotEmpty
+            ? record.id
+            : record.appointmentId.isNotEmpty
+                ? record.appointmentId
+                : _triage.doc().id;
         final TriageRecord toSave = TriageRecord(
           id: id,
           appointmentId: record.appointmentId,
@@ -124,6 +129,7 @@ class ClinicRepository {
           professionalId: record.professionalId,
           recordedBy: record.recordedBy,
           recordedAt: record.recordedAt,
+          clinicId: record.clinicId,
           weightKg: record.weightKg,
           heightCm: record.heightCm,
           headCircumferenceCm: record.headCircumferenceCm,
@@ -140,14 +146,6 @@ class ClinicRepository {
         final Map<String, dynamic> data = toSave.toMap();
         data['recordedAt'] = Timestamp.fromDate(toSave.recordedAt);
         await _triage.doc(id).set(data, SetOptions(merge: true));
-
-        // Avanca o fluxo para triagem / aguardando medico.
-        await _appointments.doc(record.appointmentId).update(<String, dynamic>{
-          'workflowStatus': ClinicWorkflowStatus.waitingDoctor.name,
-          'status': 'confirmed',
-          'triageRecordId': id,
-          'workflowUpdatedAt': FieldValue.serverTimestamp(),
-        });
       });
 
   Stream<TriageRecord?> watchTriage(String appointmentId) {

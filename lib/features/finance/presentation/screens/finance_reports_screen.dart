@@ -5,6 +5,8 @@ import 'package:printing/printing.dart';
 
 import '../../../../core/theme/app_tokens.dart';
 import '../../../../core/widgets/back_or_home_button.dart';
+import '../../../clinic_org/presentation/providers/clinic_org_providers.dart'
+    show documentClinicNameProvider;
 import '../../domain/finance_aggregators.dart';
 import '../../domain/finance_models.dart';
 import '../providers/finance_providers.dart';
@@ -99,7 +101,7 @@ class FinanceReportsScreen extends ConsumerWidget {
     final bytes = await ReceiptPdfService.build(
       receipt: receipt,
       receivable: r,
-      clinicName: 'Pediatria 360',
+      clinicName: ref.read(documentClinicNameProvider),
     );
     if (context.mounted) {
       await Printing.layoutPdf(onLayout: (_) async => bytes);

@@ -15,6 +15,8 @@ import '../../../../core/widgets/app_widgets.dart';
 import '../../../../core/widgets/state_views.dart';
 import '../../../../shared/domain/entities/encounter.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
+import '../../../clinic_org/presentation/providers/clinic_org_providers.dart'
+    show documentClinicNameProvider;
 import '../services/clinical_pdf_service.dart';
 import 'patient_timeline_screen.dart';
 
@@ -49,7 +51,7 @@ class _DocumentViewerScreenState
 
   Future<Uint8List> _render(_) => ClinicalPdfService.build(
         document: _doc,
-        clinicName: 'Pediatria 360',
+        clinicName: ref.read(documentClinicNameProvider),
         patientBirthDateLabel: null,
       );
 
@@ -57,7 +59,7 @@ class _DocumentViewerScreenState
     setState(() => _busy = true);
     await ClinicalPdfService.share(
       document: _doc,
-      clinicName: 'Pediatria 360',
+      clinicName: ref.read(documentClinicNameProvider),
     );
     if (mounted) setState(() => _busy = false);
   }

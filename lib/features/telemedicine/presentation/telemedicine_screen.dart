@@ -22,8 +22,12 @@ import '../../../core/widgets/feature_unavailable.dart';
 import '../../../core/widgets/state_views.dart';
 import '../../../core/config/app_assets.dart';
 import '../../../core/config/capi_pose.dart';
+import '../../../shared/domain/entities/app_user.dart';
+import '../../../shared/domain/entities/clinic_organization.dart';
 import '../../../shared/domain/entities/commerce.dart';
 import '../../auth/presentation/providers/auth_providers.dart';
+import '../../clinic_org/presentation/providers/clinic_org_providers.dart'
+    show activeClinicMembershipProvider;
 import '../data/telemedicine_repository.dart';
 import 'screens/pre_visit_questionnaire_form_screen.dart';
 
@@ -58,14 +62,32 @@ final StreamProvider<List<Appointment>> myAgendaProvider =
       ),
     );
   }
-  final String? uid = ref.watch(currentUserProvider)?.uid;
-  if (uid == null) {
+  final AppUser? user = ref.watch(currentUserProvider);
+  if (user == null) {
     return Stream<List<Appointment>>.value(const <Appointment>[]);
+  }
+  // Recepção e equipe de apoio não atendem: a agenda delas é a da clínica.
+  final ClinicMembership? membership =
+      ref.watch(activeClinicMembershipProvider);
+  if (!user.role.isProfessional &&
+      membership != null &&
+      membership.active &&
+      _clinicAgendaRoles.contains(membership.role)) {
+    return ref
+        .watch(telemedicineRepositoryProvider)
+        .watchClinicAgenda(membership.clinicId);
   }
   return ref
       .watch(telemedicineRepositoryProvider)
-      .watchProfessionalAgenda(uid);
+      .watchProfessionalAgenda(user.uid);
 });
+
+const Set<ClinicRole> _clinicAgendaRoles = <ClinicRole>{
+  ClinicRole.clinicAdmin,
+  ClinicRole.receptionist,
+  ClinicRole.nursing,
+  ClinicRole.technician,
+};
 
 /// A disponibilidade semanal do próprio profissional — carregada uma vez
 /// por acesso à tela; quem editar chama `setWeeklyAvailability` e invalida

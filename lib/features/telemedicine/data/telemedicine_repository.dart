@@ -506,9 +506,15 @@ class TelemedicineRepository {
           );
 
   /// Agendamentos de uma crianca (visao 360 / timeline clinica).
-  Stream<List<Appointment>> watchChildAppointments(String childId) =>
-      _appointments
-          .where('childId', isEqualTo: childId)
+  Stream<List<Appointment>> watchChildAppointments(
+    String childId, {
+    String? professionalId,
+  }) =>
+      (professionalId == null
+              ? _appointments.where('childId', isEqualTo: childId)
+              : _appointments
+                  .where('childId', isEqualTo: childId)
+                  .where('professionalId', isEqualTo: professionalId))
           .orderBy('startsAt', descending: true)
           .limit(40)
           .snapshots()

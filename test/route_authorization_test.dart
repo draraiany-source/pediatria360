@@ -165,6 +165,56 @@ void main() {
         Routes.homePath,
       );
     });
+
+    test('recepcao com membership NAO abre Paciente 360 nem triagem', () {
+      final ClinicMembership rec = ClinicMembership(
+        id: 'm1',
+        clinicId: 'c1',
+        userId: 'uid-teste',
+        role: ClinicRole.receptionist,
+        createdAt: DateTime(2026, 1, 1),
+      );
+      for (final String route in <String>[
+        '${Routes.clinicPath}/paciente/crianca-1/360',
+        '${Routes.clinicPath}/triagem/consulta-1',
+      ]) {
+        expect(
+          redirectFor(
+            location: route,
+            asUser: professional,
+            clinicMembership: rec,
+          ),
+          Routes.homePath,
+          reason: route,
+        );
+      }
+      expect(
+        redirectFor(
+          location: Routes.clinicReceptionPath,
+          asUser: professional,
+          clinicMembership: rec,
+        ),
+        isNull,
+      );
+    });
+
+    test('medico com membership abre Paciente 360', () {
+      final ClinicMembership doc = ClinicMembership(
+        id: 'm2',
+        clinicId: 'c1',
+        userId: 'uid-teste',
+        role: ClinicRole.physician,
+        createdAt: DateTime(2026, 1, 1),
+      );
+      expect(
+        redirectFor(
+          location: '${Routes.clinicPath}/paciente/crianca-1/360',
+          asUser: professional,
+          clinicMembership: doc,
+        ),
+        isNull,
+      );
+    });
   });
 
   group('ADMIN', () {

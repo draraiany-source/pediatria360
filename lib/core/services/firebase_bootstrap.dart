@@ -25,8 +25,15 @@ class FirebaseBootstrap {
   const FirebaseBootstrap._();
 
   static Future<void> run() async {
+    final FirebaseOptions base = DefaultFirebaseOptions.currentPlatform;
+    const String demoProject = AppConfig.emulatorProjectId;
     await Firebase.initializeApp(
-      options: DefaultFirebaseOptions.currentPlatform,
+      options: AppConfig.useFirebaseEmulator && demoProject.isNotEmpty
+          ? base.copyWith(
+              projectId: demoProject,
+              storageBucket: '$demoProject.appspot.com',
+            )
+          : base,
     );
 
     await AppCheckBootstrap.activateIfEnabled();
