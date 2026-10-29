@@ -43,7 +43,7 @@ class PayablesScreen extends ConsumerWidget {
               final FinancePayable p = list[i];
               return ListTile(
                 title: Text(p.description),
-                subtitle: Text('${p.category.label} 뿯½ ${p.status.label}'),
+                subtitle: Text('${p.category.label} · ${p.status.label}'),
                 trailing: Text(formatCents(p.openCents)),
                 onTap: () => _markPaid(context, ref, p),
               );

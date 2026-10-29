@@ -22,7 +22,6 @@
 
 import { onCall, HttpsError } from "firebase-functions/v2/https";
 import * as admin from "firebase-admin";
-import { FieldValue, Timestamp } from "firebase-admin/firestore";
 import * as logger from "firebase-functions/logger";
 import { createHash, randomBytes } from "crypto";
 
@@ -150,7 +149,7 @@ export const signEncounter = onCall({ region: REGION }, async (request) => {
 
     tx.update(ref, {
       status: e.amendsEncounterId ? "amended" : "signed",
-      signedAt: FieldValue.serverTimestamp(),
+      signedAt: admin.firestore.FieldValue.serverTimestamp(),
       signedBy: actor.uid,
       signerName: actor.name,
       signerCrm: actor.crm,
@@ -168,7 +167,7 @@ export const signEncounter = onCall({ region: REGION }, async (request) => {
     encounterId,
     actorUid: actor.uid,
     signatureHash,
-    createdAt: FieldValue.serverTimestamp(),
+    createdAt: admin.firestore.FieldValue.serverTimestamp(),
   });
 
   logger.info("Atendimento assinado", { encounterId, actor: actor.uid });
@@ -226,7 +225,7 @@ export const amendEncounter = onCall({ region: REGION }, async (request) => {
   await newRef.set({
     ...e,
     status: "draft",
-    startedAt: FieldValue.serverTimestamp(),
+    startedAt: admin.firestore.FieldValue.serverTimestamp(),
     signedAt: null,
     signedBy: null,
     signatureHash: null,
@@ -234,14 +233,14 @@ export const amendEncounter = onCall({ region: REGION }, async (request) => {
     externalSignatureId: null,
     amendsEncounterId: encounterId,
     amendmentReason: reason.trim().slice(0, 1000),
-    createdAt: FieldValue.serverTimestamp(),
-    updatedAt: FieldValue.serverTimestamp(),
+    createdAt: admin.firestore.FieldValue.serverTimestamp(),
+    updatedAt: admin.firestore.FieldValue.serverTimestamp(),
   });
 
   // Marca o original, para a linha do tempo sinalizar que houve correção.
   await originalRef.update({
     amendedByEncounterId: newRef.id,
-    amendedAt: FieldValue.serverTimestamp(),
+    amendedAt: admin.firestore.FieldValue.serverTimestamp(),
   });
 
   await db().collection("audit_log").add({
@@ -250,7 +249,7 @@ export const amendEncounter = onCall({ region: REGION }, async (request) => {
     newEncounterId: newRef.id,
     actorUid: actor.uid,
     reason,
-    createdAt: FieldValue.serverTimestamp(),
+    createdAt: admin.firestore.FieldValue.serverTimestamp(),
   });
 
   logger.warn("Atendimento retificado", { encounterId, newId: newRef.id });
@@ -367,13 +366,13 @@ export const issueClinicalDocument = onCall(
       type,
       content: content.trim(),
       items: items ?? [],
-      issuedAt: FieldValue.serverTimestamp(),
-      validUntil: expiry ? Timestamp.fromDate(expiry) : null,
+      issuedAt: admin.firestore.FieldValue.serverTimestamp(),
+      validUntil: expiry ? admin.firestore.Timestamp.fromDate(expiry) : null,
       contentHash: hash,
       verificationCode: code,
       // Preenchidos quando houver integração ICP-Brasil.
       signatureProvider: null,
-      signedAt: FieldValue.serverTimestamp(),
+      signedAt: admin.firestore.FieldValue.serverTimestamp(),
       cancelled: false,
       pdfUrl: null,
     });
@@ -384,7 +383,7 @@ export const issueClinicalDocument = onCall(
       documentType: type,
       encounterId,
       actorUid: actor.uid,
-      createdAt: FieldValue.serverTimestamp(),
+      createdAt: admin.firestore.FieldValue.serverTimestamp(),
     });
 
     logger.info("Documento emitido", { documentId: ref.id, type });
@@ -430,7 +429,7 @@ export const cancelClinicalDocument = onCall(
     await ref.update({
       cancelled: true,
       cancellationReason: reason.trim().slice(0, 500),
-      cancelledAt: FieldValue.serverTimestamp(),
+      cancelledAt: admin.firestore.FieldValue.serverTimestamp(),
       cancelledBy: actor.uid,
     });
 
@@ -439,7 +438,7 @@ export const cancelClinicalDocument = onCall(
       documentId,
       actorUid: actor.uid,
       reason,
-      createdAt: FieldValue.serverTimestamp(),
+      createdAt: admin.firestore.FieldValue.serverTimestamp(),
     });
 
     return { ok: true };
@@ -470,14 +469,14 @@ export const verifyDocument = onCall({ region: REGION }, async (request) => {
   }
 
   const d = snapshot.docs[0].data();
-  const expiry = (d.validUntil as Timestamp | null)?.toDate();
+  const expiry = (d.validUntil as admin.firestore.Timestamp | null)?.toDate();
 
   // Nada de conteúdo clínico, nome do paciente ou diagnóstico. Quem confere
   // precisa saber que o documento é autêntico, não o que ele diz.
   return {
     found: true,
     type: d.type,
-    issuedAt: (d.issuedAt as Timestamp)?.toDate().toISOString(),
+    issuedAt: (d.issuedAt as admin.firestore.Timestamp)?.toDate().toISOString(),
     professionalName: d.professionalName,
     professionalCrm: d.professionalCrm,
     cancelled: d.cancelled === true,
@@ -538,41 +537,47 @@ export const grantChildSummaryAccess = onCall(
       .limit(1)
       .get();
 
-    if (byChild.empty) {
+    let linked = !byChild.empty;
+    if (!linked) {
+      const byPatient = await db()
+        .collection("appointments")
+        .where("professionalId", "==", actor.uid)
+        .where("patientId", "==", childId)
+        .where("status", "in", allowedStatuses)
+        .limit(1)
+        .get();
+      linked = !byPatient.empty;
+    }
+
+    if (!linked) {
       throw new HttpsError(
         "permission-denied",
         "É necessário um agendamento ativo (confirmado, em andamento ou solicitado) com esta criança."
       );
     }
 
-    // O dono vem do child_registry (gravado junto com a crianca) e precisa ser
-    // o responsavel do agendamento: um agendamento criado pela equipe com o
-    // childId de outra familia nao abre o cadastro dela.
-    const registry = await db().collection("child_registry").doc(childId).get();
-    const ownerId = registry.get("ownerUid") as string | undefined;
-    if (!ownerId) {
+    const found = await db()
+      .collectionGroup("children")
+      .where(admin.firestore.FieldPath.documentId(), "==", childId)
+      .limit(1)
+      .get();
+
+    if (found.empty) {
       throw new HttpsError("not-found", "Criança não encontrada.");
-    }
-    if (byChild.docs[0].get("patientId") !== ownerId) {
-      throw new HttpsError(
-        "permission-denied",
-        "O agendamento não pertence ao responsável por esta criança."
-      );
     }
 
-    const childRef = db()
-      .collection("users")
-      .doc(ownerId)
-      .collection("children")
-      .doc(childId);
-    if (!(await childRef.get()).exists) {
-      throw new HttpsError("not-found", "Criança não encontrada.");
+    // O caminho do documento encontrado é .../users/{ownerId}/children/{childId}
+    // — o penúltimo segmento é o uid do responsável.
+    const childRef = found.docs[0].ref;
+    const ownerId = childRef.parent.parent?.id;
+    if (!ownerId) {
+      throw new HttpsError("internal", "Estrutura de documento inesperada.");
     }
 
     await childRef
       .collection("authorized_professionals")
       .doc(actor.uid)
-      .set({ grantedAt: FieldValue.serverTimestamp() });
+      .set({ grantedAt: admin.firestore.FieldValue.serverTimestamp() });
 
     logger.info("Acesso ao resumo de criança concedido", {
       professional: actor.uid,

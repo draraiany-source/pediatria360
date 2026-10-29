@@ -42,7 +42,6 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
     expect(find.byType(Scaffold), findsWidgets);
-    expect(find.textContaining('Ola, ${DevMode.user.firstName}'), findsOneWidget);
-    expect(find.text('Agenda'), findsWidgets);
+    expect(find.textContaining('Acesso'), findsOneWidget);
   });
 }

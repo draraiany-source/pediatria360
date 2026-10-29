@@ -1,16 +1,13 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/providers/core_providers.dart';
-import '../../../../shared/domain/entities/clinic_organization.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../clinic_org/presentation/providers/clinic_org_providers.dart';
 import '../../../notifications/presentation/notification_center_screen.dart';
 import '../../../telemedicine/data/telemedicine_repository.dart';
 import '../../../telemedicine/domain/agenda_unit_filter.dart';
-import '../../../workspace/presentation/providers/workspace_providers.dart';
 import '../../data/clinic_repository.dart';
 import '../../data/voice_consultation_repository.dart';
-import '../../domain/agenda_scope.dart';
 import '../../domain/clinic_dashboard_stats.dart';
 import '../../domain/triage_record.dart';
 import '../../domain/voice_consultation.dart';
@@ -32,20 +29,12 @@ final Provider<VoiceConsultationRepository>
   ),
 );
 
-/// Agendamentos de hoje: a clinica inteira para quem opera a recepcao;
-/// para o profissional, apenas os proprios.
+/// Agendamentos de hoje do profissional logado.
 final StreamProvider<List<Appointment>> todayClinicAppointmentsProvider =
     StreamProvider<List<Appointment>>((Ref ref) {
   final String? uid = ref.watch(currentUserProvider)?.uid;
   if (uid == null) {
     return Stream<List<Appointment>>.value(const <Appointment>[]);
-  }
-  final ClinicMembership? membership =
-      ref.watch(activeClinicMembershipProvider);
-  if (usesClinicWideAgenda(membership, ref.watch(currentWorkspaceProvider))) {
-    return ref
-        .watch(clinicRepositoryProvider)
-        .watchTodayClinicAppointments(membership!.clinicId);
   }
   return ref.watch(clinicRepositoryProvider).watchTodayAppointments(uid);
 });
@@ -88,12 +77,6 @@ final StreamProviderFamily<TriageRecord?, String> triageByAppointmentProvider =
     StreamProvider.family<TriageRecord?, String>((Ref ref, String appointmentId) {
   return ref.watch(clinicRepositoryProvider).watchTriage(appointmentId);
 });
-
-/// Campos do rascunho de voz que o profissional recusou na revisao.
-final StateProviderFamily<Set<String>, String> voiceIgnoredFieldsProvider =
-    StateProvider.family<Set<String>, String>(
-  (Ref ref, String sessionId) => <String>{},
-);
 
 final StreamProviderFamily<VoiceConsultationSession?, String>
     voiceSessionProvider =

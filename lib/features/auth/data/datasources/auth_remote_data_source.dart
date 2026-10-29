@@ -15,7 +15,7 @@ import '../../../../shared/domain/entities/app_user.dart';
 /// Acesso direto ao Firebase Auth e ao documento `users/{uid}`.
 ///
 /// O usuario do app e a *juncao* de duas fontes: a credencial (Auth) e o perfil
-/// (Firestore). Um login sem documento correspondente e um estado invalido â€”
+/// (Firestore). Um login sem documento correspondente e um estado invalido —
 /// por isso `_ensureUserDocument` roda em todo caminho de entrada.
 class AuthRemoteDataSource {
   AuthRemoteDataSource({
@@ -41,65 +41,26 @@ class AuthRemoteDataSource {
   /// Combina o estado de sessao com o documento de perfil.
   ///
   /// `switchMap` manual: a cada troca de usuario, a escuta do documento antigo
-  /// e cancelada â€” sem isso, sair e entrar com outra conta deixaria dois
+  /// e cancelada — sem isso, sair e entrar com outra conta deixaria dois
   /// listeners ativos e a UI piscaria entre os dois perfis.
   Stream<AppUser?> watchCurrentUser() {
-    late final StreamController<AppUser?> controller;
-    StreamSubscription<User?>? authSub;
-    StreamSubscription<AppUser?>? docSub;
-    String? docUid;
-    bool? docVerified;
+    return _auth.userChanges().asyncExpand<AppUser?>((User? user) {
+      if (user == null) return Stream<AppUser?>.value(null);
 
-    controller = StreamController<AppUser?>(
-      onListen: () {
-        authSub = _auth.userChanges().listen(
-          (User? user) {
-            // `userChanges` tambem dispara em renovacao de token; so reabre a
-            // escuta quando a conta ou a verificacao de e-mail mudam.
-            if (user != null &&
-                user.uid == docUid &&
-                user.emailVerified == docVerified &&
-                docSub != null) {
-              return;
-            }
-            unawaited(docSub?.cancel());
-            docSub = null;
-            docUid = user?.uid;
-            docVerified = user?.emailVerified;
-            if (user == null) {
-              controller.add(null);
-              return;
-            }
-            docSub = _watchUserDocument(user).listen(
-              controller.add,
-              onError: controller.addError,
-            );
-          },
-          onError: controller.addError,
-        );
-      },
-      onCancel: () async {
-        await docSub?.cancel();
-        await authSub?.cancel();
-      },
-    );
-    return controller.stream;
-  }
-
-  Stream<AppUser?> _watchUserDocument(User user) {
-    return _users.doc(user.uid).snapshots().asyncMap(
-      (DocumentSnapshot<Map<String, dynamic>> doc) async {
-        if (!doc.exists) {
-          // Documento ainda nao criado (primeiro login com provedor social,
-          // ou conta antiga). Cria e deixa o proximo snapshot chegar.
-          await _ensureUserDocument(user);
-          return null;
-        }
-        return AppUserMapper.fromFirestore(doc).copyWith(
-          emailVerified: user.emailVerified,
-        );
-      },
-    );
+      return _users.doc(user.uid).snapshots().asyncMap(
+        (DocumentSnapshot<Map<String, dynamic>> doc) async {
+          if (!doc.exists) {
+            // Documento ainda nao criado (primeiro login com provedor social,
+            // ou conta antiga). Cria e deixa o proximo snapshot chegar.
+            await _ensureUserDocument(user);
+            return null;
+          }
+          return AppUserMapper.fromFirestore(doc).copyWith(
+            emailVerified: user.emailVerified,
+          );
+        },
+      );
+    });
   }
 
   Future<AppUser> signInWithEmail({
@@ -166,17 +127,17 @@ class AuthRemoteDataSource {
   }
 
   Future<void> signOut() async {
-    // Remove o token PUSH antes de encerrar a sessÃ£o â€” depois de
-    // `_auth.signOut()` nÃ£o hÃ¡ mais usuÃ¡rio autenticado para gravar no
+    // Remove o token PUSH antes de encerrar a sessão — depois de
+    // `_auth.signOut()` não há mais usuário autenticado para gravar no
     // Firestore, e o token continuaria na lista. Num aparelho compartilhado
-    // (posto de saÃºde, secretaria de clÃ­nica), isso faria o prÃ³ximo usuÃ¡rio
-    // receber notificaÃ§Ã£o destinada Ã  conta anterior â€” inclusive avisos
-    // clÃ­nicos como "novo resultado de exame".
+    // (posto de saúde, secretaria de clínica), isso faria o próximo usuário
+    // receber notificação destinada à conta anterior — inclusive avisos
+    // clínicos como "novo resultado de exame".
     try {
       final String? token = await FirebaseMessaging.instance.getToken();
       if (token != null) await removeDeviceToken(token);
     } catch (_) {
-      // Falha ao remover o token nÃ£o pode impedir o logout â€” o usuÃ¡rio
+      // Falha ao remover o token não pode impedir o logout — o usuário
       // precisa conseguir sair da conta mesmo sem rede.
     }
 
@@ -222,8 +183,8 @@ class AuthRemoteDataSource {
       if (name != null) 'name': name,
       if (phone != null) 'phone': phone,
       if (photoUrl != null) 'photoUrl': photoUrl,
-      // CRM nÃ£o entra aqui de propÃ³sito â€” Ã© o dado que a equipe verificou
-      // manualmente para liberar prescriÃ§Ã£o, e nÃ£o Ã© alterÃ¡vel pelo dono.
+      // CRM não entra aqui de propósito — é o dado que a equipe verificou
+      // manualmente para liberar prescrição, e não é alterável pelo dono.
       if (specialty != null) 'specialty': specialty,
       'updatedAt': FieldValue.serverTimestamp(),
     };
@@ -256,14 +217,14 @@ class AuthRemoteDataSource {
     return _fetchUser(user);
   }
 
-  /// Registra o token deste aparelho para receber notificaÃ§Ãµes.
+  /// Registra o token deste aparelho para receber notificações.
   ///
-  /// Antes escrevia direto em `fcmTokens` no Firestore â€” o mesmo trabalho
-  /// que as Functions `registerDevice`/`unregisterDevice` jÃ¡ faziam, sem
-  /// que nada as chamasse. Duas implementaÃ§Ãµes da mesma responsabilidade Ã©
-  /// o tipo de duplicaÃ§Ã£o que diverge sem ninguÃ©m perceber. Centralizado
-  /// aqui: sÃ³ a Function grava o array, e ela roda como o prÃ³prio usuÃ¡rio
-  /// autenticado â€” nÃ£o hÃ¡ como registrar token em nome de outra conta.
+  /// Antes escrevia direto em `fcmTokens` no Firestore — o mesmo trabalho
+  /// que as Functions `registerDevice`/`unregisterDevice` já faziam, sem
+  /// que nada as chamasse. Duas implementações da mesma responsabilidade é
+  /// o tipo de duplicação que diverge sem ninguém perceber. Centralizado
+  /// aqui: só a Function grava o array, e ela roda como o próprio usuário
+  /// autenticado — não há como registrar token em nome de outra conta.
   Future<void> registerDeviceToken(String token) async {
     _requireUser();
     await _functions.httpsCallable('registerDevice').call(<String, dynamic>{

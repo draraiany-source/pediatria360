@@ -20,9 +20,16 @@ import '../providers/finance_providers.dart';
 import '../services/receipt_pdf_service.dart';
 
 class ReceivablesScreen extends ConsumerWidget {
-  const ReceivablesScreen({this.highlightId, super.key});
+  const ReceivablesScreen({
+    this.highlightId,
+    this.highlightAppointmentId,
+    super.key,
+  });
 
   final String? highlightId;
+
+  /// Vindo de uma pendencia de consulta: destaca a cobranca dessa consulta.
+  final String? highlightAppointmentId;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -40,24 +47,48 @@ class ReceivablesScreen extends ConsumerWidget {
           final List<FinanceReceivable> open = list
               .where((FinanceReceivable r) => r.effectiveStatus(now).isOpen)
               .toList(growable: false);
+          final bool noChargeForAppointment = highlightAppointmentId != null &&
+              !open.any(
+                (FinanceReceivable r) =>
+                    r.appointmentId == highlightAppointmentId,
+              );
           if (open.isEmpty) {
-            return const Center(child: Text('Nenhuma conta em aberto.'));
+            return Center(
+              child: Text(
+                noChargeForAppointment
+                    ? 'Nenhuma cobranca em aberto para esta consulta.'
+                    : 'Nenhuma conta em aberto.',
+              ),
+            );
           }
+          final int offset = noChargeForAppointment ? 1 : 0;
           return ListView.separated(
             padding: const EdgeInsets.all(AppSpacing.lg),
-            itemCount: open.length,
+            itemCount: open.length + offset,
             separatorBuilder: (_, __) => const SizedBox(height: AppSpacing.sm),
-            itemBuilder: (BuildContext context, int i) {
-              final FinanceReceivable r = open[i];
+            itemBuilder: (BuildContext context, int index) {
+              if (index < offset) {
+                return const Card(
+                  child: ListTile(
+                    leading: Icon(Icons.info_outline),
+                    title: Text(
+                      'Nenhuma cobranca em aberto para esta consulta.',
+                    ),
+                  ),
+                );
+              }
+              final FinanceReceivable r = open[index - offset];
               final ReceivableStatus st = r.effectiveStatus(now);
-              final bool hi = highlightId != null && r.id == highlightId;
+              final bool hi = (highlightId != null && r.id == highlightId) ||
+                  (highlightAppointmentId != null &&
+                      r.appointmentId == highlightAppointmentId);
               return Material(
                 color: hi ? AppColors.brand.withValues(alpha: 0.08) : Colors.white,
                 borderRadius: BorderRadius.circular(12),
                 child: ListTile(
                   title: Text(r.description.isNotEmpty ? r.description : r.id),
                   subtitle: Text(
-                    '${fmt.format(r.dueAt)} 뿯½ ${st.label} 뿯½ '
+                    '${fmt.format(r.dueAt)} · ${st.label} · '
                     'Aberto ${formatCents(r.openCents)}',
                   ),
                   isThreeLine: true,

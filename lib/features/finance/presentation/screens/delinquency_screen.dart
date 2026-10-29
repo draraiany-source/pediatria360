@@ -45,7 +45,7 @@ class DelinquencyScreen extends ConsumerWidget {
               return ListTile(
                 title: Text(r.description),
                 subtitle: Text(
-                  'Venceu ${fmt.format(r.dueAt)} 뿯½ $daysLate dia(s) 뿯½ '
+                  'Venceu ${fmt.format(r.dueAt)} · $daysLate dia(s) · '
                   '${formatCents(r.openCents)}',
                 ),
                 trailing: IconButton(

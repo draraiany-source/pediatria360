@@ -10,7 +10,6 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_icons.dart';
 import '../../../../core/theme/app_tokens.dart';
 import '../../../../core/widgets/app_icon.dart';
-import '../../../../core/widgets/back_or_home_button.dart';
 import '../../../../core/widgets/brand_ui.dart';
 import '../../../../core/widgets/state_views.dart';
 import '../../../telemedicine/data/telemedicine_repository.dart';
@@ -134,7 +133,6 @@ class _ClinicReceptionScreenState extends ConsumerState<ClinicReceptionScreen>
     return Scaffold(
       backgroundColor: AppColors.lightBackground,
       appBar: AppBar(
-        leading: const BackOrHomeButton(),
         title: const Text('Recepção'),
         backgroundColor: Colors.white,
         foregroundColor: AppColors.navy,
@@ -218,44 +216,44 @@ class _BoardTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final DateFormat fmt = DateFormat('HH:mm');
-    return ListView(
-      padding: const EdgeInsets.all(AppSpacing.lg),
-      children: <Widget>[
-        SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
+          final DateFormat fmt = DateFormat('HH:mm');
+          return ListView(
+            padding: const EdgeInsets.all(AppSpacing.lg),
+            children: <Widget>[
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
             children: columns.map((ClinicWorkflowStatus col) {
-              final List<Appointment> items = list
+                    final List<Appointment> items = list
                   .where((Appointment a) => workflowOf(a) == col)
-                  .toList(growable: false);
-              return Container(
+                        .toList(growable: false);
+                    return Container(
                 width: 280,
-                margin: const EdgeInsets.only(right: AppSpacing.md),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: <Widget>[
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: AppSpacing.md,
-                        vertical: AppSpacing.sm,
-                      ),
-                      decoration: BoxDecoration(
-                        color: AppColors.softBlue,
-                        borderRadius: AppRadius.mdAll,
-                      ),
-                      child: Text(
-                        '${col.label} (${items.length})',
-                        style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                              color: AppColors.navy,
-                              fontWeight: FontWeight.w800,
+                      margin: const EdgeInsets.only(right: AppSpacing.md),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: <Widget>[
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: AppSpacing.md,
+                              vertical: AppSpacing.sm,
                             ),
-                      ),
-                    ),
-                    const SizedBox(height: AppSpacing.sm),
-                    ...items.map(
-                      (Appointment a) => Padding(
+                            decoration: BoxDecoration(
+                              color: AppColors.softBlue,
+                              borderRadius: AppRadius.mdAll,
+                            ),
+                            child: Text(
+                              '${col.label} (${items.length})',
+                        style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                                    color: AppColors.navy,
+                                    fontWeight: FontWeight.w800,
+                                  ),
+                            ),
+                          ),
+                          const SizedBox(height: AppSpacing.sm),
+                          ...items.map(
+                            (Appointment a) => Padding(
                         padding: const EdgeInsets.only(bottom: AppSpacing.sm),
                         child: _ReceptionCard(
                           appointment: a,
@@ -477,15 +475,15 @@ class _CheckInTab extends StatelessWidget {
                 'pediatria360://checkin/${a.id}';
             return Padding(
               padding: const EdgeInsets.only(bottom: AppSpacing.sm),
-              child: AppCard(
-                color: Colors.white,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: <Widget>[
-                    Text(
-                      a.childName?.isNotEmpty == true
-                          ? a.childName!
-                          : 'Paciente',
+                              child: AppCard(
+                                color: Colors.white,
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: <Widget>[
+                                    Text(
+                                      a.childName?.isNotEmpty == true
+                                          ? a.childName!
+                                          : 'Paciente',
                       style: Theme.of(context).textTheme.titleSmall?.copyWith(
                             fontWeight: FontWeight.w800,
                             color: AppColors.navy,
@@ -504,8 +502,8 @@ class _CheckInTab extends StatelessWidget {
                             deepLink,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
-                            style: Theme.of(context)
-                                .textTheme
+                                      style: Theme.of(context)
+                                          .textTheme
                                 .labelSmall
                                 ?.copyWith(color: AppColors.inkMuted),
                           ),
@@ -576,16 +574,16 @@ class _ReceptionCard extends StatelessWidget {
                 ? appointment.childName!
                 : 'Paciente',
             style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                  color: AppColors.navy,
-                  fontWeight: FontWeight.w800,
-                ),
-          ),
-          Text(
+                                            color: AppColors.navy,
+                                            fontWeight: FontWeight.w800,
+                                          ),
+                                    ),
+                                    Text(
             '$timeLabel · ${appointment.type.label}',
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: AppColors.inkMuted,
-                ),
-          ),
+                                            color: AppColors.inkMuted,
+                                          ),
+                                    ),
           Text(
             appointment.professionalName,
             style: Theme.of(context).textTheme.bodySmall,
@@ -606,29 +604,29 @@ class _ReceptionCard extends StatelessWidget {
               style: Theme.of(context).textTheme.bodySmall,
             ),
           if (appointment.reason != null && appointment.reason!.isNotEmpty)
-            Text(
+                                      Text(
               appointment.reason!,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
+                                        maxLines: 2,
+                                        overflow: TextOverflow.ellipsis,
               style: Theme.of(context).textTheme.bodySmall,
-            ),
-          const SizedBox(height: AppSpacing.sm),
-          Wrap(
-            spacing: AppSpacing.xs,
-            runSpacing: AppSpacing.xs,
-            children: <Widget>[
+                                      ),
+                                    const SizedBox(height: AppSpacing.sm),
+                                    Wrap(
+                                      spacing: AppSpacing.xs,
+                                      runSpacing: AppSpacing.xs,
+                                      children: <Widget>[
               if (workflow == ClinicWorkflowStatus.scheduled ||
                   workflow == ClinicWorkflowStatus.confirmed)
-                TextButton(
+                                          TextButton(
                   onPressed: onCheckIn,
-                  child: const Text('Check-in'),
-                ),
-              TextButton(
-                onPressed: () => context.push(
+                                            child: const Text('Check-in'),
+                                          ),
+                                        TextButton(
+                                          onPressed: () => context.push(
                   Routes.clinicTriage(appointment.id),
-                ),
-                child: const Text('Triagem'),
-              ),
+                                          ),
+                                          child: const Text('Triagem'),
+                                        ),
               if (workflow == ClinicWorkflowStatus.arrived ||
                   workflow == ClinicWorkflowStatus.triage ||
                   workflow == ClinicWorkflowStatus.waitingDoctor)
@@ -651,15 +649,15 @@ class _ReceptionCard extends StatelessWidget {
                 child: const Text('Cancelar'),
               ),
               if (appointment.childId != null)
-                TextButton(
-                  onPressed: () => context.push(
+                                          TextButton(
+                                            onPressed: () => context.push(
                     Routes.clinicPatient360(appointment.childId!),
-                  ),
-                  child: const Text('360'),
-                ),
-            ],
-          ),
-        ],
+                                            ),
+                                            child: const Text('360'),
+                                          ),
+                                      ],
+                                    ),
+                                  ],
       ),
     );
   }

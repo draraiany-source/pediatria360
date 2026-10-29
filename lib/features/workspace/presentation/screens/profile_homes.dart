@@ -15,8 +15,6 @@ import '../../../../core/widgets/capi_illustration.dart';
 import '../../../../core/widgets/state_views.dart';
 import '../../../../shared/domain/entities/app_user.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
-import '../../../clinic/presentation/providers/clinic_providers.dart'
-    show unitScopedTodayClinicAppointmentsProvider;
 import '../../../notifications/presentation/notification_center_screen.dart';
 import '../../../telemedicine/data/telemedicine_repository.dart';
 import '../../../telemedicine/presentation/agenda_providers.dart'
@@ -144,6 +142,7 @@ class _NavTile extends StatelessWidget {
     required this.icon,
     required this.color,
     required this.onTap,
+    this.trailing,
   });
 
   final String title;
@@ -151,6 +150,7 @@ class _NavTile extends StatelessWidget {
   final IconData icon;
   final Color color;
   final VoidCallback onTap;
+  final Widget? trailing;
 
   @override
   Widget build(BuildContext context) {
@@ -186,6 +186,7 @@ class _NavTile extends StatelessWidget {
               ],
             ),
           ),
+          if (trailing != null) trailing!,
           const Icon(Icons.chevron_right_rounded, color: AppColors.navy),
         ],
       ),
@@ -379,13 +380,6 @@ class _ProfessionalHome extends ConsumerWidget {
                     onTap: () => context.go(Routes.agendaPath),
                   ),
                   _QuickSquare(
-                    title: 'Consultorio',
-                    subtitle: 'Gestao 360',
-                    icon: Icons.local_hospital_outlined,
-                    color: AppColors.navy,
-                    onTap: () => context.go(Routes.clinicPath),
-                  ),
-                  _QuickSquare(
                     title: 'Prontuario',
                     subtitle: 'Pacientes',
                     icon: Icons.folder_shared_outlined,
@@ -495,7 +489,7 @@ class _ReceptionHome extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final AsyncValue<List<Appointment>> agendaAsync =
-        ref.watch(unitScopedTodayClinicAppointmentsProvider);
+        ref.watch(unitScopedMyAgendaProvider);
     final List<Appointment> agenda =
         agendaAsync.valueOrNull ?? const <Appointment>[];
     final DateTime now = DateTime.now();

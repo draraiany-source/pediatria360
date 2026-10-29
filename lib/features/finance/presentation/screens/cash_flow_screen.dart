@@ -50,7 +50,7 @@ class CashFlowScreen extends ConsumerWidget {
                   (CashFlowBucket b) => ListTile(
                     title: Text(b.label),
                     subtitle: Text(
-                      'Entrada ${formatCents(b.inflows)} 뿯½ '
+                      'Entrada ${formatCents(b.inflows)} · '
                       'Saida ${formatCents(b.outflows)}',
                     ),
                     trailing: Text(formatCents(b.periodBalance)),

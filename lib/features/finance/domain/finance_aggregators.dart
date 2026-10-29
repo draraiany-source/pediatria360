@@ -34,6 +34,7 @@ class FinanceDashboardKpis {
   }) {
     int revenueInPeriod = 0;
     int paidCount = 0;
+    int totalBilled = 0;
     int arOpen = 0;
     int overdue = 0;
     int arTotalOpen = 0;
@@ -59,6 +60,7 @@ class FinanceDashboardKpis {
           r.professionalName ?? r.professionalId ?? 'Sem profissional';
       byProf[profKey] = (byProf[profKey] ?? 0) + r.paidCents;
       byOrigin[r.origin] = (byOrigin[r.origin] ?? 0) + r.paidCents;
+      totalBilled += r.totalCents;
     }
 
     int expensesInPeriod = 0;

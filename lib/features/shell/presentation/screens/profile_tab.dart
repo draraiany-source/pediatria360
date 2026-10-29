@@ -52,8 +52,7 @@ class ProfileTab extends ConsumerWidget {
     );
 
     if (confirmed ?? false) {
-      final bool ok = await ref.read(authControllerProvider.notifier).signOut();
-      if (ok && context.mounted) context.go(Routes.loginPath);
+      await ref.read(authControllerProvider.notifier).signOut();
     }
   }
 

@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/error/failures.dart';
-import '../../../../core/router/route_access.dart';
 import '../../../../core/router/routes.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_tokens.dart';
@@ -119,25 +118,23 @@ class BiClinicalScreen extends ConsumerWidget {
               ),
             ),
           const SizedBox(height: AppSpacing.lg),
-          if (canOpenRoute(ref, Routes.patientsPath))
-            QuickAccessCard(
-              label: 'Pacientes',
-              subtitle: 'Carteira clinica',
-              icon: Icons.groups_outlined,
-              color: AppColors.brand,
-              wide: true,
-              onTap: () => context.go(Routes.patientsPath),
-            ),
+          QuickAccessCard(
+            label: 'Pacientes',
+            subtitle: 'Carteira clinica',
+            icon: Icons.groups_outlined,
+            color: AppColors.brand,
+            wide: true,
+            onTap: () => context.go(Routes.patientsPath),
+          ),
           const SizedBox(height: AppSpacing.sm),
-          if (canOpenRoute(ref, Routes.clinicPendingPath))
-            QuickAccessCard(
-              label: 'Central de pendencias',
-              subtitle: 'Retornos, vacinas e exames',
-              icon: Icons.inbox_outlined,
-              color: AppColors.warning,
-              wide: true,
-              onTap: () => context.push(Routes.clinicPendingPath),
-            ),
+          QuickAccessCard(
+            label: 'Central de pendencias',
+            subtitle: 'Retornos, vacinas e exames',
+            icon: Icons.inbox_outlined,
+            color: AppColors.warning,
+            wide: true,
+            onTap: () => context.push(Routes.clinicPendingPath),
+          ),
           const SizedBox(height: AppSpacing.xl),
           Card(
             child: Padding(

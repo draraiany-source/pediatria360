@@ -56,8 +56,7 @@ async function canWatch(uid: string, videoGuid: string): Promise<boolean> {
     .limit(1)
     .get();
 
-  // Video fora de qualquer aula (enviado e ainda nao publicado): so a equipe.
-  if (lessons.empty) return user.role === "admin";
+  if (lessons.empty) return planActive === true;
 
   const lesson = lessons.docs[0];
   if (lesson.data().isFree === true) return true;
@@ -143,7 +142,9 @@ export const createBunnyVideo = onCall(
 export const getBunnyVideo = onCall(
   { region: REGION, secrets: [BUNNY_STREAM_API_KEY] },
   async (request) => {
-    await requireAdmin(request.auth?.uid);
+    if (!request.auth?.uid) {
+      throw new HttpsError("unauthenticated", "Entre para continuar.");
+    }
 
     const { videoGuid } = request.data as { videoGuid: string };
     const libraryId = BUNNY_LIBRARY_ID.value();
@@ -253,51 +254,34 @@ export const deleteBunnyVideo = onCall(
  *
  * Configure em: Stream > Library > Webhook URL.
  */
-export const bunnyWebhook = onRequest(
-  { region: REGION, secrets: [BUNNY_STREAM_API_KEY] },
-  async (req, res) => {
-    if (req.method !== "POST") {
-      res.status(405).send("Metodo nao permitido");
-      return;
-    }
+export const bunnyWebhook = onRequest({ region: REGION }, async (req, res) => {
+  const { VideoGuid, Status } = req.body as {
+    VideoGuid?: string;
+    Status?: number;
+  };
 
-    const { VideoGuid } = req.body as { VideoGuid?: string };
-
-    if (!VideoGuid || !/^[0-9a-fA-F-]{8,64}$/.test(VideoGuid)) {
-      res.status(400).send("VideoGuid ausente");
-      return;
-    }
-
-    // O endpoint e publico e o corpo nao e assinado: o aviso so dispara a
-    // consulta, e o status gravado e o que a API do Bunny responder.
-    const response = await fetch(
-      `${STREAM_API}/${BUNNY_LIBRARY_ID.value()}/videos/${VideoGuid}`,
-      { headers: { AccessKey: BUNNY_STREAM_API_KEY.value() } }
-    );
-    if (!response.ok) {
-      res.status(404).send("Video desconhecido");
-      return;
-    }
-    const Status = ((await response.json()) as { status?: number }).status;
-
-    logger.info("Webhook do Bunny", { VideoGuid, Status });
-
-    // Atualiza toda aula que aponte para este vídeo.
-    const lessons = await db()
-      .collectionGroup("lessons")
-      .where("videoGuid", "==", VideoGuid)
-      .get();
-
-    const batch = db().batch();
-    lessons.docs.forEach((doc) =>
-      batch.update(doc.ref, {
-        videoStatus: Status,
-        videoReady: Status === 4,
-        updatedAt: FieldValue.serverTimestamp(),
-      })
-    );
-    await batch.commit();
-
-    res.status(200).send("ok");
+  if (!VideoGuid) {
+    res.status(400).send("VideoGuid ausente");
+    return;
   }
-);
+
+  logger.info("Webhook do Bunny", { VideoGuid, Status });
+
+  // Atualiza toda aula que aponte para este vídeo.
+  const lessons = await db()
+    .collectionGroup("lessons")
+    .where("videoGuid", "==", VideoGuid)
+    .get();
+
+  const batch = db().batch();
+  lessons.docs.forEach((doc) =>
+    batch.update(doc.ref, {
+      videoStatus: Status,
+      videoReady: Status === 4,
+      updatedAt: FieldValue.serverTimestamp(),
+    })
+  );
+  await batch.commit();
+
+  res.status(200).send("ok");
+});

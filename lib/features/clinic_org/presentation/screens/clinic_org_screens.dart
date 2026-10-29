@@ -6,7 +6,6 @@ import '../../../../core/router/routes.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_tokens.dart';
 import '../../../../core/utils/result.dart';
-import '../../../../core/widgets/back_or_home_button.dart';
 import '../../../../core/widgets/brand_ui.dart';
 import '../../../../core/widgets/state_views.dart';
 import '../../../../shared/domain/entities/clinic_organization.dart';
@@ -30,7 +29,6 @@ class ClinicOrgHubScreen extends ConsumerWidget {
     return Scaffold(
       backgroundColor: AppColors.lightBackground,
       appBar: AppBar(
-        leading: const BackOrHomeButton(),
         title: const Text('Minha clinica'),
         backgroundColor: Colors.white,
         foregroundColor: AppColors.navy,
@@ -323,11 +321,7 @@ class _CreateClinicScreenState extends ConsumerState<CreateClinicScreen> {
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('Clinica criada e definida como ativa.')),
     );
-    if (context.canPop()) {
-      context.pop();
-    } else {
-      context.go(Routes.clinicOrgPath);
-    }
+    context.go(Routes.clinicOrgPath);
   }
 
   @override

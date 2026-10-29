@@ -357,28 +357,8 @@ class AppShell extends ConsumerWidget {
         location.startsWith('${destination.route}/')) {
       return;
     }
-    if (_isShellRoute(destination.route)) {
-      context.go(destination.route);
-    } else {
-      // Rotas fora do ShellRoute abrem por cima para manter o voltar.
-      context.push(destination.route);
-    }
+    context.go(destination.route);
   }
-
-  static const List<String> _shellRoots = <String>[
-    Routes.homePath,
-    Routes.clinicPath,
-    Routes.agendaPath,
-    Routes.patientsPath,
-    Routes.notificationsPath,
-    Routes.libraryPath,
-    Routes.aiPath,
-    Routes.toolsPath,
-    Routes.profilePath,
-  ];
-
-  static bool _isShellRoute(String route) =>
-      _shellRoots.any((String r) => route == r || route.startsWith('$r/'));
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -435,10 +415,7 @@ class AppShell extends ConsumerWidget {
       ScreenSize.medium || ScreenSize.expanded => Scaffold(
           body: Column(
             children: <Widget>[
-              PremiumTopBar(
-                notificationCount: unread,
-                showSearch: workspace == WorkspaceProfile.professional,
-              ),
+              PremiumTopBar(notificationCount: unread),
               Expanded(
                 child: Row(
                   children: <Widget>[
@@ -510,10 +487,7 @@ class AppShell extends ConsumerWidget {
               Expanded(
                 child: Column(
                   children: <Widget>[
-                    PremiumTopBar(
-                notificationCount: unread,
-                showSearch: workspace == WorkspaceProfile.professional,
-              ),
+                    PremiumTopBar(notificationCount: unread),
                     Expanded(child: content),
                   ],
                 ),
@@ -822,14 +796,8 @@ class _PremiumSidebar extends ConsumerWidget {
                             fontWeight: FontWeight.w700,
                           ),
                         ),
-                        onTap: () async {
-                          final bool ok = await ref
-                              .read(authControllerProvider.notifier)
-                              .signOut();
-                          if (ok && context.mounted) {
-                            context.go(Routes.loginPath);
-                          }
-                        },
+                        onTap: () =>
+                            ref.read(authControllerProvider.notifier).signOut(),
                         shape: RoundedRectangleBorder(
                           borderRadius: AppRadius.lgAll,
                         ),
