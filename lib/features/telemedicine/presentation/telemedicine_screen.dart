@@ -13,6 +13,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_icons.dart';
 import '../../../core/widgets/app_icon.dart';
 import '../../../core/theme/app_tokens.dart';
+import '../../../core/utils/clinical_access.dart' show guestSessionFailure;
 import '../../../core/utils/result.dart';
 import '../../../core/utils/validators.dart';
 import '../../../core/widgets/app_widgets.dart';
@@ -56,10 +57,7 @@ final StreamProvider<List<Appointment>> myAgendaProvider =
   if (DevMode.isEnabled &&
       ref.watch(firebaseAuthProvider).currentUser == null) {
     return Stream<List<Appointment>>.error(
-      const PermissionFailure(
-        'Modo demonstração: entre com conta profissional verificada '
-        'para carregar a agenda real.',
-      ),
+      guestSessionFailure('As consultas da agenda real'),
     );
   }
   final AppUser? user = ref.watch(currentUserProvider);

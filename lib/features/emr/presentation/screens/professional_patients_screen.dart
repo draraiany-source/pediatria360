@@ -6,7 +6,6 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/config/app_assets.dart';
 import '../../../../core/config/capi_pose.dart';
-import '../../../../core/error/failures.dart';
 import '../../../../core/config/dev_mode.dart';
 import '../../../../core/providers/core_providers.dart';
 import '../../../../core/responsive/responsive.dart';
@@ -99,10 +98,7 @@ final StreamProvider<List<PatientSummary>> professionalPatientsProvider =
   if (DevMode.isEnabled &&
       ref.watch(firebaseAuthProvider).currentUser == null) {
     return Stream<List<PatientSummary>>.error(
-      const PermissionFailure(
-        'Modo demonstração: entre com conta profissional verificada '
-        'para ver pacientes reais.',
-      ),
+      guestSessionFailure('Os pacientes reais'),
     );
   }
   final String? uid = ref.watch(currentUserProvider)?.uid;
