@@ -1,3 +1,6 @@
+import java.io.FileInputStream
+import java.util.Properties
+
 plugins {
     id("com.android.application")
     id("kotlin-android")
@@ -5,6 +8,19 @@ plugins {
     id("com.google.gms.google-services")
     id("com.google.firebase.crashlytics")
 }
+
+// Chave de upload da Play Store, fora do Git (android/key.properties):
+//   storePassword=...  keyPassword=...  keyAlias=upload  storeFile=/caminho/upload.jks
+// Sem o arquivo, o release só é gerado com ALLOW_DEBUG_SIGNED_RELEASE=true
+// (APK interno de homologação), nunca para envio à loja.
+val keystorePropertiesFile = rootProject.file("key.properties")
+val keystoreProperties = Properties()
+val hasReleaseKeystore = keystorePropertiesFile.exists()
+if (hasReleaseKeystore) {
+    keystoreProperties.load(FileInputStream(keystorePropertiesFile))
+}
+val allowDebugSignedRelease =
+    (System.getenv("ALLOW_DEBUG_SIGNED_RELEASE") ?: "false") == "true"
 
 android {
     namespace = "app.pediatria360"
@@ -32,13 +48,41 @@ android {
         multiDexEnabled = true
     }
 
+    signingConfigs {
+        if (hasReleaseKeystore) {
+            create("release") {
+                keyAlias = keystoreProperties.getProperty("keyAlias")
+                keyPassword = keystoreProperties.getProperty("keyPassword")
+                storeFile = file(keystoreProperties.getProperty("storeFile"))
+                storePassword = keystoreProperties.getProperty("storePassword")
+            }
+        }
+    }
+
     buildTypes {
         release {
-            // Trocar por keystore propria antes da Play Store.
-            signingConfig = signingConfigs.getByName("debug")
+            signingConfig = when {
+                hasReleaseKeystore -> signingConfigs.getByName("release")
+                allowDebugSignedRelease -> signingConfigs.getByName("debug")
+                else -> null
+            }
             isMinifyEnabled = false
             isShrinkResources = false
         }
+    }
+}
+
+gradle.taskGraph.whenReady {
+    val buildsRelease = allTasks.any {
+        it.project == project &&
+            (it.name == "assembleRelease" || it.name == "bundleRelease")
+    }
+    if (buildsRelease && !hasReleaseKeystore && !allowDebugSignedRelease) {
+        throw GradleException(
+            "Release sem android/key.properties. Crie a chave de upload " +
+                "(veja PUBLICACAO_PENDENCIAS_USUARIO.md) ou, só para APK " +
+                "interno de homologação, defina ALLOW_DEBUG_SIGNED_RELEASE=true."
+        )
     }
 }
 

@@ -12,18 +12,33 @@ class AppConfig {
   const AppConfig._();
 
   static const String appName = 'Pediatria 360';
-  static const String supportEmail = 'suporte@pediatria360.app';
 
   // ------------------------------------------------------------------- Legal
   //
-  // Placeholders deliberados — não é URL real. O aceite obrigatório no
-  // cadastro (ver RoleSetupScreen) precisa de algo para abrir, mas o texto
-  // dos documentos ainda não foi escrito nem revisado por advogado. Trocar
-  // por URL real antes de publicar é bloqueador de lançamento, não detalhe.
-  static const String termsOfServiceUrl =
-      'https://pediatria360.app/termos-de-uso';
-  static const String privacyPolicyUrl =
-      'https://pediatria360.app/politica-de-privacidade';
+  // Vêm do build (`--dart-define`), nunca do código: domínio, textos, CNPJ e
+  // encarregado ainda não foram definidos pela titular. Vazio = não
+  // publicado; a tela avisa em vez de abrir endereço inexistente, e
+  // `tools/release/build_prod.ps1` recusa build de produção sem eles.
+  static const String supportEmail = String.fromEnvironment('SUPPORT_EMAIL');
+  static const String termsOfServiceUrl = String.fromEnvironment('TERMS_URL');
+  static const String privacyPolicyUrl = String.fromEnvironment('PRIVACY_URL');
+
+  /// Controlador dos dados (LGPD art. 5º, VI): razão social e CNPJ.
+  static const String dataControllerName =
+      String.fromEnvironment('DATA_CONTROLLER_NAME');
+  static const String dataControllerCnpj =
+      String.fromEnvironment('DATA_CONTROLLER_CNPJ');
+
+  /// Contato do encarregado (DPO), LGPD art. 41.
+  static const String dpoEmail = String.fromEnvironment('DPO_EMAIL');
+
+  static bool get legalConfigured =>
+      supportEmail.isNotEmpty &&
+      termsOfServiceUrl.isNotEmpty &&
+      privacyPolicyUrl.isNotEmpty &&
+      dataControllerName.isNotEmpty &&
+      dataControllerCnpj.isNotEmpty &&
+      dpoEmail.isNotEmpty;
 
   // ------------------------------------------------------- Recursos incompletos
   //

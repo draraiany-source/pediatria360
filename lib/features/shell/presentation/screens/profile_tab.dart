@@ -294,6 +294,17 @@ class ProfileTab extends ConsumerWidget {
                           title: 'Ajuda',
                           subtitle: 'Dúvidas frequentes e suporte',
                           onTap: () async {
+                            if (AppConfig.supportEmail.isEmpty) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text(
+                                    'O canal de suporte ainda não foi '
+                                    'configurado nesta versão.',
+                                  ),
+                                ),
+                              );
+                              return;
+                            }
                             final Uri mail = Uri(
                               scheme: 'mailto',
                               path: AppConfig.supportEmail,

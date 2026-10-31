@@ -15,9 +15,19 @@ void main() {
       expect(AppConfig.appCheckEnabled, isFalse);
     });
 
-    test('Termos e Privacidade nao sao URLs inventadas vazias', () {
-      expect(AppConfig.termsOfServiceUrl, startsWith('https://'));
-      expect(AppConfig.privacyPolicyUrl, startsWith('https://'));
+    test('Termos, Privacidade e controlador vem do build, sem valor inventado',
+        () {
+      for (final String url in <String>[
+        AppConfig.termsOfServiceUrl,
+        AppConfig.privacyPolicyUrl,
+      ]) {
+        if (url.isNotEmpty) expect(url, startsWith('https://'));
+      }
+      if (AppConfig.termsOfServiceUrl.isEmpty ||
+          AppConfig.privacyPolicyUrl.isEmpty ||
+          AppConfig.dataControllerCnpj.isEmpty) {
+        expect(AppConfig.legalConfigured, isFalse);
+      }
     });
   });
 }

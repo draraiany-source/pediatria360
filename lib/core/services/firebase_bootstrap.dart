@@ -25,6 +25,11 @@ class FirebaseBootstrap {
   const FirebaseBootstrap._();
 
   static Future<void> run() async {
+    if (AppConfig.isProduction && AppConfig.useFirebaseEmulator) {
+      throw StateError(
+        'Build ENV=prod não pode usar USE_FIREBASE_EMULATOR=true.',
+      );
+    }
     final FirebaseOptions base = DefaultFirebaseOptions.currentPlatform;
     const String demoProject = AppConfig.emulatorProjectId;
     await Firebase.initializeApp(
