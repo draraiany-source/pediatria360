@@ -96,3 +96,6 @@ tools/*.txt
 # Segredos locais do emulador de Functions
 *.secret.local
 .secret.local
+
+# Sessões do compilador Kotlin (Gradle)
+android/.kotlin/

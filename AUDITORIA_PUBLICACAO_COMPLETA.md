@@ -24,6 +24,30 @@
 | OMS / PNI | **Ainda aproximacao / conferencia pendente** — avisos na UI; dados nao substituidos |
 | App Check / keystore / lojas | **Ainda pendente** (depende de voce + Firebase Console) |
 
+### Atualizacao 2026-10-29 (conferida no codigo enviado ao GitHub)
+
+Detalhes e logs: `docs/homologacao/publicacao-20261029/RELATORIO.md`.
+Pendencias da titular: `PUBLICACAO_PENDENCIAS_USUARIO.md`.
+
+| Achado | Situacao em 29/10 |
+|--------|-------------------|
+| Etapas 1-3 e auditoria tela por tela so locais | **Enviadas** na branch `feat/fluxo-atendimento` (PR para `main`) |
+| Erro "Sua sessao nao tem permissao" em Pacientes/Agenda | **Causa corrigida**: mensagem generica escondia sessao de demonstracao sem login e falta de autorizacao do responsavel. Regras conferidas com as consultas exatas (12/12); nada foi liberado |
+| Assinatura release Android com chave debug | **Corrigido**: `key.properties`; sem ele o release de loja e recusado |
+| `google-services.json` ausente | Local (fora do Git); baixar em cada maquina de build |
+| Bundle iOS divergente do Firebase / Info.plist com chaves duplicadas | **Corrigido** (`app.pediatria360`) |
+| Termos/Privacidade/suporte com dominio nao confirmado | **Removidos do codigo**; vem do build. Controlador e DPO adicionados. Ainda **sem valores** (dependem da titular) |
+| ENV=prod | **Garantido** por `tools/release/build_prod.ps1`; prod + emulador recusado |
+| Curvas OMS | Dados atuais sao LMS **oficiais** (repo WHO anthro), amostrados por mes; **conferencia clinica pendente** |
+| Calendario PNI | Sem data de versao; **conferencia clinica pendente** |
+| App Check | Cliente pronto, **desligado**; depende do Console |
+| Regras/indices/Functions no Firebase | **Nao publicados** (sem autorizacao). Homologacao web usa o projeto real `pediatria360-app` |
+| Video / pagamento / ICP / TISS / voz | **OFF**, nao concluidos |
+| Testes | analyze 0 erros/0 avisos; Functions 104/104; regras 346/346 + 12/12; Flutter 890 + 1 teste corrigido e reexecutado |
+| Builds | web ENV=prod gerado (`build/web`, local); APK ENV=prod **falhou** (Gradle sem memoria: 7,9 GB RAM); AAB nao gerado (sem chave de upload); IPA nao gerado (exige Mac) |
+
+**Classificacao continua: NAO PRONTO PARA PUBLICACAO EM LOJA nem para dados reais.**
+
 ---
 
 ## 0. Instrucoes ao programador (gerar PDF)
