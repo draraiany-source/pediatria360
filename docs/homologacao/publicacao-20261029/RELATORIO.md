@@ -161,3 +161,38 @@ perfil pela interface nesse projeto; fornecer os itens de
 `PUBLICACAO_PENDENCIAS_USUARIO.md`; gerar o AAB numa máquina com 16 GB de RAM
 ou mais (ou com a memória do Gradle reduzida); validação clínica de OMS, PNI e
 calculadoras.
+
+## 8. Execução autorizada em 04/11/2026
+
+A titular autorizou: envio ao GitHub, publicação no projeto **atual**
+`pediatria360-app` (escolha explícita, em vez de um projeto separado) e
+criação de contas fictícias.
+
+- **GitHub:** `feat/fluxo-atendimento` enviada sem force (último commit
+  `39132d3`). Os backups `backup/wip-fluxo-atendimento-20261029` e
+  `backup/wip-handoff-worktree-20261029` também foram enviados. A `main` não é
+  protegida. PR aberto: <https://github.com/draraiany-source/pediatria360/pull/7>.
+  A branch tem 90 commits que a `main` ainda não tem (782 arquivos).
+- **Regras e índices do Firestore:** publicados com sucesso. O conteúdo é
+  idêntico ao do commit `39132d3` (no disco, a diferença é só de final de linha).
+- **Regras do Storage:** **não publicadas.** O Storage ainda não foi ativado no
+  projeto (Console > Storage > "Get Started").
+- **Functions:** **não publicadas.** O projeto precisa do plano Blaze. Sem as
+  Functions, agendar, confirmar, convidar e todas as operações feitas no servidor
+  falham na homologação.
+- **Hosting:** o site principal não foi alterado. O canal
+  `homologacao-20261104` continua com o build de 29/10.
+- **Contas fictícias:** criadas por `tools/homologacao/seed_demo_projeto.js`
+  (exige `CONFIRMAR_PROJETO=pediatria360-app` e recusa rodar com emulador).
+  Contas: `familia.demo@`, `profissional.demo@` e `recepcao.demo@exemplo.invalid`;
+  clínica `clinica-demo-ficticia`; uma criança fictícia com autorização para a
+  profissional; uma consulta fictícia. As senhas são aleatórias, foram entregues
+  só no chat e **não estão no repositório**. Rodar o script de novo troca as senhas.
+- **Conferência no projeto publicado (REST, com login real das 3 contas):**
+  - permitido: agenda própria da profissional; agenda da clínica para a
+    recepção; consultas e criança próprias para a família;
+  - negado: família lendo a agenda da clínica; recepção lendo a ficha da
+    criança; profissional lendo a agenda de outra clínica.
+  - Resultado: 7/7 como esperado. Log: `logs/07_demo_projeto.txt`.
+- **Não conferido:** o uso pela interface web com essas contas (login,
+  Pacientes, Agenda). App Check continua desligado.

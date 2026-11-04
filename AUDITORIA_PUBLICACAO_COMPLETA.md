@@ -41,7 +41,7 @@ Pendencias da titular: `PUBLICACAO_PENDENCIAS_USUARIO.md`.
 | Curvas OMS | Dados atuais sao LMS **oficiais** (repo WHO anthro), amostrados por mes; **conferencia clinica pendente** |
 | Calendario PNI | Sem data de versao; **conferencia clinica pendente** |
 | App Check | Cliente pronto, **desligado**; depende do Console |
-| Regras/indices/Functions no Firebase | **Nao publicados** (sem autorizacao). Homologacao web usa o projeto real `pediatria360-app` |
+| Regras/indices/Functions no Firebase | 04/11: regras e indices do Firestore **publicados** em `pediatria360-app` (autorizado). Storage **nao ativado** no projeto. Functions **bloqueadas** (exige plano Blaze). Contas ficticias criadas e conferidas 7/7 via REST. PR: https://github.com/draraiany-source/pediatria360/pull/7 |
 | Video / pagamento / ICP / TISS / voz | **OFF**, nao concluidos |
 | Testes | analyze 0 erros/0 avisos; Functions 104/104; regras 346/346 + 12/12; Flutter 890 + 1 teste corrigido e reexecutado |
 | Builds | web ENV=prod gerado (`build/web`, local); APK ENV=prod **falhou** (Gradle sem memoria: 7,9 GB RAM); AAB nao gerado (sem chave de upload); IPA nao gerado (exige Mac) |
