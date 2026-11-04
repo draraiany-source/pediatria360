@@ -1,4 +1,6 @@
+import '../../features/management/domain/management_modules.dart';
 import '../../features/security/domain/permission_matrix.dart';
+import '../../features/workspace/domain/workspace_profile.dart';
 import '../../shared/domain/entities/app_user.dart';
 import '../../shared/domain/entities/clinic_organization.dart';
 import 'routes.dart';
@@ -17,6 +19,7 @@ String? resolveRouteRedirect({
   required bool seenOnboarding,
   bool unlockAllRoles = false,
   ClinicMembership? clinicMembership,
+  WorkspaceProfile? workspace,
 }) {
   // 1. Manutencao bloqueia tudo, inclusive telas publicas.
   if (maintenanceMode) {
@@ -64,31 +67,56 @@ String? resolveRouteRedirect({
     return null;
   }
 
-  // 6. Area administrativa exige papel de admin.
-  if (location.startsWith(Routes.adminPath) && !user.role.isAdmin) {
+  // 6. Area administrativa CMS exige papel de admin de plataforma.
+  if (_under(location, Routes.adminPath) && !user.role.isAdmin) {
     return Routes.homePath;
   }
 
-  // 7. Area profissional de plataforma (UserRole).
-  final bool isProfessionalArea = location.startsWith(Routes.patientsPath) ||
-      location.startsWith(Routes.agendaPath) ||
-      location.startsWith(Routes.clinicPath) ||
-      location.startsWith(Routes.financePath) ||
-      location.startsWith(Routes.billingPath) ||
-      location.startsWith(Routes.inventoryPath) ||
-      location.startsWith(Routes.biPath) ||
-      location.startsWith(Routes.auditPath) ||
-      location.startsWith(Routes.permissionsPath) ||
-      location.startsWith(Routes.supplementPath) ||
-      location.startsWith(Routes.clinicOrgPath);
-  if (isProfessionalArea && user.role != UserRole.professional) {
-    return Routes.homePath;
+  // 6b. Gestao integrada: cada modulo pelo papel no vinculo ativo com a
+  // clinica (gestao nao abre anamnese/atendimento so por ser gestao).
+  if (_under(location, Routes.managementPath)) {
+    final ClinicRole? role = clinicMembership != null && clinicMembership.active
+        ? clinicMembership.role
+        : null;
+    return managementRouteAllowed(location, role) ? null : Routes.homePath;
+  }
+
+  // 7. Areas de equipe (clinica / financeiro / BI).
+  final bool isStaffArea =
+      _under(location, Routes.patientsPath) ||
+      _under(location, Routes.agendaPath) ||
+      _under(location, Routes.clinicPath) ||
+      _under(location, Routes.financePath) ||
+      _under(location, Routes.billingPath) ||
+      _under(location, Routes.inventoryPath) ||
+      _under(location, Routes.biPath) ||
+      _under(location, Routes.auditPath) ||
+      _under(location, Routes.permissionsPath) ||
+      _under(location, Routes.supplementPath) ||
+      _under(location, Routes.clinicOrgPath);
+
+  if (isStaffArea) {
+    if (user.role == UserRole.professional) {
+      // ok
+    } else if (user.role.isAdmin) {
+      final bool adminAllowed =
+          _under(location, Routes.adminPath) ||
+          _under(location, Routes.permissionsPath) ||
+          _under(location, Routes.auditPath) ||
+          _under(location, Routes.biPath) ||
+          _under(location, Routes.clinicOrgPath);
+      if (!adminAllowed) return Routes.homePath;
+    } else if (!_staffAreaForNonProfessional(location, workspace, clinicMembership)) {
+      return Routes.homePath;
+    }
   }
 
   // 8. FASE 2 — RBAC clinico: recepcao nao abre evolucao/prontuario por URL.
   if (user.role == UserRole.professional && clinicMembership != null) {
-    final bool isChartArea = location.startsWith(Routes.patientsPath) ||
-        location.startsWith(Routes.clinicVoicePath);
+    final bool isChartArea =
+        _under(location, Routes.patientsPath) ||
+        _under(location, Routes.clinicVoicePath) ||
+        _isPatientChartRoute(location);
     if (isChartArea &&
         !PermissionMatrix.allows(
           user: user,
@@ -100,5 +128,75 @@ String? resolveRouteRedirect({
     }
   }
 
+  // 9. Area de trabalho ativa (perfil concedido) — reforco de UI/rota.
+  if (workspace != null && user.role == UserRole.professional) {
+    final bool isChart =
+        _under(location, Routes.patientsPath) ||
+        _under(location, Routes.clinicVoicePath) ||
+        _under(location, Routes.supplementPath) ||
+        _isPatientChartRoute(location);
+    final bool isFinance =
+        _under(location, Routes.financePath) ||
+        _under(location, Routes.billingPath) ||
+        _under(location, Routes.inventoryPath);
+
+    switch (workspace) {
+      case WorkspaceProfile.receptionist:
+        if (isChart || isFinance) return Routes.homePath;
+      case WorkspaceProfile.finance:
+        if (isChart) return Routes.homePath;
+        if (_under(location, Routes.clinicReceptionPath) ||
+            _under(location, Routes.clinicPendingPath)) {
+          return Routes.homePath;
+        }
+      case WorkspaceProfile.professional:
+      case WorkspaceProfile.admin:
+      case WorkspaceProfile.patient:
+        break;
+    }
+  }
+
   return null;
 }
+
+/// Conta comum com papel de recepcao ou financeiro na clinica (perfil
+/// concedido por WorkspaceAccess): so as telas daquele papel. Prontuario,
+/// pacientes, IA e suplementacao ficam de fora. As regras do Firestore
+/// conferem o papel de novo em cada leitura e escrita. A gestao (clinicAdmin)
+/// tambem entra na administracao da clinica (equipe, salas), sem prontuario.
+bool _staffAreaForNonProfessional(
+  String location,
+  WorkspaceProfile? workspace,
+  ClinicMembership? membership,
+) {
+  if (membership != null &&
+      membership.active &&
+      membership.role == ClinicRole.clinicAdmin &&
+      _under(location, Routes.clinicOrgPath)) {
+    return true;
+  }
+  switch (workspace) {
+    case WorkspaceProfile.receptionist:
+      return _under(location, Routes.agendaPath) ||
+          _under(location, Routes.clinicReceptionPath) ||
+          _under(location, Routes.clinicIntakesPath) ||
+          _under(location, Routes.clinicPendingPath);
+    case WorkspaceProfile.finance:
+      return _under(location, Routes.financePath) ||
+          _under(location, Routes.billingPath);
+    case WorkspaceProfile.admin:
+    case WorkspaceProfile.professional:
+    case WorkspaceProfile.patient:
+    case null:
+      return false;
+  }
+}
+
+/// Paciente 360 e triagem ficam sob `/consultorio`, mas sao dados clinicos.
+bool _isPatientChartRoute(String location) =>
+    location.startsWith('${Routes.clinicPath}/paciente/') ||
+    location.startsWith('${Routes.clinicPath}/triagem/');
+
+/// `/bi` cobre `/bi` e `/bi/...`, mas nao `/biblioteca`.
+bool _under(String location, String base) =>
+    location == base || location.startsWith('$base/');

@@ -1,0 +1,610 @@
+[
+  {
+    "area": "equipe",
+    "name": "recepcao NAO adiciona membro",
+    "expected": "permission-denied",
+    "observed": "permission-denied",
+    "ok": true,
+    "note": "permission-denied: Só a gestão da clínica altera a equipe."
+  },
+  {
+    "area": "equipe",
+    "name": "gestao adiciona medico verificado",
+    "expected": "permitido",
+    "observed": "permitido",
+    "ok": true,
+    "note": ""
+  },
+  {
+    "area": "equipe",
+    "name": "vinculo gravado nas duas pontas, com nome",
+    "expected": "sim",
+    "observed": "sim",
+    "ok": true,
+    "note": ""
+  },
+  {
+    "area": "equipe",
+    "name": "gestao NAO da papel clinico a conta comum",
+    "expected": "failed-precondition",
+    "observed": "failed-precondition",
+    "ok": true,
+    "note": "failed-precondition: Papel clínico exige conta de profissional de saúde."
+  },
+  {
+    "area": "equipe",
+    "name": "gestao adiciona financeiro (conta comum)",
+    "expected": "permitido",
+    "observed": "permitido",
+    "ok": true,
+    "note": ""
+  },
+  {
+    "area": "equipe",
+    "name": "gestao NAO deixa a clinica sem gestor ativo",
+    "expected": "failed-precondition",
+    "observed": "failed-precondition",
+    "ok": true,
+    "note": "failed-precondition: A clínica precisa de pelo menos um gestor ativo."
+  },
+  {
+    "area": "solicitacao",
+    "name": "recepcao (conta comum) registra paciente novo",
+    "expected": "permitido",
+    "observed": "permitido",
+    "ok": true,
+    "note": ""
+  },
+  {
+    "area": "solicitacao",
+    "name": "financeiro NAO registra solicitacao",
+    "expected": "permission-denied",
+    "observed": "permission-denied",
+    "ok": true,
+    "note": "permission-denied: Só a recepção, a gestão ou o próprio profissional registram solicitações."
+  },
+  {
+    "area": "solicitacao",
+    "name": "profissional de fora NAO registra na clinica",
+    "expected": "permission-denied",
+    "observed": "permission-denied",
+    "ok": true,
+    "note": "permission-denied: Só a recepção, a gestão ou o próprio profissional registram solicitações."
+  },
+  {
+    "area": "solicitacao",
+    "name": "duplicada (mesma crianca e responsavel) recusada",
+    "expected": "already-exists",
+    "observed": "already-exists",
+    "ok": true,
+    "note": "already-exists: Já existe solicitação pendente para esta criança e este responsável. Renove o código dela."
+  },
+  {
+    "area": "solicitacao",
+    "name": "mesmo horario do profissional recusado",
+    "expected": "already-exists",
+    "observed": "already-exists",
+    "ok": true,
+    "note": "already-exists: Horário reservado para outra solicitação aguardando o responsável."
+  },
+  {
+    "area": "solicitacao",
+    "name": "registro provisorio sem crianca, sem consulta e sem codigo legivel",
+    "expected": "sim",
+    "observed": "sim",
+    "ok": true,
+    "note": ""
+  },
+  {
+    "area": "solicitacao",
+    "name": "recepcao le a solicitacao",
+    "expected": "permitido",
+    "observed": "permitido",
+    "ok": true,
+    "note": ""
+  },
+  {
+    "area": "solicitacao",
+    "name": "financeiro NAO le a solicitacao",
+    "expected": "permission-denied",
+    "observed": "permission-denied",
+    "ok": true,
+    "note": "permission-denied: \nevaluation error at L717:22 for 'get' @ L717, false for 'get' @ L1955, false for 'get' @ L717, false for 'get' @ L1955"
+  },
+  {
+    "area": "solicitacao",
+    "name": "familia NAO le a solicitacao direto",
+    "expected": "permission-denied",
+    "observed": "permission-denied",
+    "ok": true,
+    "note": "permission-denied: \nevaluation error at L717:22 for 'get' @ L717, false for 'get' @ L1955, false for 'get' @ L717, false for 'get' @ L1955"
+  },
+  {
+    "area": "solicitacao",
+    "name": "familia NAO reserva pelo app horario retido por solicitacao",
+    "expected": "nao-permitido",
+    "observed": "already-exists",
+    "ok": true,
+    "note": "already-exists: Este horário não está disponível. Escolha outro."
+  },
+  {
+    "area": "convite",
+    "name": "previa com e-mail ainda nao confirmado",
+    "expected": "failed-precondition",
+    "observed": "failed-precondition",
+    "ok": true,
+    "note": "failed-precondition: Confirme o e-mail da sua conta antes de aceitar o convite."
+  },
+  {
+    "area": "convite",
+    "name": "outra familia (outro e-mail) NAO usa o codigo",
+    "expected": "permission-denied",
+    "observed": "permission-denied",
+    "ok": true,
+    "note": "permission-denied: Este convite foi enviado para outro e-mail. Entre com a conta do e-mail informado à clínica."
+  },
+  {
+    "area": "convite",
+    "name": "codigo errado",
+    "expected": "not-found",
+    "observed": "not-found",
+    "ok": true,
+    "note": "not-found: Código inválido, já usado ou vencido."
+  },
+  {
+    "area": "convite",
+    "name": "responsavel ve a previa",
+    "expected": "permitido",
+    "observed": "permitido",
+    "ok": true,
+    "note": ""
+  },
+  {
+    "area": "convite",
+    "name": "previa mostra clinica, profissional e crianca",
+    "expected": "sim",
+    "observed": "sim",
+    "ok": true,
+    "note": ""
+  },
+  {
+    "area": "convite",
+    "name": "aceite com a crianca de outra familia (id conhecido)",
+    "expected": "permission-denied",
+    "observed": "permission-denied",
+    "ok": true,
+    "note": "permission-denied: Escolha uma criança cadastrada na sua conta."
+  },
+  {
+    "area": "convite",
+    "name": "aceite com crianca inexistente",
+    "expected": "permission-denied",
+    "observed": "permission-denied",
+    "ok": true,
+    "note": "permission-denied: Escolha uma criança cadastrada na sua conta."
+  },
+  {
+    "area": "convite",
+    "name": "escopo invalido (prontuario sem resumo)",
+    "expected": "invalid-argument",
+    "observed": "invalid-argument",
+    "ok": true,
+    "note": "invalid-argument: Acesso ao prontuário inclui o resumo."
+  },
+  {
+    "area": "convite",
+    "name": "validade acima do limite",
+    "expected": "invalid-argument",
+    "observed": "invalid-argument",
+    "ok": true,
+    "note": "invalid-argument: Validade deve ficar entre 1 e 365 dias."
+  },
+  {
+    "area": "autorizado",
+    "name": "antes do aceite: profissional NAO le a crianca",
+    "expected": "permission-denied",
+    "observed": "permission-denied",
+    "ok": true,
+    "note": "permission-denied: \nevaluation error at L298:24 for 'get' @ L298, false for 'get' @ L1955, false for 'get' @ L298, false for 'get' @ L1955"
+  },
+  {
+    "area": "convite",
+    "name": "responsavel aceita e autoriza prontuario por 30 dias",
+    "expected": "permitido",
+    "observed": "permitido",
+    "ok": true,
+    "note": ""
+  },
+  {
+    "area": "convite",
+    "name": "codigo NAO pode ser reutilizado",
+    "expected": "not-found",
+    "observed": "not-found",
+    "ok": true,
+    "note": "not-found: Código inválido, já usado ou vencido."
+  },
+  {
+    "area": "convite",
+    "name": "consulta criada pelo servidor, origem clinicIntake, titular e crianca certos",
+    "expected": "sim",
+    "observed": "sim",
+    "ok": true,
+    "note": ""
+  },
+  {
+    "area": "convite",
+    "name": "concessao guardianInvite, autor = titular, validade ~30 dias",
+    "expected": "sim",
+    "observed": "sim",
+    "ok": true,
+    "note": ""
+  },
+  {
+    "area": "convite",
+    "name": "solicitacao marcada como vinculada",
+    "expected": "sim",
+    "observed": "sim",
+    "ok": true,
+    "note": ""
+  },
+  {
+    "area": "autorizado",
+    "name": "profissional le cadastro",
+    "expected": "permitido",
+    "observed": "permitido",
+    "ok": true,
+    "note": ""
+  },
+  {
+    "area": "autorizado",
+    "name": "checkChildAccess informa prontuario liberado",
+    "expected": "sim",
+    "observed": "sim",
+    "ok": true,
+    "note": ""
+  },
+  {
+    "area": "autorizado",
+    "name": "profissional abre atendimento na clinica",
+    "expected": "permitido",
+    "observed": "permitido",
+    "ok": true,
+    "note": ""
+  },
+  {
+    "area": "perfis",
+    "name": "recepcao NAO le a crianca",
+    "expected": "permission-denied",
+    "observed": "permission-denied",
+    "ok": true,
+    "note": "permission-denied: \nevaluation error at L298:24 for 'get' @ L298, false for 'get' @ L1955, false for 'get' @ L298, false for 'get' @ L1955"
+  },
+  {
+    "area": "perfis",
+    "name": "gestao NAO le a crianca",
+    "expected": "permission-denied",
+    "observed": "permission-denied",
+    "ok": true,
+    "note": "permission-denied: \nevaluation error at L298:24 for 'get' @ L298, false for 'get' @ L1955, false for 'get' @ L298, false for 'get' @ L1955"
+  },
+  {
+    "area": "perfis",
+    "name": "gestao NAO le o atendimento",
+    "expected": "permission-denied",
+    "observed": "permission-denied",
+    "ok": true,
+    "note": "permission-denied: \nevaluation error at L779:22 for 'get' @ L779, false for 'get' @ L1955, false for 'get' @ L779, false for 'get' @ L1955"
+  },
+  {
+    "area": "perfis",
+    "name": "recepcao faz check-in da consulta",
+    "expected": "permitido",
+    "observed": "permitido",
+    "ok": true,
+    "note": ""
+  },
+  {
+    "area": "perfis",
+    "name": "recepcao NAO marca pago",
+    "expected": "permission-denied",
+    "observed": "permission-denied",
+    "ok": true,
+    "note": "permission-denied: 7 PERMISSION_DENIED: \nevaluation error at L669:24 for 'update' @ L669, false for 'update' @ L1955, false for 'update' @ L669, false for 'update' @ L1955"
+  },
+  {
+    "area": "perfis",
+    "name": "financeiro (conta comum) marca pago",
+    "expected": "permitido",
+    "observed": "permitido",
+    "ok": true,
+    "note": ""
+  },
+  {
+    "area": "perfis",
+    "name": "financeiro lanca conta a receber da clinica",
+    "expected": "permitido",
+    "observed": "permitido",
+    "ok": true,
+    "note": ""
+  },
+  {
+    "area": "perfis",
+    "name": "financeiro NAO troca a crianca da consulta",
+    "expected": "permission-denied",
+    "observed": "permission-denied",
+    "ok": true,
+    "note": "permission-denied: 7 PERMISSION_DENIED: \nevaluation error at L669:24 for 'update' @ L669, false for 'update' @ L1955, false for 'update' @ L669, false for 'update' @ L1955"
+  },
+  {
+    "area": "sem-acesso",
+    "name": "solicitacao com o segundo medico",
+    "expected": "permitido",
+    "observed": "permitido",
+    "ok": true,
+    "note": ""
+  },
+  {
+    "area": "sem-acesso",
+    "name": "responsavel aceita a consulta sem conceder acesso",
+    "expected": "permitido",
+    "observed": "permitido",
+    "ok": true,
+    "note": ""
+  },
+  {
+    "area": "sem-acesso",
+    "name": "nenhuma concessao gravada para o segundo medico",
+    "expected": "sim",
+    "observed": "sim",
+    "ok": true,
+    "note": ""
+  },
+  {
+    "area": "sem-acesso",
+    "name": "consulta existe, mas medico NAO le a crianca",
+    "expected": "permission-denied",
+    "observed": "permission-denied",
+    "ok": true,
+    "note": "permission-denied: \nevaluation error at L298:24 for 'get' @ L298, false for 'get' @ L1955, false for 'get' @ L298, false for 'get' @ L1955"
+  },
+  {
+    "area": "sem-acesso",
+    "name": "medico NAO abre atendimento so por ter consulta",
+    "expected": "permission-denied",
+    "observed": "permission-denied",
+    "ok": true,
+    "note": "permission-denied: 7 PERMISSION_DENIED: \nevaluation error at L785:24 for 'create' @ L785, false for 'create' @ L1955, evaluation error at L793:24 for 'update' @ L793, false for 'update' @ L1955, false for 'create' @ L785, false for 'create' @ L1955"
+  },
+  {
+    "area": "sem-acesso",
+    "name": "funcao antiga de concessao por consulta nao existe mais",
+    "expected": "nao-permitido",
+    "observed": "not-found",
+    "ok": true,
+    "note": "not-found: not-found"
+  },
+  {
+    "area": "resumo",
+    "name": "solicitacao para a familia B",
+    "expected": "permitido",
+    "observed": "permitido",
+    "ok": true,
+    "note": ""
+  },
+  {
+    "area": "resumo",
+    "name": "familia B aceita com somente resumo",
+    "expected": "permitido",
+    "observed": "permitido",
+    "ok": true,
+    "note": ""
+  },
+  {
+    "area": "resumo",
+    "name": "profissional le o cadastro",
+    "expected": "permitido",
+    "observed": "permitido",
+    "ok": true,
+    "note": ""
+  },
+  {
+    "area": "resumo",
+    "name": "profissional NAO abre atendimento",
+    "expected": "permission-denied",
+    "observed": "permission-denied",
+    "ok": true,
+    "note": "permission-denied: 7 PERMISSION_DENIED: \nevaluation error at L785:24 for 'create' @ L785, false for 'create' @ L1955, evaluation error at L793:24 for 'update' @ L793, false for 'update' @ L1955, false for 'create' @ L785, false for 'create' @ L1955"
+  },
+  {
+    "area": "resumo",
+    "name": "checkChildAccess: resumo sim, prontuario nao",
+    "expected": "sim",
+    "observed": "sim",
+    "ok": true,
+    "note": ""
+  },
+  {
+    "area": "resumo",
+    "name": "IA clinica NAO roda sem prontuario liberado",
+    "expected": "permission-denied",
+    "observed": "permission-denied",
+    "ok": true,
+    "note": "permission-denied: Sem autorização do responsável para este acesso à criança."
+  },
+  {
+    "area": "resumo",
+    "name": "assinatura NAO roda sem prontuario liberado",
+    "expected": "permission-denied",
+    "observed": "permission-denied",
+    "ok": true,
+    "note": "permission-denied: Sem autorização do responsável para este acesso à criança."
+  },
+  {
+    "area": "resumo",
+    "name": "documento clinico NAO e emitido",
+    "expected": "permission-denied",
+    "observed": "permission-denied",
+    "ok": true,
+    "note": "permission-denied: Sem autorização do responsável para este acesso à criança."
+  },
+  {
+    "area": "resumo",
+    "name": "consulta por voz NAO inicia",
+    "expected": "permission-denied",
+    "observed": "permission-denied",
+    "ok": true,
+    "note": "permission-denied: Sem autorização do responsável para este acesso à criança."
+  },
+  {
+    "area": "renovar",
+    "name": "nova solicitacao",
+    "expected": "permitido",
+    "observed": "permitido",
+    "ok": true,
+    "note": ""
+  },
+  {
+    "area": "renovar",
+    "name": "recepcao gera novo codigo",
+    "expected": "permitido",
+    "observed": "permitido",
+    "ok": true,
+    "note": ""
+  },
+  {
+    "area": "renovar",
+    "name": "codigo antigo deixa de valer",
+    "expected": "not-found",
+    "observed": "not-found",
+    "ok": true,
+    "note": "not-found: Código inválido, já usado ou vencido."
+  },
+  {
+    "area": "renovar",
+    "name": "codigo novo vale",
+    "expected": "permitido",
+    "observed": "permitido",
+    "ok": true,
+    "note": ""
+  },
+  {
+    "area": "renovar",
+    "name": "financeiro NAO cancela",
+    "expected": "permission-denied",
+    "observed": "permission-denied",
+    "ok": true,
+    "note": "permission-denied: Sem permissão para esta solicitação."
+  },
+  {
+    "area": "renovar",
+    "name": "recepcao cancela",
+    "expected": "permitido",
+    "observed": "permitido",
+    "ok": true,
+    "note": ""
+  },
+  {
+    "area": "renovar",
+    "name": "apos cancelar, codigo nao vale",
+    "expected": "not-found",
+    "observed": "not-found",
+    "ok": true,
+    "note": "not-found: Código inválido, já usado ou vencido."
+  },
+  {
+    "area": "revogacao",
+    "name": "responsavel revoga o acesso do medico",
+    "expected": "permitido",
+    "observed": "permitido",
+    "ok": true,
+    "note": ""
+  },
+  {
+    "area": "revogacao",
+    "name": "NAO le a crianca",
+    "expected": "permission-denied",
+    "observed": "permission-denied",
+    "ok": true,
+    "note": "permission-denied: \nevaluation error at L298:24 for 'get' @ L298, false for 'get' @ L1955, false for 'get' @ L298, false for 'get' @ L1955"
+  },
+  {
+    "area": "revogacao",
+    "name": "NAO edita o rascunho",
+    "expected": "permission-denied",
+    "observed": "permission-denied",
+    "ok": true,
+    "note": "permission-denied: 7 PERMISSION_DENIED: \nevaluation error at L793:24 for 'update' @ L793, false for 'update' @ L1955, false for 'update' @ L793, false for 'update' @ L1955"
+  },
+  {
+    "area": "revogacao",
+    "name": "NAO abre atendimento novo",
+    "expected": "permission-denied",
+    "observed": "permission-denied",
+    "ok": true,
+    "note": "permission-denied: 7 PERMISSION_DENIED: \nevaluation error at L785:24 for 'create' @ L785, false for 'create' @ L1955, evaluation error at L793:24 for 'update' @ L793, false for 'update' @ L1955, false for 'create' @ L785, false for 'create' @ L1955"
+  },
+  {
+    "area": "revogacao",
+    "name": "checkChildAccess informa revogada",
+    "expected": "sim",
+    "observed": "sim",
+    "ok": true,
+    "note": ""
+  },
+  {
+    "area": "revogacao",
+    "name": "IA clinica NAO roda",
+    "expected": "permission-denied",
+    "observed": "permission-denied",
+    "ok": true,
+    "note": "permission-denied: Sem autorização do responsável para este acesso à criança."
+  },
+  {
+    "area": "revogacao",
+    "name": "assinatura NAO roda",
+    "expected": "permission-denied",
+    "observed": "permission-denied",
+    "ok": true,
+    "note": "permission-denied: Sem autorização do responsável para este acesso à criança."
+  },
+  {
+    "area": "revogacao",
+    "name": "consulta por voz NAO inicia",
+    "expected": "permission-denied",
+    "observed": "permission-denied",
+    "ok": true,
+    "note": "permission-denied: Sem autorização do responsável para este acesso à criança."
+  },
+  {
+    "area": "revogacao",
+    "name": "listagem por crianca negada",
+    "expected": "permission-denied",
+    "observed": "permission-denied",
+    "ok": true,
+    "note": "permission-denied: \nevaluation error at L779:22 for 'list' @ L779, false for 'list' @ L1955, Property professionalId is undefined on object. for 'list' @ L779, false for 'list' @ L1955"
+  },
+  {
+    "area": "revogacao",
+    "name": "politica atual: autor ainda le o proprio atendimento",
+    "expected": "permitido",
+    "observed": "permitido",
+    "ok": true,
+    "note": ""
+  },
+  {
+    "area": "revogacao",
+    "name": "profissional NAO desfaz a revogacao",
+    "expected": "permission-denied",
+    "observed": "permission-denied",
+    "ok": true,
+    "note": "permission-denied: 7 PERMISSION_DENIED: \nfalse for 'update' @ L319, false for 'update' @ L1955"
+  },
+  {
+    "area": "tentativas",
+    "name": "depois de 10 codigos errados, bloqueia",
+    "expected": "resource-exhausted",
+    "observed": "resource-exhausted",
+    "ok": true,
+    "note": "resource-exhausted: Muitas tentativas com código inválido. Tente de novo mais tarde."
+  }
+]

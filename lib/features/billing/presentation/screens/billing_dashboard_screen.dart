@@ -6,6 +6,7 @@ import '../../../../core/error/failures.dart';
 import '../../../../core/router/routes.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_tokens.dart';
+import '../../../../core/widgets/back_or_home_button.dart';
 import '../../../../core/widgets/brand_ui.dart';
 import '../../../../core/widgets/state_views.dart';
 import '../../../../shared/domain/entities/commerce.dart';
@@ -25,7 +26,7 @@ class BillingDashboardScreen extends ConsumerWidget {
     );
     if (!allowed) {
       return Scaffold(
-        appBar: AppBar(title: const Text('Faturamento')),
+        appBar: AppBar(leading: const BackOrHomeButton(), title: const Text('Faturamento')),
         body: const ErrorState(
           failure: AuthFailure('Sem permissao para faturamento/convenios.'),
         ),
@@ -37,6 +38,7 @@ class BillingDashboardScreen extends ConsumerWidget {
     return Scaffold(
       backgroundColor: AppColors.lightBackground,
       appBar: AppBar(
+        leading: const BackOrHomeButton(),
         title: const Text('Faturamento e convenios'),
         backgroundColor: Colors.white,
         foregroundColor: AppColors.navy,

@@ -12,28 +12,59 @@ class AppConfig {
   const AppConfig._();
 
   static const String appName = 'Pediatria 360';
-  static const String supportEmail = 'suporte@pediatria360.app';
 
   // ------------------------------------------------------------------- Legal
   //
-  // Placeholders deliberados — não é URL real. O aceite obrigatório no
-  // cadastro (ver RoleSetupScreen) precisa de algo para abrir, mas o texto
-  // dos documentos ainda não foi escrito nem revisado por advogado. Trocar
-  // por URL real antes de publicar é bloqueador de lançamento, não detalhe.
-  static const String termsOfServiceUrl =
-      'https://pediatria360.app/termos-de-uso';
-  static const String privacyPolicyUrl =
-      'https://pediatria360.app/politica-de-privacidade';
+  // Vêm do build (`--dart-define`), nunca do código: domínio, textos, CNPJ e
+  // encarregado ainda não foram definidos pela titular. Vazio = não
+  // publicado; a tela avisa em vez de abrir endereço inexistente, e
+  // `tools/release/build_prod.ps1` recusa build de produção sem eles.
+  static const String supportEmail = String.fromEnvironment('SUPPORT_EMAIL');
+  static const String termsOfServiceUrl = String.fromEnvironment('TERMS_URL');
+  static const String privacyPolicyUrl = String.fromEnvironment('PRIVACY_URL');
+
+  /// Controlador dos dados (LGPD art. 5º, VI): razão social e CNPJ.
+  static const String dataControllerName =
+      String.fromEnvironment('DATA_CONTROLLER_NAME');
+  static const String dataControllerCnpj =
+      String.fromEnvironment('DATA_CONTROLLER_CNPJ');
+
+  /// Contato do encarregado (DPO), LGPD art. 41.
+  static const String dpoEmail = String.fromEnvironment('DPO_EMAIL');
+
+  static bool get legalConfigured =>
+      supportEmail.isNotEmpty &&
+      termsOfServiceUrl.isNotEmpty &&
+      privacyPolicyUrl.isNotEmpty &&
+      dataControllerName.isNotEmpty &&
+      dataControllerCnpj.isNotEmpty &&
+      dpoEmail.isNotEmpty;
 
   // ------------------------------------------------------- Recursos incompletos
   //
-  // Enquanto a integração real não existir, o recurso fica desligado por uma
-  // flag central — não apagado. Isso preserva o código já testado (criação
-  // de pedido, baixa de estoque em transação) e torna a reativação um único
-  // valor, no dia em que o gateway for conectado, em vez de reconstruir a
-  // tela do zero.
+  // Flags da v1 de teste fechado: só o que funciona ponta a ponta fica
+  // navegável. Código permanece no repo; a reativação é um booleano.
   static const bool paymentGatewayEnabled = false;
   static const bool videoConsultationEnabled = false;
+
+  /// Prontuário por voz / consulta com IA. UI e fluxo de rascunho existem,
+  /// mas sem STT/ASR real de ponta a ponta — fora do escopo do teste fechado.
+  static const bool voiceConsultationEnabled = false;
+
+  /// Conector TISS com operadora. Há esqueleto XML local; envio real ausente.
+  static const bool tissOperatorEnabled = false;
+
+  /// Assinatura digital ICP-Brasil. Encounters usam hash interno, não ICP.
+  static const bool icpDigitalSignatureEnabled = false;
+
+  /// App Check: ativar só com `--dart-define=ENABLE_APP_CHECK=true` após
+  /// registrar apps no Console. Rules NÃO exigem token até você decidir.
+  static const bool appCheckEnabled =
+      bool.fromEnvironment('ENABLE_APP_CHECK', defaultValue: false);
+
+  /// Site key reCAPTCHA v3 (web) — fornecida no Console; não inventar.
+  static const String appCheckRecaptchaSiteKey =
+      String.fromEnvironment('APP_CHECK_RECAPTCHA_SITE_KEY');
 
   // ---------------------------------------------------------------- Ambiente
   static const String environment =
@@ -48,6 +79,11 @@ class AppConfig {
 
   static const String emulatorHost =
       String.fromEnvironment('EMULATOR_HOST', defaultValue: 'localhost');
+
+  /// Projeto usado só com os emuladores (ex.: `demo-pediatria360`). Projetos
+  /// `demo-*` não alcançam recursos reais do Google (segredos, envio).
+  static const String emulatorProjectId =
+      String.fromEnvironment('EMULATOR_PROJECT_ID');
 
   // -------------------------------------------------------------- Bunny.net
   /// Id da biblioteca do Bunny Stream (videos, lives, podcasts).

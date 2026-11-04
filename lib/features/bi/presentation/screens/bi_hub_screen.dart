@@ -5,16 +5,16 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/error/failures.dart';
 import '../../../../core/router/routes.dart';
+import '../../../../core/config/app_assets.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_tokens.dart';
+import '../../../../core/widgets/back_or_home_button.dart';
 import '../../../../core/widgets/brand_ui.dart';
 import '../../../../core/widgets/state_views.dart';
 import '../../../../shared/domain/entities/commerce.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../clinic_org/presentation/providers/clinic_org_providers.dart';
-import '../../../finance/domain/finance_models.dart';
 import '../../../clinic/presentation/providers/clinic_providers.dart';
-import '../../../finance/presentation/providers/finance_providers.dart';
 import '../../../pending/presentation/providers/pending_providers.dart';
 import '../../domain/bi_access.dart';
 import '../../domain/bi_aggregators.dart';
@@ -36,7 +36,7 @@ class BiHubScreen extends ConsumerWidget {
     );
     if (!allowed) {
       return Scaffold(
-        appBar: AppBar(title: const Text('BI / Indicadores')),
+        appBar: AppBar(leading: const BackOrHomeButton(), title: const Text('BI / Indicadores')),
         body: const ErrorState(
           failure: AuthFailure('Sem permissao para indicadores executivos.'),
         ),
@@ -54,6 +54,7 @@ class BiHubScreen extends ConsumerWidget {
     return Scaffold(
       backgroundColor: AppColors.lightBackground,
       appBar: AppBar(
+        leading: const BackOrHomeButton(),
         title: const Text('BI / Indicadores'),
         backgroundColor: Colors.white,
         foregroundColor: AppColors.navy,
@@ -116,9 +117,10 @@ class BiHubScreen extends ConsumerWidget {
               ),
             const SizedBox(height: AppSpacing.md),
             if (cards.isEmpty)
-              const BiEmptyState(
+              BiEmptyState(
                 title: 'Nenhum KPI visivel para seu perfil ou periodo.',
                 subtitle: 'Ajuste o periodo ou aguarde dados operacionais.',
+                illustration: AppAssets.capiLupa,
               )
             else
               LayoutBuilder(

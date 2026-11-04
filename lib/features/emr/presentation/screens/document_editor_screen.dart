@@ -8,8 +8,11 @@ import '../../../../core/theme/app_tokens.dart';
 import '../../../../core/utils/result.dart';
 import '../../../../core/utils/validators.dart';
 import '../../../../core/widgets/app_widgets.dart';
+import '../../../../core/widgets/unsaved_changes_guard.dart';
 import '../../../../shared/domain/entities/clinical_record.dart';
 import '../../../../shared/domain/entities/encounter.dart';
+import '../../../clinic_org/presentation/providers/clinic_org_providers.dart'
+    show documentClinicNameProvider;
 import '../../../tools/domain/calculators.dart';
 import '../services/clinical_pdf_service.dart';
 import 'patient_timeline_screen.dart';
@@ -176,7 +179,7 @@ class _DocumentEditorScreenState
         _snack('${widget.type.label} emitido.');
         await ClinicalPdfService.printDocument(
           document: document,
-          clinicName: 'Pediatria 360',
+          clinicName: ref.read(documentClinicNameProvider),
         );
         if (mounted) Navigator.of(context).pop();
       },
@@ -199,11 +202,13 @@ class _DocumentEditorScreenState
   Widget build(BuildContext context) {
     final ThemeData theme = Theme.of(context);
 
-    return Scaffold(
+    return UnsavedChangesGuard(
+      isDirty: () => _dirty,
+      child: Scaffold(
       appBar: AppBar(
         title: Text(widget.type.label),
         leading: IconButton(
-          onPressed: () => Navigator.of(context).pop(),
+          onPressed: () => leaveWithConfirmation(context, dirty: _dirty),
           icon: const Icon(Icons.close_rounded),
           tooltip: 'Cancelar',
         ),
@@ -261,8 +266,13 @@ class _DocumentEditorScreenState
           ),
         ],
       ),
+      ),
     );
   }
+
+  bool get _dirty => _isPrescription
+      ? _items.any((_ItemDraft i) => i.drug.text.trim().isNotEmpty)
+      : _content.text.trim() != _initialTemplate().trim();
 
   // ------------------------------------------------------------- Receita
 

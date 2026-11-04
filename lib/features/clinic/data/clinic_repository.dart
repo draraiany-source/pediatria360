@@ -17,8 +17,6 @@ class ClinicRepository {
         _functions = functions;
 
   final FirebaseFirestore _firestore;
-  // Reservado para callables futuros (check-in avancado, faturamento).
-  // ignore: unused_field
   final FirebaseFunctions _functions;
 
   CollectionReference<Map<String, dynamic>> get _appointments =>
@@ -28,13 +26,20 @@ class ClinicRepository {
       _firestore.collection(FirestorePaths.triageRecords);
 
   /// Agendamentos do profissional com inicio no dia civil atual (local).
-  Stream<List<Appointment>> watchTodayAppointments(String professionalId) {
+  Stream<List<Appointment>> watchTodayAppointments(String professionalId) =>
+      _watchToday(_appointments.where('professionalId', isEqualTo: professionalId));
+
+  /// Agendamentos da clinica inteira no dia civil atual (recepcao/admin).
+  /// As regras so liberam a leitura para a equipe de agenda da clinica.
+  Stream<List<Appointment>> watchTodayClinicAppointments(String clinicId) =>
+      _watchToday(_appointments.where('clinicId', isEqualTo: clinicId));
+
+  Stream<List<Appointment>> _watchToday(Query<Map<String, dynamic>> base) {
     final DateTime now = DateTime.now();
     final DateTime start = DateTime(now.year, now.month, now.day);
     final DateTime end = start.add(const Duration(days: 1));
 
-    return _appointments
-        .where('professionalId', isEqualTo: professionalId)
+    return base
         .where('startsAt', isGreaterThanOrEqualTo: Timestamp.fromDate(start))
         .where('startsAt', isLessThan: Timestamp.fromDate(end))
         .snapshots()
@@ -53,17 +58,35 @@ class ClinicRepository {
   }
 
   /// Atualiza o fluxo operacional e, quando aplicavel, o status legado.
+  ///
+  /// Cancelamento e falta passam pela Function `setAppointmentStatus`, que
+  /// libera as travas de horário, cancela lembretes, registra o motivo e
+  /// oferece o horário à lista de espera; aqui só fica o fluxo da recepção.
   Future<Result<void>> updateWorkflowStatus(
     String appointmentId,
-    ClinicWorkflowStatus status,
-  ) =>
+    ClinicWorkflowStatus status, {
+    String? reason,
+  }) =>
       guard(() async {
         final Map<String, dynamic> patch = <String, dynamic>{
           'workflowStatus': status.name,
           'workflowUpdatedAt': FieldValue.serverTimestamp(),
         };
         final String? legacy = status.toAppointmentStatusName();
-        if (legacy != null) {
+        if (legacy == 'cancelled' || legacy == 'noShow') {
+          final String fallback = status == ClinicWorkflowStatus.rescheduled
+              ? 'Remarcação pela recepção'
+              : 'Registrado pela recepção';
+          await _functions.httpsCallable('setAppointmentStatus').call(
+            <String, dynamic>{
+              'appointmentId': appointmentId,
+              'status': legacy,
+              'reason': (reason == null || reason.trim().isEmpty)
+                  ? fallback
+                  : reason.trim(),
+            },
+          );
+        } else if (legacy != null) {
           patch['status'] = legacy;
         }
         if (status == ClinicWorkflowStatus.arrived) {
@@ -90,10 +113,15 @@ class ClinicRepository {
         await _appointments.doc(appointmentId).update(patch);
       });
 
+  /// Uma triagem por consulta: salvar de novo atualiza o mesmo registro em vez
+  /// de criar outro. O avanço da fila fica com quem chama
+  /// ([updateWorkflowStatus]), para a falha dele não esconder a triagem gravada.
   Future<Result<void>> saveTriage(TriageRecord record) => guard(() async {
-        final String id = record.id.isEmpty
-            ? _triage.doc().id
-            : record.id;
+        final String id = record.id.isNotEmpty
+            ? record.id
+            : record.appointmentId.isNotEmpty
+                ? record.appointmentId
+                : _triage.doc().id;
         final TriageRecord toSave = TriageRecord(
           id: id,
           appointmentId: record.appointmentId,
@@ -101,6 +129,7 @@ class ClinicRepository {
           professionalId: record.professionalId,
           recordedBy: record.recordedBy,
           recordedAt: record.recordedAt,
+          clinicId: record.clinicId,
           weightKg: record.weightKg,
           heightCm: record.heightCm,
           headCircumferenceCm: record.headCircumferenceCm,
@@ -117,14 +146,6 @@ class ClinicRepository {
         final Map<String, dynamic> data = toSave.toMap();
         data['recordedAt'] = Timestamp.fromDate(toSave.recordedAt);
         await _triage.doc(id).set(data, SetOptions(merge: true));
-
-        // Avanca o fluxo para triagem / aguardando medico.
-        await _appointments.doc(record.appointmentId).update(<String, dynamic>{
-          'workflowStatus': ClinicWorkflowStatus.waitingDoctor.name,
-          'status': 'confirmed',
-          'triageRecordId': id,
-          'workflowUpdatedAt': FieldValue.serverTimestamp(),
-        });
       });
 
   Stream<TriageRecord?> watchTriage(String appointmentId) {

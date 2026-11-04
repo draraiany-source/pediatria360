@@ -16,6 +16,8 @@ import '../../../../core/widgets/premium_chrome.dart';
 import '../../../../core/widgets/state_views.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../notifications/presentation/notification_center_screen.dart';
+import '../../../workspace/domain/workspace_profile.dart';
+import '../../../workspace/presentation/providers/workspace_providers.dart';
 import '../../../../shared/domain/entities/app_user.dart';
 
 /// Destino da navegacao principal.
@@ -223,21 +225,115 @@ class AppShell extends ConsumerWidget {
   final Widget child;
   final String location;
 
-  List<_Destination> _primaryFor(AppUser? user) {
-    final bool isPro = user?.role.isProfessional ?? false;
-    final List<_Destination> base =
-        isPro ? _professionalPrimary : _familyDestinations;
-    return base
-        .where((_Destination d) => !d.professionalOnly || isPro)
-        .toList(growable: false);
+  List<_Destination> _primaryFor(AppUser? user, WorkspaceProfile workspace) {
+    switch (workspace) {
+      case WorkspaceProfile.patient:
+        return _familyDestinations;
+      case WorkspaceProfile.receptionist:
+        return const <_Destination>[
+          _Destination(
+            route: Routes.homePath,
+            label: 'Inicio',
+            asset: AppIcons.home,
+            icon: Icons.home_outlined,
+            selectedIcon: Icons.home_rounded,
+          ),
+          _Destination(
+            route: Routes.agendaPath,
+            label: 'Agenda',
+            asset: AppIcons.schedule,
+            icon: Icons.calendar_month_outlined,
+            selectedIcon: Icons.calendar_month_rounded,
+          ),
+          _Destination(
+            route: Routes.clinicReceptionPath,
+            label: 'Recepcao',
+            asset: AppIcons.waitingQueue,
+            icon: Icons.how_to_reg_rounded,
+            selectedIcon: Icons.how_to_reg_rounded,
+          ),
+          _Destination(
+            route: Routes.profilePath,
+            label: 'Perfil',
+            asset: AppIcons.profile,
+            icon: Icons.person_outline_rounded,
+            selectedIcon: Icons.person_rounded,
+          ),
+        ];
+      case WorkspaceProfile.finance:
+        return const <_Destination>[
+          _Destination(
+            route: Routes.homePath,
+            label: 'Inicio',
+            asset: AppIcons.home,
+            icon: Icons.home_outlined,
+            selectedIcon: Icons.home_rounded,
+          ),
+          _Destination(
+            route: Routes.financePath,
+            label: 'Lancamentos',
+            asset: AppIcons.clinic,
+            icon: Icons.receipt_long_outlined,
+            selectedIcon: Icons.receipt_long_rounded,
+          ),
+          _Destination(
+            route: Routes.financeReportsPath,
+            label: 'Relatorios',
+            icon: Icons.bar_chart_rounded,
+            selectedIcon: Icons.bar_chart_rounded,
+          ),
+          _Destination(
+            route: Routes.profilePath,
+            label: 'Perfil',
+            asset: AppIcons.profile,
+            icon: Icons.person_outline_rounded,
+            selectedIcon: Icons.person_rounded,
+          ),
+        ];
+      case WorkspaceProfile.admin:
+        return const <_Destination>[
+          _Destination(
+            route: Routes.homePath,
+            label: 'Inicio',
+            asset: AppIcons.home,
+            icon: Icons.home_outlined,
+            selectedIcon: Icons.home_rounded,
+          ),
+          _Destination(
+            route: Routes.adminPath,
+            label: 'Gestao',
+            icon: Icons.settings_outlined,
+            selectedIcon: Icons.settings_rounded,
+          ),
+          _Destination(
+            route: Routes.notificationsPath,
+            label: 'Alertas',
+            asset: AppIcons.messages,
+            icon: Icons.notifications_outlined,
+            selectedIcon: Icons.notifications_rounded,
+            showUnreadBadge: true,
+          ),
+          _Destination(
+            route: Routes.profilePath,
+            label: 'Perfil',
+            asset: AppIcons.profile,
+            icon: Icons.person_outline_rounded,
+            selectedIcon: Icons.person_rounded,
+          ),
+        ];
+      case WorkspaceProfile.professional:
+        return _professionalPrimary;
+    }
   }
 
-  List<_Destination> _sidebarFor(AppUser? user) {
-    final bool isPro = user?.role.isProfessional ?? false;
-    if (!isPro) return _primaryFor(user);
-    return _professionalSidebar
-        .where((_Destination d) => !d.professionalOnly || isPro)
-        .toList(growable: false);
+  List<_Destination> _sidebarFor(AppUser? user, WorkspaceProfile workspace) {
+    if (workspace == WorkspaceProfile.patient) {
+      return _primaryFor(user, workspace);
+    }
+    if (workspace == WorkspaceProfile.professional) {
+      return _professionalSidebar;
+    }
+    return _primaryFor(user, workspace);
   }
 
   int _indexFor(List<_Destination> destinations) {
@@ -261,14 +357,35 @@ class AppShell extends ConsumerWidget {
         location.startsWith('${destination.route}/')) {
       return;
     }
-    context.go(destination.route);
+    if (_isShellRoute(destination.route)) {
+      context.go(destination.route);
+    } else {
+      // Rotas fora do ShellRoute abrem por cima para manter o voltar.
+      context.push(destination.route);
+    }
   }
+
+  static const List<String> _shellRoots = <String>[
+    Routes.homePath,
+    Routes.clinicPath,
+    Routes.agendaPath,
+    Routes.patientsPath,
+    Routes.notificationsPath,
+    Routes.libraryPath,
+    Routes.aiPath,
+    Routes.toolsPath,
+    Routes.profilePath,
+  ];
+
+  static bool _isShellRoute(String route) =>
+      _shellRoots.any((String r) => route == r || route.startsWith('$r/'));
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final AppUser? user = ref.watch(currentUserProvider);
-    final List<_Destination> primary = _primaryFor(user);
-    final List<_Destination> sidebar = _sidebarFor(user);
+    final WorkspaceProfile workspace = ref.watch(currentWorkspaceProvider);
+    final List<_Destination> primary = _primaryFor(user, workspace);
+    final List<_Destination> sidebar = _sidebarFor(user, workspace);
     final int primaryIndex = _indexFor(primary);
     final int sidebarIndex = _indexFor(sidebar);
     final int unread = ref.watch(unreadCountProvider);
@@ -318,7 +435,10 @@ class AppShell extends ConsumerWidget {
       ScreenSize.medium || ScreenSize.expanded => Scaffold(
           body: Column(
             children: <Widget>[
-              PremiumTopBar(notificationCount: unread),
+              PremiumTopBar(
+                notificationCount: unread,
+                showSearch: workspace == WorkspaceProfile.professional,
+              ),
               Expanded(
                 child: Row(
                   children: <Widget>[
@@ -390,7 +510,10 @@ class AppShell extends ConsumerWidget {
               Expanded(
                 child: Column(
                   children: <Widget>[
-                    PremiumTopBar(notificationCount: unread),
+                    PremiumTopBar(
+                notificationCount: unread,
+                showSearch: workspace == WorkspaceProfile.professional,
+              ),
                     Expanded(child: content),
                   ],
                 ),
@@ -699,8 +822,14 @@ class _PremiumSidebar extends ConsumerWidget {
                             fontWeight: FontWeight.w700,
                           ),
                         ),
-                        onTap: () =>
-                            ref.read(authControllerProvider.notifier).signOut(),
+                        onTap: () async {
+                          final bool ok = await ref
+                              .read(authControllerProvider.notifier)
+                              .signOut();
+                          if (ok && context.mounted) {
+                            context.go(Routes.loginPath);
+                          }
+                        },
                         shape: RoundedRectangleBorder(
                           borderRadius: AppRadius.lgAll,
                         ),

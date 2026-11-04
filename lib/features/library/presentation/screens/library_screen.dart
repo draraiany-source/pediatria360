@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/config/app_assets.dart';
+import '../../../../core/config/capi_pose.dart';
 import '../../../../core/responsive/responsive.dart';
 import '../../../../core/router/routes.dart';
 import '../../../../core/theme/app_colors.dart';
@@ -133,6 +135,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
                             )
                           : EmptyState(
                               icon: Icons.menu_book_outlined,
+                              illustration: AppAssets.capiForPose(CapiPose.boasVindas),
                               title: filter.category == null
                                   ? 'Biblioteca vazia'
                                   : 'Nada em '

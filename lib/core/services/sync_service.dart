@@ -219,13 +219,16 @@ class SyncService {
             return;
           }
 
-          await ref.set(
-            <String, dynamic>{
-              ...resolution.merged!,
-              'updatedAt': FieldValue.serverTimestamp(),
-            },
-            SetOptions(merge: true),
-          );
+          final Map<String, dynamic> data = <String, dynamic>{
+            ...resolution.merged!,
+            'updatedAt': FieldValue.serverTimestamp(),
+          };
+          if (entry.entity == SyncEntity.children &&
+              entry.operation == OutboxOperation.create) {
+            await _createChildWithRegistry(ref, data);
+          } else {
+            await ref.set(data, SetOptions(merge: true));
+          }
 
           await db.recordSyncEvent(
             SyncEvent(
@@ -317,6 +320,31 @@ class SyncService {
     );
   }
 
+  /// Crianca nova vai junto com o registro de propriedade (child_registry):
+  /// as regras so aceitam a criacao com os dois no mesmo lote.
+  Future<void> _createChildWithRegistry(
+    DocumentReference<Map<String, dynamic>> childRef,
+    Map<String, dynamic> data,
+  ) async {
+    final DocumentReference<Map<String, dynamic>> registry = _firestore
+        .collection(FirestorePaths.childRegistry)
+        .doc(childRef.id);
+    final DocumentSnapshot<Map<String, dynamic>> existing =
+        await registry.get();
+    if (existing.exists) {
+      // Retentativa de um envio que ja tinha dado certo.
+      await childRef.set(data, SetOptions(merge: true));
+      return;
+    }
+    final WriteBatch batch = _firestore.batch()
+      ..set(childRef, data, SetOptions(merge: true))
+      ..set(registry, <String, dynamic>{
+        'ownerUid': childRef.parent.parent!.id,
+        'createdAt': FieldValue.serverTimestamp(),
+      });
+    await batch.commit();
+  }
+
   Future<void> _clearDirty(OutboxEntry entry) async {
     final String? table = switch (entry.entity) {
       SyncEntity.children => LocalDatabase.tableChildren,
@@ -371,6 +399,9 @@ class SyncService {
   }
 
   /// Enfileira uma escrita e tenta enviar na hora, se houver rede.
+  ///
+  /// Sem banco local (web) não existe fila: a escrita vai direto ao servidor e
+  /// a falha sobe para quem chamou, para a tela não confirmar o que não gravou.
   Future<void> enqueue({
     required String id,
     required String entity,
@@ -378,7 +409,20 @@ class SyncService {
     required OutboxOperation operation,
     required Map<String, dynamic> payload,
   }) async {
-    if (_db == null) return;
+    if (_db == null) {
+      await _writeDirect(
+        OutboxEntry(
+          id: id,
+          entity: entity,
+          entityId: entityId,
+          operation: operation,
+          payload: payload,
+          createdAt: DateTime.now(),
+          attempts: 0,
+        ),
+      );
+      return;
+    }
 
     await _db.enqueue(
       id: id,
@@ -390,6 +434,26 @@ class SyncService {
     await _refreshPending();
 
     if (_connectivity.isOnline) unawaited(sync());
+  }
+
+  Future<void> _writeDirect(OutboxEntry entry) async {
+    final DocumentReference<Map<String, dynamic>> ref = _referenceFor(entry);
+    if (entry.operation == OutboxOperation.delete) {
+      await ref.delete();
+      return;
+    }
+    final ConflictResolution resolution = await _resolveConflict(ref, entry);
+    if (!resolution.shouldWrite) return;
+    final Map<String, dynamic> data = <String, dynamic>{
+      ...resolution.merged!,
+      'updatedAt': FieldValue.serverTimestamp(),
+    };
+    if (entry.entity == SyncEntity.children &&
+        entry.operation == OutboxOperation.create) {
+      await _createChildWithRegistry(ref, data);
+    } else {
+      await ref.set(data, SetOptions(merge: true));
+    }
   }
 
   Future<void> dispose() async {

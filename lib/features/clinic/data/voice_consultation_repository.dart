@@ -101,16 +101,32 @@ class VoiceConsultationRepository {
         );
       });
 
-  Future<Result<String?>> applyDraftToEncounter(String sessionId) =>
-      guard(() async {
-        final HttpsCallableResult<dynamic> result =
-            await _functions.httpsCallable('applyVoiceDraftToEncounter').call(
-          <String, dynamic>{'sessionId': sessionId},
-        );
-        final Map<String, dynamic> data =
-            Map<String, dynamic>.from(result.data as Map);
-        return data['encounterId'] as String?;
-      });
+  /// Grava o rascunho como atendimento em rascunho, sem os campos recusados.
+  ///
+  /// `keptFields`: campos em que o texto ja escrito no atendimento foi
+  /// mantido no lugar da sugestao da IA.
+  Future<Result<({String? encounterId, List<String> keptFields})>>
+      applyDraftToEncounter(
+    String sessionId, {
+    Iterable<String> ignoredFields = const <String>[],
+  }) =>
+          guard(() async {
+            final HttpsCallableResult<dynamic> result = await _functions
+                .httpsCallable('applyVoiceDraftToEncounter')
+                .call(<String, dynamic>{
+              'sessionId': sessionId,
+              'ignoredFields': ignoredFields.toList(),
+            });
+            final Map<String, dynamic> data =
+                Map<String, dynamic>.from(result.data as Map);
+            return (
+              encounterId: data['encounterId'] as String?,
+              keptFields: ((data['keptFields'] as List<dynamic>?) ??
+                      const <dynamic>[])
+                  .whereType<String>()
+                  .toList(),
+            );
+          });
 
   Future<Result<void>> discardSession(String sessionId) => guard(() async {
         await _functions.httpsCallable('discardVoiceSession').call(

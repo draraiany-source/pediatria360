@@ -2,18 +2,18 @@ import 'package:equatable/equatable.dart';
 
 import '../utils/result.dart';
 
-/// Caso de uso assincrono que recebe [Params] e devolve [Type].
-abstract class UseCase<Type, Params> {
+/// Caso de uso assincrono que recebe [Params] e devolve [T].
+abstract class UseCase<T, Params> {
   const UseCase();
 
-  Future<Result<Type>> call(Params params);
+  Future<Result<T>> call(Params params);
 }
 
 /// Caso de uso que expoe um fluxo continuo (ex.: `watchChildren`).
-abstract class StreamUseCase<Type, Params> {
+abstract class StreamUseCase<T, Params> {
   const StreamUseCase();
 
-  Stream<Result<Type>> call(Params params);
+  Stream<Result<T>> call(Params params);
 }
 
 /// Marcador para casos de uso sem parametros.

@@ -16,8 +16,13 @@
 
 import { onCall, HttpsError } from "firebase-functions/v2/https";
 import * as admin from "firebase-admin";
+import { FieldValue, Timestamp } from "firebase-admin/firestore";
 import * as logger from "firebase-functions/logger";
-import { hasActiveBookingConflict, isPastAppointmentTime } from "./booking";
+import { isPastAppointmentTime } from "./booking";
+import { childOwnerUid } from "./childAccess";
+import { clinicRoleOf } from "./clinicFlow";
+import { CARE_ROLES } from "./intake";
+import { loadSchedulingConfig, reserveAppointment } from "./scheduling";
 
 const REGION = "southamerica-east1";
 const db = () => admin.firestore();
@@ -124,7 +129,7 @@ async function priceCart(
       couponMessage = "Cupom não encontrado.";
     } else {
       const coupon = couponDoc.data() ?? {};
-      const now = admin.firestore.Timestamp.now();
+      const now = Timestamp.now();
 
       if (coupon.active !== true) {
         couponMessage = "Este cupom não está mais ativo.";
@@ -255,7 +260,7 @@ export const createOrder = onCall({ region: REGION }, async (request) => {
         );
       }
       tx.update(productRefs[index], {
-        stock: admin.firestore.FieldValue.increment(-needed),
+        stock: FieldValue.increment(-needed),
       });
     });
 
@@ -270,12 +275,12 @@ export const createOrder = onCall({ region: REGION }, async (request) => {
       status: "pending",
       paymentMethod,
       address,
-      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      createdAt: FieldValue.serverTimestamp(),
     });
 
     if (priced.couponValid && couponCode) {
       tx.update(db().collection("coupons").doc(couponCode.toUpperCase()), {
-        usedCount: admin.firestore.FieldValue.increment(1),
+        usedCount: FieldValue.increment(1),
       });
     }
   });
@@ -335,8 +340,8 @@ export const getAvailability = onCall({ region: REGION }, async (request) => {
   const booked = await db()
     .collection("appointments")
     .where("professionalId", "==", professionalId)
-    .where("startsAt", ">=", admin.firestore.Timestamp.fromDate(dayStart))
-    .where("startsAt", "<", admin.firestore.Timestamp.fromDate(dayEnd))
+    .where("startsAt", ">=", Timestamp.fromDate(dayStart))
+    .where("startsAt", "<", Timestamp.fromDate(dayEnd))
     .get();
 
   const takenTimes = new Set(
@@ -345,7 +350,7 @@ export const getAvailability = onCall({ region: REGION }, async (request) => {
         const status = d.data().status;
         return status !== "cancelled" && status !== "noShow";
       })
-      .map((d) => (d.data().startsAt as admin.firestore.Timestamp).toMillis())
+      .map((d) => (d.data().startsAt as Timestamp).toMillis())
   );
 
   const now = Date.now();
@@ -400,6 +405,11 @@ export const bookAppointment = onCall({ region: REGION }, async (request) => {
 
   let childName: string | null = null;
   if (childId) {
+    // Só para criança do próprio titular. Pedir consulta não autoriza
+    // acesso clínico: isso é escolha separada do responsável.
+    if ((await childOwnerUid(childId)) !== uid) {
+      throw new HttpsError("permission-denied", "Criança não encontrada.");
+    }
     const childDoc = await db()
       .collection("users")
       .doc(uid)
@@ -409,48 +419,38 @@ export const bookAppointment = onCall({ region: REGION }, async (request) => {
     childName = (childDoc.data()?.name as string) ?? null;
   }
 
-  const appointmentRef = db().collection("appointments").doc();
-  const timestamp = admin.firestore.Timestamp.fromDate(start);
-
-  await db().runTransaction(async (tx) => {
-    // Relê o horário dentro da transação: entre a consulta da agenda e o
-    // toque em "agendar", outra pessoa pode ter reservado.
-    const conflicting = await tx.get(
-      db()
-        .collection("appointments")
-        .where("professionalId", "==", professionalId)
-        .where("startsAt", "==", timestamp)
-    );
-
-    const active = conflicting.docs.filter((d) =>
-      hasActiveBookingConflict([d.data().status])
-    );
-
-    if (active.length > 0) {
-      throw new HttpsError(
-        "already-exists",
-        "Este horário acabou de ser ocupado. Escolha outro."
-      );
+  // Mesma reserva da agenda da clínica: duração, sobreposição, sala e travas
+  // por recurso, tudo revalidado em transação (scheduling.ts).
+  const clinicId = typeof request.data?.clinicId === "string" && request.data.clinicId ? (request.data.clinicId as string) : null;
+  if (clinicId) {
+    const role = await clinicRoleOf(clinicId, professionalId);
+    if (!role || !CARE_ROLES.includes(role)) {
+      throw new HttpsError("not-found", "Profissional não disponível nesta clínica.");
     }
-
-    tx.set(appointmentRef, {
-      patientId: uid,
-      professionalId,
-      professionalName: professional.name ?? "",
-      specialty: professional.specialty ?? null,
-      startsAt: timestamp,
-      durationMinutes: Number(professional.consultationMinutes ?? 30),
-      priceCents: Number(professional.consultationPriceCents ?? 0),
-      status: "requested",
-      paid: false,
-      childId: childId ?? null,
-      childName,
-      reason: reason?.slice(0, 500) ?? null,
-      createdAt: admin.firestore.FieldValue.serverTimestamp(),
-    });
+  }
+  const appointmentType = typeof request.data?.appointmentType === "string" ? (request.data.appointmentType as string) : "presencial";
+  const { policy } = await loadSchedulingConfig(clinicId);
+  const appointmentId = await reserveAppointment({
+    clinicId,
+    professionalId,
+    startMs: start.getTime(),
+    type: appointmentType,
+    serviceId: null,
+    roomId: null,
+    roomLabel: null,
+    equipmentIds: [],
+    patientId: uid,
+    childId: childId ?? null,
+    childName,
+    reason: reason?.slice(0, 500) ?? null,
+    status: policy.familyBookingStatus,
+    origin: "familyBooking",
+    createdBy: uid,
+    enforceLead: true,
+    fallbackPriceCents: Number(professional.consultationPriceCents ?? 0),
   });
 
-  return { appointmentId: appointmentRef.id };
+  return { appointmentId };
 });
 
 /**
@@ -477,7 +477,7 @@ export const joinConsultation = onCall({ region: REGION }, async (request) => {
     throw new HttpsError("permission-denied", "Você não participa desta consulta.");
   }
 
-  const start = (appointment.startsAt as admin.firestore.Timestamp).toDate();
+  const start = (appointment.startsAt as Timestamp).toDate();
   const end = new Date(
     start.getTime() + (appointment.durationMinutes ?? 30) * 60000
   );

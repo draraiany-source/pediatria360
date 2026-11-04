@@ -1,19 +1,22 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/router/route_access.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_tokens.dart';
 import '../../domain/bi_models.dart';
 
-class BiKpiTile extends StatelessWidget {
+class BiKpiTile extends ConsumerWidget {
   const BiKpiTile({super.key, required this.data});
 
   final BiKpiCardData data;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final ThemeData theme = Theme.of(context);
-    final bool tappable = data.drillRoute != null;
+    final bool tappable =
+        data.drillRoute != null && canOpenRoute(ref, data.drillRoute!);
 
     return Material(
       color: Colors.white,

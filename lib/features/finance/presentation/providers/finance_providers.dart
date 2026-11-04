@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/config/dev_mode.dart';
 import '../../../../core/providers/core_providers.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
+import '../../../../shared/domain/entities/app_user.dart';
 import '../../../clinic_org/presentation/providers/clinic_org_providers.dart';
 import '../../../telemedicine/data/telemedicine_repository.dart';
 import '../../../telemedicine/presentation/agenda_providers.dart'
@@ -14,7 +15,10 @@ import '../../domain/finance_models.dart';
 
 final Provider<FinanceRepository> financeRepositoryProvider =
     Provider<FinanceRepository>(
-  (Ref ref) => FinanceRepository(firestore: ref.watch(firestoreProvider)),
+  (Ref ref) => FinanceRepository(
+    firestore: ref.watch(firestoreProvider),
+    functions: ref.watch(firebaseFunctionsProvider),
+  ),
 );
 
 final StateProvider<FinancePeriodFilter> financePeriodFilterProvider =
@@ -29,6 +33,16 @@ final Provider<FinancePeriod> financePeriodProvider = Provider<FinancePeriod>(
   },
 );
 
+/// Conta de equipe (financeiro/gestao, sem papel profissional) le o caixa da
+/// clinica do vinculo ativo; profissional continua no proprio livro.
+final Provider<String?> financeStaffClinicIdProvider = Provider<String?>((Ref ref) {
+  final user = ref.watch(currentUserProvider);
+  final membership = ref.watch(activeClinicMembershipProvider);
+  if (user == null || user.role == UserRole.professional) return null;
+  if (membership == null || !membership.active) return null;
+  return membership.clinicId;
+});
+
 final StreamProvider<List<FinanceReceivable>> financeReceivablesProvider =
     StreamProvider<List<FinanceReceivable>>((Ref ref) {
   if (DevMode.isEnabled &&
@@ -39,7 +53,9 @@ final StreamProvider<List<FinanceReceivable>> financeReceivablesProvider =
   if (uid == null) {
     return Stream<List<FinanceReceivable>>.value(const <FinanceReceivable>[]);
   }
-  return ref.watch(financeRepositoryProvider).watchReceivables(uid);
+  return ref
+      .watch(financeRepositoryProvider)
+      .watchReceivables(uid, clinicId: ref.watch(financeStaffClinicIdProvider));
 });
 
 final StreamProvider<List<FinancePayable>> financePayablesProvider =
@@ -52,7 +68,9 @@ final StreamProvider<List<FinancePayable>> financePayablesProvider =
   if (uid == null) {
     return Stream<List<FinancePayable>>.value(const <FinancePayable>[]);
   }
-  return ref.watch(financeRepositoryProvider).watchPayables(uid);
+  return ref
+      .watch(financeRepositoryProvider)
+      .watchPayables(uid, clinicId: ref.watch(financeStaffClinicIdProvider));
 });
 
 final StreamProvider<List<FinanceReceipt>> financeReceiptsProvider =
@@ -65,7 +83,9 @@ final StreamProvider<List<FinanceReceipt>> financeReceiptsProvider =
   if (uid == null) {
     return Stream<List<FinanceReceipt>>.value(const <FinanceReceipt>[]);
   }
-  return ref.watch(financeRepositoryProvider).watchReceipts(uid);
+  return ref
+      .watch(financeRepositoryProvider)
+      .watchReceipts(uid, clinicId: ref.watch(financeStaffClinicIdProvider));
 });
 
 final StreamProviderFamily<List<FinanceReceivable>, String>

@@ -40,6 +40,7 @@ enum AppointmentType {
 
 enum AppointmentStatus {
   requested,
+  awaitingConfirmation,
   confirmed,
   inProgress,
   completed,
@@ -53,7 +54,8 @@ enum AppointmentStatus {
       );
 
   String get label => switch (this) {
-        AppointmentStatus.requested => 'Aguardando confirmação',
+        AppointmentStatus.requested => 'Solicitada',
+        AppointmentStatus.awaitingConfirmation => 'Aguardando confirmação',
         AppointmentStatus.confirmed => 'Confirmada',
         AppointmentStatus.inProgress => 'Em andamento',
         AppointmentStatus.completed => 'Realizada',
@@ -63,6 +65,7 @@ enum AppointmentStatus {
 
   bool get isActive =>
       this == AppointmentStatus.requested ||
+      this == AppointmentStatus.awaitingConfirmation ||
       this == AppointmentStatus.confirmed ||
       this == AppointmentStatus.inProgress;
 }
@@ -503,9 +506,15 @@ class TelemedicineRepository {
           );
 
   /// Agendamentos de uma crianca (visao 360 / timeline clinica).
-  Stream<List<Appointment>> watchChildAppointments(String childId) =>
-      _appointments
-          .where('childId', isEqualTo: childId)
+  Stream<List<Appointment>> watchChildAppointments(
+    String childId, {
+    String? professionalId,
+  }) =>
+      (professionalId == null
+              ? _appointments.where('childId', isEqualTo: childId)
+              : _appointments
+                  .where('childId', isEqualTo: childId)
+                  .where('professionalId', isEqualTo: professionalId))
           .orderBy('startsAt', descending: true)
           .limit(40)
           .snapshots()
@@ -514,27 +523,77 @@ class TelemedicineRepository {
                 s.docs.map(Appointment.fromFirestore).toList(growable: false),
           );
 
-  Future<Result<void>> cancel(String appointmentId) => guard(() async {
-        await _appointments.doc(appointmentId).update(<String, dynamic>{
-          'status': AppointmentStatus.cancelled.name,
-          'cancelledAt': FieldValue.serverTimestamp(),
-        });
+  /// Mudanças de status passam pela Function `setAppointmentStatus`, que
+  /// confere o perfil (família, recepção, profissional), o prazo da clínica,
+  /// libera as travas de horário e cancela lembretes pendentes. Gravar direto
+  /// do aparelho foi fechado nas regras.
+  Future<Result<void>> _setStatus(
+    String appointmentId,
+    AppointmentStatus status, {
+    String? reason,
+  }) =>
+      guard(() async {
+        await _functions.httpsCallable('setAppointmentStatus').call(
+          <String, dynamic>{
+            'appointmentId': appointmentId,
+            'status': status.name,
+            if (reason != null && reason.trim().isNotEmpty)
+              'reason': reason.trim(),
+          },
+        );
       });
 
-  /// Confirma uma consulta solicitada. Só o profissional dono do
-  /// agendamento pode — a mesma regra que já protege `cancel()` (que é do
-  /// paciente) protege esta (que é do profissional), por
-  /// `resource.data.professionalId == request.auth.uid`.
-  Future<Result<void>> confirm(String appointmentId) => guard(() async {
-        await _appointments.doc(appointmentId).update(<String, dynamic>{
-          'status': AppointmentStatus.confirmed.name,
-        });
-      });
+  Future<Result<void>> cancel(String appointmentId, {String? reason}) =>
+      _setStatus(appointmentId, AppointmentStatus.cancelled, reason: reason);
 
-  Future<Result<void>> markCompleted(String appointmentId) => guard(() async {
-        await _appointments.doc(appointmentId).update(<String, dynamic>{
-          'status': AppointmentStatus.completed.name,
-        });
+  /// Confirma uma consulta solicitada (profissional, recepção ou a família
+  /// quando a clínica pede confirmação).
+  Future<Result<void>> confirm(String appointmentId) =>
+      _setStatus(appointmentId, AppointmentStatus.confirmed);
+
+  Future<Result<void>> markCompleted(String appointmentId) =>
+      _setStatus(appointmentId, AppointmentStatus.completed);
+
+  Future<Result<void>> markNoShow(String appointmentId) =>
+      _setStatus(appointmentId, AppointmentStatus.noShow);
+
+  /// Horários livres calculados no servidor (expediente, pausas, férias,
+  /// bloqueios, reservas e travas), já com a duração do tipo/serviço.
+  Future<Result<List<TimeSlot>>> clinicSlots({
+    required String clinicId,
+    required String professionalId,
+    required DateTime from,
+    int days = 1,
+    AppointmentType type = AppointmentType.presencial,
+    String? serviceId,
+    String? roomId,
+  }) =>
+      guard(() async {
+        final HttpsCallableResult<dynamic> response =
+            await _functions.httpsCallable('getScheduleSlots').call(
+          <String, dynamic>{
+            'clinicId': clinicId,
+            'professionalId': professionalId,
+            'from': from.toUtc().toIso8601String(),
+            'days': days,
+            'appointmentType': type.name,
+            if (serviceId != null) 'serviceId': serviceId,
+            if (roomId != null) 'roomId': roomId,
+          },
+        );
+        final Map<dynamic, dynamic> data =
+            response.data as Map<dynamic, dynamic>;
+        final int duration = (data['durationMinutes'] as num?)?.toInt() ?? 30;
+        return ((data['slots'] as List<dynamic>?) ?? const <dynamic>[])
+            .whereType<String>()
+            .map(
+              (String iso) => TimeSlot(
+                startsAt: DateTime.parse(iso).toLocal(),
+                durationMinutes: duration,
+                available: true,
+              ),
+            )
+            .toList(growable: false);
       });
 
   /// Entra na sala. A URL é gerada na hora e expira.
@@ -565,8 +624,11 @@ class TelemedicineRepository {
                 s.docs.map(Appointment.fromFirestore).toList(growable: false),
           );
 
-  /// Cria consulta no consultorio (recepcao/profissional), com checagem de
-  /// conflito de profissional/sala e bloqueios. Nao gera segunda agenda.
+  /// Cria consulta no consultório (recepção/profissional) pela Function
+  /// `scheduleAppointment`: a reserva trava profissional, sala e equipamento
+  /// em transação, exige a autorização do titular para o profissional e
+  /// agenda os lembretes. A checagem local abaixo só evita uma ida ao
+  /// servidor quando o conflito já está visível na tela.
   Future<Result<String>> createClinicAppointment({
     required String clinicId,
     required String patientOwnerId,
@@ -581,69 +643,65 @@ class TelemedicineRepository {
     String? roomId,
     String? roomLabel,
     String? reason,
+    String? serviceId,
     int? durationMinutes,
     AppointmentStatus status = AppointmentStatus.confirmed,
     List<Appointment> existingInWindow = const <Appointment>[],
     List<ScheduleBlock> blocks = const <ScheduleBlock>[],
   }) =>
       guard(() async {
-        final int duration = durationMinutes ??
-            defaultDurationForAppointmentType(type.name);
+        if (childId == null) {
+          throw StateError('Escolha a criança da consulta.');
+        }
         final AgendaConflict? conflict = findAgendaConflict(
           startsAt: startsAt,
-          durationMinutes: duration,
+          durationMinutes:
+              durationMinutes ?? defaultDurationForAppointmentType(type.name),
           professionalId: professionalId,
           roomId: roomId ?? '',
-          existing: existingInWindow
-              .map(
-                (Appointment a) => AgendaInterval(
-                  id: a.id,
-                  startsAt: a.startsAt,
-                  durationMinutes: a.durationMinutes,
-                  professionalId: a.professionalId,
-                  roomId: a.roomId ?? '',
-                  status: a.status.name,
-                ),
-              )
-              .toList(growable: false),
+          existing: _intervals(existingInWindow),
           blocks: blocks,
         );
         if (conflict != null) {
           throw StateError(conflict.reason);
         }
-
-        final DocumentReference<Map<String, dynamic>> ref = _appointments.doc();
-        final Map<String, dynamic> payload = <String, dynamic>{
-          'patientId': patientOwnerId,
-          'professionalId': professionalId,
-          'professionalName': professionalName,
-          'startsAt': Timestamp.fromDate(startsAt.toUtc()),
-          'durationMinutes': duration,
-          'status': status.name,
-          'createdAt': FieldValue.serverTimestamp(),
-          'type': type.name,
-          'clinicId': clinicId,
-          if (childId != null) 'childId': childId,
-          if (childName != null) 'childName': childName,
-          if (unitId != null) 'unitId': unitId,
-          if (roomId != null) 'roomId': roomId,
-          if (roomLabel != null) 'roomLabel': roomLabel,
-          if (reason != null) 'reason': reason,
-          'workflowStatus': 'scheduled',
-          'createdBy': actorUid,
-        };
-        await ref.set(payload);
-        await _appendAppointmentChange(
-          appointmentId: ref.id,
-          actorUid: actorUid,
-          action: 'created',
-          before: null,
-          after: payload,
+        final HttpsCallableResult<dynamic> response =
+            await _functions.httpsCallable('scheduleAppointment').call(
+          <String, dynamic>{
+            'clinicId': clinicId,
+            'patientId': patientOwnerId,
+            'childId': childId,
+            'professionalId': professionalId,
+            'startsAt': startsAt.toUtc().toIso8601String(),
+            'appointmentType': type.name,
+            'status': status.name,
+            if (unitId != null) 'unitId': unitId,
+            if (roomId != null) 'roomId': roomId,
+            if (roomLabel != null) 'roomLabel': roomLabel,
+            if (reason != null) 'reason': reason,
+            if (serviceId != null) 'serviceId': serviceId,
+          },
         );
-        return ref.id;
+        final Map<String, dynamic> data =
+            Map<String, dynamic>.from(response.data as Map<dynamic, dynamic>);
+        final List<dynamic> ids =
+            (data['appointmentIds'] as List<dynamic>?) ?? const <dynamic>[];
+        if (ids.isEmpty) {
+          final List<dynamic> conflicts =
+              (data['conflicts'] as List<dynamic>?) ?? const <dynamic>[];
+          final Object? first = conflicts.isEmpty ? null : conflicts.first;
+          throw StateError(
+            first is Map
+                ? (first['reason'] as String?) ?? 'Horário indisponível.'
+                : 'Horário indisponível.',
+          );
+        }
+        return ids.first as String;
       });
 
-  /// Reagenda consulta existente (mesmo id — evita duplicata).
+  /// Reagenda pela Function `rescheduleAppointment` (mesmo id, nova versão):
+  /// troca as travas, cancela os lembretes antigos, agenda os novos e oferece
+  /// o horário liberado à lista de espera.
   Future<Result<void>> reschedule({
     required String appointmentId,
     required DateTime newStartsAt,
@@ -651,146 +709,62 @@ class TelemedicineRepository {
     int? durationMinutes,
     String? roomId,
     String? roomLabel,
+    String? reason,
     List<Appointment> existingInWindow = const <Appointment>[],
     List<ScheduleBlock> blocks = const <ScheduleBlock>[],
   }) =>
       guard(() async {
-        final DocumentSnapshot<Map<String, dynamic>> snap =
-            await _appointments.doc(appointmentId).get();
-        if (!snap.exists) {
-          throw StateError('Agendamento nao encontrado.');
+        final Appointment? current = existingInWindow
+            .where((Appointment a) => a.id == appointmentId)
+            .firstOrNull;
+        if (current != null) {
+          final AgendaConflict? conflict = findAgendaConflict(
+            startsAt: newStartsAt,
+            durationMinutes: durationMinutes ?? current.durationMinutes,
+            professionalId: current.professionalId,
+            roomId: roomId ?? current.roomId ?? '',
+            ignoreAppointmentId: appointmentId,
+            existing: _intervals(existingInWindow),
+            blocks: blocks,
+          );
+          if (conflict != null) {
+            throw StateError(conflict.reason);
+          }
         }
-        final Appointment current = Appointment.fromFirestore(snap);
-        final int duration = durationMinutes ?? current.durationMinutes;
-        final String effectiveRoom = roomId ?? current.roomId ?? '';
-        final AgendaConflict? conflict = findAgendaConflict(
-          startsAt: newStartsAt,
-          durationMinutes: duration,
-          professionalId: current.professionalId,
-          roomId: effectiveRoom,
-          ignoreAppointmentId: appointmentId,
-          existing: existingInWindow
-              .map(
-                (Appointment a) => AgendaInterval(
-                  id: a.id,
-                  startsAt: a.startsAt,
-                  durationMinutes: a.durationMinutes,
-                  professionalId: a.professionalId,
-                  roomId: a.roomId ?? '',
-                  status: a.status.name,
-                ),
-              )
-              .toList(growable: false),
-          blocks: blocks,
-        );
-        if (conflict != null) {
-          throw StateError(conflict.reason);
-        }
-
-        final Map<String, dynamic> before = snap.data()!;
-        final Map<String, dynamic> patch = <String, dynamic>{
-          'startsAt': Timestamp.fromDate(newStartsAt.toUtc()),
-          'durationMinutes': duration,
-          if (roomId != null) 'roomId': roomId,
-          if (roomLabel != null) 'roomLabel': roomLabel,
-          'rescheduledAt': FieldValue.serverTimestamp(),
-          'rescheduledBy': actorUid,
-          'previousStartsAt': before['startsAt'],
-        };
-        await _appointments.doc(appointmentId).update(patch);
-        await _appendAppointmentChange(
-          appointmentId: appointmentId,
-          actorUid: actorUid,
-          action: 'rescheduled',
-          before: before,
-          after: <String, dynamic>{...before, ...patch},
+        await _functions.httpsCallable('rescheduleAppointment').call(
+          <String, dynamic>{
+            'appointmentId': appointmentId,
+            'startsAt': newStartsAt.toUtc().toIso8601String(),
+            if (roomId != null) 'roomId': roomId,
+            if (reason != null) 'reason': reason,
+          },
         );
       });
 
+  /// Cancelamento pela equipe: o servidor exige o motivo e grava o histórico.
   Future<Result<void>> cancelWithAudit({
     required String appointmentId,
     required String actorUid,
     String? reason,
   }) =>
-      guard(() async {
-        final DocumentSnapshot<Map<String, dynamic>> snap =
-            await _appointments.doc(appointmentId).get();
-        if (!snap.exists) {
-          throw StateError('Agendamento nao encontrado.');
-        }
-        final Map<String, dynamic> before = snap.data()!;
-        final Map<String, dynamic> patch = <String, dynamic>{
-          'status': AppointmentStatus.cancelled.name,
-          'cancelledAt': FieldValue.serverTimestamp(),
-          'cancelledBy': actorUid,
-          if (reason != null) 'cancelReason': reason,
-        };
-        await _appointments.doc(appointmentId).update(patch);
-        await _appendAppointmentChange(
-          appointmentId: appointmentId,
-          actorUid: actorUid,
-          action: 'cancelled',
-          before: before,
-          after: <String, dynamic>{...before, ...patch},
-        );
-      });
+      _setStatus(appointmentId, AppointmentStatus.cancelled, reason: reason);
 
   Future<Result<void>> confirmWithAudit({
     required String appointmentId,
     required String actorUid,
   }) =>
-      guard(() async {
-        final DocumentSnapshot<Map<String, dynamic>> snap =
-            await _appointments.doc(appointmentId).get();
-        if (!snap.exists) {
-          throw StateError('Agendamento nao encontrado.');
-        }
-        final Map<String, dynamic> before = snap.data()!;
-        final Map<String, dynamic> patch = <String, dynamic>{
-          'status': AppointmentStatus.confirmed.name,
-          'confirmedAt': FieldValue.serverTimestamp(),
-          'confirmedBy': actorUid,
-        };
-        await _appointments.doc(appointmentId).update(patch);
-        await _appendAppointmentChange(
-          appointmentId: appointmentId,
-          actorUid: actorUid,
-          action: 'confirmed',
-          before: before,
-          after: <String, dynamic>{...before, ...patch},
-        );
-      });
+      _setStatus(appointmentId, AppointmentStatus.confirmed);
 
-  Future<void> _appendAppointmentChange({
-    required String appointmentId,
-    required String actorUid,
-    required String action,
-    Map<String, dynamic>? before,
-    Map<String, dynamic>? after,
-  }) async {
-    final DocumentReference<Map<String, dynamic>> ref =
-        _appointments.doc(appointmentId).collection('change_log').doc();
-    await ref.set(<String, dynamic>{
-      'id': ref.id,
-      'action': action,
-      'actorUid': actorUid,
-      'at': DateTime.now().toUtc().toIso8601String(),
-      if (before != null) 'before': _sanitizeLogMap(before),
-      if (after != null) 'after': _sanitizeLogMap(after),
-    });
-  }
-
-  Map<String, dynamic> _sanitizeLogMap(Map<String, dynamic> raw) {
-    final Map<String, dynamic> out = <String, dynamic>{};
-    raw.forEach((String k, dynamic v) {
-      if (v is Timestamp) {
-        out[k] = v.toDate().toIso8601String();
-      } else if (v is FieldValue) {
-        // serverTimestamp / deletes — omitidos do log.
-      } else {
-        out[k] = v;
-      }
-    });
-    return out;
-  }
+  List<AgendaInterval> _intervals(List<Appointment> list) => list
+      .map(
+        (Appointment a) => AgendaInterval(
+          id: a.id,
+          startsAt: a.startsAt,
+          durationMinutes: a.durationMinutes,
+          professionalId: a.professionalId,
+          roomId: a.roomId ?? '',
+          status: a.status.name,
+        ),
+      )
+      .toList(growable: false);
 }

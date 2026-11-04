@@ -73,9 +73,13 @@ class ChildrenRepositoryImpl implements ChildrenRepository {
         .snapshots();
 
     await for (final QuerySnapshot<Map<String, dynamic>> snapshot in remote) {
-      await _mergeChildren(
-        snapshot.docs.map(ChildMapper.fromFirestore).toList(growable: false),
-      );
+      final List<Child> fromServer =
+          snapshot.docs.map(ChildMapper.fromFirestore).toList(growable: false);
+      if (_db == null) {
+        yield fromServer;
+        continue;
+      }
+      await _mergeChildren(fromServer);
       yield await _localChildren(ownerId);
     }
   }
@@ -229,19 +233,24 @@ class ChildrenRepositoryImpl implements ChildrenRepository {
 
     await for (final QuerySnapshot<Map<String, dynamic>> snapshot in remote) {
       final LocalDatabase? db = _db;
-      if (db != null) {
-        for (final QueryDocumentSnapshot<Map<String, dynamic>> doc
-            in snapshot.docs) {
-          final Map<String, Object?>? existing =
-              await db.queryById(LocalDatabase.tableGrowth, doc.id);
-          if ((existing?['dirty'] as int? ?? 0) == 1) continue;
-          await db.upsert(
-            LocalDatabase.tableGrowth,
-            GrowthRecordMapper.toRow(
-              GrowthRecordMapper.fromFirestore(doc, childId),
-            ),
-          );
-        }
+      if (db == null) {
+        yield snapshot.docs
+            .map((QueryDocumentSnapshot<Map<String, dynamic>> doc) =>
+                GrowthRecordMapper.fromFirestore(doc, childId))
+            .toList(growable: false);
+        continue;
+      }
+      for (final QueryDocumentSnapshot<Map<String, dynamic>> doc
+          in snapshot.docs) {
+        final Map<String, Object?>? existing =
+            await db.queryById(LocalDatabase.tableGrowth, doc.id);
+        if ((existing?['dirty'] as int? ?? 0) == 1) continue;
+        await db.upsert(
+          LocalDatabase.tableGrowth,
+          GrowthRecordMapper.toRow(
+            GrowthRecordMapper.fromFirestore(doc, childId),
+          ),
+        );
       }
       yield await _localGrowth(childId);
     }
@@ -324,19 +333,24 @@ class ChildrenRepositoryImpl implements ChildrenRepository {
 
     await for (final QuerySnapshot<Map<String, dynamic>> snapshot in remote) {
       final LocalDatabase? db = _db;
-      if (db != null) {
-        for (final QueryDocumentSnapshot<Map<String, dynamic>> doc
-            in snapshot.docs) {
-          final Map<String, Object?>? existing =
-              await db.queryById(LocalDatabase.tableVaccineDoses, doc.id);
-          if ((existing?['dirty'] as int? ?? 0) == 1) continue;
-          await db.upsert(
-            LocalDatabase.tableVaccineDoses,
-            VaccineDoseMapper.toRow(
-              VaccineDoseMapper.fromFirestore(doc, childId),
-            ),
-          );
-        }
+      if (db == null) {
+        yield snapshot.docs
+            .map((QueryDocumentSnapshot<Map<String, dynamic>> doc) =>
+                VaccineDoseMapper.fromFirestore(doc, childId))
+            .toList(growable: false);
+        continue;
+      }
+      for (final QueryDocumentSnapshot<Map<String, dynamic>> doc
+          in snapshot.docs) {
+        final Map<String, Object?>? existing =
+            await db.queryById(LocalDatabase.tableVaccineDoses, doc.id);
+        if ((existing?['dirty'] as int? ?? 0) == 1) continue;
+        await db.upsert(
+          LocalDatabase.tableVaccineDoses,
+          VaccineDoseMapper.toRow(
+            VaccineDoseMapper.fromFirestore(doc, childId),
+          ),
+        );
       }
       yield await _localDoses(childId);
     }

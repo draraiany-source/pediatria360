@@ -28,7 +28,9 @@
 import { onCall, HttpsError } from "firebase-functions/v2/https";
 import { defineSecret } from "firebase-functions/params";
 import * as admin from "firebase-admin";
+import { FieldValue, Timestamp } from "firebase-admin/firestore";
 import * as logger from "firebase-functions/logger";
+import { requireChildAccess } from "./childAccess";
 
 const REGION = "southamerica-east1";
 const ANTHROPIC_API_KEY = defineSecret("ANTHROPIC_API_KEY");
@@ -162,10 +164,13 @@ async function requireVerifiedProfessional(uid: string | undefined) {
 async function buildContext(
   task: ClinicalTask,
   uid: string,
-  encounterId?: string,
-  patientId?: string
+  encounterId?: string
 ): Promise<string> {
   const blocks: string[] = [];
+  // Paciente vem sempre do atendimento do proprio profissional; o patientId
+  // enviado pelo cliente e ignorado (senao resumia o historico de qualquer
+  // crianca).
+  let ownedPatientId: string | undefined;
 
   if (encounterId) {
     const doc = await db().collection("encounters").doc(encounterId).get();
@@ -182,6 +187,10 @@ async function buildContext(
         "Este atendimento não é seu."
       );
     }
+
+    ownedPatientId = typeof e.patientId === "string" ? e.patientId : undefined;
+    // O contexto inclui exames da criança, não só este atendimento.
+    await requireChildAccess(uid, ownedPatientId, "chartWrite", e.clinicId ?? null);
 
     const a = e.anamnesis ?? {};
     const v = e.vitals ?? {};
@@ -238,6 +247,7 @@ async function buildContext(
     const labs = await db()
       .collection("lab_results")
       .where("patientId", "==", e.patientId)
+      .where("professionalId", "==", uid)
       .orderBy("collectedAt", "desc")
       .limit(30)
       .get();
@@ -260,10 +270,11 @@ async function buildContext(
   }
 
   // Histórico: só para a tarefa que precisa dele.
-  if (task === "summarizeHistory" && patientId) {
+  if (task === "summarizeHistory" && ownedPatientId) {
     const previous = await db()
       .collection("encounters")
-      .where("patientId", "==", patientId)
+      .where("patientId", "==", ownedPatientId)
+      .where("professionalId", "==", uid)
       .where("status", "in", ["signed", "amended"])
       .orderBy("startedAt", "desc")
       .limit(15)
@@ -274,7 +285,7 @@ async function buildContext(
         previous.docs
           .map((d) => {
             const e = d.data();
-            const date = (e.startedAt as admin.firestore.Timestamp)
+            const date = (e.startedAt as Timestamp)
               ?.toDate()
               .toLocaleDateString("pt-BR");
             const dx = ((e.diagnoses ?? []) as { description: string }[])
@@ -358,9 +369,9 @@ async function consumeClinicalQuota(
 ): Promise<void> {
   await ref.set(
     {
-      count: admin.firestore.FieldValue.increment(1),
+      count: FieldValue.increment(1),
       limit: CLINICAL_ASSIST_DAILY_LIMIT,
-      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      updatedAt: FieldValue.serverTimestamp(),
     },
     { merge: true }
   );
@@ -397,7 +408,7 @@ export const clinicalAssist = onCall(
       };
     }
 
-    const context = await buildContext(task, actor.uid, encounterId, patientId);
+    const context = await buildContext(task, actor.uid, encounterId);
 
     if (!context && !freeText) {
       throw new HttpsError(
@@ -464,7 +475,7 @@ export const clinicalAssist = onCall(
       encounterId: encounterId ?? null,
       patientId: patientId ?? null,
       actorUid: actor.uid,
-      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      createdAt: FieldValue.serverTimestamp(),
       outputLength: text.length,
     });
 

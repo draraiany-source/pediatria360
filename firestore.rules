@@ -29,9 +29,23 @@ service cloud.firestore {
     // documento de criança contra uid de usuário. Só existe um jeito de
     // confirmar "este usuário é responsável por esta criança": checar se
     // ela existe na subcoleção de crianças dele.
+    //
+    // So que o dono grava qualquer id na propria subcolecao: sem mais nada,
+    // quem soubesse o id de uma crianca criaria um documento com esse id e
+    // passaria a ler o prontuario dela. child_registry/{childId} guarda o
+    // dono, gravado uma unica vez junto com a crianca; quando existe, vale
+    // ele. O caminho antigo so resta para criancas ainda sem registro (rodar
+    // tools/migrations/backfill_child_registry.js antes de publicar).
+    function childRegistryPath(childId) {
+      return /databases/$(database)/documents/child_registry/$(childId);
+    }
+
     function ownsChild(childId) {
-      return signedIn() &&
-             exists(/databases/$(database)/documents/users/$(request.auth.uid)/children/$(childId));
+      return signedIn() && (
+        exists(childRegistryPath(childId))
+          ? get(childRegistryPath(childId)).data.ownerUid == request.auth.uid
+          : exists(/databases/$(database)/documents/users/$(request.auth.uid)/children/$(childId))
+      );
     }
 
     // Responsavel secundario com autorizacao ativa e canViewData.
@@ -42,11 +56,102 @@ service cloud.firestore {
              get(/databases/$(database)/documents/users/$(ownerUid)/children/$(childId)/guardians/$(request.auth.uid)).data.get('canViewData', false) == true;
     }
 
+    // Concessao do responsavel a um profissional, em
+    // users/{dono}/children/{c}/authorized_professionals/{prof}.
+    // So vale com escopo, validade e sem revogacao. Ser verificado, ser dono
+    // de clinica, conhecer os ids ou existir uma consulta nao basta: a
+    // concessao nasce de escolha explicita do titular, pelo app (`guardian`)
+    // ou ao aceitar o convite da clinica (`guardianInvite`, gravada pela
+    // Function acceptClinicIntake com o titular autenticado).
+    // Concessao antiga (so `grantedAt`) e a automatica por consulta
+    // (`familyAppointment`) nao valem.
+    //   summary    -> le o cadastro da crianca (nome, idade, alergias)
+    //   chartWrite -> grava registros clinicos da crianca
+    function grantPath(ownerUid, childId, profUid) {
+      return /databases/$(database)/documents/users/$(ownerUid)/children/$(childId)/authorized_professionals/$(profUid);
+    }
+
+    function grantIsActive(g) {
+      return g.get('source', '') in ['guardian', 'guardianInvite'] &&
+             g.get('scopes', null) is list &&
+             g.get('expiresAt', null) is timestamp &&
+             g.expiresAt > request.time &&
+             g.get('revokedAt', null) == null;
+    }
+
+    function grantAllows(g, scope) {
+      return grantIsActive(g) && scope in g.scopes;
+    }
+
+    // Concessao restrita a uma clinica so vale nela.
+    function grantAllowsInClinic(g, scope, clinicId) {
+      return grantAllows(g, scope) &&
+             (g.get('clinicId', null) == null || g.clinicId == clinicId);
+    }
+
+    function hasActiveGrant(ownerUid, childId, profUid, scope) {
+      return ownerUid is string && childId is string && profUid is string &&
+             exists(grantPath(ownerUid, childId, profUid)) &&
+             grantAllows(get(grantPath(ownerUid, childId, profUid)).data, scope);
+    }
+
+    function hasActiveGrantInClinic(ownerUid, childId, profUid, scope, clinicId) {
+      return ownerUid is string && childId is string && profUid is string &&
+             exists(grantPath(ownerUid, childId, profUid)) &&
+             grantAllowsInClinic(get(grantPath(ownerUid, childId, profUid)).data,
+                                 scope, clinicId);
+    }
+
+    // Registro clinico da crianca: profissional verificado com `chartWrite`
+    // ativo, procurado pelo dono que consta no child_registry.
+    function canWriteChart(childId, clinicId) {
+      return isVerifiedProfessional() &&
+             childId is string &&
+             exists(childRegistryPath(childId)) &&
+             hasActiveGrantInClinic(get(childRegistryPath(childId)).data.ownerUid,
+                                    childId, request.auth.uid, 'chartWrite',
+                                    clinicId);
+    }
+
     function canReadChildCadastro(ownerUid, childId) {
       return isOwner(ownerUid) ||
              isLinkedGuardianOf(ownerUid, childId) ||
              (isVerifiedProfessional() &&
-              exists(/databases/$(database)/documents/users/$(ownerUid)/children/$(childId)/authorized_professionals/$(request.auth.uid)));
+              hasActiveGrant(ownerUid, childId, request.auth.uid, 'summary'));
+    }
+
+    function isChildRegistryOwner(uid, childId) {
+      return isOwner(uid) &&
+             exists(childRegistryPath(childId)) &&
+             get(childRegistryPath(childId)).data.ownerUid == uid;
+    }
+
+    function isValidGuardianGrant(uid) {
+      return request.resource.data.keys().hasOnly(
+               ['scopes', 'source', 'authorizedBy', 'grantedAt', 'expiresAt',
+                'revokedAt', 'clinicId', 'professionalName', 'clinicName']) &&
+             request.resource.data.keys().hasAll(
+               ['scopes', 'source', 'authorizedBy', 'grantedAt', 'expiresAt']) &&
+             request.resource.data.scopes is list &&
+             request.resource.data.scopes.size() > 0 &&
+             request.resource.data.scopes.toSet().hasOnly(['summary', 'chartWrite']) &&
+             request.resource.data.source == 'guardian' &&
+             request.resource.data.authorizedBy == uid &&
+             request.resource.data.grantedAt == request.time &&
+             request.resource.data.expiresAt is timestamp &&
+             request.resource.data.expiresAt > request.time &&
+             request.resource.data.expiresAt <= request.time + duration.value(366, 'd') &&
+             request.resource.data.get('revokedAt', null) == null &&
+             (request.resource.data.get('clinicId', null) == null ||
+              request.resource.data.clinicId is string);
+    }
+
+    function isGrantRevocation(uid) {
+      return resource.data.get('revokedAt', null) == null &&
+             request.resource.data.diff(resource.data).affectedKeys()
+               .hasOnly(['revokedAt', 'revokedBy']) &&
+             request.resource.data.revokedAt == request.time &&
+             request.resource.data.revokedBy == uid;
     }
 
     function userDoc() {
@@ -71,6 +176,29 @@ service cloud.firestore {
              userDoc().get('professionalVerified', false) == true;
     }
 
+    // Atualizacao de registro clinico: so o autor atual, sem trocar o autor
+    // nem o paciente. Conferir so o valor novo deixava qualquer profissional
+    // gravar o proprio id num registro alheio e passar a le-lo.
+    // Revogar ou vencer a concessao tambem barra a edicao do que ja existe.
+    function isClinicalRecordAuthorUpdate(authorField, patientField) {
+      return isVerifiedProfessional() &&
+             resource.data.get(authorField, null) == request.auth.uid &&
+             request.resource.data.get(authorField, null) == request.auth.uid &&
+             request.resource.data.get(patientField, null) ==
+               resource.data.get(patientField, null) &&
+             request.resource.data.get('clinicId', null) ==
+               resource.data.get('clinicId', null) &&
+             canWriteChart(resource.data.get(patientField, null),
+                           resource.data.get('clinicId', null));
+    }
+
+    function isClinicalRecordCreate(authorField, patientField) {
+      return isVerifiedProfessional() &&
+             request.resource.data.get(authorField, null) == request.auth.uid &&
+             canWriteChart(request.resource.data.get(patientField, null),
+                           request.resource.data.get('clinicId', null));
+    }
+
     function planActive() {
       return signedIn() && userDoc().get('plan', 'free') != 'free';
     }
@@ -82,14 +210,30 @@ service cloud.firestore {
       // centralizado nas Functions registerDevice/unregisterDevice — antes
       // disso o cliente escrevia o array direto, e as duas formas
       // coexistiam sem que nada impedisse divergência entre elas.
-      return ['plan', 'planExpiresAt', 'xp', 'streakDays',
-              'professionalVerified', 'role', 'fcmTokens'];
+      // careSpecialty: especialidade conferida junto com o registro
+      // profissional (CRM, CRP, CREFITO...). Decide o que o profissional
+      // registra no cuidado multidisciplinar, então só o servidor grava.
+      return ['plan', 'planExpiresAt', 'xp', 'streakDays', 'longestStreak',
+              'lastStreakDate', 'professionalVerified', 'role', 'fcmTokens',
+              'careSpecialty', 'communicationPrefs', 'lastMarketingAt'];
     }
 
     function notTouchingServerFields() {
       return !request.resource.data.diff(resource.data)
                      .affectedKeys()
                      .hasAny(serverOnlyFields());
+    }
+
+    // A conta nasce 'parent'; no onboarding (uma vez) o dono escolhe ser
+    // profissional, sempre como nao verificado.
+    function isOnboardingRoleChoice() {
+      return resource.data.get('onboardingDone', false) != true &&
+             request.resource.data.onboardingDone == true &&
+             request.resource.data.role in ['parent', 'professional'] &&
+             request.resource.data.get('professionalVerified', false) == false &&
+             !request.resource.data.diff(resource.data).affectedKeys()
+                .difference(['role', 'professionalVerified'].toSet())
+                .hasAny(serverOnlyFields());
     }
 
     function isValidString(field, maxLength) {
@@ -99,6 +243,20 @@ service cloud.firestore {
 
     // ---------------------------------------------------------------- Users
 
+    // Dono de cada crianca (ver ownsChild). Criado pelo app no mesmo lote da
+    // crianca; nunca muda. A leitura de id inexistente e liberada para o app
+    // saber se precisa criar o registro numa retentativa de envio.
+    match /child_registry/{childId} {
+      allow read: if signedIn() &&
+                     (resource == null ||
+                      resource.data.ownerUid == request.auth.uid);
+      allow create: if signedIn() &&
+                       request.resource.data.keys().hasOnly(['ownerUid', 'createdAt']) &&
+                       request.resource.data.ownerUid == request.auth.uid &&
+                       existsAfter(/databases/$(database)/documents/users/$(request.auth.uid)/children/$(childId));
+      allow update, delete: if false;
+    }
+
     match /users/{uid} {
       allow read: if isOwner(uid) || isAdmin();
 
@@ -107,12 +265,21 @@ service cloud.firestore {
                     && request.resource.data.get('plan', 'free') == 'free'
                     && request.resource.data.get('professionalVerified', false) == false
                     && request.resource.data.get('xp', 0) == 0
+                    && request.resource.data.get('streakDays', 0) == 0
+                    && !request.resource.data.keys().hasAny(
+                         ['longestStreak', 'lastStreakDate', 'planExpiresAt',
+                          'communicationPrefs', 'lastMarketingAt'])
                     && request.resource.data.get('role', 'parent') in ['parent', 'professional'];
 
       // Atualização: o dono pode editar o perfil, mas nunca os campos de
       // servidor. O admin pode tudo (é como o CRM é verificado).
+      // Depois de verificado, o CRM impresso nas prescricoes so muda pelo admin.
       allow update: if isAdmin()
-                    || (isOwner(uid) && notTouchingServerFields());
+                    || (isOwner(uid) &&
+                        (notTouchingServerFields() || isOnboardingRoleChoice()) &&
+                        (resource.data.get('professionalVerified', false) != true ||
+                         !request.resource.data.diff(resource.data)
+                            .affectedKeys().hasAny(['crm'])));
 
       // Exclusão de conta passa pela Function `onUserDeleted`, que apaga em
       // cascata. Apagar só o documento deixaria as subcollections órfãs.
@@ -130,16 +297,29 @@ service cloud.firestore {
       // nunca chegava a quem mais precisava vê-lo.
       match /children/{childId} {
         allow read: if canReadChildCadastro(uid, childId);
-        allow write: if isOwner(uid);
+        // Criacao so com o registro de propriedade no mesmo lote, e so se
+        // ninguem registrou esse id antes.
+        allow create: if isOwner(uid) &&
+                         !exists(childRegistryPath(childId)) &&
+                         getAfter(childRegistryPath(childId)).data.ownerUid == uid;
+        allow update, delete: if isOwner(uid) &&
+                                 (!exists(childRegistryPath(childId)) ||
+                                  get(childRegistryPath(childId)).data.ownerUid == uid);
 
-        // Concessao de leitura do cadastro da crianca: so o responsavel
-        // (dono) grava. O profissional NAO se auto-concede — isso passa
-        // pela Function grantChildSummaryAccess (Admin SDK), apos vinculo
-        // com agendamento ativo.
+        // Concessao ao profissional (ver grantIsActive): so o titular que
+        // consta no child_registry grava, com escopo e validade de ate um
+        // ano, e depois so revoga. O profissional NAO cria, amplia, estende
+        // nem desfaz revogacao da propria concessao; a outra origem e a
+        // Function acceptClinicIntake (Admin SDK), com o titular autenticado
+        // escolhendo o escopo ao aceitar o convite.
         match /authorized_professionals/{profId} {
           allow read: if isOwner(uid) ||
                          (isVerifiedProfessional() && request.auth.uid == profId);
-          allow write: if isOwner(uid);
+          allow create: if isChildRegistryOwner(uid, childId) &&
+                           isValidGuardianGrant(uid);
+          allow update: if isChildRegistryOwner(uid, childId) &&
+                           (isValidGuardianGrant(uid) || isGrantRevocation(uid));
+          allow delete: if isChildRegistryOwner(uid, childId);
         }
 
         // Responsaveis vinculados (FASE 2) — permissoes explicitas.
@@ -159,20 +339,27 @@ service cloud.firestore {
           allow update, delete: if false;
         }
 
+        // Responsavel vinculado com canViewData so le; quem grava e o dono.
         match /growth_records/{recordId} {
-          allow read, write: if isOwner(uid) || isLinkedGuardianOf(uid, childId);
+          allow read: if isOwner(uid) || isLinkedGuardianOf(uid, childId);
+          allow write: if isOwner(uid);
         }
 
         match /vaccine_doses/{doseId} {
-          allow read, write: if isOwner(uid) || isLinkedGuardianOf(uid, childId);
+          allow read: if isOwner(uid) || isLinkedGuardianOf(uid, childId);
+          allow write: if isOwner(uid);
         }
       }
 
       // Indice invertido: criancas vinculadas a um responsavel secundario.
       match /linked_children/{childId} {
         allow read: if isOwner(uid);
+        // Gravado pelo dono da crianca ao vincular/revogar o responsavel.
         allow create, update: if signedIn() &&
-                               request.resource.data.guardianUid == uid;
+                               request.resource.data.guardianUid == uid &&
+                               request.resource.data.childId == childId &&
+                               request.resource.data.ownerId == request.auth.uid &&
+                               ownsChild(childId);
         allow delete: if false;
       }
 
@@ -204,6 +391,13 @@ service cloud.firestore {
         allow write: if false;
       }
 
+      // Historico de autorizacao de WhatsApp e de marketing (Function
+      // saveCommunicationPreferences / unsubscribeMarketing).
+      match /communication_consents/{entryId} {
+        allow read: if isOwner(uid);
+        allow write: if false;
+      }
+
       // Cota da IA: leitura para mostrar "restam N hoje"; escrita só no
       // servidor, senão qualquer um zeraria o contador.
       match /ai_usage/{day} {
@@ -217,16 +411,26 @@ service cloud.firestore {
       match /clinical_assist_usage/{day} {
         allow read: if isOwner(uid);
         allow write: if false;
+      }
 
-      // Memberships multitenant (indice invertido). Escrita via cliente
-      // apenas na criacao da propria clinica (clinicAdmin) ? reforcado nas
-      // rules da clinica; aqui o dono le e o proprio user escreve seu vinculo.
+      // Memberships multitenant (indice invertido): users/{uid}/clinic_memberships/{clinicId}
+      // Escrita so espelhando um doc em clinics/{clinicId}/memberships/{id} —
+      // impede forjar vinculo a clinica alheia so alterando o indice invertido.
       match /clinic_memberships/{clinicId} {
         allow read: if isOwner(uid);
         allow create, update: if isOwner(uid) &&
-                               request.resource.data.userId == uid;
+                               request.resource.data.userId == uid &&
+                               request.resource.data.clinicId == clinicId &&
+                               request.resource.data.keys().hasAll(
+                                 ['id', 'userId', 'clinicId', 'role', 'active']
+                               ) &&
+                               exists(/databases/$(database)/documents/clinics/$(clinicId)/memberships/$(request.resource.data.id)) &&
+                               get(/databases/$(database)/documents/clinics/$(clinicId)/memberships/$(request.resource.data.id)).data.userId == uid &&
+                               get(/databases/$(database)/documents/clinics/$(clinicId)/memberships/$(request.resource.data.id)).data.role ==
+                                 request.resource.data.role &&
+                               get(/databases/$(database)/documents/clinics/$(clinicId)/memberships/$(request.resource.data.id)).data.active ==
+                                 request.resource.data.active;
         allow delete: if false;
-      }
       }
 
       match /supplementation/{docId} {
@@ -331,6 +535,83 @@ service cloud.firestore {
              clinicRole(clinicId) in ['clinicAdmin', 'receptionist'];
     }
 
+    // Vinculo ativo de OUTRO usuario com a clinica, com papel de atendimento
+    // (o profissional de uma consulta marcada pela equipe). Mesma checagem
+    // dupla de isClinicMember: copia do usuario e documento da clinica.
+    function userClinicMemberPath(clinicId, uid) {
+      return /databases/$(database)/documents/users/$(uid)/clinic_memberships/$(clinicId);
+    }
+
+    function clinicMemberDocPath(clinicId, membershipId) {
+      return /databases/$(database)/documents/clinics/$(clinicId)/memberships/$(membershipId);
+    }
+
+    function isActiveCareMembership(m, uid) {
+      return m.get('active', false) == true &&
+             m.get('userId', '') == uid &&
+             m.get('role', '') in
+               ['clinicAdmin', 'physician', 'healthProfessional', 'nursing', 'technician'];
+    }
+
+    // Sem exists() antes do get(): a escrita tem limite de 10 leituras de
+    // documento por avaliacao e as duas contam. Documento ausente da erro de
+    // avaliacao, que nega do mesmo jeito.
+    function clinicSideMemberIsCare(clinicId, uid, membershipId) {
+      return isActiveCareMembership(get(clinicMemberDocPath(clinicId, membershipId)).data,
+                                    uid);
+    }
+
+    function userMirrorPointsToClinic(m, clinicId, uid) {
+      return m.get('active', false) == true &&
+             m.get('userId', '') == uid &&
+             m.get('clinicId', '') == clinicId;
+    }
+
+    function isClinicCareMemberFromMirror(m, clinicId, uid) {
+      return userMirrorPointsToClinic(m, clinicId, uid) &&
+             clinicSideMemberIsCare(clinicId, uid, m.get('id', uid));
+    }
+
+    function isClinicCareMember(clinicId, uid) {
+      return clinicId is string && uid is string &&
+             isClinicCareMemberFromMirror(get(userClinicMemberPath(clinicId, uid)).data,
+                                          clinicId, uid);
+    }
+
+    // Ids que amarram a consulta a familia, crianca, profissional e clinica.
+    // Nao mudam pelo app; troca legitima precisa de operacao propria no
+    // servidor, validada e auditada.
+    // `origin` e `intakeId` registram de onde a consulta veio (pedido da
+    // familia, equipe, convite aceito) e tambem nao mudam.
+    function appointmentIdsUnchanged() {
+      return !request.resource.data.diff(resource.data).affectedKeys().hasAny(
+               ['patientId', 'childId', 'professionalId', 'clinicId',
+                'requestedBy', 'createdBy', 'createdAt', 'origin', 'intakeId']);
+    }
+
+    // O que profissional da consulta e recepcao/gestao alteram: andamento,
+    // horario, sala e registros de confirmacao, check-in e cancelamento.
+    // Pagamento fica com o financeiro.
+    // Horario, duracao e sala NAO estao aqui: remarcar passa pela Function
+    // rescheduleAppointment, que trava profissional/sala/equipamento em
+    // transacao. Gravar direto do aparelho furaria o controle de conflito.
+    function appointmentCareFields() {
+      return ['status',
+              'unitId', 'type', 'reason', 'notes', 'rescheduledAt',
+              'rescheduledBy', 'previousStartsAt', 'confirmedAt',
+              'confirmedBy', 'cancelledAt', 'cancelledBy', 'cancelReason',
+              'completedAt', 'workflowStatus', 'workflowUpdatedAt',
+              'arrivedAt', 'checkInNotes', 'triageRecordId', 'updatedAt'];
+    }
+
+    // Consulta cancelada ou com falta libera as travas de horario; reativar
+    // direto do aparelho poderia sobrepor outra reserva. Volta so remarcando
+    // pela Function.
+    function appointmentNotRevived() {
+      return !(resource.data.get('status', '') in ['cancelled', 'noShow']) ||
+             request.resource.data.get('status', '') == resource.data.get('status', '');
+    }
+
     // ------------------------------------------------------- Telemedicina
 
     match /appointments/{appointmentId} {
@@ -346,31 +627,58 @@ service cloud.firestore {
                                            resource.data.childId))));
 
       allow create: if signedIn() && (
+                      // Familia: so solicitacao, em nome proprio, sem campos de
+                      // clinica/cobranca e para crianca propria. `requestedBy`
+                      // so pode ser o proprio titular. Pedir consulta nao
+                      // autoriza acesso clinico: isso e escolha separada do
+                      // titular (authorized_professionals).
                       (request.resource.data.patientId == request.auth.uid &&
-                       request.resource.data.get('status', '') == 'requested') ||
-                      (isVerifiedProfessional() &&
-                       request.resource.data.clinicId != null &&
-                       isClinicAgendaStaff(request.resource.data.clinicId) &&
-                       (isClinicReceptionOrAdmin(request.resource.data.clinicId) ||
-                        request.resource.data.professionalId == request.auth.uid) &&
-                       request.resource.data.keys().hasAll(
-                         ['patientId', 'professionalId', 'startsAt', 'status', 'clinicId']))
+                       request.resource.data.get('status', '') == 'requested' &&
+                       request.resource.data.get('requestedBy', request.auth.uid) ==
+                         request.auth.uid &&
+                       request.resource.data.get('origin', 'familyRequest') ==
+                         'familyRequest' &&
+                       !request.resource.data.keys().hasAny(
+                         ['clinicId', 'unitId', 'paid', 'priceCents', 'amountCents',
+                          'workflowStatus', 'confirmedAt', 'createdBy',
+                          'intakeId', 'startsAt', 'durationMinutes', 'roomId',
+                          'equipmentIds', 'lockIds', 'scheduleVersion']) &&
+                       (!('childId' in request.resource.data) ||
+                        ownsChild(request.resource.data.childId)))
+                      // Consulta com horario (familia ou equipe) so nasce pelas
+                      // Functions bookAppointment/scheduleAppointment, que
+                      // validam agenda, conflitos e a autorizacao do titular.
                     );
 
-      // Cancelar e do paciente; confirmar/concluir e do profissional;
-      // recepcao/admin da clinica podem remarcar/cancelar operacionalmente.
-      allow update: if isAdmin()
-                    || (signedIn()
-                        && resource.data.patientId == request.auth.uid
-                        && request.resource.data.status == 'cancelled')
-                    || (isVerifiedProfessional()
-                        && resource.data.professionalId == request.auth.uid)
-                    || (isVerifiedProfessional()
-                        && resource.data.clinicId != null
-                        && isClinicReceptionOrAdmin(resource.data.clinicId)
-                        && request.resource.data.clinicId == resource.data.clinicId
-                        && request.resource.data.professionalId ==
-                             resource.data.professionalId);
+      // Campos editaveis por perfil, sempre sem trocar os ids
+      // (appointmentIdsUnchanged): familia so cancela pedido avulso (sem
+      // clinica; na clinica vale a politica de prazo da Function);
+      // profissional da consulta e recepcao/gestao mexem no andamento
+      // (appointmentCareFields); financeiro so marca como pago.
+      allow update: if appointmentIdsUnchanged() && (
+                      isAdmin()
+                      || (signedIn()
+                          && resource.data.patientId == request.auth.uid
+                          && resource.data.get('clinicId', null) == null
+                          && resource.data.get('scheduleVersion', null) == null
+                          && request.resource.data.status == 'cancelled'
+                          && request.resource.data.diff(resource.data).affectedKeys()
+                               .hasOnly(['status', 'cancelledAt', 'cancelledBy',
+                                         'cancelReason', 'updatedAt']))
+                      || (isVerifiedProfessional()
+                          && resource.data.professionalId == request.auth.uid
+                          && appointmentNotRevived()
+                          && request.resource.data.diff(resource.data).affectedKeys()
+                               .hasOnly(appointmentCareFields()))
+                      || (resource.data.get('clinicId', null) != null
+                          && isClinicReceptionOrAdmin(resource.data.clinicId)
+                          && appointmentNotRevived()
+                          && request.resource.data.diff(resource.data).affectedKeys()
+                               .hasOnly(appointmentCareFields()))
+                      || (resource.data.get('clinicId', null) != null
+                          && financeWriteRole(resource.data.clinicId)
+                          && request.resource.data.diff(resource.data).affectedKeys()
+                               .hasOnly(['paid', 'updatedAt'])));
 
       allow delete: if false;
 
@@ -382,9 +690,29 @@ service cloud.firestore {
                          (get(/databases/$(database)/documents/appointments/$(appointmentId)).data.clinicId != null &&
                           isClinicAgendaStaff(get(/databases/$(database)/documents/appointments/$(appointmentId)).data.clinicId))));
         allow create: if signedIn() &&
-                       request.resource.data.actorUid == request.auth.uid;
+                       request.resource.data.actorUid == request.auth.uid &&
+                       (get(/databases/$(database)/documents/appointments/$(appointmentId)).data.patientId == request.auth.uid ||
+                        get(/databases/$(database)/documents/appointments/$(appointmentId)).data.professionalId == request.auth.uid ||
+                        (get(/databases/$(database)/documents/appointments/$(appointmentId)).data.get('clinicId', null) != null &&
+                         isClinicAgendaStaff(get(/databases/$(database)/documents/appointments/$(appointmentId)).data.clinicId)));
         allow update, delete: if false;
       }
+    }
+
+    // Solicitacao de atendimento de paciente novo, registrada pela recepcao
+    // (ou pelo profissional para si). E provisoria e administrativa: nome,
+    // nascimento e contato informados pela clinica, horario pedido e
+    // situacao do convite. Nao tem id de crianca nem dado clinico, nao cria
+    // vinculo e nao abre prontuario. Vira consulta so quando o responsavel,
+    // autenticado e com o codigo do convite, a aceita para uma crianca dele
+    // (Function acceptClinicIntake). O codigo fica em colecao do servidor.
+    match /clinic_intakes/{intakeId} {
+      allow read: if signedIn() &&
+                     ((resource.data.get('clinicId', null) != null &&
+                       isClinicAgendaStaff(resource.data.clinicId)) ||
+                      resource.data.get('professionalId', '') == request.auth.uid ||
+                      resource.data.get('createdBy', '') == request.auth.uid);
+      allow write: if false;
     }
 
     // O responsável preenche antes da consulta; profissional lê o que foi
@@ -412,7 +740,7 @@ service cloud.firestore {
                     && request.resource.data.professionalId ==
                        get(/databases/$(database)/documents/appointments/$(appointmentId)).data.professionalId
                     && get(/databases/$(database)/documents/appointments/$(appointmentId)).data.status
-                       in ['requested', 'confirmed'];
+                       in ['requested', 'awaitingConfirmation', 'confirmed'];
 
       allow delete: if false;
     }
@@ -445,15 +773,16 @@ service cloud.firestore {
                   && (ownsChild(resource.data.patientId) ||
                       resource.data.professionalId == request.auth.uid);
 
-      // Só profissional verificado abre atendimento, e só em nome próprio.
-      allow create: if isVerifiedProfessional()
-                    && request.resource.data.professionalId == request.auth.uid
+      // Só profissional verificado abre atendimento, em nome próprio e com
+      // `chartWrite` ativo para a criança.
+      allow create: if isClinicalRecordCreate('professionalId', 'patientId')
                     && request.resource.data.get('status', '') == 'draft'
                     && request.resource.data.get('signedAt', null) == null
                     && request.resource.data.get('signatureHash', null) == null;
 
-      // Edição só enquanto rascunho, e nunca nos campos de assinatura —
-      // assinar é ato da Function, que calcula o hash sobre o servidor.
+      // Edição só enquanto rascunho, com a concessão ainda ativa, e nunca
+      // nos campos de assinatura — assinar é ato da Function, que calcula o
+      // hash sobre o servidor.
       allow update: if isVerifiedProfessional()
                     && resource.data.professionalId == request.auth.uid
                     && resource.data.status == 'draft'
@@ -462,7 +791,10 @@ service cloud.firestore {
                             .hasAny(['status', 'signedAt', 'signedBy',
                                      'signatureHash', 'signatureProvider',
                                      'externalSignatureId', 'patientId',
-                                     'professionalId', 'amendsEncounterId']);
+                                     'professionalId', 'amendsEncounterId',
+                                     'clinicId'])
+                    && canWriteChart(resource.data.patientId,
+                                     resource.data.get('clinicId', null));
 
       // Prontuário não se apaga. Retenção é exigência legal, e apagar
       // atendimento é justamente o que não pode acontecer.
@@ -492,8 +824,7 @@ service cloud.firestore {
                        resource.data.status == 'released') ||
                       resource.data.professionalId == request.auth.uid);
 
-      allow create: if isVerifiedProfessional()
-                    && request.resource.data.professionalId == request.auth.uid
+      allow create: if isClinicalRecordCreate('professionalId', 'patientId')
                     && request.resource.data.status == 'draft';
 
       // Só o próprio autor edita, e não pode reatribuir o resumo para
@@ -507,11 +838,8 @@ service cloud.firestore {
       // repositório — sem isso, uma escrita direta ao Firestore (sem
       // passar pelo app) poderia pular de `draft` para `released` sem
       // nunca passar por `finalized`.
-      allow update: if isVerifiedProfessional()
-                    && resource.data.professionalId == request.auth.uid
+      allow update: if isClinicalRecordAuthorUpdate('professionalId', 'patientId')
                     && resource.data.status != 'released'
-                    && request.resource.data.professionalId == resource.data.professionalId
-                    && request.resource.data.patientId == resource.data.patientId
                     && (
                          (resource.data.status == 'draft' &&
                           request.resource.data.status in ['draft', 'finalized']) ||
@@ -535,8 +863,8 @@ service cloud.firestore {
       allow read: if signedIn()
                   && (ownsChild(resource.data.patientId) ||
                       resource.data.professionalId == request.auth.uid);
-      allow create, update: if isVerifiedProfessional()
-                             && request.resource.data.professionalId == request.auth.uid;
+      allow create: if isClinicalRecordCreate('professionalId', 'patientId');
+      allow update: if isClinicalRecordAuthorUpdate('professionalId', 'patientId');
       allow delete: if false;
     }
 
@@ -565,9 +893,8 @@ service cloud.firestore {
                      (signedIn() &&
                       resource.data.keys().hasAny(['childId']) &&
                       ownsChild(resource.data.childId));
-      allow create, update: if isVerifiedProfessional() &&
-                             request.resource.data.professionalId ==
-                               request.auth.uid;
+      allow create: if isClinicalRecordCreate('professionalId', 'childId');
+      allow update: if isClinicalRecordAuthorUpdate('professionalId', 'childId');
       allow delete: if false;
     }
 
@@ -578,9 +905,8 @@ service cloud.firestore {
                      (signedIn() &&
                       resource.data.keys().hasAny(['childId']) &&
                       ownsChild(resource.data.childId));
-      allow create, update: if isVerifiedProfessional() &&
-                             request.resource.data.professionalId ==
-                               request.auth.uid;
+      allow create: if isClinicalRecordCreate('professionalId', 'childId');
+      allow update: if isClinicalRecordAuthorUpdate('professionalId', 'childId');
       allow delete: if false;
     }
 
@@ -621,8 +947,8 @@ service cloud.firestore {
                      (signedIn() &&
                       resource.data.keys().hasAny(['childId']) &&
                       ownsChild(resource.data.childId));
-      allow create, update: if isVerifiedProfessional() &&
-                             request.resource.data.recordedBy == request.auth.uid;
+      allow create: if isClinicalRecordCreate('recordedBy', 'childId');
+      allow update: if isClinicalRecordAuthorUpdate('recordedBy', 'childId');
       allow delete: if false;
     }
 
@@ -633,9 +959,8 @@ service cloud.firestore {
                       resource.data.keys().hasAny(['childId']) &&
                       ownsChild(resource.data.childId) &&
                       resource.data.status == 'confirmed');
-      allow create, update: if isVerifiedProfessional() &&
-                             request.resource.data.professionalId ==
-                               request.auth.uid;
+      allow create: if isClinicalRecordCreate('professionalId', 'childId');
+      allow update: if isClinicalRecordAuthorUpdate('professionalId', 'childId');
       allow delete: if false;
     }
 
@@ -645,24 +970,22 @@ service cloud.firestore {
                      (signedIn() &&
                       resource.data.keys().hasAny(['childId']) &&
                       ownsChild(resource.data.childId));
-      allow create: if isVerifiedProfessional() &&
-                     request.resource.data.createdBy == request.auth.uid;
+      allow create: if isClinicalRecordCreate('createdBy', 'childId');
       allow update, delete: if false;
     }
 
     match /supplement_clinical_notes/{id} {
-      allow read, create, update: if isVerifiedProfessional() &&
-                                   (resource == null ||
-                                    resource.data.professionalId == request.auth.uid) &&
-                                   request.resource.data.professionalId ==
-                                     request.auth.uid;
+      allow read: if isVerifiedProfessional() &&
+                     resource.data.professionalId == request.auth.uid;
+      allow create: if isClinicalRecordCreate('professionalId', 'childId');
+      allow update: if isClinicalRecordAuthorUpdate('professionalId', 'childId');
       allow delete: if false;
     }
 
     match /supplement_ai_drafts/{id} {
-      allow read, create: if isVerifiedProfessional() &&
-                           request.resource.data.professionalId ==
-                             request.auth.uid;
+      allow read: if isVerifiedProfessional() &&
+                     resource.data.professionalId == request.auth.uid;
+      allow create: if isClinicalRecordCreate('professionalId', 'childId');
       allow update, delete: if false;
     }
 
@@ -682,14 +1005,28 @@ service cloud.firestore {
       return get(/databases/$(database)/documents/users/$(request.auth.uid)/clinic_memberships/$(clinicId));
     }
 
+    // Documento do vinculo do lado da clinica - so o admin da clinica altera.
+    // A copia do usuario aponta para ele pelo campo id (padrao: o uid).
+    function clinicSideMemberPath(clinicId) {
+      return /databases/$(database)/documents/clinics/$(clinicId)/memberships/$(clinicMemberDoc(clinicId).data.get('id', request.auth.uid));
+    }
+
+    // Ativo e papel valem pelo documento da clinica: desativar ou rebaixar
+    // alguem la precisa surtir efeito mesmo que a copia do usuario fique velha.
     function isClinicMember(clinicId) {
       return signedIn() &&
+             clinicId != null &&
              exists(/databases/$(database)/documents/users/$(request.auth.uid)/clinic_memberships/$(clinicId)) &&
-             clinicMemberDoc(clinicId).data.active == true;
+             clinicMemberDoc(clinicId).data.active == true &&
+             clinicMemberDoc(clinicId).data.userId == request.auth.uid &&
+             clinicMemberDoc(clinicId).data.clinicId == clinicId &&
+             exists(clinicSideMemberPath(clinicId)) &&
+             get(clinicSideMemberPath(clinicId)).data.active == true &&
+             get(clinicSideMemberPath(clinicId)).data.userId == request.auth.uid;
     }
 
     function clinicRole(clinicId) {
-      return clinicMemberDoc(clinicId).data.role;
+      return get(clinicSideMemberPath(clinicId)).data.role;
     }
 
     function isClinicAdmin(clinicId) {
@@ -761,16 +1098,29 @@ service cloud.firestore {
              clinicRole(clinicId) in ['clinicAdmin', 'finance'];
     }
 
+    // Na clinica vale o papel do vinculo (o financeiro nao e profissional de
+    // saude e nao tem registro a conferir). Fora de clinica, o livro proprio
+    // do profissional continua exigindo a verificacao (isLegacyOwner*).
     function canReadLedger() {
-      return isVerifiedProfessional() && (
-        isLegacyOwnerLedgerRead() ||
-        (ledgerDocClinicId() != null && financeReadRole(ledgerDocClinicId()))
-      );
+      return isLegacyOwnerLedgerRead() ||
+             (ledgerDocClinicId() != null && financeReadRole(ledgerDocClinicId()));
+    }
+
+    // Guias, lotes e glosas carregam diagnostico (CID): fora da recepcao/tecnico.
+    function billingClinicalReadRole(clinicId) {
+      return isClinicMember(clinicId) &&
+             clinicRole(clinicId) in
+               ['clinicAdmin', 'finance', 'physician', 'healthProfessional'];
+    }
+
+    function canReadBillingClinicalLedger() {
+      return isLegacyOwnerLedgerRead() ||
+             (ledgerDocClinicId() != null &&
+              billingClinicalReadRole(ledgerDocClinicId()));
     }
 
     function canWriteFinanceLedger() {
-      return isVerifiedProfessional() &&
-             ledgerClinicIdUnchanged() &&
+      return ledgerClinicIdUnchanged() &&
              ledgerOwnerMatches() && (
         isLegacyOwnerLedgerWrite() ||
         (ledgerReqClinicId() != null &&
@@ -779,8 +1129,7 @@ service cloud.firestore {
     }
 
     function canWriteBillingLedger() {
-      return isVerifiedProfessional() &&
-             ledgerClinicIdUnchanged() &&
+      return ledgerClinicIdUnchanged() &&
              ledgerOwnerMatches() && (
         isLegacyOwnerLedgerWrite() ||
         (ledgerReqClinicId() != null &&
@@ -789,8 +1138,7 @@ service cloud.firestore {
     }
 
     function canWriteInventoryLedger() {
-      return isVerifiedProfessional() &&
-             ledgerClinicIdUnchanged() &&
+      return ledgerClinicIdUnchanged() &&
              ledgerOwnerMatches() && (
         isLegacyOwnerLedgerWrite() ||
         (ledgerReqClinicId() != null &&
@@ -799,28 +1147,30 @@ service cloud.firestore {
     }
 
     function canReadInventoryLedger() {
-      return isVerifiedProfessional() && (
-        isLegacyOwnerLedgerRead() ||
-        (ledgerDocClinicId() != null &&
-         inventoryReadRole(ledgerDocClinicId()))
-      );
+      return isLegacyOwnerLedgerRead() ||
+             (ledgerDocClinicId() != null &&
+              inventoryReadRole(ledgerDocClinicId()));
     }
 
     function canCreateFinanceAudit() {
-      return isVerifiedProfessional() &&
+      return signedIn() &&
              request.resource.data.ownerId == request.auth.uid &&
-             ledgerClinicIdUnchanged() && (
-        request.resource.data.get('clinicId', null) == null ||
-        financeWriteRole(request.resource.data.clinicId)
-      );
+             ledgerClinicIdUnchanged() &&
+             (request.resource.data.get('clinicId', null) == null
+                ? isVerifiedProfessional()
+                : financeWriteRole(request.resource.data.clinicId));
     }
 
     match /clinics/{clinicId} {
-      allow read: if isClinicMember(clinicId) || isAdmin();
+      allow read: if isClinicMember(clinicId) || isAdmin() ||
+                     (signedIn() &&
+                      resource.data.get('ownerUserId', '') == request.auth.uid);
       // Criacao: profissional autenticado (onboarding). Admin plataforma tambem.
+      // ownerUserId obriga o criador a se identificar — usado no 1o membership.
       allow create: if signedIn() &&
                        (isVerifiedProfessional() || isAdmin()) &&
-                       isValidString('name', 200);
+                       isValidString('name', 200) &&
+                       request.resource.data.ownerUserId == request.auth.uid;
       allow update: if isClinicAdmin(clinicId) || isAdmin();
       allow delete: if false;
 
@@ -832,7 +1182,17 @@ service cloud.firestore {
       match /memberships/{membershipId} {
         allow read: if isClinicMember(clinicId) || isAdmin() ||
                        (signedIn() && resource.data.userId == request.auth.uid);
-        allow create, update: if isClinicAdmin(clinicId) || isAdmin();
+        // Admin da clinica, plataforma, ou dono criando o primeiro vinculo
+        // clinicAdmin (onboarding — espelha ownerUserId da clinica).
+        allow create: if isClinicAdmin(clinicId) || isAdmin() ||
+                         (isVerifiedProfessional() &&
+                          request.resource.data.userId == request.auth.uid &&
+                          request.resource.data.clinicId == clinicId &&
+                          request.resource.data.role == 'clinicAdmin' &&
+                          request.resource.data.id == membershipId &&
+                          get(/databases/$(database)/documents/clinics/$(clinicId))
+                              .data.ownerUserId == request.auth.uid);
+        allow update: if isClinicAdmin(clinicId) || isAdmin();
         allow delete: if false;
       }
 
@@ -855,6 +1215,141 @@ service cloud.firestore {
       match /audit_logs/{logId} {
         allow read: if isClinicAdmin(clinicId) || isAdmin();
         allow write: if false;
+      }
+
+      // Gestao integrada (scheduling/automations/crm/anamnesis/marketing.ts).
+      // Tudo gravado pelas Functions, que validam papel e parametros; o
+      // cliente so le o que o papel permite. Nada aqui tem conteudo clinico,
+      // exceto os modelos de anamnese (perguntas, sem respostas).
+      match /settings/{docId} {
+        allow read: if isClinicMember(clinicId);
+        allow write: if false;
+      }
+      match /professional_schedules/{profId} {
+        allow read: if isClinicAgendaStaff(clinicId);
+        allow write: if false;
+      }
+      // Servicos e equipamentos: cadastro da gestao, com formato conferido.
+      match /services/{serviceId} {
+        allow read: if isClinicMember(clinicId);
+        allow create, update: if isClinicAdmin(clinicId) &&
+          request.resource.data.keys().hasOnly(
+            ['name', 'appointmentType', 'durationMinutes', 'priceCents',
+             'active', 'unitId', 'updatedAt']) &&
+          request.resource.data.name is string &&
+          request.resource.data.name.size() <= 120 &&
+          request.resource.data.durationMinutes is int &&
+          request.resource.data.durationMinutes >= 10 &&
+          request.resource.data.durationMinutes <= 240 &&
+          request.resource.data.durationMinutes % 5 == 0 &&
+          request.resource.data.priceCents is int &&
+          request.resource.data.priceCents >= 0 &&
+          request.resource.data.active is bool;
+        allow delete: if false;
+      }
+      match /equipment/{equipmentId} {
+        allow read: if isClinicAgendaStaff(clinicId);
+        allow create, update: if isClinicAdmin(clinicId) &&
+          request.resource.data.keys().hasOnly(['name', 'unitId', 'active']) &&
+          request.resource.data.name is string &&
+          request.resource.data.name.size() <= 120;
+        allow delete: if false;
+      }
+      match /waitlist/{entryId} {
+        allow read: if isClinicReceptionOrAdmin(clinicId) ||
+                       (signedIn() && resource.data.patientId == request.auth.uid);
+        allow write: if false;
+      }
+      match /automations/{kind} {
+        allow read: if isClinicReceptionOrAdmin(clinicId);
+        allow write: if false;
+      }
+      match /automation_runs/{runId} {
+        allow read: if isClinicAdmin(clinicId);
+        allow write: if false;
+      }
+      match /whatsapp_inbox/{itemId} {
+        allow read: if isClinicReceptionOrAdmin(clinicId);
+        allow write: if false;
+      }
+      match /anamnesis_templates/{templateId} {
+        allow read: if isClinicMember(clinicId);
+        allow write: if false;
+        match /versions/{version} {
+          allow read: if isClinicMember(clinicId);
+          allow write: if false;
+        }
+      }
+      match /crm_contacts/{contactKey} {
+        allow read: if isClinicReceptionOrAdmin(clinicId);
+        allow write: if false;
+        match /notes/{noteId} {
+          allow read: if isClinicReceptionOrAdmin(clinicId);
+          allow write: if false;
+        }
+      }
+      match /crm_tasks/{taskId} {
+        allow read: if isClinicReceptionOrAdmin(clinicId);
+        allow write: if false;
+      }
+      match /crm_merge_requests/{requestId} {
+        allow read: if isClinicReceptionOrAdmin(clinicId);
+        allow write: if false;
+      }
+      match /campaigns/{campaignId} {
+        allow read: if isClinicAdmin(clinicId);
+        allow write: if false;
+      }
+      match /ai_hub_log/{logId} {
+        allow read: if isClinicAdmin(clinicId);
+        allow write: if false;
+      }
+    }
+
+    // Controle interno do servidor (travas de agenda, convites, eventos de
+    // provedores, contadores, propostas do assistente, supressao).
+    match /schedule_locks/{id} { allow read, write: if false; }
+    match /schedule_holds/{id} { allow read, write: if false; }
+    match /message_rate/{id} { allow read, write: if false; }
+    match /automation_runs/{id} { allow read, write: if false; }
+    match /whatsapp_events/{id} { allow read, write: if false; }
+    match /payment_events/{id} { allow read, write: if false; }
+    match /usage_events/{id} { allow read, write: if false; }
+    match /usage_counters/{id} { allow read, write: if false; }
+    match /assistant_proposals/{id} { allow read, write: if false; }
+    match /marketing_suppression/{id} { allow read, write: if false; }
+
+    match /appointment_series/{id} {
+      allow read: if signedIn() && isClinicReceptionOrAdmin(resource.data.clinicId);
+      allow write: if false;
+    }
+
+    // Fila de mensagens: o destinatario ve as proprias; recepcao/gestao veem
+    // as da clinica (so tipo, canal, status e variaveis administrativas).
+    match /message_queue/{id} {
+      allow read: if signedIn() &&
+                     (resource.data.recipientUid == request.auth.uid ||
+                      (resource.data.clinicId != null &&
+                       isClinicReceptionOrAdmin(resource.data.clinicId)));
+      allow write: if false;
+    }
+
+    match /finance_operations/{id} {
+      allow read: if signedIn() && resource.data.clinicId != null &&
+                     financeWriteRole(resource.data.clinicId);
+      allow write: if false;
+    }
+
+    // Anamnese: a familia ve as proprias; o profissional da consulta ve o
+    // que foi enviado (nunca rascunho). Recepcao e gestao nao leem.
+    match /anamnesis_responses/{responseId} {
+      allow read: if signedIn() &&
+                     (resource.data.ownerUid == request.auth.uid ||
+                      (resource.data.professionalId == request.auth.uid &&
+                       resource.data.status in ['submitted', 'reviewed']));
+      allow write: if false;
+      match /revisions/{rev} {
+        allow read, write: if false;
       }
     }
 
@@ -900,22 +1395,22 @@ service cloud.firestore {
       allow delete: if false;
     }
     match /billing_guides/{id} {
-      allow read: if canReadLedger();
+      allow read: if canReadBillingClinicalLedger();
       allow create, update: if canWriteBillingLedger();
       allow delete: if false;
     }
     match /billing_batches/{id} {
-      allow read: if canReadLedger();
+      allow read: if canReadBillingClinicalLedger();
       allow create, update: if canWriteBillingLedger();
       allow delete: if false;
     }
     match /billing_glosas/{id} {
-      allow read: if canReadLedger();
+      allow read: if canReadBillingClinicalLedger();
       allow create, update: if canWriteBillingLedger();
       allow delete: if false;
     }
     match /billing_audit_logs/{id} {
-      allow read: if canReadLedger();
+      allow read: if canReadBillingClinicalLedger();
       allow create: if canCreateFinanceAudit();
       allow update, delete: if false;
     }
@@ -975,13 +1470,18 @@ service cloud.firestore {
     match /security_audit_logs/{id} {
       allow read: if isAdmin()
                   || (signedIn() && resource.data.actorUid == request.auth.uid)
-                  || (isVerifiedProfessional()
-                      && resource.data.clinicId != null
+                  || (resource.data.get('clinicId', null) != null
                       && isClinicAdmin(resource.data.clinicId));
+      // Equipe da clinica (inclusive recepcao e financeiro, sem registro
+      // profissional) registra eventos na propria clinica; fora de clinica,
+      // so profissional verificado.
       allow create: if signedIn()
                     && request.resource.data.actorUid == request.auth.uid
                     && request.resource.data.keys().hasAll(['actorUid', 'action', 'module', 'at'])
-                    && (isVerifiedProfessional() || isAdmin());
+                    && (isAdmin()
+                        || (request.resource.data.get('clinicId', null) == null
+                              ? isVerifiedProfessional()
+                              : isClinicMember(request.resource.data.clinicId)));
       allow update, delete: if false;
     }
 
@@ -990,6 +1490,591 @@ service cloud.firestore {
     match /config/{document} {
       allow read: if signedIn();
       allow write: if isAdmin();
+    }
+
+    // ------------------------------------------ Cuidado multidisciplinar
+    //
+    // Espelha lib/shared/care/care_policy.dart e a matriz de acesso em
+    // docs/homologacao/compartilhamento-seletivo/RELATORIO.md. O acesso vem do
+    // vínculo do profissional com a criança (members/{uid}), autorizado pela
+    // família, e da especialidade conferida (users/{uid}.careSpecialty).
+    // Vínculo e mesma clínica não abrem registros: o registro completo é do
+    // autor; a equipe recebe só o resumo que o autor escolheu e endereçou, ou
+    // um acesso concedido com justificativa. A gestão da clínica organiza a
+    // equipe mas não lê registros.
+
+    function careKinds(s) {
+      return s == 'pediatria'
+          ? ['avaliacao', 'evolucao', 'objetivos', 'orientacao']
+        : s == 'psicologia'
+          ? ['avaliacao', 'sessao', 'planoTerapeutico', 'objetivos',
+             'orientacao']
+        : s == 'fisioterapia'
+          ? ['avaliacaoFuncional', 'objetivos', 'planoSessoes', 'intervencao',
+             'evolucao', 'medida', 'atividadeCasa', 'orientacao']
+        : s in ['fonoaudiologia', 'terapiaOcupacional']
+          ? ['avaliacao', 'objetivos', 'evolucao', 'atividadeCasa',
+             'orientacao']
+        : s == 'nutricao'
+          ? ['avaliacao', 'objetivos', 'evolucao', 'orientacao']
+        : [];
+    }
+
+    function careDocKinds(s) {
+      return s == 'pediatria'
+          ? ['atestadoMedico', 'receituario', 'solicitacaoExames',
+             'declaracaoComparecimento', 'encaminhamento', 'orientacoes']
+        : s == 'psicologia'
+          ? ['declaracaoComparecimento', 'relatorioPsicologico',
+             'encaminhamento', 'orientacoes']
+        : s == 'fisioterapia'
+          ? ['declaracaoComparecimento', 'relatorioFisioterapeutico',
+             'planoExerciciosCasa', 'encaminhamento', 'orientacoes']
+        : s in ['fonoaudiologia', 'terapiaOcupacional', 'nutricao']
+          ? ['declaracaoComparecimento', 'encaminhamento', 'orientacoes']
+        : [];
+    }
+
+    function userCareSpecialty(uid) {
+      return get(/databases/$(database)/documents/users/$(uid)).data
+                .get('careSpecialty', '');
+    }
+
+    match /care_teams/{childId} {
+      function teamPath() {
+        return /databases/$(database)/documents/care_teams/$(childId);
+      }
+
+      function memberPath(uid) {
+        return /databases/$(database)/documents/care_teams/$(childId)/members/$(uid);
+      }
+
+      function recordPath(rid) {
+        return /databases/$(database)/documents/care_teams/$(childId)/records/$(rid);
+      }
+
+      function grantPath(rid, uid) {
+        return /databases/$(database)/documents/care_teams/$(childId)/records/$(rid)/grants/$(uid);
+      }
+
+      function summaryPath(rid) {
+        return /databases/$(database)/documents/care_teams/$(childId)/summaries/$(rid);
+      }
+
+      function member() {
+        return get(memberPath(request.auth.uid)).data;
+      }
+
+      // Vínculo ativo (autorizado pela família e não encerrado).
+      function activeMember() {
+        return isVerifiedProfessional() &&
+               exists(memberPath(request.auth.uid)) &&
+               member().status == 'active';
+      }
+
+      function sameClinic(clinicId) {
+        return member().clinicId == clinicId;
+      }
+
+      // Outro profissional com vínculo ativo na clínica indicada.
+      function activeColleague(uid, clinicId) {
+        return exists(memberPath(uid)) &&
+               get(memberPath(uid)).data.status == 'active' &&
+               get(memberPath(uid)).data.clinicId == clinicId;
+      }
+
+      // Acesso ao registro completo concedido pelo autor e não retirado.
+      function hasGrant(rid) {
+        return exists(grantPath(rid, request.auth.uid)) &&
+               get(grantPath(rid, request.auth.uid)).data
+                 .get('revokedAt', null) == null;
+      }
+
+      function careGuardian() {
+        return ownsChild(childId) ||
+               (exists(teamPath()) &&
+                isLinkedGuardianOf(get(teamPath()).data.ownerUid, childId));
+      }
+
+      // Pedido de vínculo: sempre pendente, para profissional verificado com
+      // a especialidade conferida, feito pela gestão da clínica ou pelo
+      // próprio profissional (aceite de encaminhamento) na clínica dele.
+      function newPendingRequest(uid) {
+        return exists(teamPath()) &&
+               request.resource.data.keys().hasOnly(
+                 ['specialty', 'clinicId', 'status', 'reason', 'requestedBy',
+                  'since']) &&
+               request.resource.data.status == 'pending' &&
+               request.resource.data.requestedBy == request.auth.uid &&
+               request.resource.data.since == request.time &&
+               get(/databases/$(database)/documents/users/$(uid)).data
+                 .get('professionalVerified', false) == true &&
+               userCareSpecialty(uid) == request.resource.data.specialty &&
+               (isClinicAdmin(request.resource.data.clinicId) ||
+                (request.auth.uid == uid &&
+                 isClinicMember(request.resource.data.clinicId)));
+      }
+
+      // Padrão privado. Só orientação e atividade para casa vão à família.
+      function validVisibility(d) {
+        return d.visibility in ['privado', 'familia'] &&
+               (d.visibility != 'familia' ||
+                d.kind in ['orientacao', 'atividadeCasa']) &&
+               (d.visibility == 'familia' || d.get('releasedAt', null) == null);
+      }
+
+      // Texto preparado pela IA só é gravado revisado por quem grava.
+      function aiReviewed(d) {
+        return d.get('aiGenerated', false) != true ||
+               d.get('reviewedBy', '') == request.auth.uid;
+      }
+
+      allow read: if activeMember() ||
+                     (isVerifiedProfessional() &&
+                      exists(memberPath(request.auth.uid))) ||
+                     careGuardian();
+      allow create: if ownsChild(childId) &&
+                       request.resource.data.keys().hasOnly(['ownerUid', 'createdAt']) &&
+                       request.resource.data.ownerUid == request.auth.uid;
+      allow update, delete: if false;
+
+      match /members/{uid} {
+        allow read: if request.auth.uid == uid ||
+                       activeMember() ||
+                       isClinicAdmin(resource.data.clinicId) ||
+                       careGuardian();
+        allow create: if newPendingRequest(uid);
+        // Família autoriza.
+        function familyAuthorizes() {
+          return request.resource.data.diff(resource.data).affectedKeys()
+                   .hasOnly(['status', 'authorizedAt', 'authorizedBy']) &&
+                 request.resource.data.authorizedBy == request.auth.uid &&
+                 request.resource.data.authorizedAt == request.time &&
+                 careGuardian();
+        }
+
+        // Encerram: o próprio profissional, a gestão da clínica ou a família.
+        function endsLink(uid) {
+          return request.resource.data.diff(resource.data).affectedKeys()
+                   .hasOnly(['status', 'endedAt', 'endedBy', 'endReason']) &&
+                 request.resource.data.endedBy == request.auth.uid &&
+                 request.resource.data.endedAt == request.time &&
+                 (request.auth.uid == uid ||
+                  isClinicAdmin(resource.data.clinicId) ||
+                  careGuardian());
+        }
+
+        // Transições explícitas em ternário: no emulador, `false && (f() || x)`
+        // com f() = careGuardian() chegou a liberar a escrita. Por isso
+        // careGuardian() fica sempre por último nas disjunções deste bloco.
+        allow update: if
+          (resource.data.status == 'pending' &&
+           request.resource.data.status == 'active')
+            ? familyAuthorizes()
+          : (resource.data.status in ['pending', 'active'] &&
+             request.resource.data.status == 'ended')
+            ? endsLink(uid)
+          // Novo pedido depois de encerrado (outra clínica, por exemplo).
+          : (resource.data.status == 'ended' &&
+             request.resource.data.status == 'pending')
+            ? newPendingRequest(uid)
+          : false;
+        allow delete: if false;
+      }
+
+      // Registro completo: o autor; quem recebeu acesso justificado (com
+      // vínculo ativo na mesma clínica); a família, só o que foi liberado.
+      match /records/{recordId} {
+        allow read: if signedIn() && (
+          resource.data.authorUid == request.auth.uid ||
+          (activeMember() && sameClinic(resource.data.clinicId) &&
+           hasGrant(recordId)) ||
+          (resource.data.visibility == 'familia' &&
+           resource.data.get('releasedAt', null) != null &&
+           careGuardian()));
+        allow create: if activeMember() &&
+                         request.resource.data.authorUid == request.auth.uid &&
+                         request.resource.data.specialty == member().specialty &&
+                         request.resource.data.clinicId == member().clinicId &&
+                         request.resource.data.kind in careKinds(member().specialty) &&
+                         validVisibility(request.resource.data) &&
+                         request.resource.data.revision == 1 &&
+                         request.resource.data.createdAt == request.time &&
+                         aiReviewed(request.resource.data);
+        // Toda alteração grava, no mesmo lote, a revisão com o texto anterior.
+        allow update: if activeMember() &&
+                         resource.data.authorUid == request.auth.uid &&
+                         sameClinic(resource.data.clinicId) &&
+                         !request.resource.data.diff(resource.data).affectedKeys()
+                            .hasAny(['authorUid', 'specialty', 'clinicId', 'kind',
+                                     'createdAt', 'aiGenerated']) &&
+                         validVisibility(request.resource.data) &&
+                         request.resource.data.revision == resource.data.revision + 1 &&
+                         existsAfter(/databases/$(database)/documents/care_teams/$(childId)/records/$(recordId)/revisions/$(string(request.resource.data.revision))) &&
+                         aiReviewed(request.resource.data);
+        allow delete: if false;
+
+        match /revisions/{rev} {
+          allow read: if signedIn() &&
+                         get(recordPath(recordId)).data.authorUid == request.auth.uid;
+          allow create: if activeMember() &&
+                           get(recordPath(recordId)).data.authorUid == request.auth.uid &&
+                           request.resource.data.actorUid == request.auth.uid &&
+                           request.resource.data.at == request.time &&
+                           request.resource.data.keys().hasAll(
+                             ['actorUid', 'at', 'note', 'previousBody']);
+          allow update, delete: if false;
+        }
+
+        // Partes do registro. Anotação privada, transcrição e conversa ficam
+        // só com o autor, inclusive para quem recebeu acesso ao registro.
+        match /sections/{sectionId} {
+          allow read: if signedIn() && (
+            get(recordPath(recordId)).data.authorUid == request.auth.uid ||
+            (resource.data.kind == 'clinica' &&
+             activeMember() &&
+             sameClinic(get(recordPath(recordId)).data.clinicId) &&
+             hasGrant(recordId)));
+          allow create: if activeMember() &&
+                           getAfter(recordPath(recordId)).data.authorUid == request.auth.uid &&
+                           request.resource.data.keys().hasOnly(
+                             ['kind', 'label', 'text', 'createdAt']) &&
+                           request.resource.data.kind in
+                             ['clinica', 'anotacaoPrivada', 'transcricao', 'conversa'] &&
+                           request.resource.data.createdAt == request.time;
+          allow update: if activeMember() &&
+                           get(recordPath(recordId)).data.authorUid == request.auth.uid &&
+                           request.resource.data.diff(resource.data).affectedKeys()
+                             .hasOnly(['label', 'text']);
+          allow delete: if false;
+        }
+
+        // Acesso ao registro completo, um por profissional (id = uid de quem
+        // recebe). Só o autor concede, com justificativa, a colega com vínculo
+        // ativo na mesma clínica. Retirar não apaga: grava quem, quando e por
+        // quê. Uma nova concessão guarda antes a anterior em history/{rodada}.
+        match /grants/{granteeUid} {
+          function rec() {
+            return get(recordPath(recordId)).data;
+          }
+
+          function validGrant(d) {
+            return d.keys().hasOnly(
+                     ['granteeUid', 'clinicId', 'justification', 'grantedAt',
+                      'grantedBy', 'round']) &&
+                   d.granteeUid == granteeUid &&
+                   granteeUid != request.auth.uid &&
+                   d.clinicId == rec().clinicId &&
+                   d.justification is string &&
+                   d.justification.size() >= 15 &&
+                   d.justification.size() <= 500 &&
+                   d.grantedAt == request.time &&
+                   d.grantedBy == request.auth.uid &&
+                   activeMember() &&
+                   rec().authorUid == request.auth.uid &&
+                   sameClinic(rec().clinicId) &&
+                   activeColleague(granteeUid, rec().clinicId);
+          }
+
+          allow read: if signedIn() &&
+                         (request.auth.uid == granteeUid ||
+                          rec().authorUid == request.auth.uid);
+          allow create: if validGrant(request.resource.data) &&
+                           request.resource.data.round == 1;
+          allow update: if
+            (resource.data.get('revokedAt', null) == null)
+              // Retirada: o autor, mesmo depois de encerrado o próprio vínculo.
+              ? (rec().authorUid == request.auth.uid &&
+                 request.resource.data.diff(resource.data).affectedKeys()
+                   .hasOnly(['revokedAt', 'revokedBy', 'revokeReason']) &&
+                 request.resource.data.revokedAt == request.time &&
+                 request.resource.data.revokedBy == request.auth.uid &&
+                 request.resource.data.revokeReason is string &&
+                 request.resource.data.revokeReason.size() >= 3)
+              // Nova concessão depois de retirada.
+              : (validGrant(request.resource.data) &&
+                 request.resource.data.round == resource.data.round + 1 &&
+                 existsAfter(/databases/$(database)/documents/care_teams/$(childId)/records/$(recordId)/grants/$(granteeUid)/history/$(string(resource.data.round))));
+          allow delete: if false;
+
+          match /history/{round} {
+            allow read: if signedIn() &&
+                           get(recordPath(recordId)).data.authorUid == request.auth.uid;
+            allow create: if signedIn() &&
+                             get(recordPath(recordId)).data.authorUid == request.auth.uid &&
+                             request.resource.data.keys().hasAll(
+                               ['justification', 'grantedAt', 'revokedAt',
+                                'revokedBy', 'revokeReason']);
+            allow update, delete: if false;
+          }
+        }
+      }
+
+      // Resumo para a equipe (id = registro de origem). É uma cópia, feita
+      // pelo autor, só dos itens que ele marcou, endereçada a profissionais
+      // escolhidos. Cada publicação, atualização ou encerramento sobe a
+      // versão e grava a versão em versions/{n} no mesmo lote.
+      match /summaries/{recordId} {
+        function validSummary(d) {
+          return d.keys().hasOnly(
+                   ['authorUid', 'clinicId', 'specialty', 'recordTitle',
+                    'status', 'audience', 'recipients', 'items', 'attachments',
+                    'note', 'version', 'createdAt', 'updatedAt', 'aiAssisted',
+                    'reviewedBy']) &&
+                 d.authorUid == request.auth.uid &&
+                 d.status in ['publicado', 'encerrado'] &&
+                 d.audience in ['selecionados', 'equipe'] &&
+                 d.recipients is list &&
+                 d.recipients.size() >= 1 &&
+                 d.recipients.size() <= 30 &&
+                 !(request.auth.uid in d.recipients) &&
+                 d.items is list &&
+                 d.items.size() <= 30 &&
+                 d.attachments is list &&
+                 d.attachments.size() <= 10 &&
+                 d.updatedAt == request.time &&
+                 (d.get('aiAssisted', false) != true ||
+                  d.get('reviewedBy', '') == request.auth.uid) &&
+                 existsAfter(/databases/$(database)/documents/care_teams/$(childId)/summaries/$(recordId)/versions/$(string(d.version)));
+        }
+
+        allow read: if signedIn() && (
+          resource.data.authorUid == request.auth.uid ||
+          (resource.data.status == 'publicado' &&
+           request.auth.uid in resource.data.recipients &&
+           activeMember() &&
+           sameClinic(resource.data.clinicId)));
+        allow create: if activeMember() &&
+                         get(recordPath(recordId)).data.authorUid == request.auth.uid &&
+                         validSummary(request.resource.data) &&
+                         request.resource.data.clinicId == get(recordPath(recordId)).data.clinicId &&
+                         request.resource.data.specialty == get(recordPath(recordId)).data.specialty &&
+                         request.resource.data.status == 'publicado' &&
+                         request.resource.data.version == 1 &&
+                         request.resource.data.createdAt == request.time;
+        // Atualizar exige vínculo ativo; encerrar o acesso, só ser o autor.
+        allow update: if resource.data.authorUid == request.auth.uid &&
+                         validSummary(request.resource.data) &&
+                         !request.resource.data.diff(resource.data).affectedKeys()
+                            .hasAny(['authorUid', 'clinicId', 'specialty',
+                                     'recordTitle', 'createdAt']) &&
+                         request.resource.data.version == resource.data.version + 1 &&
+                         (request.resource.data.status == 'encerrado'
+                            ? true
+                            : (activeMember() &&
+                               sameClinic(resource.data.clinicId)));
+        allow delete: if false;
+
+        // Histórico de versões: só o autor, imutável.
+        match /versions/{version} {
+          allow read: if signedIn() &&
+                         get(summaryPath(recordId)).data.authorUid == request.auth.uid;
+          allow create: if signedIn() &&
+                           getAfter(summaryPath(recordId)).data.authorUid == request.auth.uid &&
+                           request.resource.data.version == int(version) &&
+                           request.resource.data.actorUid == request.auth.uid &&
+                           request.resource.data.at == request.time &&
+                           request.resource.data.keys().hasAll(
+                             ['version', 'actorUid', 'at', 'status', 'audience',
+                              'recipients', 'items', 'attachments']);
+          allow update, delete: if false;
+        }
+
+        // Quem acessou: gravado por quem lê, na versão em vigor. O autor
+        // consulta; ninguém altera nem apaga.
+        match /access/{accessId} {
+          allow read: if signedIn() &&
+                         get(summaryPath(recordId)).data.authorUid == request.auth.uid;
+          allow create: if activeMember() &&
+                           request.resource.data.keys().hasOnly(
+                             ['readerUid', 'at', 'version']) &&
+                           request.resource.data.readerUid == request.auth.uid &&
+                           request.resource.data.at == request.time &&
+                           get(summaryPath(recordId)).data.status == 'publicado' &&
+                           request.auth.uid in get(summaryPath(recordId)).data.recipients &&
+                           request.resource.data.version ==
+                             get(summaryPath(recordId)).data.version;
+          allow update, delete: if false;
+        }
+      }
+
+      // Plano terapêutico conjunto, por clínica: a equipe de outra clínica e
+      // a família não o veem. Cada objetivo tem responsável, prazo e
+      // reavaliação; cada profissional contribui com o que escolhe escrever.
+      match /plan/{clinicId} {
+        allow read, write: if false;
+
+        match /goals/{goalId} {
+          function planMember() {
+            return activeMember() && sameClinic(clinicId);
+          }
+
+          allow read: if planMember();
+          allow create: if planMember() &&
+                           request.resource.data.keys().hasOnly(
+                             ['objective', 'responsibleUid', 'responsibleSpecialty',
+                              'dueDate', 'reassessAt', 'status', 'reassessCount',
+                              'createdBy', 'createdAt']) &&
+                           request.resource.data.objective is string &&
+                           request.resource.data.objective.size() >= 3 &&
+                           request.resource.data.objective.size() <= 500 &&
+                           request.resource.data.status == 'emAndamento' &&
+                           request.resource.data.reassessCount == 0 &&
+                           request.resource.data.createdBy == request.auth.uid &&
+                           request.resource.data.createdAt == request.time &&
+                           request.resource.data.dueDate is timestamp &&
+                           request.resource.data.dueDate > request.time &&
+                           request.resource.data.reassessAt is timestamp &&
+                           request.resource.data.reassessAt <= request.resource.data.dueDate &&
+                           activeColleague(request.resource.data.responsibleUid, clinicId) &&
+                           get(memberPath(request.resource.data.responsibleUid)).data.specialty ==
+                             request.resource.data.responsibleSpecialty;
+          // Reavaliação: só o responsável, gravando o registro no mesmo lote.
+          allow update: if planMember() &&
+                           resource.data.responsibleUid == request.auth.uid &&
+                           request.resource.data.diff(resource.data).affectedKeys()
+                             .hasOnly(['status', 'reassessAt', 'reassessCount']) &&
+                           request.resource.data.status in
+                             ['emAndamento', 'atingido', 'revisar'] &&
+                           request.resource.data.reassessAt is timestamp &&
+                           request.resource.data.reassessCount ==
+                             resource.data.reassessCount + 1 &&
+                           existsAfter(/databases/$(database)/documents/care_teams/$(childId)/plan/$(clinicId)/goals/$(goalId)/reassessments/$(string(request.resource.data.reassessCount)));
+          allow delete: if false;
+
+          match /reassessments/{n} {
+            allow read: if planMember();
+            allow create: if planMember() &&
+                             getAfter(/databases/$(database)/documents/care_teams/$(childId)/plan/$(clinicId)/goals/$(goalId)).data.responsibleUid == request.auth.uid &&
+                             request.resource.data.keys().hasOnly(
+                               ['actorUid', 'at', 'status', 'note', 'nextReassessAt']) &&
+                             request.resource.data.actorUid == request.auth.uid &&
+                             request.resource.data.at == request.time;
+            allow update, delete: if false;
+          }
+
+          match /contributions/{contributionId} {
+            allow read: if planMember();
+            allow create: if planMember() &&
+                             existsAfter(/databases/$(database)/documents/care_teams/$(childId)/plan/$(clinicId)/goals/$(goalId)) &&
+                             request.resource.data.keys().hasOnly(
+                               ['authorUid', 'authorSpecialty', 'kind', 'text', 'at']) &&
+                             request.resource.data.authorUid == request.auth.uid &&
+                             request.resource.data.authorSpecialty == member().specialty &&
+                             request.resource.data.kind in ['acao', 'informacao'] &&
+                             request.resource.data.text is string &&
+                             request.resource.data.text.size() >= 1 &&
+                             request.resource.data.text.size() <= 2000 &&
+                             request.resource.data.at == request.time;
+            allow update, delete: if false;
+          }
+        }
+
+        match /history/{entryId} {
+          allow read: if activeMember() && sameClinic(clinicId);
+          allow create: if activeMember() && sameClinic(clinicId) &&
+                           request.resource.data.actorUid == request.auth.uid &&
+                           request.resource.data.at == request.time;
+          allow update, delete: if false;
+        }
+      }
+
+      // Comunicação da equipe. A família não lê. O encaminhamento em aberto
+      // é legível por quem pode aceitá-lo (destinatário ou especialidade).
+      match /messages/{messageId} {
+        function canAcceptReferral() {
+          return isVerifiedProfessional() &&
+                 resource.data.kind == 'encaminhamento' &&
+                 resource.data.status == 'aberto' &&
+                 (resource.data.get('toUid', null) == request.auth.uid ||
+                  (resource.data.get('toUid', null) == null &&
+                   userCareSpecialty(request.auth.uid) == resource.data.toSpecialty &&
+                   isClinicMember(resource.data.clinicId)));
+        }
+
+        allow read: if (activeMember() && sameClinic(resource.data.clinicId)) ||
+                       canAcceptReferral();
+        allow create: if activeMember() &&
+                         request.resource.data.authorUid == request.auth.uid &&
+                         request.resource.data.authorSpecialty == member().specialty &&
+                         request.resource.data.clinicId == member().clinicId &&
+                         request.resource.data.kind in ['encaminhamento', 'parecer', 'mensagem'] &&
+                         (request.resource.data.kind != 'encaminhamento' ||
+                          request.resource.data.get('toSpecialty', null) != null) &&
+                         request.resource.data.status == 'aberto' &&
+                         request.resource.data.at == request.time;
+        // Só o status muda: aceite/recusa do encaminhamento por quem pode
+        // aceitá-lo, ou "respondido" pela equipe.
+        allow update: if signedIn() &&
+                         request.resource.data.diff(resource.data).affectedKeys()
+                           .hasOnly(['status', 'statusBy', 'statusAt']) &&
+                         request.resource.data.statusBy == request.auth.uid &&
+                         request.resource.data.statusAt == request.time &&
+                         ((canAcceptReferral() &&
+                           request.resource.data.status in ['aceito', 'recusado']) ||
+                          (resource.data.kind != 'encaminhamento' &&
+                           activeMember() && sameClinic(resource.data.clinicId) &&
+                           request.resource.data.status == 'respondido'));
+        allow delete: if false;
+      }
+
+      // Documentos emitidos: do autor; a família lê o que foi liberado. A
+      // equipe não lê documentos de outro profissional.
+      match /documents/{docId} {
+        allow read: if signedIn() && (
+          resource.data.authorUid == request.auth.uid ||
+          (resource.data.get('releasedAt', null) != null && careGuardian()));
+        allow create: if activeMember() &&
+                         request.resource.data.authorUid == request.auth.uid &&
+                         request.resource.data.specialty == member().specialty &&
+                         request.resource.data.clinicId == member().clinicId &&
+                         request.resource.data.kind in careDocKinds(member().specialty) &&
+                         request.resource.data.status == 'draft' &&
+                         request.resource.data.get('releasedAt', null) == null;
+        allow update: if activeMember() &&
+                         resource.data.authorUid == request.auth.uid &&
+                         !request.resource.data.diff(resource.data).affectedKeys()
+                            .hasAny(['authorUid', 'specialty', 'clinicId', 'kind',
+                                     'createdAt']) &&
+                         ((resource.data.status == 'draft' &&
+                           request.resource.data.status in ['draft', 'reviewed']) ||
+                          (resource.data.status == 'reviewed' &&
+                           request.resource.data.status in ['reviewed', 'issued']) ||
+                          (resource.data.status == 'issued' &&
+                           request.resource.data.status == 'issued' &&
+                           request.resource.data.diff(resource.data).affectedKeys()
+                             .hasOnly(['releasedAt']))) &&
+                         (request.resource.data.get('releasedAt', null) == null ||
+                          request.resource.data.status == 'issued');
+        allow delete: if false;
+      }
+      // Trilha de acessos e alterações: append-only. A família e a gestão
+      // da clínica leem; ninguém altera nem apaga.
+      match /access_log/{logId} {
+        allow read: if isClinicAdmin(resource.data.get('clinicId', null)) ||
+                       careGuardian();
+        allow create: if signedIn() &&
+                         request.resource.data.actorUid == request.auth.uid &&
+                         request.resource.data.at == request.time &&
+                         request.resource.data.keys().hasAll(
+                           ['actorUid', 'action', 'target', 'at', 'allowed']) &&
+                         ((isVerifiedProfessional() &&
+                           exists(memberPath(request.auth.uid))) ||
+                          careGuardian());
+        allow update, delete: if false;
+      }
+    }
+
+    // Modelos pessoais de documento do cuidado multidisciplinar.
+    match /care_templates/{templateId} {
+      allow read, delete: if signedIn() &&
+                             resource.data.ownerUid == request.auth.uid;
+      allow create, update: if isVerifiedProfessional() &&
+                               request.resource.data.ownerUid == request.auth.uid &&
+                               (resource == null ||
+                                resource.data.ownerUid == request.auth.uid) &&
+                               request.resource.data.kind in
+                                 careDocKinds(userCareSpecialty(request.auth.uid));
     }
 
     // Nada além do declarado acima. Uma collection nova nasce fechada, em vez

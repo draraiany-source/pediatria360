@@ -22,8 +22,16 @@
 
 import { onCall, HttpsError } from "firebase-functions/v2/https";
 import * as admin from "firebase-admin";
+import { FieldValue, Timestamp } from "firebase-admin/firestore";
 import * as logger from "firebase-functions/logger";
 import { createHash, randomBytes } from "crypto";
+import {
+  childOwnerUid,
+  grantAllows,
+  grantRef,
+  requireChildAccess,
+  grantState,
+} from "./childAccess";
 
 const REGION = "southamerica-east1";
 const db = () => admin.firestore();
@@ -130,6 +138,8 @@ export const signEncounter = onCall({ region: REGION }, async (request) => {
       );
     }
 
+    await requireChildAccess(actor.uid, e.patientId, "chartWrite", e.clinicId ?? null);
+
     if (e.status !== "draft") {
       throw new HttpsError(
         "failed-precondition",
@@ -149,7 +159,7 @@ export const signEncounter = onCall({ region: REGION }, async (request) => {
 
     tx.update(ref, {
       status: e.amendsEncounterId ? "amended" : "signed",
-      signedAt: admin.firestore.FieldValue.serverTimestamp(),
+      signedAt: FieldValue.serverTimestamp(),
       signedBy: actor.uid,
       signerName: actor.name,
       signerCrm: actor.crm,
@@ -167,7 +177,7 @@ export const signEncounter = onCall({ region: REGION }, async (request) => {
     encounterId,
     actorUid: actor.uid,
     signatureHash,
-    createdAt: admin.firestore.FieldValue.serverTimestamp(),
+    createdAt: FieldValue.serverTimestamp(),
   });
 
   logger.info("Atendimento assinado", { encounterId, actor: actor.uid });
@@ -213,6 +223,7 @@ export const amendEncounter = onCall({ region: REGION }, async (request) => {
       "Só quem conduziu o atendimento pode retificá-lo."
     );
   }
+  await requireChildAccess(actor.uid, e.patientId, "chartWrite", e.clinicId ?? null);
   if (e.status === "draft") {
     throw new HttpsError(
       "failed-precondition",
@@ -225,7 +236,7 @@ export const amendEncounter = onCall({ region: REGION }, async (request) => {
   await newRef.set({
     ...e,
     status: "draft",
-    startedAt: admin.firestore.FieldValue.serverTimestamp(),
+    startedAt: FieldValue.serverTimestamp(),
     signedAt: null,
     signedBy: null,
     signatureHash: null,
@@ -233,14 +244,14 @@ export const amendEncounter = onCall({ region: REGION }, async (request) => {
     externalSignatureId: null,
     amendsEncounterId: encounterId,
     amendmentReason: reason.trim().slice(0, 1000),
-    createdAt: admin.firestore.FieldValue.serverTimestamp(),
-    updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    createdAt: FieldValue.serverTimestamp(),
+    updatedAt: FieldValue.serverTimestamp(),
   });
 
   // Marca o original, para a linha do tempo sinalizar que houve correção.
   await originalRef.update({
     amendedByEncounterId: newRef.id,
-    amendedAt: admin.firestore.FieldValue.serverTimestamp(),
+    amendedAt: FieldValue.serverTimestamp(),
   });
 
   await db().collection("audit_log").add({
@@ -249,7 +260,7 @@ export const amendEncounter = onCall({ region: REGION }, async (request) => {
     newEncounterId: newRef.id,
     actorUid: actor.uid,
     reason,
-    createdAt: admin.firestore.FieldValue.serverTimestamp(),
+    createdAt: FieldValue.serverTimestamp(),
   });
 
   logger.warn("Atendimento retificado", { encounterId, newId: newRef.id });
@@ -322,6 +333,7 @@ export const issueClinicalDocument = onCall(
     if (e.professionalId !== actor.uid) {
       throw new HttpsError("permission-denied", "Atendimento de outro profissional.");
     }
+    await requireChildAccess(actor.uid, e.patientId, "chartWrite", e.clinicId ?? null);
     if (e.status === "draft") {
       throw new HttpsError(
         "failed-precondition",
@@ -366,13 +378,13 @@ export const issueClinicalDocument = onCall(
       type,
       content: content.trim(),
       items: items ?? [],
-      issuedAt: admin.firestore.FieldValue.serverTimestamp(),
-      validUntil: expiry ? admin.firestore.Timestamp.fromDate(expiry) : null,
+      issuedAt: FieldValue.serverTimestamp(),
+      validUntil: expiry ? Timestamp.fromDate(expiry) : null,
       contentHash: hash,
       verificationCode: code,
       // Preenchidos quando houver integração ICP-Brasil.
       signatureProvider: null,
-      signedAt: admin.firestore.FieldValue.serverTimestamp(),
+      signedAt: FieldValue.serverTimestamp(),
       cancelled: false,
       pdfUrl: null,
     });
@@ -383,7 +395,7 @@ export const issueClinicalDocument = onCall(
       documentType: type,
       encounterId,
       actorUid: actor.uid,
-      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      createdAt: FieldValue.serverTimestamp(),
     });
 
     logger.info("Documento emitido", { documentId: ref.id, type });
@@ -429,7 +441,7 @@ export const cancelClinicalDocument = onCall(
     await ref.update({
       cancelled: true,
       cancellationReason: reason.trim().slice(0, 500),
-      cancelledAt: admin.firestore.FieldValue.serverTimestamp(),
+      cancelledAt: FieldValue.serverTimestamp(),
       cancelledBy: actor.uid,
     });
 
@@ -438,7 +450,7 @@ export const cancelClinicalDocument = onCall(
       documentId,
       actorUid: actor.uid,
       reason,
-      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      createdAt: FieldValue.serverTimestamp(),
     });
 
     return { ok: true };
@@ -469,14 +481,14 @@ export const verifyDocument = onCall({ region: REGION }, async (request) => {
   }
 
   const d = snapshot.docs[0].data();
-  const expiry = (d.validUntil as admin.firestore.Timestamp | null)?.toDate();
+  const expiry = (d.validUntil as Timestamp | null)?.toDate();
 
   // Nada de conteúdo clínico, nome do paciente ou diagnóstico. Quem confere
   // precisa saber que o documento é autêntico, não o que ele diz.
   return {
     found: true,
     type: d.type,
-    issuedAt: (d.issuedAt as admin.firestore.Timestamp)?.toDate().toISOString(),
+    issuedAt: (d.issuedAt as Timestamp)?.toDate().toISOString(),
     professionalName: d.professionalName,
     professionalCrm: d.professionalCrm,
     cancelled: d.cancelled === true,
@@ -486,104 +498,38 @@ export const verifyDocument = onCall({ region: REGION }, async (request) => {
 });
 
 /**
- * Concede a um profissional verificado a leitura do resumo de segurança de
- * uma criança (nome, idade, alergia) — não do prontuário clínico completo.
+ * Situação da autorização do responsável para este profissional nesta
+ * criança. Só consulta: não concede nada.
  *
- * ## Por que isto precisa ser Function, não escrita direta do cliente
- *
- * `EncounterRepository.create` grava direto no Firestore, sem passar por
- * Function — e só recebe `childId`, nunca o uid do responsável. Um
- * profissional não tem como escrever
- * `users/{ownerId}/children/{childId}/authorized_professionals/{seuUid}`
- * porque não sabe `ownerId`, e não tem como descobrir sem já ter a
- * permissão que está tentando conceder a si mesmo — circular.
- *
- * Rodando com Admin SDK, esta Function ignora as regras do cliente e
- * localiza a criança por busca de collection group, direto pelo id do
- * documento — não precisa de índice composto, é igualdade simples.
- *
- * ## Vinculo obrigatorio com agendamento ativo
- *
- * Exige um documento em `appointments` ligando este profissional a esta
- * crianca (`patientId` OU `childId` igual ao childId solicitado) com
- * status em `confirmed` | `inProgress` | `requested`. Sem esse vinculo,
- * retorna permission-denied — evita auto-concessao ampla so por ser
- * profissional verificado. A escrita da concessao continua so via Admin
- * SDK (o cliente nao escreve mais authorized_professionals).
- *
- * ## O que isto NÃO concede
- *
- * Só a leitura do documento da criança em si (nome, idade, sexo, alergia,
- * condição, foto). Não dá acesso a `growth_records`, `vaccine_doses`, nem a
- * mais nada da família — essas subcoleções continuam exclusivas do dono.
+ * Até a etapa 1, esta era `grantChildSummaryAccess`, que concedia acesso a
+ * partir de consulta pedida pela família. Existir consulta não é
+ * autorização: a concessão agora nasce só de escolha explícita do titular
+ * (tela de autorizações ou aceite do convite da clínica). Versões antigas
+ * do app que chamarem o nome antigo recebem "not-found" e seguem sem
+ * concessão.
  */
-export const grantChildSummaryAccess = onCall(
+export const checkChildAccess = onCall(
   { region: REGION },
   async (request) => {
     const actor = await requireVerifiedProfessional(request.auth?.uid);
-    const { childId } = request.data as { childId?: string };
+    const { childId, clinicId } = request.data as { childId?: string; clinicId?: string | null };
 
-    if (!childId) {
+    if (!childId || typeof childId !== "string") {
       throw new HttpsError("invalid-argument", "childId não informado.");
     }
 
-    // Agendamento ativo ligando profissional ↔ criança (patientId ou childId).
-    const allowedStatuses = ["confirmed", "inProgress", "requested"];
-    const byChild = await db()
-      .collection("appointments")
-      .where("professionalId", "==", actor.uid)
-      .where("childId", "==", childId)
-      .where("status", "in", allowedStatuses)
-      .limit(1)
-      .get();
-
-    let linked = !byChild.empty;
-    if (!linked) {
-      const byPatient = await db()
-        .collection("appointments")
-        .where("professionalId", "==", actor.uid)
-        .where("patientId", "==", childId)
-        .where("status", "in", allowedStatuses)
-        .limit(1)
-        .get();
-      linked = !byPatient.empty;
-    }
-
-    if (!linked) {
-      throw new HttpsError(
-        "permission-denied",
-        "É necessário um agendamento ativo (confirmado, em andamento ou solicitado) com esta criança."
-      );
-    }
-
-    const found = await db()
-      .collectionGroup("children")
-      .where(admin.firestore.FieldPath.documentId(), "==", childId)
-      .limit(1)
-      .get();
-
-    if (found.empty) {
-      throw new HttpsError("not-found", "Criança não encontrada.");
-    }
-
-    // O caminho do documento encontrado é .../users/{ownerId}/children/{childId}
-    // — o penúltimo segmento é o uid do responsável.
-    const childRef = found.docs[0].ref;
-    const ownerId = childRef.parent.parent?.id;
+    const ownerId = await childOwnerUid(childId);
     if (!ownerId) {
-      throw new HttpsError("internal", "Estrutura de documento inesperada.");
+      return { summary: false, chartWrite: false, state: "none" };
     }
 
-    await childRef
-      .collection("authorized_professionals")
-      .doc(actor.uid)
-      .set({ grantedAt: admin.firestore.FieldValue.serverTimestamp() });
-
-    logger.info("Acesso ao resumo de criança concedido", {
-      professional: actor.uid,
-      childId,
-    });
-
-    return { ok: true };
+    const grant = (await grantRef(ownerId, childId, actor.uid).get()).data();
+    const now = Date.now();
+    const clinic = typeof clinicId === "string" && clinicId ? clinicId : null;
+    return {
+      summary: grantAllows(grant, "summary", now, clinic),
+      chartWrite: grantAllows(grant, "chartWrite", now, clinic),
+      state: grantState(grant, now),
+    };
   }
 );

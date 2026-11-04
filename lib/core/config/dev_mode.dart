@@ -35,6 +35,8 @@ class DevMode {
   static bool requireRealAuth = false;
 
   static bool get isEnabled {
+    // Builds de publicacao (`ENV=prod`) nunca usam convidado, mesmo em debug.
+    if (AppConfig.isProduction) return false;
     if (_forceRealAuthDefine || requireRealAuth) return false;
     if (!_flag) return false;
     if (kDebugMode) return true;

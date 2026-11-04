@@ -6,6 +6,7 @@ import '../../../../core/error/failures.dart';
 import '../../../../core/router/routes.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_tokens.dart';
+import '../../../../core/widgets/back_or_home_button.dart';
 import '../../../../core/widgets/brand_ui.dart';
 import '../../../../core/widgets/state_views.dart';
 import '../../domain/automation_catalog.dart';
@@ -35,6 +36,7 @@ class _ClinicCrmScreenState extends ConsumerState<ClinicCrmScreen> {
     return Scaffold(
       backgroundColor: AppColors.lightBackground,
       appBar: AppBar(
+        leading: const BackOrHomeButton(),
         title: const Text('CRM clínico'),
         backgroundColor: Colors.white,
         foregroundColor: AppColors.navy,

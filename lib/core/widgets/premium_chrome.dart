@@ -17,9 +17,11 @@ class PremiumTopBar extends ConsumerWidget {
     super.key,
     this.notificationCount = 0,
     this.onSearchSubmitted,
+    this.showSearch = true,
   });
 
   final int notificationCount;
+  final bool showSearch;
   final ValueChanged<String>? onSearchSubmitted;
 
   @override
@@ -43,7 +45,7 @@ class PremiumTopBar extends ConsumerWidget {
         ),
         child: Row(
           children: <Widget>[
-            Expanded(
+            if (!showSearch) const Spacer() else Expanded(
               child: ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: 560),
                 child: TextField(
@@ -53,7 +55,9 @@ class PremiumTopBar extends ConsumerWidget {
                       return;
                     }
                     if (q.trim().isEmpty) return;
-                    context.go(Routes.patientsPath);
+                    context.go(
+                      '${Routes.patientsPath}?q=${Uri.encodeQueryComponent(q.trim())}',
+                    );
                   },
                   decoration: InputDecoration(
                     hintText: 'Buscar pacientes, consultas, documentos...',

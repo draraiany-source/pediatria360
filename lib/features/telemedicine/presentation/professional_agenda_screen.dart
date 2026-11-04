@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/config/app_assets.dart';
 import '../../../core/error/failures.dart';
 import '../../../core/config/dev_mode.dart';
 import '../../../core/providers/core_providers.dart';
@@ -14,6 +15,7 @@ import '../../../core/utils/result.dart';
 import '../../../core/utils/validators.dart';
 import '../../../core/router/routes.dart';
 import '../../../core/widgets/app_widgets.dart';
+import '../../../core/widgets/back_or_home_button.dart';
 import '../../../core/widgets/clinical_ui.dart';
 import '../../../core/widgets/skeleton.dart';
 import '../../../core/widgets/state_views.dart';
@@ -96,27 +98,46 @@ class _ProfessionalAgendaScreenState
   }
 
   Future<void> _cancel(Appointment a) async {
-    final bool? confirmed = await showDialog<bool>(
+    final TextEditingController reasonCtrl = TextEditingController();
+    final String? reason = await showDialog<String>(
       context: context,
       builder: (BuildContext context) => AlertDialog(
         title: const Text('Cancelar esta consulta?'),
-        content: Text(
-          '${a.childName ?? 'Paciente'}, '
-          '${_timeLabel(a.startsAt)}. Isto avisa o responsável.',
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            Text(
+              '${a.childName ?? 'Paciente'}, '
+              '${_timeLabel(a.startsAt)}. Isto avisa o responsável.',
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: reasonCtrl,
+              maxLength: 300,
+              decoration: const InputDecoration(
+                labelText: 'Motivo (administrativo, sem dados clínicos)',
+              ),
+            ),
+          ],
         ),
         actions: <Widget>[
           TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
+            onPressed: () => Navigator.of(context).pop(),
             child: const Text('Voltar'),
           ),
           FilledButton(
-            onPressed: () => Navigator.of(context).pop(true),
+            onPressed: () {
+              final String r = reasonCtrl.text.trim();
+              if (r.isNotEmpty) Navigator.of(context).pop(r);
+            },
             child: const Text('Cancelar consulta'),
           ),
         ],
       ),
     );
-    if (!(confirmed ?? false) || !mounted) return;
+    reasonCtrl.dispose();
+    if (reason == null || !mounted) return;
 
     setState(() => _busy = true);
     final String? uid = ref.read(currentUserProvider)?.uid;
@@ -127,6 +148,7 @@ class _ProfessionalAgendaScreenState
         : await ref.read(telemedicineRepositoryProvider).cancelWithAudit(
               appointmentId: a.id,
               actorUid: uid,
+              reason: reason,
             );
     if (!mounted) return;
     setState(() => _busy = false);
@@ -291,7 +313,7 @@ class _ProfessionalAgendaScreenState
         automaticallyImplyLeading: false,
         leading: context.canPop()
             ? IconButton(
-                onPressed: () => context.pop(),
+                onPressed: () => context.popOrHome(),
                 icon: const AppIcon(
             asset: AppIcons.back,
             size: 22,
@@ -304,7 +326,7 @@ class _ProfessionalAgendaScreenState
           Padding(
             padding: const EdgeInsets.only(right: AppSpacing.sm),
             child: FilledButton.icon(
-              onPressed: () => _openAvailabilitySheet(context),
+              onPressed: () => _primaryAction(context),
               style: FilledButton.styleFrom(
                 backgroundColor: AppColors.brand,
                 foregroundColor: Colors.white,
@@ -318,7 +340,7 @@ class _ProfessionalAgendaScreenState
                 size: 18,
                 fallback: Icons.add_rounded,
               ),
-              label: const Text('+ Novo atendimento'),
+              label: Text(_primaryLabel),
             ),
           ),
         ],
@@ -397,14 +419,15 @@ class _ProfessionalAgendaScreenState
             return EmptyState(
               icon: Icons.event_available_outlined,
               asset: AppIcons.schedule,
+              illustration: AppAssets.capiLupa,
               title: _range == _AgendaRange.today
                   ? 'Nenhuma consulta hoje'
                   : 'Nenhuma consulta nos próximos 7 dias',
               message:
                   'Quando houver atendimentos agendados, eles aparecem aqui '
                   'com horário e paciente.',
-              actionLabel: 'Novo atendimento',
-              onAction: () => _openAvailabilitySheet(context),
+              actionLabel: _primaryLabel,
+              onAction: () => _primaryAction(context),
             );
           }
           return ListView.separated(
@@ -419,12 +442,28 @@ class _ProfessionalAgendaScreenState
               onConfirm: () => _confirm(list[i]),
               onCancel: () => _cancel(list[i]),
               onReschedule: () => _reschedule(list[i]),
-              onStart: () => _startEncounter(list[i]),
+              onStart: _isStaffAgenda ? null : () => _startEncounter(list[i]),
             ),
           );
         },
       ),
     );
+  }
+
+  /// Quem não atende não tem disponibilidade própria: a ação da equipe é
+  /// abrir a solicitação de novo paciente.
+  bool get _isStaffAgenda =>
+      !(ref.read(currentUserProvider)?.role.isProfessional ?? false);
+
+  String get _primaryLabel =>
+      _isStaffAgenda ? 'Novo paciente' : 'Disponibilidade';
+
+  void _primaryAction(BuildContext context) {
+    if (_isStaffAgenda) {
+      context.push(Routes.clinicIntakesPath);
+    } else {
+      _openAvailabilitySheet(context);
+    }
   }
 
   void _openAvailabilitySheet(BuildContext context) {
@@ -455,10 +494,11 @@ class _AppointmentCard extends StatelessWidget {
   final VoidCallback onConfirm;
   final VoidCallback onCancel;
   final VoidCallback onReschedule;
-  final VoidCallback onStart;
+  final VoidCallback? onStart;
 
   Color _statusColor(ColorScheme scheme) => switch (appointment.status) {
         AppointmentStatus.requested => AppColors.warning,
+        AppointmentStatus.awaitingConfirmation => AppColors.warning,
         AppointmentStatus.confirmed => AppColors.success,
         AppointmentStatus.inProgress => AppColors.brand,
         AppointmentStatus.completed => scheme.onSurfaceVariant,
@@ -468,6 +508,7 @@ class _AppointmentCard extends StatelessWidget {
 
   IconData _statusIcon(AppointmentStatus status) => switch (status) {
         AppointmentStatus.requested => Icons.schedule_rounded,
+        AppointmentStatus.awaitingConfirmation => Icons.schedule_rounded,
         AppointmentStatus.confirmed => Icons.check_circle_outline_rounded,
         AppointmentStatus.inProgress => Icons.play_circle_outline_rounded,
         AppointmentStatus.completed => Icons.event_available_outlined,
@@ -477,6 +518,7 @@ class _AppointmentCard extends StatelessWidget {
 
   String _statusAsset(AppointmentStatus status) => switch (status) {
         AppointmentStatus.requested => AppIcons.followUpPending,
+        AppointmentStatus.awaitingConfirmation => AppIcons.followUpPending,
         AppointmentStatus.confirmed => AppIcons.appointmentConfirmed,
         AppointmentStatus.inProgress => AppIcons.schedule,
         AppointmentStatus.completed => AppIcons.followUp,
@@ -488,6 +530,7 @@ class _AppointmentCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final ThemeData theme = Theme.of(context);
     final bool isActive = appointment.status == AppointmentStatus.requested ||
+        appointment.status == AppointmentStatus.awaitingConfirmation ||
         appointment.status == AppointmentStatus.confirmed;
 
     return PremiumCard(
@@ -549,14 +592,16 @@ class _AppointmentCard extends StatelessWidget {
                   ),
                 if (appointment.status == AppointmentStatus.requested)
                   const SizedBox(width: AppSpacing.sm),
-                if (appointment.status == AppointmentStatus.confirmed)
+                if (appointment.status == AppointmentStatus.confirmed &&
+                    onStart != null)
                   Expanded(
                     child: FilledButton(
                       onPressed: busy ? null : onStart,
                       child: const Text('Iniciar atendimento'),
                     ),
                   ),
-                if (appointment.status == AppointmentStatus.confirmed)
+                if (appointment.status == AppointmentStatus.confirmed &&
+                    onStart != null)
                   const SizedBox(width: AppSpacing.sm),
                 IconButton(
                   onPressed: busy ? null : onReschedule,

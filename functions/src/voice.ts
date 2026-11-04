@@ -8,7 +8,9 @@
 import { onCall, HttpsError } from "firebase-functions/v2/https";
 import { defineSecret } from "firebase-functions/params";
 import * as admin from "firebase-admin";
+import { FieldValue } from "firebase-admin/firestore";
 import * as logger from "firebase-functions/logger";
+import { requireChildAccess } from "./childAccess";
 
 const REGION = "southamerica-east1";
 const ANTHROPIC_API_KEY = defineSecret("ANTHROPIC_API_KEY");
@@ -96,6 +98,119 @@ function fillMissing(value: unknown): string {
   return t.length === 0 ? NOT_INFORMED : t;
 }
 
+const ANAMNESIS_TEXT_FIELDS = [
+  "chiefComplaint",
+  "historyOfPresentIllness",
+  "pastMedicalHistory",
+  "gestationalHistory",
+  "birthHistory",
+  "developmentHistory",
+  "feedingHistory",
+  "sleepHistory",
+  "eliminationHistory",
+  "immunizationStatus",
+  "familyHistory",
+  "socialHistory",
+] as const;
+
+/** Campos que o profissional pode recusar na revisao. */
+const IGNORABLE_FIELDS = new Set<string>([
+  ...ANAMNESIS_TEXT_FIELDS,
+  "allergies",
+  "currentMedications",
+  "reviewOfSystems",
+  "examFindings",
+  "examNotes",
+  "assessment",
+  "plan",
+]);
+
+function hasText(value: unknown): value is string {
+  return (
+    typeof value === "string" &&
+    value.trim().length > 0 &&
+    value.trim() !== NOT_INFORMED
+  );
+}
+
+function stringList(value: unknown): string[] {
+  return Array.isArray(value)
+    ? value.filter((v): v is string => typeof v === "string" && v.trim() !== "")
+    : [];
+}
+
+function stringMap(value: unknown): Record<string, string> {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return {};
+  return Object.fromEntries(
+    Object.entries(value as Record<string, unknown>).filter(
+      ([, v]) => typeof v === "string"
+    )
+  ) as Record<string, string>;
+}
+
+/**
+ * Monta os campos clinicos a gravar a partir do rascunho da IA.
+ *
+ * Campo recusado na revisao nao entra. Texto que o profissional ja escreveu
+ * no atendimento nunca e sobrescrito; alergias e medicamentos sao somados.
+ */
+export function buildClinicalPatch(
+  draft: Record<string, unknown>,
+  existing: Record<string, unknown>,
+  ignored: Set<string>
+) {
+  const kept: string[] = [];
+  const oldAnamnesis = (existing.anamnesis ?? {}) as Record<string, unknown>;
+  const oldExam = (existing.exam ?? {}) as Record<string, unknown>;
+
+  const text = (field: string, current: unknown): string => {
+    if (hasText(current)) {
+      if (hasText(draft[field]) && !ignored.has(field)) kept.push(field);
+      return current;
+    }
+    if (ignored.has(field)) return NOT_INFORMED;
+    return fillMissing(draft[field]);
+  };
+
+  const anamnesis: Record<string, unknown> = {};
+  for (const field of ANAMNESIS_TEXT_FIELDS) {
+    anamnesis[field] = text(field, oldAnamnesis[field]);
+  }
+  for (const field of ["allergies", "currentMedications"]) {
+    const merged = stringList(oldAnamnesis[field]);
+    if (!ignored.has(field)) {
+      for (const item of stringList(draft[field])) {
+        if (!merged.some((m) => m.toLowerCase() === item.toLowerCase())) {
+          merged.push(item);
+        }
+      }
+    }
+    anamnesis[field] = merged;
+  }
+  anamnesis.reviewOfSystems = {
+    ...(ignored.has("reviewOfSystems") ? {} : stringMap(draft.reviewOfSystems)),
+    ...stringMap(oldAnamnesis.reviewOfSystems),
+  };
+
+  const findings = {
+    ...(ignored.has("examFindings") ? {} : stringMap(draft.examFindings)),
+    ...stringMap(oldExam.findings),
+  };
+  const exam = {
+    findings,
+    systemsExamined: Object.keys(findings),
+    notes: text("examNotes", oldExam.notes),
+  };
+
+  return {
+    anamnesis,
+    exam,
+    assessment: text("assessment", existing.assessment),
+    plan: text("plan", existing.plan),
+    kept,
+  };
+}
+
 /** Inicia sessao apos consentimento no cliente. */
 export const startVoiceConsultation = onCall(
   { region: REGION },
@@ -121,8 +236,18 @@ export const startVoiceConsultation = onCall(
       throw new HttpsError("invalid-argument", "childId e obrigatorio.");
     }
 
+    let clinicId: string | null = null;
+    if (encounterId) {
+      const enc = (await db().collection("encounters").doc(encounterId).get()).data();
+      if (!enc || enc.professionalId !== actor.uid || enc.patientId !== childId) {
+        throw new HttpsError("permission-denied", "Atendimento de outro profissional ou de outra crianca.");
+      }
+      clinicId = (enc.clinicId as string | undefined) ?? null;
+    }
+    await requireChildAccess(actor.uid, childId, "chartWrite", clinicId);
+
     const ref = db().collection("voice_sessions").doc();
-    const now = admin.firestore.FieldValue.serverTimestamp();
+    const now = FieldValue.serverTimestamp();
     const payload = {
       id: ref.id,
       childId,
@@ -181,7 +306,7 @@ export const updateVoiceSession = onCall(
 
     await ref.update({
       status: next,
-      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      updatedAt: FieldValue.serverTimestamp(),
     });
 
     return { ok: true, status: next };
@@ -206,8 +331,8 @@ export const finalizeVoiceRecording = onCall(
 
     const patch: Record<string, unknown> = {
       status: "processing",
-      endedAt: admin.firestore.FieldValue.serverTimestamp(),
-      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      endedAt: FieldValue.serverTimestamp(),
+      updatedAt: FieldValue.serverTimestamp(),
     };
 
     if (Array.isArray(transcript) && transcript.length > 0) {
@@ -371,7 +496,7 @@ Modelo de evolucao pedido: ${template}.`;
     await ref.update({
       draft,
       status: "draftReady",
-      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      updatedAt: FieldValue.serverTimestamp(),
     });
 
     return { ok: true, draft };
@@ -386,7 +511,10 @@ export const applyVoiceDraftToEncounter = onCall(
   { region: REGION },
   async (request) => {
     const actor = await requireVerifiedProfessional(request.auth?.uid);
-    const { sessionId } = request.data as { sessionId?: string };
+    const { sessionId, ignoredFields } = request.data as {
+      sessionId?: string;
+      ignoredFields?: unknown;
+    };
     const { ref: sessionRef, data: session } = await loadOwnedSession(
       sessionId ?? "",
       actor.uid
@@ -400,52 +528,36 @@ export const applyVoiceDraftToEncounter = onCall(
       );
     }
 
+    const ignored = new Set(
+      stringList(ignoredFields).filter((f) => IGNORABLE_FIELDS.has(f))
+    );
+
     let encounterId = (session.encounterId as string) || null;
     const childId = session.childId as string;
+    let kept: string[] = [];
 
     if (!encounterId) {
+      await requireChildAccess(actor.uid, childId, "chartWrite", null);
       const encRef = db().collection("encounters").doc();
       encounterId = encRef.id;
+      const patch = buildClinicalPatch(draft, {}, ignored);
       await encRef.set({
         patientId: childId,
         professionalId: actor.uid,
         status: "draft",
         type: "consultation",
-        anamnesis: {
-          chiefComplaint: draft.chiefComplaint ?? NOT_INFORMED,
-          historyOfPresentIllness:
-            draft.historyOfPresentIllness ?? NOT_INFORMED,
-          pastMedicalHistory: draft.pastMedicalHistory ?? NOT_INFORMED,
-          gestationalHistory: draft.gestationalHistory ?? NOT_INFORMED,
-          birthHistory: draft.birthHistory ?? NOT_INFORMED,
-          developmentHistory: draft.developmentHistory ?? NOT_INFORMED,
-          feedingHistory: draft.feedingHistory ?? NOT_INFORMED,
-          sleepHistory: draft.sleepHistory ?? NOT_INFORMED,
-          eliminationHistory: draft.eliminationHistory ?? NOT_INFORMED,
-          immunizationStatus: draft.immunizationStatus ?? NOT_INFORMED,
-          allergies: draft.allergies ?? [],
-          currentMedications: draft.currentMedications ?? [],
-          familyHistory: draft.familyHistory ?? NOT_INFORMED,
-          socialHistory: draft.socialHistory ?? NOT_INFORMED,
-          reviewOfSystems: draft.reviewOfSystems ?? {},
-        },
-        exam: {
-          findings: draft.examFindings ?? {},
-          systemsExamined: Object.keys(
-            (draft.examFindings as Record<string, string>) ?? {}
-          ),
-          notes: draft.examNotes ?? NOT_INFORMED,
-        },
-        assessment: draft.assessment ?? NOT_INFORMED,
-        plan: draft.plan ?? NOT_INFORMED,
+        anamnesis: patch.anamnesis,
+        exam: patch.exam,
+        assessment: patch.assessment,
+        plan: patch.plan,
         diagnoses: [],
         vitals: {},
         procedures: [],
         signedAt: null,
         signatureHash: null,
         signedBy: null,
-        createdAt: admin.firestore.FieldValue.serverTimestamp(),
-        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        createdAt: FieldValue.serverTimestamp(),
+        updatedAt: FieldValue.serverTimestamp(),
         sourceVoiceSessionId: sessionRef.id,
         aiDraft: true,
       });
@@ -456,10 +568,10 @@ export const applyVoiceDraftToEncounter = onCall(
         throw new HttpsError("not-found", "Atendimento nao encontrado.");
       }
       const enc = encSnap.data() ?? {};
-      if (enc.professionalId !== actor.uid) {
+      if (enc.professionalId !== actor.uid || enc.patientId !== childId) {
         throw new HttpsError(
           "permission-denied",
-          "Atendimento de outro profissional."
+          "Atendimento de outro profissional ou de outra crianca."
         );
       }
       if (enc.status !== "draft") {
@@ -468,37 +580,23 @@ export const applyVoiceDraftToEncounter = onCall(
           "So e permitido aplicar rascunho em atendimento draft."
         );
       }
+      await requireChildAccess(
+        actor.uid,
+        childId,
+        "chartWrite",
+        (enc.clinicId as string | undefined) ?? null
+      );
+
+      const patch = buildClinicalPatch(draft, enc, ignored);
+      kept = patch.kept;
 
       // Nunca tocar em assinatura.
       await encRef.update({
-        anamnesis: {
-          chiefComplaint: draft.chiefComplaint ?? NOT_INFORMED,
-          historyOfPresentIllness:
-            draft.historyOfPresentIllness ?? NOT_INFORMED,
-          pastMedicalHistory: draft.pastMedicalHistory ?? NOT_INFORMED,
-          gestationalHistory: draft.gestationalHistory ?? NOT_INFORMED,
-          birthHistory: draft.birthHistory ?? NOT_INFORMED,
-          developmentHistory: draft.developmentHistory ?? NOT_INFORMED,
-          feedingHistory: draft.feedingHistory ?? NOT_INFORMED,
-          sleepHistory: draft.sleepHistory ?? NOT_INFORMED,
-          eliminationHistory: draft.eliminationHistory ?? NOT_INFORMED,
-          immunizationStatus: draft.immunizationStatus ?? NOT_INFORMED,
-          allergies: draft.allergies ?? [],
-          currentMedications: draft.currentMedications ?? [],
-          familyHistory: draft.familyHistory ?? NOT_INFORMED,
-          socialHistory: draft.socialHistory ?? NOT_INFORMED,
-          reviewOfSystems: draft.reviewOfSystems ?? {},
-        },
-        exam: {
-          findings: draft.examFindings ?? {},
-          systemsExamined: Object.keys(
-            (draft.examFindings as Record<string, string>) ?? {}
-          ),
-          notes: draft.examNotes ?? NOT_INFORMED,
-        },
-        assessment: draft.assessment ?? NOT_INFORMED,
-        plan: draft.plan ?? NOT_INFORMED,
-        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        anamnesis: patch.anamnesis,
+        exam: patch.exam,
+        assessment: patch.assessment,
+        plan: patch.plan,
+        updatedAt: FieldValue.serverTimestamp(),
         sourceVoiceSessionId: sessionRef.id,
         aiDraft: true,
         // signedAt / signatureHash / signedBy intencionalmente omitidos
@@ -508,10 +606,11 @@ export const applyVoiceDraftToEncounter = onCall(
     await sessionRef.update({
       status: "applied",
       encounterId,
-      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      ignoredFields: [...ignored],
+      updatedAt: FieldValue.serverTimestamp(),
     });
 
-    return { ok: true, encounterId };
+    return { ok: true, encounterId, keptFields: kept };
   }
 );
 
@@ -526,7 +625,7 @@ export const discardVoiceSession = onCall(
       status: "discarded",
       draft: null,
       audioStored: false,
-      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      updatedAt: FieldValue.serverTimestamp(),
     });
 
     return { ok: true };

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/config/app_config.dart';
 import '../../../../core/error/failures.dart';
 import '../../../../core/router/routes.dart';
 import '../../../../core/theme/app_colors.dart';
@@ -68,16 +69,18 @@ class ClinicDashboardScreen extends ConsumerWidget {
                       _KpiGrid(stats: stats),
                       const SizedBox(height: AppSpacing.xl),
                       const BrandSectionHeader(title: 'Atalhos'),
-                      QuickAccessCard(
-                        label: 'Iniciar consulta com IA',
-                        subtitle: 'Gravacao, rascunho e revisao medica',
-                        icon: Icons.mic_rounded,
-                        asset: AppIcons.microphone,
-                        color: AppColors.raspberry,
-                        wide: true,
-                        onTap: () => context.push(Routes.clinicVoicePath),
-                      ),
-                      const SizedBox(height: AppSpacing.sm),
+                      if (AppConfig.voiceConsultationEnabled) ...<Widget>[
+                        QuickAccessCard(
+                          label: 'Iniciar consulta com IA',
+                          subtitle: 'Gravacao, rascunho e revisao medica',
+                          icon: Icons.mic_rounded,
+                          asset: AppIcons.microphone,
+                          color: AppColors.raspberry,
+                          wide: true,
+                          onTap: () => context.push(Routes.clinicVoicePath),
+                        ),
+                        const SizedBox(height: AppSpacing.sm),
+                      ],
                       QuickAccessCard(
                         label: 'Recepcao',
                         subtitle: 'Fila e check-in do dia',

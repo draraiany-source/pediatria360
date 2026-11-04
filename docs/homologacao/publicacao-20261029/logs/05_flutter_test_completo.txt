@@ -1,0 +1,1088 @@
+Resolving dependencies...
+Downloading packages...
+  _flutterfire_internals 1.3.59 (1.3.79 available)
+  archive 4.3.0 (4.5.2 available)
+  cached_network_image 3.4.1 (4.0.5 available)
+  cached_network_image_platform_interface 4.1.1 (5.0.3 available)
+  cached_network_image_web 1.3.1 (2.0.3 available)
+  chewie 1.17.2 (1.17.4 available)
+  clock 1.1.2 (1.1.3 available)
+  cloud_firestore 5.6.12 (7.1.0 available)
+  cloud_firestore_platform_interface 6.6.12 (8.1.0 available)
+  cloud_firestore_web 4.4.12 (5.8.0 available)
+  cloud_functions 5.6.2 (7.0.1 available)
+  cloud_functions_platform_interface 5.8.2 (6.1.1 available)
+  cloud_functions_web 4.11.5 (5.1.15 available)
+  code_assets 1.2.1 (2.1.0 available)
+  connectivity_plus 6.1.5 (7.3.2 available)
+  crypto 3.0.7 (3.0.8 available)
+  cupertino_icons 1.0.9 (2.0.0 available)
+  dbus 0.7.15 (0.8.0 available)
+  equatable 2.1.0 (3.0.0 available)
+  firebase_analytics 11.6.0 (13.0.1 available)
+  firebase_analytics_platform_interface 4.4.3 (6.0.9 available)
+  firebase_analytics_web 0.5.10+16 (0.6.3+15 available)
+  firebase_app_check 0.3.2+10 (0.5.1 available)
+  firebase_app_check_platform_interface 0.1.1+10 (0.5.1+3 available)
+  firebase_app_check_web 0.2.0+14 (0.3.1+3 available)
+  firebase_auth 5.7.0 (7.0.1 available)
+  firebase_auth_platform_interface 7.7.3 (9.1.2 available)
+  firebase_auth_web 5.15.3 (6.3.2 available)
+  firebase_core 3.15.2 (5.1.0 available)
+  firebase_core_platform_interface 6.0.3 (8.1.1 available)
+  firebase_core_web 2.24.1 (4.1.0 available)
+  firebase_crashlytics 4.3.10 (6.0.1 available)
+  firebase_crashlytics_platform_interface 3.8.10 (3.9.2 available)
+  firebase_messaging 15.2.10 (17.0.1 available)
+  firebase_messaging_platform_interface 4.6.10 (4.11.1 available)
+  firebase_messaging_web 3.10.10 (4.3.1 available)
+  firebase_remote_config 5.5.0 (7.0.1 available)
+  firebase_remote_config_platform_interface 2.0.0 (3.0.9 available)
+  firebase_remote_config_web 1.8.9 (1.10.16 available)
+  firebase_storage 12.4.10 (14.0.1 available)
+  firebase_storage_platform_interface 5.2.10 (6.0.9 available)
+  firebase_storage_web 3.10.17 (3.11.15 available)
+  fl_chart 0.69.2 (1.3.0 available)
+  flutter_cache_manager 3.4.5 (3.4.6 available)
+  flutter_lints 5.0.0 (6.0.0 available)
+  flutter_local_notifications 18.0.1 (22.3.3 available)
+  flutter_local_notifications_linux 5.0.0 (8.0.2 available)
+  flutter_local_notifications_platform_interface 8.0.0 (12.2.0 available)
+  flutter_riverpod 2.6.1 (3.4.3 available)
+  flutter_shaders 0.1.3 (0.1.5 available)
+  go_router 14.8.1 (18.1.1 available)
+  google_fonts 6.3.3 (9.0.0 available)
+  google_sign_in 6.3.0 (7.2.0 available)
+  google_sign_in_android 6.2.1 (7.2.18 available)
+  google_sign_in_ios 5.9.0 (6.3.8 available)
+  google_sign_in_platform_interface 2.5.0 (3.1.0 available)
+  google_sign_in_web 0.12.4+4 (1.1.3 available)
+  hooks 2.0.2 (2.2.0 available)
+  image 4.10.1 (4.12.0 available)
+  intl 0.20.2 (0.20.3 available)
+  jni 1.0.3 (1.1.1 available)
+  jni_flutter 1.0.3 (1.0.4+1 available)
+  lints 5.1.1 (6.1.0 available)
+  lottie 3.6.1 (3.7.0 available)
+  matcher 0.12.19 (0.12.20 available)
+  material_color_utilities 0.13.0 (0.13.1 available)
+  meta 1.18.0 (1.19.0 available)
+  nm 0.5.0 (0.6.0 available)
+  objective_c 9.5.0 (9.6.2 available)
+  octo_image 2.1.1 (2.1.2 available)
+  package_info_plus 10.2.1 (10.2.2 available)
+  permission_handler 11.4.0 (13.0.2 available)
+  permission_handler_android 12.1.0 (14.1.1 available)
+  permission_handler_apple 9.6.1 (9.6.4 available)
+  petitparser 7.0.2 (7.1.0 available)
+  posix 6.5.2 (6.5.4 available)
+  qr 3.0.2 (4.0.1 available)
+  record_use 0.6.0 (1.1.1 available)
+  riverpod 2.6.1 (3.4.3 available)
+  shared_preferences 2.5.5 (2.5.6 available)
+  shared_preferences_android 2.4.28 (2.5.4 available)
+  shared_preferences_foundation 2.5.7 (2.6.1 available)
+  shimmer 3.0.0 (4.0.0 available)
+  sqflite 2.4.4 (2.4.5 available)
+  sqflite_android 2.4.4 (2.4.5 available)
+  sqflite_common 2.5.13 (2.5.14 available)
+  sqflite_darwin 2.4.4 (2.4.4+1 available)
+  sqflite_platform_interface 2.4.2 (2.4.3 available)
+  stack_trace 1.12.1 (1.12.2 available)
+  synchronized 3.4.2 (3.5.0 available)
+  test_api 0.7.11 (0.7.15 available)
+  timezone 0.10.1 (0.11.2 available)
+  url_launcher 6.3.2 (6.3.3 available)
+  vector_graphics 1.2.3 (1.2.4 available)
+  vector_graphics_compiler 1.3.0 (1.3.3 available)
+  vector_math 2.2.0 (2.4.4 available)
+  video_player 2.14.0 (2.14.1 available)
+  video_player_avfoundation 2.12.0 (2.12.3 available)
+  vm_service 15.3.0 (15.4.0 available)
+  wakelock_plus 1.8.0 (1.8.2 available)
+  web 1.1.1 (1.1.2 available)
+  xml 7.0.1 (7.1.0 available)
+Got dependencies!
+102 packages have newer versions incompatible with dependency constraints.
+Try `flutter pub outdated` for more information.
+00:00 +0: loading C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/agenda_scope_test.dart
+00:00 +0: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/agenda_scope_test.dart: recepcionista ve a agenda do dia da clinica inteira
+00:00 +1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/agenda_scope_test.dart: admin da clinica so ve a agenda inteira na area de recepcao
+00:00 +2: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/agenda_scope_test.dart: profissional e financeiro ficam na propria agenda
+00:00 +3: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/agenda_scope_test.dart: sem vinculo ativo nao amplia a consulta
+00:00 +4: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/agenda_unit_filter_test.dart: no filter when membership has empty unitIds
+00:00 +5: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/agenda_unit_filter_test.dart: filters by unitId and keeps legacy null unitId
+00:03 +6: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/back_or_home_button_test.dart: sem historico, voltar leva ao inicio
+00:03 +7: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/back_or_home_button_test.dart: sem historico, voltar leva ao inicio
+00:03 +8: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/back_or_home_button_test.dart: sem historico, voltar leva ao inicio
+00:03 +9: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/back_or_home_button_test.dart: sem historico, voltar leva ao inicio
+00:05 +10: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/back_or_home_button_test.dart: sem historico, voltar leva ao inicio
+00:05 +11: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/back_or_home_button_test.dart: com historico, voltar desempilha
+00:08 +12: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/billing_finance_integration_test.dart: paid batch uses guia_ receivable id
+00:08 +13: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/billing_finance_integration_test.dart: glosa reduces paid and leaves open balance
+00:08 +14: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/billing_validation_test.dart: valid guide has no issues
+00:08 +15: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/billing_validation_test.dart: missing plan flagged
+00:10 +16: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/bi_access_test.dart: clinic admin has full BI access
+00:10 +17: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/bi_access_test.dart: finance role sees finance not clinical deep
+00:10 +18: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/bi_access_test.dart: physician has clinical ops
+00:10 +19: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/bi_access_test.dart: receptionist ops without finance
+00:10 +20: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/bi_access_test.dart: legacy professional without membership is full
+00:10 +21: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/bi_access_test.dart: parent has no BI access
+00:11 +22: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/bi_aggregators_test.dart: compose zeros when inputs empty
+00:11 +23: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/bi_aggregators_test.dart: finance numbers pass through from FinanceDashboardKpis
+00:11 +24: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/bi_aggregators_test.dart: agenda attendance and no-show rates
+00:11 +25: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/bi_aggregators_test.dart: csv export includes card values
+00:11 +26: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/bi_aggregators_test.dart: compose does not invent revenue without finance kpis
+00:12 +27: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/blocked_access_tracker_test.dart: BlockedAccessTracker fires after three events within window
+00:12 +28: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/blocked_access_tracker_test.dart: BlockedAccessTracker does not count events outside window
+00:14 +29: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/brand_logo_test.dart: conferência do arquivo PNG e JPG aceitos, lidos pelo conteúdo
+00:14 +30: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/brand_logo_test.dart: conferência do arquivo SVG, texto e arquivo vazio são recusados
+00:14 +31: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/brand_logo_test.dart: conferência do arquivo dimensões e tamanho fora do limite
+00:14 +32: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/brand_logo_test.dart: conferência do arquivo imagem corrompida não entra no PDF
+00:14 +33: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/brand_logo_test.dart: vínculo com a conta só a própria conta envia, vê, troca e remove
+00:14 +34: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/brand_logo_test.dart: vínculo com a conta arquivo inválido não substitui a logomarca atual
+00:14 +35: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/brand_logo_test.dart: vínculo com a conta documento emitido guarda a logomarca da emissão
+00:14 +36: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/brand_logo_test.dart: documentos emissão grava a logomarca; a versão seguinte não herda
+00:14 +37: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/calculators_extra_test.dart: Apgar soma os cinco critérios
+00:14 +38: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/brand_logo_test.dart: documentos PDF leva a imagem da logomarca no cabeçalho
+00:14 +39: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/brand_logo_test.dart: documentos PDF leva a imagem da logomarca no cabeçalho
+00:14 +40: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/brand_logo_test.dart: documentos PDF leva a imagem da logomarca no cabeçalho
+00:14 +41: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/brand_logo_test.dart: documentos PDF leva a imagem da logomarca no cabeçalho
+00:14 +42: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/brand_logo_test.dart: documentos PDF leva a imagem da logomarca no cabeçalho
+00:14 +43: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/brand_logo_test.dart: documentos PDF leva a imagem da logomarca no cabeçalho
+00:14 +44: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/brand_logo_test.dart: documentos PDF leva a imagem da logomarca no cabeçalho
+00:14 +45: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/brand_logo_test.dart: documentos PDF leva a imagem da logomarca no cabeçalho
+00:14 +46: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/brand_logo_test.dart: documentos PDF leva a imagem da logomarca no cabeçalho
+00:14 +47: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/brand_logo_test.dart: documentos PDF leva a imagem da logomarca no cabeçalho
+00:14 +48: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/brand_logo_test.dart: documentos PDF leva a imagem da logomarca no cabeçalho
+00:14 +49: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/brand_logo_test.dart: documentos PDF leva a imagem da logomarca no cabeçalho
+00:14 +50: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/brand_logo_test.dart: documentos PDF leva a imagem da logomarca no cabeçalho
+00:14 +51: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/brand_logo_test.dart: documentos PDF leva a imagem da logomarca no cabeçalho
+00:14 +52: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/brand_logo_test.dart: documentos PDF leva a imagem da logomarca no cabeçalho
+00:14 +53: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/brand_logo_test.dart: documentos PDF leva a imagem da logomarca no cabeçalho
+Helvetica-Bold has no Unicode support see https://github.com/DavBfr/dart_pdf/wiki/Fonts-Management
+Helvetica has no Unicode support see https://github.com/DavBfr/dart_pdf/wiki/Fonts-Management
+Helvetica-Bold has no Unicode support see https://github.com/DavBfr/dart_pdf/wiki/Fonts-Management
+Helvetica has no Unicode support see https://github.com/DavBfr/dart_pdf/wiki/Fonts-Management
+00:16 +54: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/calculators_test.dart: Holliday-Segar primeiros 10 kg: 100 mL/kg/dia
+00:16 +55: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/calculators_test.dart: Holliday-Segar de 10 a 20 kg: 1000 mL + 50 mL/kg
+00:16 +56: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/calculators_test.dart: Holliday-Segar acima de 20 kg: 1500 mL + 20 mL/kg
+00:16 +57: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/calculators_test.dart: Holliday-Segar a regra 4-2-1 é calculada direto, não derivada da diária
+00:16 +58: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/calculators_test.dart: Holliday-Segar 4-2-1 nas três faixas
+00:16 +59: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/calculators_test.dart: Holliday-Segar peso inválido devolve zero
+00:16 +60: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/calculators_test.dart: Mosteller superfície corporal de referência
+00:16 +61: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/calculators_test.dart: Mosteller entrada inválida devolve zero
+00:16 +62: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/calculators_test.dart: IMC calcula peso sobre altura ao quadrado
+00:16 +63: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/calculators_test.dart: déficit por desidratação peso x percentual x 10
+00:16 +64: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/calculators_test.dart: idade corrigida a termo não corrige
+00:16 +65: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/calculators_test.dart: idade corrigida 32 semanas desconta cerca de 2 meses
+00:16 +66: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/calculators_test.dart: idade corrigida não corrige depois dos 24 meses
+00:16 +67: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/calculators_test.dart: idade corrigida nunca devolve idade negativa
+00:16 +68: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/calculators_test.dart: peso estimado APLS (idade + 4) x 2
+00:16 +69: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/calculators_test.dart: peso estimado APLS fora da faixa de validade devolve nulo
+00:16 +70: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/calculators_test.dart: motor de dose dose simples é mg/kg x peso
+00:16 +71: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/calculators_test.dart: motor de dose converte para volume usando a concentração
+00:16 +72: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/calculators_test.dart: motor de dose respeita o teto por dose e sinaliza
+00:16 +73: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/calculators_test.dart: motor de dose teto diário reduz a dose unitária, mantendo as tomadas
+00:16 +74: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/calculators_test.dart: motor de dose sem concentração não calcula volume
+00:16 +75: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/calculators_test.dart: motor de dose sinaliza criança abaixo da idade mínima
+00:16 +76: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/calculators_test.dart: motor de dose peso inválido devolve zero, não lança
+00:17 +77: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/capi_widgets_golden_test.dart: golden: Capi welcome illustration
+00:18 +78: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/capi_widgets_golden_test.dart: golden: Capi welcome illustration
+00:18 +79: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/capi_widgets_golden_test.dart: golden: Capi welcome illustration
+00:18 +80: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/capi_widgets_golden_test.dart: golden: Capi welcome illustration
+00:18 +81: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/capi_widgets_golden_test.dart: golden: Capi welcome illustration
+00:19 +82: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/capi_widgets_golden_test.dart: golden: Capi welcome illustration
+00:19 +83: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/capi_widgets_golden_test.dart: golden: Capi welcome illustration
+00:19 +84: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/capi_widgets_golden_test.dart: golden: Capi welcome illustration
+00:19 +85: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/capi_widgets_golden_test.dart: golden: Capi welcome illustration
+00:19 +86: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/capi_widgets_golden_test.dart: golden: Capi welcome illustration
+00:19 +87: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/capi_widgets_golden_test.dart: golden: Capi welcome illustration
+00:19 +88: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/capi_widgets_golden_test.dart: golden: Capi welcome illustration
+00:19 +89: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/capi_widgets_golden_test.dart: golden: Capi welcome illustration
+00:19 +90: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/capi_widgets_golden_test.dart: golden: Capi welcome illustration
+00:19 +91: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/capi_widgets_golden_test.dart: golden: Capi welcome illustration
+00:19 +92: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/capi_widgets_golden_test.dart: golden: Capi welcome illustration
+00:19 +93: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/capi_widgets_golden_test.dart: golden: Capi welcome illustration
+00:19 +94: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/capi_widgets_golden_test.dart: golden: Capi welcome illustration
+00:19 +95: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/capi_widgets_golden_test.dart: golden: Capi welcome illustration
+00:19 +96: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/capi_widgets_golden_test.dart: golden: Capi welcome illustration
+00:19 +97: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/capi_widgets_golden_test.dart: golden: Capi welcome illustration
+00:19 +98: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/capi_widgets_golden_test.dart: golden: Capi welcome illustration
+00:19 +99: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/capi_widgets_golden_test.dart: golden: Capi welcome illustration
+00:19 +100: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/capi_widgets_golden_test.dart: golden: Capi welcome illustration
+00:19 +101: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/capi_widgets_golden_test.dart: golden: Capi welcome illustration
+00:19 +102: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/capi_widgets_golden_test.dart: golden: Capi welcome illustration
+00:19 +103: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/capi_widgets_golden_test.dart: golden: Capi welcome illustration
+00:19 +104: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/capi_widgets_golden_test.dart: golden: Capi welcome illustration
+00:19 +105: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/capi_widgets_golden_test.dart: golden: Capi welcome illustration
+00:19 +106: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/capi_widgets_golden_test.dart: golden: Capi welcome illustration
+00:19 +107: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/capi_widgets_golden_test.dart: golden: Capi welcome illustration
+00:19 +108: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/capi_widgets_golden_test.dart: golden: Capi welcome illustration
+00:19 +109: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/capi_widgets_golden_test.dart: golden: Capi welcome illustration
+00:19 +110: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/capi_widgets_golden_test.dart: golden: Capi welcome illustration
+00:19 +111: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/capi_widgets_golden_test.dart: golden: Capi welcome illustration
+00:19 +112: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/capi_widgets_golden_test.dart: golden: Capi welcome illustration
+00:19 +113: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/capi_widgets_golden_test.dart: golden: Capi welcome illustration
+00:19 +114: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/capi_widgets_golden_test.dart: golden: Capi welcome illustration
+00:19 +115: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/capi_widgets_golden_test.dart: golden: Capi welcome illustration
+00:19 +116: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/capi_widgets_golden_test.dart: golden: Capi welcome illustration
+00:19 +117: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/capi_widgets_golden_test.dart: golden: Capi welcome illustration
+00:19 +118: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/capi_widgets_golden_test.dart: golden: Capi welcome illustration
+00:19 +119: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/capi_widgets_golden_test.dart: golden: Capi welcome illustration
+00:19 +120: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/capi_widgets_golden_test.dart: golden: Capi welcome illustration
+00:19 +121: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/capi_widgets_golden_test.dart: golden: Capi welcome illustration
+00:19 +122: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/capi_widgets_golden_test.dart: golden: child avatar picker
+00:21 +123: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/capi_widgets_golden_test.dart: golden: empty state with Capi
+00:21 +124: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/child_age_test.dart: idade corrigida do prematuro nascido a termo nao sofre correcao
+00:21 +125: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/child_age_test.dart: idade corrigida do prematuro prematuro de 32 semanas desconta cerca de dois meses
+00:21 +126: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/child_age_test.dart: idade corrigida do prematuro correcao deixa de valer depois dos 24 meses
+00:23 +127: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/child_avatar_ref_test.dart: ChildAvatarRef encode and pathFrom round-trip asset paths
+00:23 +128: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/child_avatar_ref_test.dart: ChildAvatarRef network URLs are not treated as assets
+00:23 +129: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/child_avatar_ref_test.dart: ChildAvatarRef empty and null are not assets
+00:23 +130: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/clinical/clinical_documents_test.dart: preenchimento atestado usa dados do paciente e da consulta
+00:23 +131: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/clinical/clinical_documents_test.dart: preenchimento declaração traz o responsável e exige horários
+00:23 +132: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/clinical/clinical_documents_test.dart: preenchimento encaminhamento registra todos os campos pedidos
+00:23 +133: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/clinical/clinical_documents_test.dart: preenchimento solicitação de exames lista um por linha
+00:23 +134: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/clinical/clinical_documents_test.dart: preenchimento receituário sem item não pode ser revisado
+00:23 +135: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/clinical/clinical_documents_test.dart: ciclo de vida emitir exige revisão; emitido não é assinado
+00:23 +136: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/clinical/clinical_documents_test.dart: ciclo de vida editar rascunho revisado invalida a revisão na mesma versão
+00:24 +137: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/clinical/clinical_documents_test.dart: ciclo de vida editar documento emitido cria nova versão e preserva a anterior
+00:24 +138: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/clinical/clinical_documents_test.dart: ciclo de vida atestado com CID exige o código
+00:24 +139: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/clinical/clinical_documents_test.dart: ciclo de vida assinatura só existe com provedor e data
+00:24 +140: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/clinical/clinical_documents_test.dart: ciclo de vida cada modalidade tem requisito de assinatura configurado
+00:24 +141: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/clinical/clinical_documents_test.dart: orientações personaliza com dados da criança
+00:24 +142: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/clinical/clinical_documents_test.dart: orientações texto personalizado volta a ser modelo reutilizável
+00:24 +143: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/clinical/clinical_documents_test.dart: biblioteca de suplementação 17 temas pedidos, todos em rascunho e sem conteúdo
+00:24 +144: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/clinical/clinical_documents_test.dart: biblioteca de suplementação validação exige todos os campos, fonte, revisor e data
+00:27 +145: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/clinical/dose_calculator_test.dart: mg/kg/dose: dose por administração, diária e volume em mL
+00:27 +146: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/clinical/dose_calculator_test.dart: mg/kg/dia: divide a dose diária pelo número de tomadas
+00:27 +147: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/clinical/dose_calculator_test.dart: conversão mcg e g para mg na concentração
+00:27 +148: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/clinical/dose_calculator_test.dart: dose acima do máximo gera alerta crítico e pode ser limitada
+00:27 +149: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/clinical/family_release_test.dart: liberação para a família rascunho e documento revisado não podem ser liberados
+00:27 +150: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/clinical/family_release_test.dart: liberação para a família rascunho e documento revisado não podem ser liberados
+00:27 +151: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/clinical/dose_calculator_test.dart: referência não validada ou sem fonte bloqueia o cálculo
+00:27 +152: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/clinical/family_release_test.dart: liberação para a família só quem emitiu libera ou retira
+00:27 +153: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/clinical/family_release_test.dart: liberação para a família só quem emitiu libera ou retira
+00:27 +154: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/clinical/family_release_test.dart: liberação para a família só quem emitiu libera ou retira
+00:27 +155: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/clinical/family_release_test.dart: liberação para a família só quem emitiu libera ou retira
+00:27 +156: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/clinical/family_release_test.dart: liberação para a família só quem emitiu libera ou retira
+00:27 +157: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/clinical/family_release_test.dart: liberação para a família só quem emitiu libera ou retira
+00:27 +158: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/clinical/family_release_test.dart: liberação para a família só quem emitiu libera ou retira
+00:27 +159: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/clinical/dose_calculator_test.dart: mg/kg fora da faixa configurada gera alerta
+00:27 +160: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/clinical/dose_calculator_test.dart: volume acima da faixa da apresentação gera alerta
+00:27 +161: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/clinical/dose_calculator_test.dart: formatação pt-BR
+00:27 +162: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/clinical/family_release_test.dart: liberação para a família retirar exige motivo e documento liberado
+00:27 +163: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/clinical/family_release_test.dart: liberação para a família família vê só a última versão emitida, e só se liberado
+00:27 +164: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/clinical/family_release_test.dart: liberação para a família orientações sugerem liberar na emissão; os demais tipos não
+00:27 +165: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/clinical/family_release_test.dart: liberação para a família todo tipo de documento tem grupo no pós-consulta
+00:31 +166: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/clinical/growth_test.dart: tabelas oficiais da OMS valores publicados ao nascer (Padrões 2006)
+00:31 +167: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/clinical/growth_test.dart: tabelas oficiais da OMS comprimento até 730 dias e altura depois
+00:31 +168: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/clinical/growth_test.dart: tabelas oficiais da OMS peso de menino aos 12 meses: -2 e +2 escores Z da tabela mensal
+00:31 +169: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/clinical/growth_test.dart: tabelas oficiais da OMS Referência 2007 após 5 anos e limites de cada indicador
+00:31 +170: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/clinical/growth_test.dart: escore Z e percentil mediana dá Z zero e percentil 50
+00:31 +171: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/clinical/growth_test.dart: escore Z e percentil método restrito da OMS além de +3 e -3 para peso
+00:31 +172: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/clinical/growth_test.dart: escore Z e percentil percentil limitado nas extremidades
+00:31 +173: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/clinical/growth_test.dart: idade e posição altura medida em pé antes de 24 meses soma 0,7 cm
+00:31 +174: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/clinical/growth_test.dart: idade e posição prematuro: idade corrigida até 24 meses cronológicos
+00:31 +175: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/clinical/growth_test.dart: idade e posição antes do termo corrigido não há escore (referência neonatal)
+00:31 +176: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/clinical/growth_test.dart: idade e posição peso após 10 anos não tem referência: orienta usar IMC
+00:31 +177: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/clinical/growth_test.dart: idade e posição IMC usa o comprimento ajustado
+00:31 +178: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/clinical/growth_test.dart: histórico de correções corrigir guarda o valor anterior, o motivo e o autor
+00:31 +179: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/clinical/growth_test.dart: histórico de correções correção exige motivo e alguma mudança
+00:31 +180: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/clinical/growth_test.dart: histórico de correções lançamento anulado sai da curva e fica no histórico
+00:31 +181: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/clinical/growth_test.dart: histórico de correções validação barra data futura, antes do nascimento e erro grosseiro
+00:31 +182: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/clinical/growth_test.dart: curva de referência é contínua dentro da janela
+00:31 +183: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/clinical/growth_test.dart: idade formatada
+00:31 +184: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/clinical/growth_test.dart: idade exibida em calendario
+00:32 +185: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/clinical/lab_results_test.dart: lançamento e conferência digitado entra conferido e exige os campos do laudo
+00:33 +186: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/clinical/lab_results_test.dart: lançamento e conferência importado de PDF fica pendente e fora das comparações
+00:33 +187: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/clinical/lab_results_test.dart: lançamento e conferência imagem vira importação de imagem; outro tipo é recusado
+00:33 +188: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/clinical/lab_results_test.dart: lançamento e conferência conferência não libera resultado incompleto
+00:33 +189: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/clinical/lab_results_test.dart: lançamento e conferência correção mantém o valor anterior e exige motivo
+00:33 +190: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/clinical/lab_results_test.dart: intervalo de referência do laudo compara só com o intervalo informado no próprio laudo
+00:33 +191: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/clinical/lab_results_test.dart: séries agrupa o mesmo exame e separa unidades diferentes
+00:33 +192: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/clinical/lab_results_test.dart: séries números no formato brasileiro
+00:33 +193: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/clinical/lab_results_test.dart: séries sugestão de vínculo com temas de suplementação
+00:33 +194: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/clinical/lab_results_test.dart: decisão de suplementação exige justificativa e guarda versões
+00:33 +195: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/clinical/lab_results_test.dart: decisão de suplementação só a indicação vai ao receituário
+00:35 +196: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/clinical/workspace_logic_test.dart: agenda por dia, semana e mês semana começa na segunda e o mês tem 6 semanas
+00:35 +197: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/clinical/workspace_logic_test.dart: agenda por dia, semana e mês limites, avanço e títulos
+00:35 +198: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/clinical/workspace_logic_test.dart: agenda por dia, semana e mês horários livres descontam consultas, bloqueios e o que passou
+00:35 +199: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/clinical/workspace_logic_test.dart: agenda por dia, semana e mês trecho menor que o mínimo não aparece
+00:35 +200: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/clinical/workspace_logic_test.dart: diário de atendimentos classificação
+00:35 +201: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/clinical/workspace_logic_test.dart: diário de atendimentos períodos olham para trás até o fim de hoje
+00:35 +202: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/clinical/workspace_logic_test.dart: tarefas prazo e ordem
+00:35 +203: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/clinical/workspace_logic_test.dart: tarefas validação
+00:35 +204: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/clinical/workspace_logic_test.dart: observações editar guarda versões e exige motivo para mudar visibilidade
+00:35 +205: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/clinical/workspace_logic_test.dart: observações texto vazio ou longo é recusado
+00:35 +206: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/clinical/workspace_logic_test.dart: organizador da consulta só preenche seções vazias e nunca sugere avaliação
+00:35 +207: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/clinical/workspace_logic_test.dart: organizador da consulta sem entrada, nada a sugerir
+00:35 +208: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/clinical/workspace_logic_test.dart: linha do tempo e comparação mais recente primeiro e filtro por tipo
+00:35 +209: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/clinical/workspace_logic_test.dart: linha do tempo e comparação ganho de peso por dia e crescimento por mês
+00:35 +210: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/clinical/workspace_logic_test.dart: linha do tempo e comparação medida da consulta: a vinculada ou a mais próxima em 7 dias
+00:35 +211: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/clinical/workspace_logic_test.dart: registro de alterações lista só os campos que mudaram
+00:36 +212: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/clinical_access_message_test.dart: clinicalLoadErrorMessage sessão de demonstração explica que falta login, sem culpar a regra
+00:36 +213: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/clinical_access_message_test.dart: clinicalLoadErrorMessage recusa do app mantém o motivo (autorização do responsável)
+00:36 +214: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/clinical_access_message_test.dart: clinicalLoadErrorMessage recusa das regras do Firestore orienta conta, registro e vínculo
+00:36 +215: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/clinical_access_message_test.dart: clinicalLoadErrorMessage índice ausente continua com a mensagem própria
+00:37 +216: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/clinical_flow_e2e_test.dart: 1. atendimento novo nasce incompleto rascunho vazio não pode ser assinado
+00:37 +217: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/clinical_flow_e2e_test.dart: 1. atendimento novo nasce incompleto a tela sabe exatamente o que falta
+00:37 +218: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/clinical_flow_e2e_test.dart: 2. preenchimento libera a assinatura só a queixa não basta
+00:37 +219: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/clinical_flow_e2e_test.dart: 2. preenchimento libera a assinatura sinais vitais satisfazem o requisito de exame
+00:37 +220: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/clinical_flow_e2e_test.dart: 2. preenchimento libera a assinatura exame físico também satisfaz, sem vitais
+00:37 +221: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/clinical_flow_e2e_test.dart: 2. preenchimento libera a assinatura sem diagnóstico não assina
+00:37 +222: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/clinical_flow_e2e_test.dart: 2. preenchimento libera a assinatura sem conduta não assina
+00:37 +223: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/clinical_flow_e2e_test.dart: 3. assinatura torna imutável deixa de ser editável
+00:37 +224: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/clinical_flow_e2e_test.dart: 3. assinatura torna imutável a retificação carrega o vínculo com o original
+00:37 +225: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/clinical_flow_e2e_test.dart: 4. exame físico distingue normal de não examinado aparelho não avaliado aparece na lista de pendências
+00:37 +226: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/clinical_flow_e2e_test.dart: 4. exame físico distingue normal de não examinado todo aparelho tem texto de normalidade pronto
+00:37 +227: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/clinical_flow_e2e_test.dart: 5. idade do paciente é a da data do atendimento não usa a idade de hoje
+00:37 +228: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/clinical_flow_e2e_test.dart: 5. idade do paciente é a da data do atendimento nascimento no futuro não gera idade negativa
+00:37 +229: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/clinical_flow_e2e_test.dart: 6. documentos emitidos receita com controlado muda o modelo impresso
+00:37 +230: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/clinical_flow_e2e_test.dart: 6. documentos emitidos documento vencido não é válido
+00:37 +231: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/clinical_flow_e2e_test.dart: 6. documentos emitidos cancelado continua legível mas inválido
+00:37 +232: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/clinical_flow_e2e_test.dart: 6. documentos emitidos sem prazo declarado não vence
+00:37 +233: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/clinical_flow_e2e_test.dart: 6. documentos emitidos código de conferência não tem caractere ambíguo
+00:37 +234: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/clinical_flow_e2e_test.dart: 7. posologia impressa monta a linha na ordem que se lê
+00:37 +235: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/clinical_flow_e2e_test.dart: 7. posologia impressa campos vazios não deixam vírgula solta
+00:37 +236: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/clinical_flow_e2e_test.dart: 8. exames laboratoriais sinalizam sem interpretar dentro da faixa não sinaliza
+00:37 +237: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/clinical_flow_e2e_test.dart: 8. exames laboratoriais sinalizam sem interpretar abaixo sinaliza a direção
+00:37 +238: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/clinical_flow_e2e_test.dart: 8. exames laboratoriais sinalizam sem interpretar acima sinaliza a direção
+00:37 +239: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/clinical_flow_e2e_test.dart: 8. exames laboratoriais sinalizam sem interpretar limite exato está dentro da faixa
+00:37 +240: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/clinical_flow_e2e_test.dart: 8. exames laboratoriais sinalizam sem interpretar sem faixa de referência não sinaliza
+00:37 +241: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/clinical_flow_e2e_test.dart: 8. exames laboratoriais sinalizam sem interpretar faixa aberta só de um lado
+00:38 +242: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/clinic_workflow_test.dart: resolve prefere workflowStatus ao status legado
+00:38 +243: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/clinic_workflow_test.dart: resolve cai no status legado sem workflow
+00:38 +244: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/clinic_workflow_test.dart: called esta na coluna de recepcao
+00:39 +245: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/closed_test_feature_flags_test.dart: Closed-test feature flags recursos incompletos ficam desligados por padrao
+00:40 +246: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/closed_test_feature_flags_test.dart: Closed-test feature flags App Check nao e obrigatorio sem dart-define
+00:40 +247: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/closed_test_feature_flags_test.dart: Closed-test feature flags Termos e Privacidade nao sao URLs inventadas vazias
+00:40 +247 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/closed_test_feature_flags_test.dart: Closed-test feature flags Termos e Privacidade nao sao URLs inventadas vazias [E]
+  Expected: a string starting with 'https://'
+    Actual: ''
+  
+  package:matcher                                     expect
+  package:flutter_test/src/widget_tester.dart 473:18  expect
+  test\closed_test_feature_flags_test.dart 19:7       main.<fn>.<fn>
+  
+00:40 +247 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/commerce_test.dart: formatação de moeda centavos viram reais com vírgula
+00:40 +248 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/commerce_test.dart: formatação de moeda separador de milhar
+00:40 +249 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/commerce_test.dart: desconto do produto sem preço anterior não há desconto
+00:41 +250 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/commerce_test.dart: desconto do produto calcula o percentual
+00:41 +251 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/commerce_test.dart: desconto do produto preço anterior menor não conta como desconto
+00:41 +252 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/commerce_test.dart: carrinho começa vazio
+00:41 +253 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/commerce_test.dart: carrinho adicionar cria item
+00:41 +254 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/commerce_test.dart: carrinho adicionar o mesmo produto soma a quantidade
+00:41 +255 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/commerce_test.dart: carrinho produtos diferentes viram itens distintos
+00:41 +256 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/commerce_test.dart: carrinho quantidade é limitada a 20 por item
+00:41 +257 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/commerce_test.dart: carrinho somar além do teto não ultrapassa 20
+00:41 +258 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/commerce_test.dart: carrinho quantidade zero remove o item
+00:41 +259 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/commerce_test.dart: carrinho quantidade negativa também remove
+00:41 +260 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/commerce_test.dart: carrinho remover item específico preserva os demais
+00:41 +261 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/commerce_test.dart: carrinho cupom é normalizado em caixa alta pelo controlador
+00:41 +262 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/commerce_test.dart: carrinho limpar esvazia tudo
+00:41 +263 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/commerce_test.dart: faixa etária do produto sem faixa serve para qualquer idade
+00:41 +264 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/commerce_test.dart: faixa etária do produto respeita os limites
+00:41 +265 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/commerce_test.dart: consulta sala fechada muito antes do horário
+00:41 +266 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/commerce_test.dart: consulta sala abre 10 minutos antes
+00:41 +267 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/commerce_test.dart: consulta consulta cancelada nunca abre a sala
+00:41 +268 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/commerce_test.dart: consulta sala fecha 15 minutos depois do fim
+00:41 +269 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/commerce_test.dart: consulta cancelamento gratuito até 24 h antes
+00:42 +270 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/content_search_test.dart: normalização para busca remove acentos
+00:42 +271 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/content_search_test.dart: normalização para busca caixa baixa e pontuação viram espaço
+00:42 +272 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/content_search_test.dart: normalização para busca colapsa espaços
+00:42 +273 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/content_search_test.dart: normalização para busca cedilha e til
+00:42 +274 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/content_search_test.dart: tokens da busca descarta palavras com menos de 3 letras
+00:42 +275 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/content_search_test.dart: tokens da busca consulta curta não gera token
+00:42 +276 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/content_search_test.dart: tokens da busca limita a 10 termos para caber no array-contains-any
+00:42 +277 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/content_search_test.dart: audiência do conteúdo nome desconhecido cai no padrão mais restritivo de leitura
+00:42 +278 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/content_search_test.dart: faixa etária sem faixa vale para qualquer idade
+00:42 +279 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/content_search_test.dart: faixa etária respeita os limites, inclusive
+00:42 +280 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/content_search_test.dart: seções detecta posologia e sinais de alarme
+00:43 +281 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/course_completion_test.dart: isCourseFullyCompleted todas as aulas concluídas → completo
+00:43 +282 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/course_completion_test.dart: isCourseFullyCompleted faltam aulas → não completo
+00:43 +283 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/course_completion_test.dart: isCourseFullyCompleted nenhuma aula concluída → não completo
+00:43 +284 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/course_completion_test.dart: isCourseFullyCompleted curso sem aula carregada (total=0) nunca conta como completo
+00:43 +285 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/course_completion_test.dart: isCourseFullyCompleted mais aulas concluídas do que o total (dado inconsistente) ainda conta como completo
+00:44 +286 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/course_progress_test.dart: bloqueio de aula curso aberto libera para qualquer um
+00:44 +287 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/course_progress_test.dart: bloqueio de aula curso pago bloqueia usuário do plano gratuito
+00:44 +288 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/course_progress_test.dart: bloqueio de aula aula de amostra abre mesmo em curso pago
+00:44 +289 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/course_progress_test.dart: bloqueio de aula plano ativo libera curso pago
+00:44 +290 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/course_progress_test.dart: bloqueio de aula plano expirado não libera
+00:44 +291 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/course_progress_test.dart: bloqueio de aula curso profissional exige registro verificado
+00:44 +292 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/course_progress_test.dart: bloqueio de aula amostra não fura a barreira profissional
+00:44 +293 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/course_progress_test.dart: bloqueio de aula deslogado é tratado como plano gratuito
+00:44 +294 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/course_progress_test.dart: progresso do curso curso vazio não divide por zero
+00:44 +295 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/course_progress_test.dart: progresso do curso calcula proporção e percentual
+00:44 +296 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/course_progress_test.dart: progresso do curso conclusão total
+00:44 +297 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/course_progress_test.dart: formatação de duração curso abaixo de uma hora
+00:44 +298 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/course_progress_test.dart: formatação de duração horas exatas omitem os minutos
+00:44 +299 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/course_progress_test.dart: formatação de duração horas com resto
+00:44 +300 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/course_progress_test.dart: estado do vídeo no Bunny mapeia os códigos da API
+00:44 +301 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/course_progress_test.dart: estado do vídeo no Bunny código desconhecido é tratado como falha, não como pronto
+00:44 +302 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/course_progress_test.dart: estado do vídeo no Bunny apenas ready é reproduzível
+00:49 +303 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/demo_brand_test.dart: celular: enviar, visualizar, trocar e remover; emitido fica com a logomarca da emissão
+00:56 +304 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/demo_brand_test.dart: celular: enviar, visualizar, trocar e remover; emitido fica com a logomarca da emissão
+00:57 +305 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/demo_brand_test.dart: celular: enviar, visualizar, trocar e remover; emitido fica com a logomarca da emissão
+00:59 +306 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/demo_brand_test.dart: celular: enviar, visualizar, trocar e remover; emitido fica com a logomarca da emissão
+01:04 +307 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/demo_brand_test.dart: celular: enviar, visualizar, trocar e remover; emitido fica com a logomarca da emissão
+01:04 +308 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/demo_brand_test.dart: celular: enviar, visualizar, trocar e remover; emitido fica com a logomarca da emissão
+Helvetica-Bold has no Unicode support see https://github.com/DavBfr/dart_pdf/wiki/Fonts-Management
+Helvetica has no Unicode support see https://github.com/DavBfr/dart_pdf/wiki/Fonts-Management
+Helvetica-Bold has no Unicode support see https://github.com/DavBfr/dart_pdf/wiki/Fonts-Management
+Helvetica has no Unicode support see https://github.com/DavBfr/dart_pdf/wiki/Fonts-Management
+Helvetica-Bold has no Unicode support see https://github.com/DavBfr/dart_pdf/wiki/Fonts-Management
+Helvetica has no Unicode support see https://github.com/DavBfr/dart_pdf/wiki/Fonts-Management
+01:05 +309 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/demo_care_flow_test.dart: acesso concedido com justificativa mostra o registro sem as partes privadas e pode ser retirado
+01:07 +310 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/demo_brand_test.dart: computador: enviar, visualizar, trocar e remover; emitido fica com a logomarca da emissão
+01:10 +311 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/demo_brand_test.dart: computador: enviar, visualizar, trocar e remover; emitido fica com a logomarca da emissão
+01:12 +312 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/demo_brand_test.dart: computador: enviar, visualizar, trocar e remover; emitido fica com a logomarca da emissão
+Helvetica-Bold has no Unicode support see https://github.com/DavBfr/dart_pdf/wiki/Fonts-Management
+Helvetica has no Unicode support see https://github.com/DavBfr/dart_pdf/wiki/Fonts-Management
+Helvetica-Bold has no Unicode support see https://github.com/DavBfr/dart_pdf/wiki/Fonts-Management
+Helvetica has no Unicode support see https://github.com/DavBfr/dart_pdf/wiki/Fonts-Management
+Helvetica-Bold has no Unicode support see https://github.com/DavBfr/dart_pdf/wiki/Fonts-Management
+Helvetica has no Unicode support see https://github.com/DavBfr/dart_pdf/wiki/Fonts-Management
+01:12 +313 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/demo_care_flow_test.dart: troca de profissional: gestão designa, família autoriza, o privado continua com a autora
+01:14 +314 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/demo_brand_test.dart: a logomarca de uma conta não aparece para outra
+01:15 +315 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/demo_care_flow_test.dart: troca de clínica: equipe anterior sai e a nova não vê registros nem resumos antigos
+01:15 +316 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/demo_brand_test.dart: recepção e responsável não têm logomarca nem veem a da clínica
+01:18 +317 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/demo_clinical_flow_test.dart: calculadora mg/kg/dose e conversão mg -> mL com as duas conferências
+01:25 +318 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/demo_doc_templates_flow_test.dart: biblioteca de modelos profissional vê os seus e os da clínica; modelo da clínica só pode ser usado ou duplicado
+01:27 +319 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/demo_clinical_flow_test.dart: calculadora mg/kg/dia divide a dose diária pelas tomadas
+01:27 +320 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/demo_doc_templates_flow_test.dart: biblioteca de modelos criar modelo de atestado com marcadores e pasta
+01:30 +321 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/demo_doc_templates_flow_test.dart: biblioteca de modelos criar modelo de atestado com marcadores e pasta
+01:31 +322 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/demo_clinical_flow_test.dart: calculadora dados ausentes, referência não validada, alergia e idade bloqueiam
+01:34 +323 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/demo_clinical_flow_test.dart: calculadora dados ausentes, referência não validada, alergia e idade bloqueiam
+01:35 +324 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/demo_doc_templates_flow_test.dart: biblioteca de modelos organizar: mover de pasta, arquivar e restaurar
+01:35 +325 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/demo_clinical_flow_test.dart: documentos Atestado médico: preencher, revisar, emitir, PDF, imprimir e histórico
+01:36 +326 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/demo_clinical_flow_test.dart: documentos Atestado médico: preencher, revisar, emitir, PDF, imprimir e histórico
+Helvetica-Bold has no Unicode support see https://github.com/DavBfr/dart_pdf/wiki/Fonts-Management
+Helvetica has no Unicode support see https://github.com/DavBfr/dart_pdf/wiki/Fonts-Management
+Helvetica-Bold has no Unicode support see https://github.com/DavBfr/dart_pdf/wiki/Fonts-Management
+01:37 +327 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/demo_clinical_flow_test.dart: documentos Atestado médico: preencher, revisar, emitir, PDF, imprimir e histórico
+Helvetica has no Unicode support see https://github.com/DavBfr/dart_pdf/wiki/Fonts-Management
+01:38 +328 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/demo_doc_templates_flow_test.dart: aplicar modelo em duas crianças usar modelo dentro do editor e salvar documento como modelo
+01:39 +329 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/demo_clinical_flow_test.dart: documentos Declaração de comparecimento: preencher, revisar, emitir, PDF, imprimir e histórico
+Helvetica-Bold has no Unicode support see https://github.com/DavBfr/dart_pdf/wiki/Fonts-Management
+Helvetica has no Unicode support see https://github.com/DavBfr/dart_pdf/wiki/Fonts-Management
+Helvetica-Bold has no Unicode support see https://github.com/DavBfr/dart_pdf/wiki/Fonts-Management
+Helvetica has no Unicode support see https://github.com/DavBfr/dart_pdf/wiki/Fonts-Management
+01:40 +330 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/demo_doc_templates_flow_test.dart: permissões recepção, financeiro e família não abrem modelos
+01:41 +331 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/demo_clinical_flow_test.dart: documentos Encaminhamento: preencher, revisar, emitir, PDF, imprimir e histórico
+Helvetica-Bold has no Unicode support see https://github.com/DavBfr/dart_pdf/wiki/Fonts-Management
+Helvetica has no Unicode support see https://github.com/DavBfr/dart_pdf/wiki/Fonts-Management
+Helvetica-Bold has no Unicode support see https://github.com/DavBfr/dart_pdf/wiki/Fonts-Management
+Helvetica has no Unicode support see https://github.com/DavBfr/dart_pdf/wiki/Fonts-Management
+01:43 +332 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/demo_clinical_flow_test.dart: documentos Encaminhamento: preencher, revisar, emitir, PDF, imprimir e histórico
+01:43 +333 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/demo_doc_templates_flow_test.dart: permissões outro profissional não vê modelos pessoais nem da clínica alheia
+01:43 +334 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/demo_clinical_flow_test.dart: documentos Orientações ao responsável: preencher, revisar, emitir, PDF, imprimir e histórico
+Helvetica-Bold has no Unicode support see https://github.com/DavBfr/dart_pdf/wiki/Fonts-Management
+Helvetica has no Unicode support see https://github.com/DavBfr/dart_pdf/wiki/Fonts-Management
+Helvetica-Bold has no Unicode support see https://github.com/DavBfr/dart_pdf/wiki/Fonts-Management
+01:45 +334 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/demo_doc_templates_flow_test.dart: emissão, PDF, histórico e família documento de modelo: revisar, emitir, PDF, histórico e liberar para a família
+Helvetica-Bold has no Unicode support see https://github.com/DavBfr/dart_pdf/wiki/Fonts-Management
+Helvetica has no Unicode support see https://github.com/DavBfr/dart_pdf/wiki/Fonts-Management
+01:46 +334 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/demo_clinical_flow_test.dart: documentos Orientações ao responsável: preencher, revisar, emitir, PDF, imprimir e histórico
+Helvetica has no Unicode support see https://github.com/DavBfr/dart_pdf/wiki/Fonts-Management
+01:46 +335 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/demo_doc_templates_flow_test.dart: emissão, PDF, histórico e família documento de modelo: revisar, emitir, PDF, histórico e liberar para a família
+01:46 +336 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/demo_clinical_flow_test.dart: documentos Solicitação de exames: preencher, revisar, emitir, PDF, imprimir e histórico
+01:47 +337 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/demo_clinical_flow_test.dart: documentos Solicitação de exames: preencher, revisar, emitir, PDF, imprimir e histórico
+Helvetica-Bold has no Unicode support see https://github.com/DavBfr/dart_pdf/wiki/Fonts-Management
+Helvetica has no Unicode support see https://github.com/DavBfr/dart_pdf/wiki/Fonts-Management
+Helvetica-Bold has no Unicode support see https://github.com/DavBfr/dart_pdf/wiki/Fonts-Management
+Helvetica has no Unicode support see https://github.com/DavBfr/dart_pdf/wiki/Fonts-Management
+01:48 +338 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/demo_doc_templates_flow_test.dart: emissão, PDF, histórico e família dados profissionais configuráveis na tela de logomarca
+01:48 +339 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/demo_clinical_flow_test.dart: documentos Receituário: preencher, revisar, emitir, PDF, imprimir e histórico
+Helvetica-Bold has no Unicode support see https://github.com/DavBfr/dart_pdf/wiki/Fonts-Management
+Helvetica has no Unicode support see https://github.com/DavBfr/dart_pdf/wiki/Fonts-Management
+Helvetica-Bold has no Unicode support see https://github.com/DavBfr/dart_pdf/wiki/Fonts-Management
+Helvetica has no Unicode support see https://github.com/DavBfr/dart_pdf/wiki/Fonts-Management
+01:50 +340 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/demo_clinical_flow_test.dart: documentos editar documento emitido cria nova versão e mantém a anterior
+01:52 +341 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/demo_clinical_flow_test.dart: documentos orientação: modelo personalizado exige edição e vira novo modelo
+01:53 +342 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/demo_clinical_flow_test.dart: documentos orientação: modelo personalizado exige edição e vira novo modelo
+01:53 +343 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/demo_clinical_flow_test.dart: documentos orientação: modelo personalizado exige edição e vira novo modelo
+01:53 +344 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/demo_clinical_flow_test.dart: documentos orientação: modelo personalizado exige edição e vira novo modelo
+01:53 +345 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/demo_clinical_flow_test.dart: documentos orientação: modelo personalizado exige edição e vira novo modelo
+01:53 +346 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/demo_family_area_test.dart: regras na sessão consultas para a família: sem anotações clínicas, com documentos liberados e retorno
+01:53 +347 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/demo_clinical_flow_test.dart: documentos encaminhamento pendente não pode ser revisado
+01:53 +348 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/demo_clinical_flow_test.dart: documentos encaminhamento pendente não pode ser revisado
+01:53 +349 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/demo_clinical_flow_test.dart: documentos encaminhamento pendente não pode ser revisado
+01:54 +350 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/demo_family_area_test.dart: telas celular: família abre saúde, documentos liberados e PDF
+01:57 +351 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/demo_family_area_test.dart: telas celular: família abre saúde, documentos liberados e PDF
+01:58 +352 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/demo_family_area_test.dart: telas celular: família abre saúde, documentos liberados e PDF
+Helvetica-Bold has no Unicode support see https://github.com/DavBfr/dart_pdf/wiki/Fonts-Management
+Helvetica has no Unicode support see https://github.com/DavBfr/dart_pdf/wiki/Fonts-Management
+02:00 +353 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/demo_clinical_flow_test.dart: perfis sem permissão não abrem consulta, documentos, calculadora nem suplementação
+02:01 +354 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/demo_family_area_test.dart: telas computador: família abre saúde, documentos liberados e PDF
+Helvetica-Bold has no Unicode support see https://github.com/DavBfr/dart_pdf/wiki/Fonts-Management
+Helvetica has no Unicode support see https://github.com/DavBfr/dart_pdf/wiki/Fonts-Management
+02:03 +355 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/demo_family_area_test.dart: telas profissional não abre a área da família; libera e retira pelo documento
+02:05 +356 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/demo_flow_test.dart: perfis e telas abrem sem erro de layout em Size(320.0, 640.0)
+02:07 +357 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/demo_flow_test.dart: perfis e telas abrem sem erro de layout em Size(320.0, 640.0)
+02:10 +358 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/demo_flow_test.dart: perfis e telas abrem sem erro de layout em Size(320.0, 640.0)
+02:12 +359 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/demo_flow_test.dart: perfis e telas abrem sem erro de layout em Size(320.0, 640.0)
+02:18 +360 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/demo_growth_lab_test.dart: curva de crescimento profissional: escore Z, percentil, idade corrigida e PDF
+Helvetica-Bold has no Unicode support see https://github.com/DavBfr/dart_pdf/wiki/Fonts-Management
+Helvetica has no Unicode support see https://github.com/DavBfr/dart_pdf/wiki/Fonts-Management
+Helvetica-Bold has no Unicode support see https://github.com/DavBfr/dart_pdf/wiki/Fonts-Management
+Helvetica has no Unicode support see https://github.com/DavBfr/dart_pdf/wiki/Fonts-Management
+02:24 +361 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/demo_flow_test.dart: perfis e telas abrem sem erro de layout em Size(430.0, 932.0)
+02:24 +362 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/demo_growth_lab_test.dart: curva de crescimento corrigir medida exige motivo e guarda o valor anterior
+02:26 +363 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/demo_flow_test.dart: perfis e telas abrem sem erro de layout em Size(1280.0, 800.0)
+02:28 +364 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/demo_flow_test.dart: perfis e telas abrem sem erro de layout em Size(1280.0, 800.0)
+02:28 +365 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/demo_flow_test.dart: perfis e telas abrem sem erro de layout em Size(1280.0, 800.0)
+02:29 +366 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/demo_flow_test.dart: perfis e telas abrem sem erro de layout em Size(1280.0, 800.0)
+02:29 +367 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/demo_flow_test.dart: perfis e telas abrem sem erro de layout em Size(1280.0, 800.0)
+02:30 +368 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/demo_growth_lab_test.dart: exames laboratoriais laudo importado fica pendente fora do prontuário até ser conferido
+02:31 +369 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/demo_growth_lab_test.dart: exames laboratoriais laudo importado fica pendente fora do prontuário até ser conferido
+02:31 +370 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/demo_growth_lab_test.dart: exames laboratoriais laudo importado fica pendente fora do prontuário até ser conferido
+02:33 +371 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/demo_growth_lab_test.dart: exames laboratoriais laudo importado fica pendente fora do prontuário até ser conferido
+02:33 +372 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/demo_growth_lab_test.dart: exames laboratoriais laudo importado fica pendente fora do prontuário até ser conferido
+02:34 +373 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/demo_flow_test.dart: cadastro valida campos e avisa antes de descartar
+02:34 +374 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/demo_growth_lab_test.dart: exames laboratoriais arquivo que não é PDF nem imagem é recusado
+02:35 +375 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/demo_flow_test.dart: falha de conexão simulada mostra erro e recupera
+02:35 +376 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/demo_growth_lab_test.dart: exames laboratoriais cada resultado mantém o intervalo do próprio laudo
+02:35 +377 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/demo_growth_lab_test.dart: exames laboratoriais cada resultado mantém o intervalo do próprio laudo
+02:36 +378 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/demo_growth_lab_test.dart: exames laboratoriais corrigir valor exige motivo e mantém o histórico
+02:37 +379 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/demo_growth_lab_test.dart: suplementação do paciente decisão indicada leva à calculadora e ao receituário
+02:38 +380 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/demo_growth_lab_test.dart: suplementação do paciente decisão indicada leva à calculadora e ao receituário
+02:39 +381 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/demo_growth_lab_test.dart: suplementação do paciente decisão indicada leva à calculadora e ao receituário
+02:40 +382 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/demo_growth_lab_test.dart: suplementação do paciente decisão sem justificativa não é salva
+02:41 +383 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/demo_pre_visit_test.dart: celular: família anexa foto e PDF, confere, remove o errado e envia; profissional vê organizado
+02:52 +384 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/demo_routine_test.dart: calendário e diário troca entre as vistas e o toque no dia mostra o diário
+02:54 +385 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/demo_pre_visit_test.dart: computador: família anexa foto e PDF, confere, remove o errado e envia; profissional vê organizado
+02:55 +386 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/demo_pre_visit_test.dart: computador: família anexa foto e PDF, confere, remove o errado e envia; profissional vê organizado
+02:57 +387 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/demo_routine_test.dart: diário fralda em três toques, correção com histórico e exclusão
+02:58 +388 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/demo_routine_test.dart: diário fralda em três toques, correção com histórico e exclusão
+02:59 +389 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/demo_pre_visit_test.dart: consulta do profissional mostra a pré-consulta e volta para ela
+02:59 +390 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/demo_routine_test.dart: diário mamadeira, temperatura com foto e sono aberto
+03:01 +391 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/demo_routine_test.dart: diário mamadeira, temperatura com foto e sono aberto
+03:01 +392 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/demo_routine_test.dart: diário mamadeira, temperatura com foto e sono aberto
+03:02 +393 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/demo_routine_test.dart: diário dia futuro não aceita registro
+03:02 +394 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/demo_routine_test.dart: calendário criar com lembrete, editar, concluir, reabrir e cancelar
+03:08 +395 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/demo_rx_templates_test.dart: lista, busca, duplicar e editar cria nova versão
+03:10 +396 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/demo_rx_templates_test.dart: lista, busca, duplicar e editar cria nova versão
+03:10 +397 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/demo_routine_test.dart: calendário medicamento da receita: programar horários e dar a dose
+03:12 +398 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/demo_rx_templates_test.dart: novo modelo: item pelo peso (só mg/kg) e item de dose fixa
+03:13 +399 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/demo_rx_templates_test.dart: novo modelo: item pelo peso (só mg/kg) e item de dose fixa
+03:14 +400 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/demo_rx_templates_test.dart: novo modelo: item pelo peso (só mg/kg) e item de dose fixa
+03:15 +401 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/demo_routine_test.dart: resumo para o pediatra filtros, envio, PDF e cópia; profissional vê só leitura
+Helvetica has no Unicode support see https://github.com/DavBfr/dart_pdf/wiki/Fonts-Management
+Helvetica-Bold has no Unicode support see https://github.com/DavBfr/dart_pdf/wiki/Fonts-Management
+03:18 +402 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/demo_rx_templates_test.dart: na consulta: modelo gera rascunho com o peso atual, exige conferência, emite no histórico e não muda se o modelo for editado
+Helvetica-Bold has no Unicode support see https://github.com/DavBfr/dart_pdf/wiki/Fonts-Management
+Helvetica has no Unicode support see https://github.com/DavBfr/dart_pdf/wiki/Fonts-Management
+03:21 +403 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/demo_rx_templates_test.dart: na consulta: modelo gera rascunho com o peso atual, exige conferência, emite no histórico e não muda se o modelo for editado
+Helvetica-Bold has no Unicode support see https://github.com/DavBfr/dart_pdf/wiki/Fonts-Management
+Helvetica has no Unicode support see https://github.com/DavBfr/dart_pdf/wiki/Fonts-Management
+03:22 +404 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/demo_rx_templates_test.dart: outra criança: dose refeita com o peso dela; peso novo exige recalcular
+03:24 +405 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/demo_rx_templates_test.dart: outra criança: dose refeita com o peso dela; peso novo exige recalcular
+03:24 +406 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/demo_rx_templates_test.dart: outra criança: dose refeita com o peso dela; peso novo exige recalcular
+03:24 +407 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/demo_rx_templates_test.dart: outra criança: dose refeita com o peso dela; peso novo exige recalcular
+03:24 +408 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/demo_rx_templates_test.dart: outra criança: dose refeita com o peso dela; peso novo exige recalcular
+03:24 +409 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/demo_rx_templates_test.dart: outra criança: dose refeita com o peso dela; peso novo exige recalcular
+03:24 +410 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/demo_rx_templates_test.dart: outra criança: dose refeita com o peso dela; peso novo exige recalcular
+03:24 +411 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/demo_rx_templates_test.dart: outra criança: dose refeita com o peso dela; peso novo exige recalcular
+03:25 +412 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/demo_rx_templates_test.dart: outra criança: dose refeita com o peso dela; peso novo exige recalcular
+03:25 +413 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/demo_rx_templates_test.dart: outra criança: dose refeita com o peso dela; peso novo exige recalcular
+03:25 +414 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/demo_rx_templates_test.dart: outra criança: dose refeita com o peso dela; peso novo exige recalcular
+03:25 +415 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/demo_scheduling_test.dart: lembretes rodada inclui sessões de psicologia sem interromper as demais
+03:25 +416 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/demo_rx_templates_test.dart: salvar receita como modelo não leva a dose da criança
+03:25 +417 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/demo_rx_templates_test.dart: salvar receita como modelo não leva a dose da criança
+03:25 +418 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/demo_rx_templates_test.dart: salvar receita como modelo não leva a dose da criança
+03:25 +419 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/demo_rx_templates_test.dart: salvar receita como modelo não leva a dose da criança
+03:25 +420 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/demo_rx_templates_test.dart: salvar receita como modelo não leva a dose da criança
+03:25 +421 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/demo_rx_templates_test.dart: salvar receita como modelo não leva a dose da criança
+03:25 +422 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/demo_rx_templates_test.dart: salvar receita como modelo não leva a dose da criança
+03:25 +423 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/demo_rx_templates_test.dart: salvar receita como modelo não leva a dose da criança
+03:25 +424 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/demo_rx_templates_test.dart: salvar receita como modelo não leva a dose da criança
+03:25 +425 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/demo_rx_templates_test.dart: salvar receita como modelo não leva a dose da criança
+03:25 +426 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/demo_rx_templates_test.dart: salvar receita como modelo não leva a dose da criança
+03:25 +427 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/demo_rx_templates_test.dart: salvar receita como modelo não leva a dose da criança
+03:25 +428 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/demo_rx_templates_test.dart: salvar receita como modelo não leva a dose da criança
+03:26 +429 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/demo_scheduling_test.dart: telas recepção: painel, filtro e registro de contato
+03:26 +430 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/demo_scheduling_test.dart: telas recepção: painel, filtro e registro de contato
+03:30 +431 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/demo_sleep_wellchild_test.dart: sono família: noite com despertar, cochilo, linha do tempo, resumo, correção com histórico e volta ao sono
+03:32 +432 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/demo_sleep_wellchild_test.dart: sono família: noite com despertar, cochilo, linha do tempo, resumo, correção com histórico e volta ao sono
+03:34 +433 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/demo_sleep_wellchild_test.dart: sono família: noite com despertar, cochilo, linha do tempo, resumo, correção com histórico e volta ao sono
+03:34 +434 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/demo_sleep_wellchild_test.dart: sono família: noite com despertar, cochilo, linha do tempo, resumo, correção com histórico e volta ao sono
+03:36 +435 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/demo_sleep_wellchild_test.dart: sono família: noite com despertar, cochilo, linha do tempo, resumo, correção com histórico e volta ao sono
+03:36 +436 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/demo_sleep_wellchild_test.dart: sono família: noite com despertar, cochilo, linha do tempo, resumo, correção com histórico e volta ao sono
+03:37 +437 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/demo_sleep_wellchild_test.dart: sono família: noite com despertar, cochilo, linha do tempo, resumo, correção com histórico e volta ao sono
+03:40 +438 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/demo_sleep_wellchild_test.dart: sono família: despertar no mesmo minuto em que dormiu é aceito
+03:40 +439 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/demo_sleep_wellchild_test.dart: sono família: despertar no mesmo minuto em que dormiu é aceito
+03:40 +440 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/demo_sleep_wellchild_test.dart: sono família: despertar no mesmo minuto em que dormiu é aceito
+03:40 +441 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/demo_sleep_wellchild_test.dart: sono família: despertar no mesmo minuto em que dormiu é aceito
+03:40 +442 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/demo_sleep_wellchild_test.dart: sono família: despertar no mesmo minuto em que dormiu é aceito
+03:40 +443 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/demo_sleep_wellchild_test.dart: sono família: despertar no mesmo minuto em que dormiu é aceito
+03:40 +444 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/demo_sleep_wellchild_test.dart: sono família: despertar no mesmo minuto em que dormiu é aceito
+03:40 +445 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/demo_sleep_wellchild_test.dart: sono família: despertar no mesmo minuto em que dormiu é aceito
+03:41 +446 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/demo_sleep_wellchild_test.dart: sono família: despertar no mesmo minuto em que dormiu é aceito
+03:41 +447 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/demo_sleep_wellchild_test.dart: sono família: despertar no mesmo minuto em que dormiu é aceito
+03:41 +448 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/demo_sleep_wellchild_test.dart: sono família: despertar no mesmo minuto em que dormiu é aceito
+03:41 +449 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/demo_workspace_test.dart: observações e histórico linha do tempo reúne consultas, documentos, crescimento e faltas
+03:41 +450 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/demo_sleep_wellchild_test.dart: sono profissional: diário compartilhado só para leitura, avaliação revisada no prontuário e volta ao prontuário
+03:43 +451 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/demo_workspace_test.dart: telas agenda: dia, semana e mês, e horário de outro profissional
+03:47 +452 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/demo_sleep_wellchild_test.dart: puericultura consulta completa: modelo, incorporação revisada, medidas, marcos, dúvidas, acompanhamento, PDF, finalização, calendário, correção com motivo, histórico e voltar
+03:50 +453 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/demo_sleep_wellchild_test.dart: puericultura consulta completa: modelo, incorporação revisada, medidas, marcos, dúvidas, acompanhamento, PDF, finalização, calendário, correção com motivo, histórico e voltar
+03:52 +454 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/demo_sleep_wellchild_test.dart: puericultura consulta completa: modelo, incorporação revisada, medidas, marcos, dúvidas, acompanhamento, PDF, finalização, calendário, correção com motivo, histórico e voltar
+03:53 +455 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/demo_sleep_wellchild_test.dart: puericultura consulta completa: modelo, incorporação revisada, medidas, marcos, dúvidas, acompanhamento, PDF, finalização, calendário, correção com motivo, histórico e voltar
+Helvetica-Bold has no Unicode support see https://github.com/DavBfr/dart_pdf/wiki/Fonts-Management
+Helvetica has no Unicode support see https://github.com/DavBfr/dart_pdf/wiki/Fonts-Management
+03:56 +456 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/demo_sleep_wellchild_test.dart: puericultura modelo de evolução salvo sem dados da família, separado por conta e reutilizado em outro paciente
+03:58 +457 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/demo_sleep_wellchild_test.dart: puericultura modelo de evolução salvo sem dados da família, separado por conta e reutilizado em outro paciente
+03:58 +458 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/demo_sleep_wellchild_test.dart: puericultura PDF do resumo: sem logomarca na consulta anterior; ao finalizar grava a logomarca vigente
+Helvetica-Bold has no Unicode support see https://github.com/DavBfr/dart_pdf/wiki/Fonts-Management
+Helvetica has no Unicode support see https://github.com/DavBfr/dart_pdf/wiki/Fonts-Management
+Helvetica-Bold has no Unicode support see https://github.com/DavBfr/dart_pdf/wiki/Fonts-Management
+Helvetica has no Unicode support see https://github.com/DavBfr/dart_pdf/wiki/Fonts-Management
+Helvetica-Bold has no Unicode support see https://github.com/DavBfr/dart_pdf/wiki/Fonts-Management
+Helvetica has no Unicode support see https://github.com/DavBfr/dart_pdf/wiki/Fonts-Management
+04:00 +459 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/demo_sleep_wellchild_test.dart: área da família e permissões família vê só orientações emitidas das próprias crianças, com PDF e voltar
+04:00 +460 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/demo_sleep_wellchild_test.dart: área da família e permissões família vê só orientações emitidas das próprias crianças, com PDF e voltar
+04:00 +461 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/demo_sleep_wellchild_test.dart: área da família e permissões família vê só orientações emitidas das próprias crianças, com PDF e voltar
+04:00 +462 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/demo_sleep_wellchild_test.dart: área da família e permissões família vê só orientações emitidas das próprias crianças, com PDF e voltar
+04:00 +463 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/demo_sleep_wellchild_test.dart: área da família e permissões família vê só orientações emitidas das próprias crianças, com PDF e voltar
+04:00 +464 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/demo_sleep_wellchild_test.dart: área da família e permissões família vê só orientações emitidas das próprias crianças, com PDF e voltar
+04:00 +465 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/demo_sleep_wellchild_test.dart: área da família e permissões família vê só orientações emitidas das próprias crianças, com PDF e voltar
+04:02 +466 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/demo_sleep_wellchild_test.dart: área da família e permissões família vê só orientações emitidas das próprias crianças, com PDF e voltar
+04:02 +467 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/demo_sleep_wellchild_test.dart: área da família e permissões família vê só orientações emitidas das próprias crianças, com PDF e voltar
+04:02 +468 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/demo_sleep_wellchild_test.dart: área da família e permissões família vê só orientações emitidas das próprias crianças, com PDF e voltar
+04:02 +469 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/demo_sleep_wellchild_test.dart: área da família e permissões família vê só orientações emitidas das próprias crianças, com PDF e voltar
+04:02 +470 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/demo_sleep_wellchild_test.dart: área da família e permissões família vê só orientações emitidas das próprias crianças, com PDF e voltar
+04:02 +471 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/demo_sleep_wellchild_test.dart: área da família e permissões família vê só orientações emitidas das próprias crianças, com PDF e voltar
+04:02 +472 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/demo_sleep_wellchild_test.dart: área da família e permissões família vê só orientações emitidas das próprias crianças, com PDF e voltar
+04:02 +473 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/demo_sleep_wellchild_test.dart: área da família e permissões família vê só orientações emitidas das próprias crianças, com PDF e voltar
+04:02 +474 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/demo_sleep_wellchild_test.dart: área da família e permissões família vê só orientações emitidas das próprias crianças, com PDF e voltar
+04:02 +475 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/demo_sleep_wellchild_test.dart: área da família e permissões família vê só orientações emitidas das próprias crianças, com PDF e voltar
+04:02 +476 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/demo_sleep_wellchild_test.dart: área da família e permissões família vê só orientações emitidas das próprias crianças, com PDF e voltar
+04:02 +477 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/demo_sleep_wellchild_test.dart: área da família e permissões família vê só orientações emitidas das próprias crianças, com PDF e voltar
+04:02 +478 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/demo_sleep_wellchild_test.dart: área da família e permissões família vê só orientações emitidas das próprias crianças, com PDF e voltar
+04:02 +479 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/demo_sleep_wellchild_test.dart: área da família e permissões família vê só orientações emitidas das próprias crianças, com PDF e voltar
+04:02 +480 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/demo_sleep_wellchild_test.dart: área da família e permissões família vê só orientações emitidas das próprias crianças, com PDF e voltar
+04:02 +481 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/demo_sleep_wellchild_test.dart: área da família e permissões família vê só orientações emitidas das próprias crianças, com PDF e voltar
+04:03 +482 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/demo_sleep_wellchild_test.dart: área da família e permissões família vê só orientações emitidas das próprias crianças, com PDF e voltar
+04:03 +483 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/demo_sleep_wellchild_test.dart: área da família e permissões família vê só orientações emitidas das próprias crianças, com PDF e voltar
+04:03 +484 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/demo_sleep_wellchild_test.dart: área da família e permissões família vê só orientações emitidas das próprias crianças, com PDF e voltar
+04:03 +485 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/demo_sleep_wellchild_test.dart: área da família e permissões família vê só orientações emitidas das próprias crianças, com PDF e voltar
+04:03 +486 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/demo_sleep_wellchild_test.dart: área da família e permissões família vê só orientações emitidas das próprias crianças, com PDF e voltar
+04:03 +487 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/demo_sleep_wellchild_test.dart: área da família e permissões família vê só orientações emitidas das próprias crianças, com PDF e voltar
+Helvetica-Bold has no Unicode support see https://github.com/DavBfr/dart_pdf/wiki/Fonts-Management
+Helvetica has no Unicode support see https://github.com/DavBfr/dart_pdf/wiki/Fonts-Management
+04:04 +488 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/demo_sleep_wellchild_test.dart: área da família e permissões editor de orientação: modelos por tema e faixa etária, sugestão pela idade corrigida e novo modelo com tema
+04:05 +489 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/demo_sleep_wellchild_test.dart: área da família e permissões editor de orientação: modelos por tema e faixa etária, sugestão pela idade corrigida e novo modelo com tema
+04:05 +490 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/demo_sleep_wellchild_test.dart: área da família e permissões editor de orientação: modelos por tema e faixa etária, sugestão pela idade corrigida e novo modelo com tema
+04:05 +491 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/demo_sleep_wellchild_test.dart: área da família e permissões editor de orientação: modelos por tema e faixa etária, sugestão pela idade corrigida e novo modelo com tema
+04:05 +492 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/demo_sleep_wellchild_test.dart: área da família e permissões editor de orientação: modelos por tema e faixa etária, sugestão pela idade corrigida e novo modelo com tema
+04:05 +493 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/demo_sleep_wellchild_test.dart: área da família e permissões editor de orientação: modelos por tema e faixa etária, sugestão pela idade corrigida e novo modelo com tema
+04:05 +494 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/demo_sleep_wellchild_test.dart: área da família e permissões editor de orientação: modelos por tema e faixa etária, sugestão pela idade corrigida e novo modelo com tema
+04:05 +495 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/demo_sleep_wellchild_test.dart: área da família e permissões editor de orientação: modelos por tema e faixa etária, sugestão pela idade corrigida e novo modelo com tema
+04:05 +496 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/demo_sleep_wellchild_test.dart: área da família e permissões editor de orientação: modelos por tema e faixa etária, sugestão pela idade corrigida e novo modelo com tema
+04:05 +497 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/demo_sleep_wellchild_test.dart: área da família e permissões editor de orientação: modelos por tema e faixa etária, sugestão pela idade corrigida e novo modelo com tema
+04:05 +498 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/demo_sleep_wellchild_test.dart: área da família e permissões editor de orientação: modelos por tema e faixa etária, sugestão pela idade corrigida e novo modelo com tema
+04:05 +499 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/demo_sleep_wellchild_test.dart: área da família e permissões editor de orientação: modelos por tema e faixa etária, sugestão pela idade corrigida e novo modelo com tema
+04:05 +500 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/demo_sleep_wellchild_test.dart: área da família e permissões editor de orientação: modelos por tema e faixa etária, sugestão pela idade corrigida e novo modelo com tema
+04:05 +501 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/demo_sleep_wellchild_test.dart: área da família e permissões editor de orientação: modelos por tema e faixa etária, sugestão pela idade corrigida e novo modelo com tema
+04:05 +502 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/demo_sleep_wellchild_test.dart: área da família e permissões editor de orientação: modelos por tema e faixa etária, sugestão pela idade corrigida e novo modelo com tema
+04:05 +503 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/demo_sleep_wellchild_test.dart: área da família e permissões editor de orientação: modelos por tema e faixa etária, sugestão pela idade corrigida e novo modelo com tema
+04:05 +504 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/demo_sleep_wellchild_test.dart: área da família e permissões editor de orientação: modelos por tema e faixa etária, sugestão pela idade corrigida e novo modelo com tema
+04:05 +505 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/demo_sleep_wellchild_test.dart: área da família e permissões editor de orientação: modelos por tema e faixa etária, sugestão pela idade corrigida e novo modelo com tema
+04:05 +506 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/demo_sleep_wellchild_test.dart: área da família e permissões editor de orientação: modelos por tema e faixa etária, sugestão pela idade corrigida e novo modelo com tema
+04:06 +507 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/demo_sleep_wellchild_test.dart: área da família e permissões recepção, financeiro, administrador e responsável não abrem a puericultura; profissional não edita o diário da família
+04:07 +508 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/demo_sleep_wellchild_test.dart: área da família e permissões recepção, financeiro, administrador e responsável não abrem a puericultura; profissional não edita o diário da família
+04:07 +509 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/demo_sleep_wellchild_test.dart: área da família e permissões recepção, financeiro, administrador e responsável não abrem a puericultura; profissional não edita o diário da família
+04:07 +510 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/demo_sleep_wellchild_test.dart: área da família e permissões recepção, financeiro, administrador e responsável não abrem a puericultura; profissional não edita o diário da família
+04:07 +511 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/demo_sleep_wellchild_test.dart: área da família e permissões recepção, financeiro, administrador e responsável não abrem a puericultura; profissional não edita o diário da família
+04:07 +512 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/demo_sleep_wellchild_test.dart: área da família e permissões recepção, financeiro, administrador e responsável não abrem a puericultura; profissional não edita o diário da família
+04:07 +513 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/demo_sleep_wellchild_test.dart: área da família e permissões recepção, financeiro, administrador e responsável não abrem a puericultura; profissional não edita o diário da família
+04:07 +514 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/demo_sleep_wellchild_test.dart: área da família e permissões recepção, financeiro, administrador e responsável não abrem a puericultura; profissional não edita o diário da família
+04:09 +515 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/features/management/management_modules_test.dart: módulos por perfil sem vínculo ou paciente não vê nada
+04:09 +516 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/features/management/management_modules_test.dart: módulos por perfil recepção: agenda, CRM, comunicação e automações; nada clínico
+04:09 +517 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/features/management/management_modules_test.dart: módulos por perfil financeiro: financeiro e Central de IA, sem agenda nem clínico
+04:09 +518 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/features/management/management_modules_test.dart: módulos por perfil profissional: agenda, anamnese e atendimento; sem gestão
+04:09 +519 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/features/management/management_modules_test.dart: módulos por perfil gestão vê os dez módulos, na ordem do menu
+04:09 +520 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/features/management/management_modules_test.dart: rotas /gestao cada rota segue o módulo
+04:09 +521 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/features/management/management_modules_test.dart: rotas /gestao redirect usa o papel ativo; vínculo revogado perde o acesso
+04:09 +522 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/features/management/management_modules_test.dart: anamnese condicional campo com showIf só aparece com a resposta correspondente
+04:10 +523 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/features/supplementation/supplement_catalog_test.dart: supplement catalog has expected micronutrients
+04:11 +524 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/features/supplementation/supplement_catalog_test.dart: supplement catalog sections use pending placeholder (no invented doses)
+04:11 +525 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/features/supplementation/supplement_catalog_test.dart: calculator engine does not invent numeric doses
+04:11 +526 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/features/supplementation/supplement_catalog_test.dart: ai organizer structures free text without diagnosing
+04:11 +527 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/finance_access_test.dart: finance role has full access
+04:11 +528 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/finance_access_test.dart: receptionist can register payment only
+04:11 +529 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/finance_access_test.dart: physician sees own receivables
+04:11 +530 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/finance_access_test.dart: platform admin full
+04:12 +531 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/finance_aggregators_test.dart: FinanceDashboardKpis computes balance and delinquency
+04:12 +532 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/finance_aggregators_test.dart: FinanceDashboardKpis partial payment status via open cents
+04:12 +533 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/finance_aggregators_test.dart: CashFlowSeries builds buckets with cumulative
+04:12 +534 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/finance_aggregators_test.dart: DreReport net revenue subtracts refunds
+04:12 +535 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/finance_aggregators_test.dart: OriginBreakdown splits particular vs insurance
+04:12 +536 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/finance_aggregators_test.dart: ProductionReport counts consult types
+04:13 +537 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/gamification_test.dart: sequência de dias primeira atividade inicia em 1
+04:13 +538 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/gamification_test.dart: sequência de dias mesmo dia não soma duas vezes
+04:13 +539 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/gamification_test.dart: sequência de dias dias consecutivos somam
+04:13 +540 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/gamification_test.dart: sequência de dias um dia perdido não zera: a tolerância cobre
+04:13 +541 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/gamification_test.dart: sequência de dias segundo dia perdido na mesma semana zera
+04:13 +542 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/gamification_test.dart: sequência de dias três dias de ausência zera mesmo com tolerância disponível
+04:13 +543 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/gamification_test.dart: sequência de dias o recorde não é perdido ao zerar
+04:13 +544 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/gamification_test.dart: nível a partir do XP começa no nível 1
+04:13 +545 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/gamification_test.dart: nível a partir do XP 100 XP alcança o nível 2
+04:13 +546 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/gamification_test.dart: nível a partir do XP cada nível custa 20% mais que o anterior
+04:13 +547 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/gamification_test.dart: nível a partir do XP progresso fica entre 0 e 1
+04:13 +548 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/gamification_test.dart: nível a partir do XP progresso zera ao subir de nível
+04:13 +549 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/gamification_test.dart: desafio proporção não passa de 1
+04:13 +550 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/gamification_test.dart: desafio alvo zero não divide por zero
+04:14 +551 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/inventory_access_test.dart: nursing has stockOps
+04:14 +552 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/inventory_access_test.dart: finance has view only
+04:14 +553 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/inventory_access_test.dart: reception has none
+04:14 +554 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/inventory_aggregators_test.dart: dashboard KPIs count below min and expiry
+04:16 +555 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/inventory_finance_integration_test.dart: suggest payable on received PO
+04:16 +556 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/inventory_finance_integration_test.dart: skips duplicate when payableId set
+04:17 +557 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/inventory_movement_test.dart: lot expiry status thresholds
+04:17 +558 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/inventory_movement_test.dart: exit rejects negative balance
+04:17 +559 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/inventory_movement_test.dart: entry adds quantity
+04:17 +560 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/inventory_movement_test.dart: stockQtyForItem sums lots
+04:18 +561 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/parsers_test.dart: separador decimal brasileiro (vírgula) vírgula simples
+04:18 +562 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/parsers_test.dart: separador decimal brasileiro (vírgula) negativo com vírgula
+04:18 +563 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/parsers_test.dart: separador de milhar — o bug que motivou este arquivo milhar com decimal não retorna mais nulo
+04:19 +564 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/parsers_test.dart: separador de milhar — o bug que motivou este arquivo milhar redondo não perde três ordens de grandeza
+04:19 +565 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/parsers_test.dart: separador de milhar — o bug que motivou este arquivo milhar duplo, sem parte decimal
+04:19 +566 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/parsers_test.dart: separador de milhar — o bug que motivou este arquivo milhar de três dígitos exatos
+04:19 +567 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/parsers_test.dart: ponto único permanece decimal — ambiguidade resolvida a favor do caso comum o que um teclado numérico digita para "5 vírgula 5"
+04:19 +568 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/parsers_test.dart: casos de borda nulo
+04:19 +569 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/parsers_test.dart: casos de borda vazio ou só espaço
+04:19 +570 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/parsers_test.dart: casos de borda texto não numérico
+04:19 +571 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/parsers_test.dart: casos de borda inteiro sem separador
+04:19 +572 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/parsers_test.dart: casos de borda espaços nas bordas são ignorados
+04:19 +573 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/parsers_test.dart: casos de borda zero
+04:19 +574 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/parsers_test.dart: Parsers.integer extrai apenas dígitos
+04:19 +575 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/parsers_test.dart: Parsers.integer nulo ou sem dígito nenhum
+04:19 +576 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/patient_360_timeline_test.dart: buildPatient360Timeline ordena do mais recente
+04:22 +577 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/patient_summary_formatting_test.dart: formatGrowthSummary — paciente SEM dado nenhuma medição → "Sem registro", não número inventado
+04:22 +578 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/patient_summary_formatting_test.dart: formatGrowthSummary — paciente SEM dado medição existe mas sem nenhum valor → mensagem própria, não vazio silencioso
+04:22 +579 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/patient_summary_formatting_test.dart: formatGrowthSummary — paciente COM dado só peso: mostra só peso, não inventa altura
+04:22 +580 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/patient_summary_formatting_test.dart: formatGrowthSummary — paciente COM dado peso e altura: calcula IMC — não aparece com só um dos dois
+04:22 +581 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/patient_summary_formatting_test.dart: formatGrowthSummary — paciente COM dado perímetro cefálico aparece quando presente
+04:22 +582 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/patient_summary_formatting_test.dart: formatGrowthSummary — paciente COM dado inclui a data da medição
+04:22 +583 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/patient_summary_formatting_test.dart: formatConsultationsSummary — paciente SEM dado nenhum atendimento → "Sem registro", não consulta inventada
+04:22 +584 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/patient_summary_formatting_test.dart: formatConsultationsSummary — paciente COM dado um atendimento: singular correto
+04:22 +585 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/patient_summary_formatting_test.dart: formatConsultationsSummary — paciente COM dado vários atendimentos: plural, e mostra o mais recente como "última"
+04:22 +586 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/patient_summary_formatting_test.dart: formatConsultationsSummary — paciente COM dado não menciona "próxima consulta" — não existe fonte de dado aqui
+04:22 +587 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/patient_summary_formatting_test.dart: formatLabsSummary — paciente SEM dado nenhum exame → "Sem registro", não exame inventado
+04:22 +588 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/patient_summary_formatting_test.dart: formatLabsSummary — paciente COM dado um exame: singular correto, mostra o analito e a data
+04:22 +589 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/patient_summary_formatting_test.dart: formatLabsSummary — paciente COM dado vários exames: plural, mostra o mais recente
+04:22 +590 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/patient_summary_formatting_test.dart: formatDocumentsSummary — paciente SEM dado nenhum documento → "Sem registro"
+04:22 +591 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/patient_summary_formatting_test.dart: formatDocumentsSummary — paciente SEM dado só documento cancelado → "Sem registro", não conta como ativo
+04:22 +592 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/patient_summary_formatting_test.dart: formatDocumentsSummary — paciente COM dado um documento ativo: singular correto
+04:22 +593 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/patient_summary_formatting_test.dart: formatDocumentsSummary — paciente COM dado documento cancelado não entra na contagem, mesmo com ativos presentes
+04:23 +594 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/patient_timeline_screen_test.dart: paciente COM dados mostra nome, responsável e consulta reais — nenhum número inventado
+04:24 +595 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/patient_timeline_screen_test.dart: paciente COM dados mostra nome, responsável e consulta reais — nenhum número inventado
+04:24 +596 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/patient_timeline_screen_test.dart: paciente COM dados mostra nome, responsável e consulta reais — nenhum número inventado
+04:27 +597 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/patient_timeline_screen_test.dart: paciente COM dados mostra nome, responsável e consulta reais — nenhum número inventado
+04:27 +598 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/patient_timeline_screen_test.dart: paciente COM dados mostra nome, responsável e consulta reais — nenhum número inventado
+04:27 +599 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/patient_timeline_screen_test.dart: paciente COM dados mostra nome, responsável e consulta reais — nenhum número inventado
+04:27 +600 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/patient_timeline_screen_test.dart: paciente COM dados mostra nome, responsável e consulta reais — nenhum número inventado
+04:27 +601 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/patient_timeline_screen_test.dart: paciente COM dados mostra nome, responsável e consulta reais — nenhum número inventado
+04:27 +602 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/patient_timeline_screen_test.dart: paciente COM dados mostra nome, responsável e consulta reais — nenhum número inventado
+04:27 +603 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/patient_timeline_screen_test.dart: paciente COM dados mostra nome, responsável e consulta reais — nenhum número inventado
+04:27 +604 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/patient_timeline_screen_test.dart: paciente COM dados mostra nome, responsável e consulta reais — nenhum número inventado
+04:29 +605 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/permission_matrix_test.dart: PermissionMatrix negative cross-module receptionist cannot finance full (manage ledger)
+04:29 +606 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/patient_timeline_screen_test.dart: paciente COM dados alergia aparece como alerta visível
+04:29 +607 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/patient_timeline_screen_test.dart: paciente COM dados alergia aparece como alerta visível
+04:29 +608 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/patient_timeline_screen_test.dart: paciente COM dados alergia aparece como alerta visível
+04:29 +609 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/patient_timeline_screen_test.dart: paciente COM dados alergia aparece como alerta visível
+04:29 +610 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/patient_timeline_screen_test.dart: paciente COM dados alergia aparece como alerta visível
+04:29 +611 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/patient_timeline_screen_test.dart: paciente COM dados alergia aparece como alerta visível
+04:29 +612 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/patient_timeline_screen_test.dart: paciente COM dados alergia aparece como alerta visível
+04:29 +613 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/patient_timeline_screen_test.dart: paciente COM dados alergia aparece como alerta visível
+04:29 +614 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/patient_timeline_screen_test.dart: paciente COM dados alergia aparece como alerta visível
+04:31 +615 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/patient_timeline_screen_test.dart: paciente SEM dados prontuário genuinamente vazio mostra estado vazio, não card fictício
+04:31 +616 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/patient_timeline_screen_test.dart: paciente SEM dados prontuário genuinamente vazio mostra estado vazio, não card fictício
+04:31 +617 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/patient_timeline_screen_test.dart: paciente SEM dados prontuário genuinamente vazio mostra estado vazio, não card fictício
+04:31 +618 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/patient_timeline_screen_test.dart: paciente SEM dados prontuário genuinamente vazio mostra estado vazio, não card fictício
+04:31 +619 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/patient_timeline_screen_test.dart: paciente SEM dados prontuário genuinamente vazio mostra estado vazio, não card fictício
+04:31 +620 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/patient_timeline_screen_test.dart: paciente SEM dados prontuário genuinamente vazio mostra estado vazio, não card fictício
+04:31 +621 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/patient_timeline_screen_test.dart: paciente SEM dados prontuário genuinamente vazio mostra estado vazio, não card fictício
+04:31 +622 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/patient_timeline_screen_test.dart: paciente SEM dados prontuário genuinamente vazio mostra estado vazio, não card fictício
+04:31 +623 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/patient_timeline_screen_test.dart: paciente SEM dados prontuário genuinamente vazio mostra estado vazio, não card fictício
+04:31 +624 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/patient_timeline_screen_test.dart: paciente SEM dados prontuário genuinamente vazio mostra estado vazio, não card fictício
+04:33 +625 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/patient_timeline_screen_test.dart: isolamento entre pacientes criança A não mistura dado com criança B
+04:34 +626 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/patient_timeline_screen_test.dart: isolamento entre pacientes criança A não mistura dado com criança B
+04:34 +627 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/patient_timeline_screen_test.dart: isolamento entre pacientes criança A não mistura dado com criança B
+04:34 +628 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/patient_timeline_screen_test.dart: isolamento entre pacientes criança A não mistura dado com criança B
+04:34 +629 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/patient_timeline_screen_test.dart: isolamento entre pacientes criança A não mistura dado com criança B
+04:34 +630 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/patient_timeline_screen_test.dart: isolamento entre pacientes criança A não mistura dado com criança B
+04:34 +631 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/patient_timeline_screen_test.dart: isolamento entre pacientes criança A não mistura dado com criança B
+04:34 +632 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/patient_timeline_screen_test.dart: isolamento entre pacientes criança A não mistura dado com criança B
+04:36 +633 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/patient_timeline_screen_test.dart: carregamento stream de encounters nunca resolve → skeleton, não tela vazia
+04:37 +634 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/patient_timeline_screen_test.dart: carregamento stream de encounters nunca resolve → skeleton, não tela vazia
+04:37 +635 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/patient_timeline_screen_test.dart: carregamento stream de encounters nunca resolve → skeleton, não tela vazia
+04:37 +636 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/patient_timeline_screen_test.dart: carregamento stream de encounters nunca resolve → skeleton, não tela vazia
+04:37 +637 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/patient_timeline_screen_test.dart: carregamento stream de encounters nunca resolve → skeleton, não tela vazia
+04:37 +638 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/patient_timeline_screen_test.dart: carregamento stream de encounters nunca resolve → skeleton, não tela vazia
+04:37 +639 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/patient_timeline_screen_test.dart: carregamento stream de encounters nunca resolve → skeleton, não tela vazia
+04:37 +640 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/patient_timeline_screen_test.dart: carregamento stream de encounters nunca resolve → skeleton, não tela vazia
+04:37 +641 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/patient_timeline_screen_test.dart: carregamento stream de encounters nunca resolve → skeleton, não tela vazia
+04:37 +642 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/patient_timeline_screen_test.dart: carregamento stream de encounters nunca resolve → skeleton, não tela vazia
+04:37 +643 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/patient_timeline_screen_test.dart: carregamento stream de encounters nunca resolve → skeleton, não tela vazia
+04:37 +644 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/patient_timeline_screen_test.dart: carregamento stream de encounters nunca resolve → skeleton, não tela vazia
+04:37 +645 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/patient_timeline_screen_test.dart: carregamento stream de encounters nunca resolve → skeleton, não tela vazia
+04:37 +646 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/patient_timeline_screen_test.dart: carregamento stream de encounters nunca resolve → skeleton, não tela vazia
+04:37 +647 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/patient_timeline_screen_test.dart: carregamento stream de encounters nunca resolve → skeleton, não tela vazia
+04:37 +648 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/patient_timeline_screen_test.dart: carregamento stream de encounters nunca resolve → skeleton, não tela vazia
+04:37 +649 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/patient_timeline_screen_test.dart: carregamento stream de encounters nunca resolve → skeleton, não tela vazia
+04:38 +650 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/patient_timeline_screen_test.dart: erro stream de encounters falha → ErrorState com retry, não "vazio"
+04:38 +651 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/patient_timeline_screen_test.dart: erro stream de encounters falha → ErrorState com retry, não "vazio"
+04:38 +652 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/patient_timeline_screen_test.dart: erro stream de encounters falha → ErrorState com retry, não "vazio"
+04:38 +653 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/patient_timeline_screen_test.dart: erro stream de encounters falha → ErrorState com retry, não "vazio"
+04:38 +654 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/patient_timeline_screen_test.dart: erro stream de encounters falha → ErrorState com retry, não "vazio"
+04:38 +655 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/patient_timeline_screen_test.dart: erro stream de encounters falha → ErrorState com retry, não "vazio"
+04:38 +656 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/patient_timeline_screen_test.dart: erro stream de encounters falha → ErrorState com retry, não "vazio"
+04:38 +657 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/patient_timeline_screen_test.dart: erro stream de encounters falha → ErrorState com retry, não "vazio"
+04:38 +658 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/patient_timeline_screen_test.dart: erro stream de encounters falha → ErrorState com retry, não "vazio"
+04:38 +659 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/patient_timeline_screen_test.dart: erro stream de encounters falha → ErrorState com retry, não "vazio"
+04:38 +660 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/patient_timeline_screen_test.dart: erro stream de encounters falha → ErrorState com retry, não "vazio"
+04:38 +661 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/patient_timeline_screen_test.dart: erro stream de encounters falha → ErrorState com retry, não "vazio"
+04:38 +662 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/patient_timeline_screen_test.dart: erro stream de encounters falha → ErrorState com retry, não "vazio"
+04:38 +663 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/patient_timeline_screen_test.dart: erro stream de encounters falha → ErrorState com retry, não "vazio"
+04:39 +664 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/patient_timeline_screen_test.dart: erro stream de encounters falha → ErrorState com retry, não "vazio"
+04:39 +665 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/patient_timeline_screen_test.dart: erro stream de encounters falha → ErrorState com retry, não "vazio"
+04:39 +666 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/patient_timeline_screen_test.dart: erro stream de encounters falha → ErrorState com retry, não "vazio"
+04:39 +667 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/patient_timeline_screen_test.dart: erro stream de encounters falha → ErrorState com retry, não "vazio"
+04:39 +668 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/patient_timeline_screen_test.dart: erro stream de encounters falha → ErrorState com retry, não "vazio"
+04:39 +669 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/patient_timeline_screen_test.dart: erro stream de encounters falha → ErrorState com retry, não "vazio"
+04:39 +670 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/patient_timeline_screen_test.dart: erro stream de encounters falha → ErrorState com retry, não "vazio"
+04:39 +671 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/patient_timeline_screen_test.dart: erro stream de encounters falha → ErrorState com retry, não "vazio"
+04:39 +672 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/patient_timeline_screen_test.dart: erro stream de encounters falha → ErrorState com retry, não "vazio"
+04:39 +673 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/patient_timeline_screen_test.dart: erro stream de encounters falha → ErrorState com retry, não "vazio"
+04:39 +674 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/patient_timeline_screen_test.dart: erro stream de encounters falha → ErrorState com retry, não "vazio"
+04:39 +675 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/patient_timeline_screen_test.dart: erro stream de encounters falha → ErrorState com retry, não "vazio"
+04:39 +676 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/patient_timeline_screen_test.dart: erro stream de encounters falha → ErrorState com retry, não "vazio"
+04:39 +677 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/patient_timeline_screen_test.dart: erro stream de encounters falha → ErrorState com retry, não "vazio"
+04:39 +678 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/patient_timeline_screen_test.dart: erro stream de encounters falha → ErrorState com retry, não "vazio"
+04:39 +679 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/patient_timeline_screen_test.dart: erro stream de encounters falha → ErrorState com retry, não "vazio"
+04:39 +680 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/patient_timeline_screen_test.dart: erro stream de encounters falha → ErrorState com retry, não "vazio"
+04:39 +681 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/patient_timeline_screen_test.dart: erro stream de encounters falha → ErrorState com retry, não "vazio"
+04:39 +682 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/patient_timeline_screen_test.dart: erro stream de encounters falha → ErrorState com retry, não "vazio"
+04:39 +683 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/patient_timeline_screen_test.dart: erro stream de encounters falha → ErrorState com retry, não "vazio"
+04:39 +684 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/patient_timeline_screen_test.dart: erro stream de encounters falha → ErrorState com retry, não "vazio"
+04:39 +685 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/patient_timeline_screen_test.dart: filtro tocar "Crescimento" esconde evento de outro tipo
+04:41 +686 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/patient_timeline_screen_test.dart: filtro tocar "Crescimento" esconde evento de outro tipo
+04:41 +687 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/patient_timeline_screen_test.dart: filtro tocar "Crescimento" esconde evento de outro tipo
+04:41 +688 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/patient_timeline_screen_test.dart: filtro tocar "Crescimento" esconde evento de outro tipo
+04:41 +689 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/patient_timeline_screen_test.dart: filtro tocar "Crescimento" esconde evento de outro tipo
+04:41 +690 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/patient_timeline_screen_test.dart: filtro tocar "Crescimento" esconde evento de outro tipo
+04:41 +691 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/patient_timeline_screen_test.dart: filtro tocar "Crescimento" esconde evento de outro tipo
+04:41 +692 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/patient_timeline_screen_test.dart: filtro tocar "Crescimento" esconde evento de outro tipo
+04:41 +693 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/patient_timeline_screen_test.dart: filtro tocar "Crescimento" esconde evento de outro tipo
+04:41 +694 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/patient_timeline_screen_test.dart: filtro tocar "Crescimento" esconde evento de outro tipo
+04:41 +695 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/patient_timeline_screen_test.dart: filtro tocar "Crescimento" esconde evento de outro tipo
+04:41 +696 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/patient_timeline_screen_test.dart: filtro tocar "Crescimento" esconde evento de outro tipo
+04:41 +697 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/patient_timeline_screen_test.dart: filtro tocar "Crescimento" esconde evento de outro tipo
+04:41 +698 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/patient_timeline_screen_test.dart: filtro tocar "Crescimento" esconde evento de outro tipo
+04:41 +699 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/patient_timeline_screen_test.dart: filtro tocar "Crescimento" esconde evento de outro tipo
+04:41 +700 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/patient_timeline_screen_test.dart: filtro tocar "Crescimento" esconde evento de outro tipo
+04:41 +701 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/patient_timeline_screen_test.dart: filtro tocar "Crescimento" esconde evento de outro tipo
+04:41 +702 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/patient_timeline_screen_test.dart: filtro tocar "Crescimento" esconde evento de outro tipo
+04:41 +703 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/patient_timeline_screen_test.dart: filtro tocar "Crescimento" esconde evento de outro tipo
+04:43 +704 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/routine/sleep_log_test.dart: tipo de sono escolhido pela família prevalece
+04:43 +705 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/routine/sleep_log_test.dart: tipo de sono sem escolha: noite longa ou em andamento vira noturno
+04:43 +706 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/routine/sleep_log_test.dart: tipo de sono noite de madrugada conta para o dia anterior
+04:43 +707 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/routine/sleep_log_test.dart: resumo por dia e por semana dia soma a noite que começou nele e os cochilos
+04:43 +708 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/routine/sleep_log_test.dart: resumo por dia e por semana semana: médias só entre dias com registro
+04:43 +709 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/routine/sleep_log_test.dart: resumo por dia e por semana semana vazia diz que não há registro
+04:43 +710 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/routine/sleep_log_test.dart: linha do tempo sono que atravessa a meia-noite vira dois trechos
+04:43 +711 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/routine/sleep_log_test.dart: linha do tempo sono em andamento vai até agora
+04:43 +712 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/routine/sleep_log_test.dart: despertares no diário descrição, validação e histórico
+04:43 +713 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/routine/sleep_log_test.dart: despertares no diário correção compara despertares
+04:44 +714 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/rx_templates_test.dart: dose pelo peso é refeita para cada criança, com a conta
+04:44 +715 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/rx_templates_test.dart: sem peso a dose não é calculada e a receita não pode ser revisada
+04:44 +716 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/rx_templates_test.dart: conferência dos nove campos é exigida antes da revisão
+04:44 +717 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/rx_templates_test.dart: item sem campo da conferência preenchido continua pendente
+04:44 +718 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/rx_templates_test.dart: peso atualizado depois do rascunho exige recalcular
+04:44 +719 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/rx_templates_test.dart: alergia bloqueia a dose pelo peso e alerta nos itens manuais
+04:44 +720 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/rx_templates_test.dart: modelo a partir de receita não guarda a dose da outra criança
+04:44 +721 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/rx_templates_test.dart: editar o modelo cria versão e não muda a receita já emitida
+04:44 +722 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/rx_templates_test.dart: duplicar, buscar e validar
+04:45 +723 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/scheduling/follow_up_test.dart: inativo sem consulta há mais de N meses e sem consulta futura
+04:45 +724 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/scheduling/follow_up_test.dart: inativo NÃO é inativo quem já tem consulta futura marcada
+04:45 +725 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/scheduling/follow_up_test.dart: inativo consulta futura já passada não protege
+04:45 +726 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/scheduling/follow_up_test.dart: inativo consulta de hoje já no horário continua protegendo
+04:45 +727 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/scheduling/follow_up_test.dart: inativo critério configurável muda a classificação
+04:45 +728 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/scheduling/follow_up_test.dart: inativo sem nenhuma consulta não vira inativo
+04:45 +729 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/scheduling/follow_up_test.dart: inativo usa a consulta mais recente, fora de ordem
+04:45 +730 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/scheduling/follow_up_test.dart: frequente conta consultas no período padrão (12 meses)
+04:45 +731 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/scheduling/follow_up_test.dart: frequente filtro de período do painel
+04:45 +732 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/scheduling/follow_up_test.dart: retorno próximo faltam até N dias
+04:45 +733 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/scheduling/follow_up_test.dart: retorno próximo longe demais não entra; critério maior entra
+04:45 +734 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/scheduling/follow_up_test.dart: retorno próximo vencido sem agendamento entra; vencido já agendado não
+04:45 +735 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/scheduling/follow_up_test.dart: contagem por indicador
+04:45 +736 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/scheduling/follow_up_test.dart: validação dos critérios
+04:45 +737 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/scheduling/follow_up_test.dart: subtractMonths ajusta fim de mês
+04:46 +738 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/scheduling/reminders_test.dart: quando enviar nada antes do primeiro horário
+04:46 +739 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/scheduling/reminders_test.dart: quando enviar envia o de 48 h quando chega a hora
+04:46 +740 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/scheduling/reminders_test.dart: quando enviar vários vencidos: só o mais próximo da consulta
+04:46 +741 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/scheduling/reminders_test.dart: quando enviar não repete e não envia depois do início
+04:46 +742 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/scheduling/reminders_test.dart: consentimento e preferência com consentimento e WhatsApp preferido: envia
+04:46 +743 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/scheduling/reminders_test.dart: consentimento e preferência sem consentimento: não envia
+04:46 +744 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/scheduling/reminders_test.dart: consentimento e preferência preferência por ligação: não envia pelo WhatsApp
+04:46 +745 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/scheduling/reminders_test.dart: consentimento e preferência telefone inválido
+04:46 +746 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/scheduling/reminders_test.dart: texto discreto: sem motivo, sem sobrenome, com opções
+04:46 +747 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/scheduling/reminders_test.dart: payload dos botões
+04:46 +748 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/scheduling/reminders_test.dart: configuração dos intervalos
+04:47 +749 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/scheduling/slots_assistant_test.dart: horários disponíveis respeita antecedência mínima e o agendamento existente
+04:47 +750 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/scheduling/slots_assistant_test.dart: horários disponíveis bloqueio de agenda (congresso na quarta de manhã)
+04:47 +751 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/scheduling/slots_assistant_test.dart: horários disponíveis duração cabe na faixa de atendimento
+04:47 +752 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/scheduling/slots_assistant_test.dart: horários disponíveis mesma criança não fica com duas consultas sobrepostas
+04:47 +753 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/scheduling/slots_assistant_test.dart: horários disponíveis reagendamento ignora o próprio horário
+04:47 +754 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/scheduling/slots_assistant_test.dart: horários disponíveis regras de reagendar e cancelar
+04:47 +755 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/scheduling/slots_assistant_test.dart: horários disponíveis duração por tipo reaproveita a regra da agenda real
+04:47 +756 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/scheduling/slots_assistant_test.dart: urgência e texto livre sinais de alerta
+04:47 +757 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/scheduling/slots_assistant_test.dart: urgência e texto livre orientação não traz diagnóstico
+04:47 +758 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/scheduling/slots_assistant_test.dart: urgência e texto livre intenção, período e dias
+04:47 +759 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/scheduling/slots_assistant_test.dart: conversa agenda só após confirmação explícita
+04:47 +760 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/scheduling/slots_assistant_test.dart: conversa próxima semana busca a partir da segunda seguinte
+04:47 +761 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/scheduling/slots_assistant_test.dart: conversa frase completa preenche vários dados de uma vez
+04:47 +762 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/scheduling/slots_assistant_test.dart: conversa puericultura é só presencial
+04:47 +763 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/scheduling/slots_assistant_test.dart: conversa horário ocupado na confirmação: oferece outros
+04:47 +764 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/scheduling/slots_assistant_test.dart: conversa urgência interrompe e orienta, sem gravar
+04:47 +765 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/scheduling/slots_assistant_test.dart: conversa remarcar e cancelar dentro das regras
+04:47 +766 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/scheduling/slots_assistant_test.dart: conversa fora do prazo vai para a recepção
+04:47 +767 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/scheduling/slots_assistant_test.dart: conversa não entendeu duas vezes: oferece a recepção
+04:48 +768 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/security_audit_models_test.dart: classifyAuditSeverity critical actions
+04:48 +769 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/security_audit_models_test.dart: classifyAuditSeverity warning for export
+04:48 +770 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/security_audit_models_test.dart: classifyAuditSeverity info default
+04:48 +771 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/security_audit_models_test.dart: redactAuditJson redacts password and token keys
+04:48 +772 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/security_audit_models_test.dart: redactAuditJson SecurityAuditEvent.fromMap applies redaction
+04:49 +773 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/shared/domain/clinic_organization_test.dart: ClinicRole RBAC physician can access chart and agenda
+04:49 +774 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/shared/domain/clinic_organization_test.dart: ClinicRole RBAC receptionist manages agenda but not chart write flags
+04:49 +775 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/shared/domain/clinic_organization_test.dart: ClinicRole RBAC finance role is isolated
+04:49 +776 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/shared/domain/clinic_organization_test.dart: ClinicRole RBAC clinicAdmin has staff and finance
+04:49 +777 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/shared/domain/clinic_organization_test.dart: ClinicRole RBAC inventory RBAC helpers
+04:49 +778 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/shared/domain/clinic_organization_test.dart: ClinicMembership unit admin getters global clinic admin
+04:49 +779 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/shared/domain/clinic_organization_test.dart: ClinicMembership unit admin getters local unit admin
+04:49 +780 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/shared/domain/clinic_organization_test.dart: serialization ClinicOrganization roundtrip
+04:49 +781 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/shared/domain/clinic_organization_test.dart: serialization ClinicMembership roundtrip
+04:49 +782 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/shared/domain/clinic_organization_test.dart: serialization empty clinicName falls back to clinicId for display
+04:50 +783 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/sync_conflict_test.dart: estratégia por entidade medição mantém as duas versões
+04:50 +784 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/sync_conflict_test.dart: estratégia por entidade vacina prefere o registro mais antigo
+04:50 +785 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/sync_conflict_test.dart: estratégia por entidade cadastro mescla campo a campo
+04:50 +786 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/sync_conflict_test.dart: estratégia por entidade entidade desconhecida cai no último recurso
+04:50 +787 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/sync_conflict_test.dart: mesclagem de cadastro edições em campos diferentes não são conflito
+04:50 +788 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/sync_conflict_test.dart: mesclagem de cadastro listas são unidas — nenhuma alergia se perde
+04:50 +789 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/sync_conflict_test.dart: mesclagem de cadastro lista sem novidade não duplica
+04:50 +790 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/sync_conflict_test.dart: mesclagem de cadastro mesmo campo com valores diferentes vira conflito registrado
+04:50 +791 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/sync_conflict_test.dart: mesclagem de cadastro campos do servidor não são sobrescritos pelo cliente
+04:50 +792 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/sync_conflict_test.dart: vacina: data mais antiga prevalece só o servidor marcou: a marcação vence
+04:50 +793 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/sync_conflict_test.dart: vacina: data mais antiga prevalece só o local marcou: a marcação vence
+04:50 +794 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/sync_conflict_test.dart: vacina: data mais antiga prevalece servidor tem data anterior: descarta o local
+04:50 +795 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/sync_conflict_test.dart: vacina: data mais antiga prevalece local tem data anterior: prevalece
+04:50 +796 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/sync_conflict_test.dart: vacina: data mais antiga prevalece mesma data não é conflito
+04:50 +797 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/sync_conflict_test.dart: vacina: data mais antiga prevalece nenhum dos dois marcou
+04:50 +798 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/sync_conflict_test.dart: medição mantém ambas não descarta a versão local
+04:50 +799 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/sync_conflict_test.dart: espera entre tentativas primeira tentativa não espera
+04:50 +800 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/sync_conflict_test.dart: espera entre tentativas cresce exponencialmente
+04:50 +801 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/sync_conflict_test.dart: espera entre tentativas respeita o teto de 30 minutos
+04:50 +802 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/sync_conflict_test.dart: espera entre tentativas o ruído só diminui a espera, nunca aumenta
+04:50 +803 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/sync_conflict_test.dart: espera entre tentativas o ruído não reduz mais que 25%
+04:50 +804 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/sync_conflict_test.dart: espera entre tentativas sem tentativa anterior está sempre pronto
+04:50 +805 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/sync_conflict_test.dart: espera entre tentativas espera cumprida libera nova tentativa
+04:50 +806 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/sync_conflict_test.dart: histórico de sincronização ida e volta pela linha do banco
+04:50 +807 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/sync_conflict_test.dart: histórico de sincronização lista vazia de conflitos sobrevive à serialização
+04:50 +808 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/sync_conflict_test.dart: histórico de sincronização resultados que merecem atenção do usuário
+04:51 +809 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/sync_integration_test.dart: dois aparelhos editando o cadastro da criança edições em campos diferentes convivem
+04:51 +810 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/sync_integration_test.dart: dois aparelhos editando o cadastro da criança alergias registradas em aparelhos diferentes se somam
+04:51 +811 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/sync_integration_test.dart: dois aparelhos editando o cadastro da criança mesmo campo divergente registra o conflito
+04:51 +812 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/sync_integration_test.dart: vacina marcada nos dois aparelhos a data mais antiga prevalece
+04:51 +813 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/sync_integration_test.dart: medições feitas offline nos dois aparelhos nenhuma é descartada
+04:51 +814 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/sync_integration_test.dart: recuperação após perda de conexão a fila drena em ordem quando a rede volta
+04:51 +815 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/sync_integration_test.dart: recuperação após perda de conexão item que nunca passa é abandonado e registrado
+04:52 +816 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/tenant_scope_test.dart: requireClinicAccess same clinic ok
+04:52 +817 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/tenant_scope_test.dart: requireClinicAccess cross clinic deny
+04:52 +818 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/tenant_scope_test.dart: assertSameClinic legacy doc without clinicId ok
+04:52 +819 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/tenant_scope_test.dart: assertSameClinic matching clinic ok
+04:52 +820 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/tenant_scope_test.dart: assertSameClinic cross clinic deny
+04:52 +821 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/tenant_scope_test.dart: canAccessUnit clinicAdmin empty unitIds allows any unit
+04:52 +822 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/tenant_scope_test.dart: canAccessUnit scoped finance allows assigned unit only
+04:52 +823 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/tenant_scope_test.dart: canAccessUnit doc without unitId allowed when member
+04:52 +824 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/tenant_scope_test.dart: requireTransferUnits allows transfer between accessible units
+04:52 +825 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/tenant_scope_test.dart: requireTransferUnits denies destination outside scope
+04:52 +826 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/tenant_scope_test.dart: requireTransferUnits global admin can reach any unit
+04:52 +827 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/tenant_scope_test.dart: stampLedgerMap adds clinicId without overriding
+04:52 +828 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/tenant_scope_test.dart: stampLedgerMap stamps clinicId when missing
+04:54 +829 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/ui_smoke_test.dart: LoginScreen mostra Bem-vinda e Entrar
+04:55 +830 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/ui_smoke_test.dart: LoginScreen mostra Bem-vinda e Entrar
+04:55 +831 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/ui_smoke_test.dart: LoginScreen mostra Bem-vinda e Entrar
+04:55 +832 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/ui_smoke_test.dart: LoginScreen mostra Bem-vinda e Entrar
+04:55 +833 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/ui_smoke_test.dart: LoginScreen mostra Bem-vinda e Entrar
+04:55 +834 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/ui_smoke_test.dart: LoginScreen mostra Bem-vinda e Entrar
+04:55 +835 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/ui_smoke_test.dart: LoginScreen mostra Bem-vinda e Entrar
+04:55 +836 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/ui_smoke_test.dart: LoginScreen mostra Bem-vinda e Entrar
+04:55 +837 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/ui_smoke_test.dart: LoginScreen mostra Bem-vinda e Entrar
+04:55 +838 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/ui_smoke_test.dart: LoginScreen mostra Bem-vinda e Entrar
+04:55 +839 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/ui_smoke_test.dart: LoginScreen mostra Bem-vinda e Entrar
+04:55 +840 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/ui_smoke_test.dart: LoginScreen mostra Bem-vinda e Entrar
+04:56 +841 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/ui_smoke_test.dart: LoginScreen mostra Bem-vinda e Entrar
+04:56 +842 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/ui_smoke_test.dart: LoginScreen mostra Bem-vinda e Entrar
+04:56 +843 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/ui_smoke_test.dart: LoginScreen mostra Bem-vinda e Entrar
+04:56 +844 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/ui_smoke_test.dart: LoginScreen mostra Bem-vinda e Entrar
+04:56 +845 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/ui_smoke_test.dart: LoginScreen mostra Bem-vinda e Entrar
+04:56 +846 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/ui_smoke_test.dart: LoginScreen mostra Bem-vinda e Entrar
+04:56 +847 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/ui_smoke_test.dart: LoginScreen mostra Bem-vinda e Entrar
+04:56 +848 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/ui_smoke_test.dart: LoginScreen mostra Bem-vinda e Entrar
+04:56 +849 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/ui_smoke_test.dart: LoginScreen mostra Bem-vinda e Entrar
+04:57 +850 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/ui_smoke_test.dart: HomeScreen com DevMode monta Scaffold
+04:59 +851 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/ui_smoke_test.dart: HomeScreen com DevMode monta Scaffold
+04:59 +852 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/ui_smoke_test.dart: HomeScreen com DevMode monta Scaffold
+04:59 +853 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/ui_smoke_test.dart: HomeScreen com DevMode monta Scaffold
+04:59 +854 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/ui_smoke_test.dart: HomeScreen com DevMode monta Scaffold
+04:59 +855 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/ui_smoke_test.dart: HomeScreen com DevMode monta Scaffold
+05:01 +856 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/voice_review_screen_test.dart: Ignorar grava a recusa para a confirmacao final
+05:02 +857 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/voice_review_screen_test.dart: Ignorar grava a recusa para a confirmacao final
+05:02 +858 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/voice_review_screen_test.dart: Ignorar grava a recusa para a confirmacao final
+05:02 +859 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/voice_review_screen_test.dart: Ignorar grava a recusa para a confirmacao final
+05:02 +860 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/voice_review_screen_test.dart: Ignorar grava a recusa para a confirmacao final
+05:02 +861 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/voice_review_screen_test.dart: Ignorar grava a recusa para a confirmacao final
+05:02 +862 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/voice_review_screen_test.dart: Ignorar grava a recusa para a confirmacao final
+05:02 +863 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/voice_review_screen_test.dart: Ignorar grava a recusa para a confirmacao final
+05:02 +864 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/voice_review_screen_test.dart: Ignorar grava a recusa para a confirmacao final
+05:02 +865 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/voice_review_screen_test.dart: Ignorar grava a recusa para a confirmacao final
+05:02 +866 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/voice_review_screen_test.dart: Ignorar grava a recusa para a confirmacao final
+05:02 +867 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/voice_review_screen_test.dart: Ignorar grava a recusa para a confirmacao final
+05:02 +867 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/wellchild/well_child_test.dart: PDF do resumo com logomarca: a imagem entra no cabeçalho
+Helvetica-Bold has no Unicode support see https://github.com/DavBfr/dart_pdf/wiki/Fonts-Management
+Helvetica has no Unicode support see https://github.com/DavBfr/dart_pdf/wiki/Fonts-Management
+05:02 +868 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/voice_review_screen_test.dart: Ignorar grava a recusa para a confirmacao final
+05:02 +868 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/wellchild/well_child_test.dart: PDF do resumo sem logomarca: identidade padrão, sem imagem
+Helvetica-Bold has no Unicode support see https://github.com/DavBfr/dart_pdf/wiki/Fonts-Management
+Helvetica has no Unicode support see https://github.com/DavBfr/dart_pdf/wiki/Fonts-Management
+05:02 +869 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/voice_review_screen_test.dart: Ignorar grava a recusa para a confirmacao final
+05:02 +870 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/voice_review_screen_test.dart: Ignorar grava a recusa para a confirmacao final
+05:05 +871 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/voice_review_screen_test.dart: Ignorar grava a recusa para a confirmacao final
+05:05 +872 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/voice_review_screen_test.dart: Ignorar grava a recusa para a confirmacao final
+05:05 +873 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/voice_review_screen_test.dart: Ignorar grava a recusa para a confirmacao final
+05:05 +874 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/voice_review_screen_test.dart: Ignorar grava a recusa para a confirmacao final
+05:05 +875 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/voice_review_screen_test.dart: Ignorar grava a recusa para a confirmacao final
+05:05 +876 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/voice_review_screen_test.dart: Ignorar grava a recusa para a confirmacao final
+05:05 +877 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/voice_review_screen_test.dart: Ignorar grava a recusa para a confirmacao final
+05:05 +878 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/voice_review_screen_test.dart: Ignorar grava a recusa para a confirmacao final
+05:05 +879 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/who_reference_test.dart: classificação entre -2 e +1 é adequado
+05:05 +880 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/who_reference_test.dart: classificação abaixo de -2 é peso baixo
+05:05 +881 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/who_reference_test.dart: classificação abaixo de -3 é peso muito baixo
+05:05 +882 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/who_reference_test.dart: classificação faixas fora do adequado pedem atenção
+05:05 +883 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/who_reference_test.dart: curva de referência produz pontos ao longo de toda a faixa pedida
+05:05 +884 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/who_reference_test.dart: (tearDownAll)
+05:05 +884 -1: loading C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/widget_test.dart
+05:06 +884 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/widget_test.dart: DevMode permanece ativo em debug
+05:07 +885 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/workspace_profile_test.dart: paciente so recebe workspace patient
+05:07 +886 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/workspace_profile_test.dart: admin plataforma so recebe admin
+05:07 +887 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/workspace_profile_test.dart: recepcionista nao recebe prontuario
+05:07 +888 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/workspace_profile_test.dart: clinicAdmin recebe tres areas clinicas
+05:07 +889 -1: C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/workspace_profile_test.dart: rota: recepcao ativa bloqueia pacientes
+05:07 +890 -1: Some tests failed.
+
+Failing tests:
+  C:/Users/Lenovo/Desktop/pediatria360/p360-demo/test/closed_test_feature_flags_test.dart: Closed-test feature flags Termos e Privacidade nao sao URLs inventadas vazias
+exit=1

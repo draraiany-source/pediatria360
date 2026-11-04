@@ -13,14 +13,22 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_icons.dart';
 import '../../../core/widgets/app_icon.dart';
 import '../../../core/theme/app_tokens.dart';
+import '../../../core/utils/clinical_access.dart' show guestSessionFailure;
 import '../../../core/utils/result.dart';
 import '../../../core/utils/validators.dart';
 import '../../../core/widgets/app_widgets.dart';
 import '../../../core/widgets/clinical_ui.dart';
 import '../../../core/widgets/skeleton.dart';
+import '../../../core/widgets/feature_unavailable.dart';
 import '../../../core/widgets/state_views.dart';
+import '../../../core/config/app_assets.dart';
+import '../../../core/config/capi_pose.dart';
+import '../../../shared/domain/entities/app_user.dart';
+import '../../../shared/domain/entities/clinic_organization.dart';
 import '../../../shared/domain/entities/commerce.dart';
 import '../../auth/presentation/providers/auth_providers.dart';
+import '../../clinic_org/presentation/providers/clinic_org_providers.dart'
+    show activeClinicMembershipProvider;
 import '../data/telemedicine_repository.dart';
 import 'screens/pre_visit_questionnaire_form_screen.dart';
 
@@ -49,20 +57,35 @@ final StreamProvider<List<Appointment>> myAgendaProvider =
   if (DevMode.isEnabled &&
       ref.watch(firebaseAuthProvider).currentUser == null) {
     return Stream<List<Appointment>>.error(
-      const PermissionFailure(
-        'Modo demonstração: entre com conta profissional verificada '
-        'para carregar a agenda real.',
-      ),
+      guestSessionFailure('As consultas da agenda real'),
     );
   }
-  final String? uid = ref.watch(currentUserProvider)?.uid;
-  if (uid == null) {
+  final AppUser? user = ref.watch(currentUserProvider);
+  if (user == null) {
     return Stream<List<Appointment>>.value(const <Appointment>[]);
+  }
+  // Recepção e equipe de apoio não atendem: a agenda delas é a da clínica.
+  final ClinicMembership? membership =
+      ref.watch(activeClinicMembershipProvider);
+  if (!user.role.isProfessional &&
+      membership != null &&
+      membership.active &&
+      _clinicAgendaRoles.contains(membership.role)) {
+    return ref
+        .watch(telemedicineRepositoryProvider)
+        .watchClinicAgenda(membership.clinicId);
   }
   return ref
       .watch(telemedicineRepositoryProvider)
-      .watchProfessionalAgenda(uid);
+      .watchProfessionalAgenda(user.uid);
 });
+
+const Set<ClinicRole> _clinicAgendaRoles = <ClinicRole>{
+  ClinicRole.clinicAdmin,
+  ClinicRole.receptionist,
+  ClinicRole.nursing,
+  ClinicRole.technician,
+};
 
 /// A disponibilidade semanal do próprio profissional — carregada uma vez
 /// por acesso à tela; quem editar chama `setWeeklyAvailability` e invalida
@@ -246,6 +269,15 @@ class TelemedicineScreen extends ConsumerWidget {
                   ),
                 ),
                 const SizedBox(height: AppSpacing.lg),
+                if (!AppConfig.videoConsultationEnabled)
+                  const Padding(
+                    padding: EdgeInsets.only(bottom: AppSpacing.md),
+                    child: FeatureOffBanner(
+                      text:
+                          'Telemedicina em prototipo: a sala de video ainda '
+                          'nao esta disponivel ponta a ponta nesta versao.',
+                    ),
+                  ),
                 // O aviso vem primeiro, antes de qualquer opção de agendar.
                 // Quem abre telemedicina com uma criança passando mal precisa
                 // ler isto antes de esperar por um horário.
@@ -347,8 +379,9 @@ class TelemedicineScreen extends ConsumerWidget {
                   ),
                   data: (List<ProfessionalProfile> list) {
                     if (list.isEmpty) {
-                      return const EmptyState(
+                      return EmptyState(
                         icon: Icons.medical_services_outlined,
+                        illustration: AppAssets.capiForPose(CapiPose.boasVindas),
                         title: 'Nenhum profissional disponível',
                         message: 'Os atendentes aparecem aqui depois que a '
                             'equipe verificar o registro profissional.',
@@ -464,12 +497,64 @@ class _AppointmentCard extends ConsumerWidget {
                       style: TextButton.styleFrom(
                         foregroundColor: AppColors.brand,
                       ),
-                      onPressed: () => ref
-                          .read(telemedicineRepositoryProvider)
-                          .cancel(appointment.id),
+                      onPressed: () async {
+                        final Result<void> r = await ref
+                            .read(telemedicineRepositoryProvider)
+                            .cancel(appointment.id);
+                        if (!context.mounted) return;
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(
+                              r.fold(
+                                (_) => 'Consulta cancelada.',
+                                (Failure f) => f.message,
+                              ),
+                            ),
+                          ),
+                        );
+                      },
                       child: const Text('Cancelar'),
                     ),
                 ],
+              ),
+            if (appointment.status == AppointmentStatus.awaitingConfirmation)
+              Padding(
+                padding: const EdgeInsets.only(top: AppSpacing.sm),
+                child: FilledButton.icon(
+                  onPressed: () async {
+                    final Result<void> r = await ref
+                        .read(telemedicineRepositoryProvider)
+                        .confirm(appointment.id);
+                    if (!context.mounted) return;
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(
+                          r.fold(
+                            (_) => 'Presença confirmada.',
+                            (Failure f) => f.message,
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                  icon: const Icon(Icons.check_rounded, size: 18),
+                  label: const Text('Confirmar presença'),
+                ),
+              ),
+            // Consulta da clínica: pré-consulta com modelo por especialidade
+            // e idade, rascunho e versões (Function startAnamnesis).
+            if (appointment.childId != null &&
+                appointment.clinicId != null &&
+                appointment.status.isActive &&
+                appointment.status != AppointmentStatus.inProgress)
+              Padding(
+                padding: const EdgeInsets.only(top: AppSpacing.sm),
+                child: OutlinedButton.icon(
+                  onPressed: () =>
+                      context.push(Routes.familyAnamnesis(appointment.id)),
+                  icon: const Icon(Icons.assignment_outlined, size: 18),
+                  label: const Text('Pré-consulta (anamnese)'),
+                ),
               ),
             // Só enquanto a regra do servidor ainda aceita escrita — a
             // mesma janela (requested/confirmed) que
@@ -477,6 +562,7 @@ class _AppointmentCard extends ConsumerWidget {
             // o botão fora dessa janela levaria a um envio que a regra
             // rejeitaria, sem explicação nenhuma pra família.
             if (appointment.childId != null &&
+                appointment.clinicId == null &&
                 (appointment.status == AppointmentStatus.requested ||
                     appointment.status == AppointmentStatus.confirmed))
               Padding(

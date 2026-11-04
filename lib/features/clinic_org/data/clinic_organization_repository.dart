@@ -32,6 +32,7 @@ class ClinicOrganizationRepository {
         logoUrl: clinic.logoUrl,
         active: clinic.active,
         plan: clinic.plan,
+        ownerUserId: ownerUserId,
         createdAt: clinic.createdAt,
       );
       await _db.doc(ClinicPaths.clinic(id)).set(saved.toMap());

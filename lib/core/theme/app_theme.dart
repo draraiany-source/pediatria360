@@ -36,16 +36,12 @@ class AppTheme {
       primaryContainer: isDark ? AppColors.darkSurfaceAlt : AppColors.softBlue,
       onPrimaryContainer: isDark ? AppColors.darkInk : AppColors.navy,
       secondary: AppColors.teal,
-      onSecondary: Colors.white,
-      secondaryContainer: isDark
-          ? const Color(0xFF0D3D38)
-          : AppColors.softTeal,
+      onSecondary: isDark ? Colors.white : AppColors.navy,
+      secondaryContainer: isDark ? const Color(0xFF0D3D38) : AppColors.softTeal,
       onSecondaryContainer: isDark ? AppColors.darkInk : AppColors.tealDeep,
       tertiary: AppColors.moduleLibrary,
       onTertiary: Colors.white,
-      tertiaryContainer: isDark
-          ? const Color(0xFF2A2150)
-          : AppColors.softLilac,
+      tertiaryContainer: isDark ? const Color(0xFF2A2150) : AppColors.softLilac,
       onTertiaryContainer: isDark ? AppColors.darkInk : AppColors.navy,
       error: AppColors.danger,
       onError: Colors.white,
@@ -92,11 +88,12 @@ class AppTheme {
         },
       ),
       appBarTheme: AppBarTheme(
-        backgroundColor: background,
+        backgroundColor: isDark ? background : surface,
         surfaceTintColor: Colors.transparent,
         foregroundColor: ink,
         elevation: 0,
         scrolledUnderElevation: 0.5,
+        shape: isDark ? null : Border(bottom: BorderSide(color: line)),
         centerTitle: false,
         titleTextStyle: text.titleLarge,
         systemOverlayStyle: isDark
@@ -111,7 +108,7 @@ class AppTheme {
         margin: EdgeInsets.zero,
         shape: RoundedRectangleBorder(
           borderRadius: AppRadius.mdAll,
-          side: BorderSide(color: line.withValues(alpha: 0.55)),
+          side: BorderSide(color: isDark ? line.withValues(alpha: 0.55) : line),
         ),
       ),
       dividerTheme: DividerThemeData(color: line, thickness: 1, space: 1),
@@ -127,7 +124,12 @@ class AppTheme {
         style: OutlinedButton.styleFrom(
           minimumSize: const Size(64, 52),
           foregroundColor: scheme.primary,
-          side: BorderSide(color: scheme.primary.withValues(alpha: 0.4)),
+          side: BorderSide(
+            color: isDark
+                ? scheme.primary.withValues(alpha: 0.6)
+                : scheme.primary,
+            width: 1.5,
+          ),
           padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl),
           shape: const RoundedRectangleBorder(borderRadius: AppRadius.pillAll),
           textStyle: text.labelLarge,
@@ -185,7 +187,9 @@ class AppTheme {
       navigationBarTheme: NavigationBarThemeData(
         backgroundColor: surface,
         surfaceTintColor: Colors.transparent,
-        indicatorColor: scheme.primaryContainer,
+        indicatorColor: isDark
+            ? scheme.primaryContainer
+            : AppColors.brandIndicator,
         indicatorShape: const RoundedRectangleBorder(
           borderRadius: AppRadius.pillAll,
         ),
@@ -193,15 +197,32 @@ class AppTheme {
         labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
         labelTextStyle: WidgetStateProperty.resolveWith(
           (Set<WidgetState> states) => states.contains(WidgetState.selected)
-              ? text.labelMedium!.copyWith(color: scheme.primary)
+              ? text.labelMedium!.copyWith(
+                  color: isDark ? scheme.primary : AppColors.navy,
+                  fontWeight: FontWeight.w800,
+                )
               : text.labelMedium!.copyWith(color: muted),
+        ),
+        iconTheme: WidgetStateProperty.resolveWith(
+          (Set<WidgetState> states) => IconThemeData(
+            color: states.contains(WidgetState.selected)
+                ? (isDark ? scheme.primary : AppColors.navy)
+                : muted,
+          ),
         ),
       ),
       navigationRailTheme: NavigationRailThemeData(
         backgroundColor: surface,
-        indicatorColor: scheme.primaryContainer,
+        indicatorColor: isDark
+            ? scheme.primaryContainer
+            : AppColors.brandIndicator,
+        selectedIconTheme: IconThemeData(
+          color: isDark ? scheme.primary : AppColors.navy,
+        ),
+        unselectedIconTheme: IconThemeData(color: muted),
         selectedLabelTextStyle: text.labelMedium!.copyWith(
-          color: scheme.primary,
+          color: isDark ? scheme.primary : AppColors.navy,
+          fontWeight: FontWeight.w800,
         ),
         unselectedLabelTextStyle: text.labelMedium!.copyWith(color: muted),
       ),

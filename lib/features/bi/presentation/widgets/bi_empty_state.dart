@@ -9,11 +9,13 @@ class BiEmptyState extends StatelessWidget {
     required this.title,
     this.subtitle,
     this.icon = Icons.insights_outlined,
+    this.illustration,
   });
 
   final String title;
   final String? subtitle;
   final IconData icon;
+  final String? illustration;
 
   @override
   Widget build(BuildContext context) {
@@ -24,7 +26,14 @@ class BiEmptyState extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: <Widget>[
-            Icon(icon, size: 48, color: AppColors.navy.withValues(alpha: 0.4)),
+            if (illustration != null)
+              Image.asset(
+                illustration!,
+                height: 120,
+                fit: BoxFit.contain,
+              )
+            else
+              Icon(icon, size: 48, color: AppColors.navy.withValues(alpha: 0.4)),
             const SizedBox(height: AppSpacing.md),
             Text(
               title,
