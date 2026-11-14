@@ -80,6 +80,9 @@ class AppConfig {
   static const String emulatorHost =
       String.fromEnvironment('EMULATOR_HOST', defaultValue: 'localhost');
 
+  static const int firestoreEmulatorPort =
+      int.fromEnvironment('FIRESTORE_EMULATOR_PORT', defaultValue: 8080);
+
   /// Projeto usado só com os emuladores (ex.: `demo-pediatria360`). Projetos
   /// `demo-*` não alcançam recursos reais do Google (segredos, envio).
   static const String emulatorProjectId =

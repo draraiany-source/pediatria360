@@ -466,6 +466,8 @@ class TelemedicineRepository {
     required DateTime startsAt,
     String? childId,
     String? reason,
+    String? clinicId,
+    AppointmentType? type,
   }) =>
       guard(() async {
         final HttpsCallableResult<dynamic> response =
@@ -475,6 +477,8 @@ class TelemedicineRepository {
             'startsAt': startsAt.toUtc().toIso8601String(),
             if (childId != null) 'childId': childId,
             if (reason != null) 'reason': reason,
+            if (clinicId != null) 'clinicId': clinicId,
+            if (type != null) 'appointmentType': type.name,
           },
         );
 

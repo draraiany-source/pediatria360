@@ -75,6 +75,7 @@ import '../../features/library/presentation/screens/content_detail_screen.dart';
 import '../../features/library/presentation/screens/library_screen.dart';
 import '../../features/shop/presentation/screens/shop_screens.dart';
 import '../../features/telemedicine/presentation/professional_agenda_screen.dart';
+import '../../features/telemedicine/presentation/screens/booking_screens.dart';
 import '../../features/telemedicine/presentation/telemedicine_screen.dart';
 import '../../features/shell/presentation/screens/profile_tab.dart';
 import '../../features/tools/presentation/screens/tools_screen.dart';
@@ -343,7 +344,18 @@ final Provider<GoRouter> routerProvider = Provider<GoRouter>((Ref ref) {
         builder: (BuildContext context, GoRouterState state) =>
             const TelemedicineScreen(),
       ),
-
+      GoRoute(
+        path: Routes.familyBookingPath,
+        name: Routes.familyBookingName,
+        builder: (BuildContext context, GoRouterState state) =>
+            const FamilyBookingScreen(),
+      ),
+      GoRoute(
+        path: Routes.clinicBookingPath,
+        name: Routes.clinicBookingName,
+        builder: (BuildContext context, GoRouterState state) =>
+            const ClinicBookingScreen(),
+      ),
 
 
       GoRoute(

@@ -307,6 +307,31 @@ class TelemedicineScreen extends ConsumerWidget {
                     ],
                   ),
                 ),
+                if (ref.watch(currentUserProvider)?.role == UserRole.parent)
+                  Padding(
+                    padding: const EdgeInsets.only(top: AppSpacing.md),
+                    child: SurfaceCard(
+                      child: Row(
+                        children: <Widget>[
+                          Expanded(
+                            child: Text(
+                              'Consulta presencial na clínica que já atende '
+                              'vocês, com horários reais da agenda.',
+                              style: theme.textTheme.bodySmall,
+                            ),
+                          ),
+                          const SizedBox(width: AppSpacing.md),
+                          FilledButton.icon(
+                            key: const Key('family-book-open'),
+                            onPressed: () =>
+                                context.push(Routes.familyBookingPath),
+                            icon: const Icon(Icons.event_available_outlined),
+                            label: const Text('Agendar'),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
                 appointments.when(
                   loading: () =>
                       const SkeletonList(itemCount: 2, itemHeight: 72),

@@ -323,6 +323,12 @@ class _ProfessionalAgendaScreenState
               )
             : null,
         actions: <Widget>[
+          IconButton(
+            key: const Key('agenda-book'),
+            tooltip: 'Agendar consulta',
+            onPressed: () => context.push(Routes.clinicBookingPath),
+            icon: const Icon(Icons.event_available_outlined),
+          ),
           Padding(
             padding: const EdgeInsets.only(right: AppSpacing.sm),
             child: FilledButton.icon(

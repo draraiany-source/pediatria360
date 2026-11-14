@@ -92,7 +92,8 @@ class FirebaseBootstrap {
     const String host = AppConfig.emulatorHost;
     try {
       await FirebaseAuth.instance.useAuthEmulator(host, 9099);
-      FirebaseFirestore.instance.useFirestoreEmulator(host, 8080);
+      FirebaseFirestore.instance
+          .useFirestoreEmulator(host, AppConfig.firestoreEmulatorPort);
       await FirebaseStorage.instance.useStorageEmulator(host, 9199);
       FirebaseFunctions.instanceFor(region: 'southamerica-east1')
           .useFunctionsEmulator(host, 5001);

@@ -124,6 +124,10 @@ class Routes {
   static const String telemedicineName = 'telemedicine';
   static const String agendaPath = '/agenda';
   static const String agendaName = 'agenda';
+  static const String clinicBookingPath = '/agenda/agendar';
+  static const String clinicBookingName = 'clinic-booking';
+  static const String familyBookingPath = '/agendar-consulta';
+  static const String familyBookingName = 'family-booking';
   static const String appointmentDetailPath = ':appointmentId';
   static const String appointmentDetailName = 'appointment-detail';
   static const String consultationRoomPath = ':appointmentId/consulta';
