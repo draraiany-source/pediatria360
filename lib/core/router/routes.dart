@@ -164,6 +164,15 @@ class Routes {
   static const String clinicVoiceFinalPath = '/consultorio/ia/final/:sessionId';
   static const String clinicVoiceFinalName = 'clinic-voice-final';
 
+  /// Módulo clínico do menu que exige paciente selecionado.
+  static const String patientModulePath = '/consultorio/modulo/:module';
+  static const String patientModuleName = 'patient-module';
+  static String patientModule(String module) => '/consultorio/modulo/$module';
+
+  /// Aba exclusiva da recepcionista IA (Tia Cris).
+  static const String receptionistAiPath = '/recepcionista-ia';
+  static const String receptionistAiName = 'receptionist-ai';
+
   static String clinicTriage(String appointmentId) =>
       '/consultorio/triagem/$appointmentId';
   static String clinicPatient360(String childId) =>

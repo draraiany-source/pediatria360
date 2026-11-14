@@ -42,8 +42,8 @@ Nenhum P0 foi confirmado até aqui (ver seção "Segurança").
 | Módulo | Tela/rota | Arquivo ou serviço | Estado real | Problema | Prior. | Correção | Evidência |
 |---|---|---|---|---|---|---|---|
 | Agenda | Agenda do profissional e da clínica (`/agenda`) | `professional_agenda_screen.dart` | FV | — | — | — | [UI] 28/10 |
-| Agenda | **Agendar paciente já cadastrado (recepção)** | `createClinicAppointment`/`clinicSlots` sem tela | **AUS** | A recepção não consegue marcar consulta para paciente existente | **P1** | Criar tela: paciente → profissional → horário real → confirmar | Busca no código em 14/11: nenhum uso em `lib/features` |
-| Agenda | **Agendamento pela família** | `availability`/`book` sem tela | **AUS** | A família não consegue agendar | **P1** | Criar fluxo com horários do backend | Idem; botão informa "indisponível" |
+| Agenda | **Agendar paciente já cadastrado (recepção)** | `ClinicBookingScreen` (`/agenda/agendar`) → `scheduleAppointment` | **FV** | Corrigido no commit `cb30a09` | — | — | [TESTE] `booking_flow_test.dart` 9/9; ponta a ponta nos emuladores 10/10 (`tools/homologacao/agendamento_e2e.js`); [UI] `evidencias/p1-agendamento/p1-02` a `p1-04` |
+| Agenda | **Agendamento pela família** | `FamilyBookingScreen` (`/agendar-consulta`) → `scheduleAppointment` | **FV** | Corrigido no commit `cb30a09`. Só com profissional e clínica de consultas anteriores. O envio pela interface foi coberto pelo teste ponta a ponta, não por captura de tela | — | — | [TESTE] `booking_flow_test.dart`; ponta a ponta nos emuladores; [UI] `evidencias/p1-agendamento/p1-07` (formulário) |
 | Agenda | Reagendamento pela família | `rescheduleAppointment` + `familyMayReschedule` | AUS (interface) | Só a equipe remarca | P2 | Ação no card da consulta | Levantamento da Tia Cris |
 | Agenda | Confirmar/cancelar pela família | `_AppointmentCard` → `setAppointmentStatus` | FV | — | — | — | [UI] 28/10 |
 | Agenda | Conflitos e reservas simultâneas | `scheduling.ts` (travas em transação) | FV | — | — | — | [TESTE] `schedulingCore.test.ts` |

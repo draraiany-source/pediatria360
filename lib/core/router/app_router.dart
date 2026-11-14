@@ -88,6 +88,8 @@ import '../providers/core_providers.dart';
 import '../services/app_logger.dart';
 import '../services/remote_config_service.dart';
 import '../widgets/feature_unavailable.dart';
+import '../../features/receptionist_ai/presentation/receptionist_ai_screen.dart';
+import '../../features/shell/presentation/screens/patient_module_screen.dart';
 import 'route_authorization.dart';
 import 'routes.dart';
 
@@ -947,6 +949,23 @@ final Provider<GoRouter> routerProvider = Provider<GoRouter>((Ref ref) {
             name: Routes.homeName,
             pageBuilder: (BuildContext context, GoRouterState state) =>
                 const NoTransitionPage<void>(child: HomeScreen()),
+          ),
+          GoRoute(
+            path: Routes.patientModulePath,
+            name: Routes.patientModuleName,
+            pageBuilder: (BuildContext context, GoRouterState state) =>
+                NoTransitionPage<void>(
+              child: PatientModuleScreen(
+                key: ValueKey<String>(state.matchedLocation),
+                moduleSlug: state.pathParameters['module']!,
+              ),
+            ),
+          ),
+          GoRoute(
+            path: Routes.receptionistAiPath,
+            name: Routes.receptionistAiName,
+            pageBuilder: (BuildContext context, GoRouterState state) =>
+                const NoTransitionPage<void>(child: ReceptionistAiScreen()),
           ),
           GoRoute(
             path: Routes.clinicPath,

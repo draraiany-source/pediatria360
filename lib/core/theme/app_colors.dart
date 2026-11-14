@@ -2,18 +2,31 @@ import 'package:flutter/material.dart';
 
 /// Design System Pediatria360 — identidade oficial (referências Figma).
 ///
-/// Light-first: azul clínico #315EF5, marinho #0E2A66, turquesa #2FC7B5.
+/// Light-first: roxo #6D35C8, roxo profundo #2A1153, rosa de destaque
+/// #D02F7A, fundo lavanda #F6F2FD, turquesa #2FC7B5 como cor de apoio.
 /// Alias legados (`petrol`, `violet`, `raspberry`) apontam para a marca
 /// atual para não quebrar telas existentes.
 class AppColors {
   const AppColors._();
 
   // ------------------------------------------------------------ Marca
-  static const Color brand = Color(0xFF315EF5);
-  static const Color brandSoft = Color(0xFF5B7FF7);
-  static const Color navy = Color(0xFF0E2A66);
+  static const Color brand = Color(0xFF6D35C8);
+  static const Color brandSoft = Color(0xFF9466DE);
+  static const Color navy = Color(0xFF2A1153);
   static const Color teal = Color(0xFF2FC7B5);
   static const Color tealDeep = Color(0xFF1FA896);
+
+  /// Rosa do item ativo do menu lateral (texto branco: contraste 4,6:1).
+  static const Color navSelected = Color(0xFFD02F7A);
+
+  /// Menu lateral: degradê roxo profundo.
+  static const LinearGradient sidebarGradient = LinearGradient(
+    begin: Alignment.topCenter,
+    end: Alignment.bottomCenter,
+    colors: <Color>[Color(0xFF3A1677), Color(0xFF26104F)],
+  );
+  static const Color sidebarText = Color(0xFFEDE5FB);
+  static const Color sidebarMuted = Color(0xFFBBA8E0);
 
   /// Alias legados → marca oficial.
   static const Color petrol = brand;
@@ -33,7 +46,7 @@ class AppColors {
   static const Color vital = Color(0xFF4C7DFF);
 
   /// Destaque de navegação (menu, abas) com contraste sobre branco.
-  static const Color brandIndicator = Color(0xFFD3DEFD);
+  static const Color brandIndicator = Color(0xFFE6DAFA);
 
   // ------------------------------------------------------------ Semântica
   static const Color success = Color(0xFF12877A);
@@ -46,16 +59,17 @@ class AppColors {
   static const Color badgeSilver = Color(0xFF9DA6AD);
 
   // ------------------------------------------------------------ Neutros light
-  static const Color ink = Color(0xFF0E2A66);
-  static const Color inkMuted = Color(0xFF4A5B7A);
-  static const Color line = Color(0xFFCBD5E4);
+  static const Color ink = Color(0xFF24133F);
+  static const Color inkMuted = Color(0xFF5B4E72);
+  static const Color line = Color(0xFFDCD2EC);
 
-  static const Color lightBackground = Color(0xFFEEF2F8);
+  static const Color lightBackground = Color(0xFFF6F2FD);
   static const Color lightSurface = Color(0xFFFFFFFF);
-  static const Color lightSurfaceAlt = Color(0xFFEDF3FF);
+  static const Color lightSurfaceAlt = Color(0xFFF1EAFC);
   static const Color lightSurfaceElevated = Color(0xFFFFFFFF);
 
-  static const Color softBlue = Color(0xFFEDF3FF);
+  static const Color softBlue = Color(0xFFEAF2FF);
+  static const Color softYellow = Color(0xFFFFF7DD);
   static const Color softTeal = Color(0xFFEAFBF7);
   static const Color softPink = Color(0xFFFFF0F4);
   static const Color softLilac = Color(0xFFF2EFFF);
@@ -75,13 +89,13 @@ class AppColors {
   static const Color glassLightFill = Color(0xCCFFFFFF);
   static const Color glassLightBorder = Color(0x33FFFFFF);
   static const Color glassDarkFill = Color(0x331A2B45);
-  static const Color glassDarkBorder = Color(0x33315EF5);
+  static const Color glassDarkBorder = Color(0x336D35C8);
 
   // ------------------------------------------------------------ Gradientes
   static const LinearGradient brandGradient = LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
-    colors: <Color>[navy, brand, teal],
+    colors: <Color>[navy, brand, navSelected],
   );
 
   static const LinearGradient warmGradient = LinearGradient(
@@ -93,7 +107,7 @@ class AppColors {
   static const LinearGradient ambientLight = LinearGradient(
     begin: Alignment.topCenter,
     end: Alignment.bottomCenter,
-    colors: <Color>[Color(0xFFF1F4FA), Color(0xFFE4ECFA)],
+    colors: <Color>[Color(0xFFF8F5FE), Color(0xFFF0E9FC)],
   );
 
   static const LinearGradient ambientDark = LinearGradient(
@@ -105,7 +119,7 @@ class AppColors {
   static const LinearGradient cardGlow = LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
-    colors: <Color>[Color(0x14315EF5), Color(0x0A2FC7B5)],
+    colors: <Color>[Color(0x146D35C8), Color(0x0AD02F7A)],
   );
 
   // ------------------------------------------------- Módulos

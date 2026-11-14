@@ -81,6 +81,18 @@ String? resolveRouteRedirect({
     return managementRouteAllowed(location, role) ? null : Routes.homePath;
   }
 
+  // 6c. Recepcionista IA: configuracao da gestao e uso pela recepcao. Nao
+  // herda o acesso clinico do assistente do prontuario.
+  if (_under(location, Routes.receptionistAiPath)) {
+    final ClinicRole? role = clinicMembership != null && clinicMembership.active
+        ? clinicMembership.role
+        : null;
+    final bool allowed = user.role.isAdmin ||
+        role == ClinicRole.clinicAdmin ||
+        role == ClinicRole.receptionist;
+    return allowed ? null : Routes.homePath;
+  }
+
   // 7. Areas de equipe (clinica / financeiro / BI).
   final bool isStaffArea =
       _under(location, Routes.patientsPath) ||
@@ -192,10 +204,12 @@ bool _staffAreaForNonProfessional(
   }
 }
 
-/// Paciente 360 e triagem ficam sob `/consultorio`, mas sao dados clinicos.
+/// Paciente 360, triagem e modulos do paciente ficam sob `/consultorio`, mas
+/// sao dados clinicos.
 bool _isPatientChartRoute(String location) =>
     location.startsWith('${Routes.clinicPath}/paciente/') ||
-    location.startsWith('${Routes.clinicPath}/triagem/');
+    location.startsWith('${Routes.clinicPath}/triagem/') ||
+    location.startsWith('${Routes.clinicPath}/modulo/');
 
 /// `/bi` cobre `/bi` e `/bi/...`, mas nao `/biblioteca`.
 bool _under(String location, String base) =>
