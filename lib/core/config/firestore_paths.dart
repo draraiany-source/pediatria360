@@ -38,6 +38,11 @@ class FirestorePaths {
   /// Trilha de auditoria do consultorio (somente servidor).
   static const String clinicAuditLogs = 'clinic_audit_logs';
 
+  /// Espaco Kids — progresso e sessoes de sala de espera (sem dados clinicos).
+  static const String kidsPlayProgress = 'kids_play_progress';
+  static const String kidsWaitingSessions = 'kids_waiting_sessions';
+
+
   // Subcollections
   static const String messages = 'messages';
   static const String progress = 'progress';

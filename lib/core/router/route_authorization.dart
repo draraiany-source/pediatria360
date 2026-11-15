@@ -81,6 +81,14 @@ String? resolveRouteRedirect({
     return managementRouteAllowed(location, role) ? null : Routes.homePath;
   }
 
+  // 6d. Espaco Kids: nunca e rota clinica. Exige flag ligada e usuario
+  // autenticado com onboarding; nao concede chart.
+  if (_under(location, Routes.kidsPath)) {
+    // A checagem da feature flag ocorre no redirect do GoRouter
+    // (ModuleFlags). Aqui so garantimos autenticacao ja tratada acima.
+    return null;
+  }
+
   // 6c. Recepcionista IA: configuracao da gestao e uso pela recepcao. Nao
   // herda o acesso clinico do assistente do prontuario.
   if (_under(location, Routes.receptionistAiPath)) {

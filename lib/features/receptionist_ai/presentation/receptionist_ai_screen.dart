@@ -2,34 +2,113 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/config/module_flags.dart';
+import '../../../core/providers/core_providers.dart';
 import '../../../core/responsive/responsive.dart';
 import '../../../core/router/route_access.dart';
 import '../../../core/router/routes.dart';
+import '../../../core/services/remote_config_service.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_tokens.dart';
-import '../../../core/widgets/brand_ui.dart';
 import '../../../core/widgets/state_views.dart';
+import '../../clinic_org/presentation/providers/clinic_org_providers.dart';
+import '../../management/presentation/management_common.dart';
+import '../domain/tia_cris_intent.dart';
 
-/// Arquivos da personagem. Nulo enquanto a ilustração oficial não for
-/// entregue: a área mostra um espaço reservado do mesmo tamanho.
+/// Arquivos da personagem. Nulo enquanto a ilustracao oficial nao for entregue.
 class TiaCrisAssets {
   const TiaCrisAssets._();
 
   static const String? portrait = null;
 }
 
-/// Aba exclusiva da Tia Cris, recepcionista IA.
-///
-/// O atendimento automático ainda não existe no servidor: a tela mostra o
-/// escopo e os limites combinados, sem simular conversa nem agendamento.
-class ReceptionistAiScreen extends ConsumerWidget {
+class _ChatLine {
+  const _ChatLine({required this.fromUser, required this.text});
+  final bool fromUser;
+  final String text;
+}
+
+/// Aba da Tia Cris — recepcionista IA (M2), separada do assistente clinico.
+class ReceptionistAiScreen extends ConsumerStatefulWidget {
   const ReceptionistAiScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<ReceptionistAiScreen> createState() =>
+      _ReceptionistAiScreenState();
+}
+
+class _ReceptionistAiScreenState extends ConsumerState<ReceptionistAiScreen> {
+  final TextEditingController _controller = TextEditingController();
+  final TiaCrisEngine _engine = const TiaCrisEngine();
+  final List<_ChatLine> _lines = <_ChatLine>[];
+  String? _whatsAppStatus;
+  bool _loadingWa = false;
+  static const bool _voiceArmed = false;
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  Future<void> _loadWhatsAppStatus() async {
+    final clinic = ref.read(activeClinicProvider).valueOrNull;
+    if (clinic == null) {
+      setState(() => _whatsAppStatus = 'Nenhuma clinica ativa.');
+      return;
+    }
+    setState(() {
+      _loadingWa = true;
+      _whatsAppStatus = null;
+    });
+    final result =
+        await ref.read(managementRepositoryProvider).whatsAppStatus(clinic.id);
+    if (!mounted) {
+      return;
+    }
+    setState(() {
+      _loadingWa = false;
+      _whatsAppStatus = result.fold(
+        (Map<String, dynamic> status) {
+          final bool configured = status['configured'] == true ||
+              status['ready'] == true ||
+              status['connected'] == true;
+          return configured
+              ? 'WhatsApp configurado (status real do servidor).'
+              : 'WhatsApp nao configurado ? nenhum envio sera simulado.';
+        },
+        (failure) =>
+            'Nao foi possivel obter o status real do WhatsApp: ${failure.message}',
+      );
+    });
+  }
+
+  void _send() {
+    final String text = _controller.text.trim();
+    if (text.isEmpty) {
+      return;
+    }
+    final TiaCrisReply reply = _engine.reply(text);
+    setState(() {
+      _lines.add(_ChatLine(fromUser: true, text: text));
+      _lines.add(_ChatLine(fromUser: false, text: reply.text));
+      _controller.clear();
+    });
+    if (reply.suggestWhatsApp) {
+      _loadWhatsAppStatus();
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final ThemeData theme = Theme.of(context);
+    final RemoteConfigService remote = ref.watch(remoteConfigProvider);
+    final bool runtimeOn = ModuleFlags.tiaCrisRuntimeEnabled(remote);
+    final bool bookingOn = ModuleFlags.tiaCrisBookingEnabled(remote);
+    final bool kidsOn = ModuleFlags.kidsSpaceEnabled(remote);
     final bool canOpenAgenda = canOpenRoute(ref, Routes.agendaPath);
     final bool canOpenReception = canOpenRoute(ref, Routes.clinicReceptionPath);
+    final bool canOpenWa = canOpenRoute(ref, Routes.managementCommunicationPath);
 
     return Scaffold(
       backgroundColor: Colors.transparent,
@@ -58,9 +137,9 @@ class ReceptionistAiScreen extends ConsumerWidget {
                       ),
                       const SizedBox(height: AppSpacing.xs),
                       Text(
-                        'Apoio à recepção: dúvidas administrativas, '
-                        'orientação sobre agendamento e encaminhamento para '
-                        'a equipe humana.',
+                        'Apoio a recepcao convencional: duvidas administrativas, '
+                        'agenda real e encaminhamento humano. '
+                        'Nao substitui a recepcao presencial.',
                         style: theme.textTheme.bodyMedium?.copyWith(
                           color: AppColors.inkMuted,
                         ),
@@ -71,20 +150,26 @@ class ReceptionistAiScreen extends ConsumerWidget {
               ],
             ),
             const SizedBox(height: AppSpacing.lg),
-            const DataWarningBanner(
-              text: 'Atendimento automático ainda não ativado neste ambiente. '
-                  'A Tia Cris não responde pacientes nem marca consultas por '
-                  'enquanto.',
+            DataWarningBanner(
+              text: runtimeOn
+                  ? 'Runtime da Tia Cris ligado neste ambiente. '
+                      'Respostas administrativas sao deterministicas; '
+                      'agendamento so via backend oficial'
+                      '${bookingOn ? '.' : ' (booking flag ainda off).'}'
+                  : 'Atendimento automatico desligado '
+                      '(tia_cris_enabled / TIA_CRIS_ENABLED). '
+                      'A aba permanece para escopo, limites e encaminhamento.',
             ),
             const SizedBox(height: AppSpacing.lg),
             const _ScopeCard(
-              title: 'O que ela vai fazer',
+              title: 'O que ela faz',
               icon: Icons.check_circle_outline_rounded,
               color: AppColors.success,
               items: <String>[
-                'Informar horários, serviços e valores cadastrados pela clínica.',
-                'Oferecer horários livres consultando a agenda real.',
-                'Encaminhar para a recepção humana quando não souber responder.',
+                'Informar que horarios/servicos vem do cadastro da clinica.',
+                'Orientar agendamento/remarcacao/cancelamento via agenda real.',
+                'Encaminhar para a recepcao humana.',
+                'Apresentar o Espaco Kids (sem dados clinicos).',
               ],
             ),
             const SizedBox(height: AppSpacing.md),
@@ -94,29 +179,109 @@ class ReceptionistAiScreen extends ConsumerWidget {
               color: AppColors.danger,
               items: <String>[
                 'Diagnosticar, prescrever ou interpretar exames.',
-                'Inventar horários, preços, profissionais ou serviços.',
-                'Acessar prontuário: as permissões dela são as da recepção, '
-                    'separadas do assistente clínico.',
+                'Inventar horarios, precos, profissionais ou servicos.',
+                'Acessar prontuario infantil ou financeiro clinico.',
+                'Marcar WhatsApp como enviado sem status real do provedor.',
               ],
             ),
-            if (canOpenAgenda || canOpenReception) ...<Widget>[
-              const SizedBox(height: AppSpacing.lg),
-              Wrap(
-                spacing: AppSpacing.md,
-                runSpacing: AppSpacing.sm,
+            const SizedBox(height: AppSpacing.lg),
+            Wrap(
+              spacing: AppSpacing.md,
+              runSpacing: AppSpacing.sm,
+              children: <Widget>[
+                if (canOpenAgenda)
+                  OutlinedButton.icon(
+                    onPressed: () => context.go(Routes.agendaPath),
+                    icon: const Icon(Icons.calendar_month_outlined),
+                    label: const Text('Abrir agenda'),
+                  ),
+                if (canOpenReception)
+                  OutlinedButton.icon(
+                    onPressed: () => context.go(Routes.clinicReceptionPath),
+                    icon: const Icon(Icons.how_to_reg_rounded),
+                    label: const Text('Recepcao humana'),
+                  ),
+                if (kidsOn)
+                  OutlinedButton.icon(
+                    onPressed: () => context.go(Routes.kidsPath),
+                    icon: const Icon(Icons.sports_esports_outlined),
+                    label: const Text('Espaco Kids'),
+                  ),
+                if (canOpenWa)
+                  OutlinedButton.icon(
+                    onPressed: _loadingWa ? null : _loadWhatsAppStatus,
+                    icon: const Icon(Icons.chat_outlined),
+                    label: const Text('Status WhatsApp'),
+                  ),
+              ],
+            ),
+            if (_whatsAppStatus != null) ...<Widget>[
+              const SizedBox(height: AppSpacing.sm),
+              Text(_whatsAppStatus!, style: theme.textTheme.bodyMedium),
+            ],
+            const SizedBox(height: AppSpacing.lg),
+            SwitchListTile(
+              contentPadding: EdgeInsets.zero,
+              title: const Text('Atendimento por voz'),
+              subtitle: const Text(
+                'Reconhecimento de fala somente quando autorizado e configurado. '
+                'Neste ambiente permanece desligado — sem simular STT.',
+              ),
+              value: _voiceArmed,
+              onChanged: null,
+            ),
+            if (runtimeOn) ...<Widget>[
+              const SizedBox(height: AppSpacing.md),
+              Text('Conversa (texto)', style: theme.textTheme.titleMedium),
+              const SizedBox(height: AppSpacing.sm),
+              Container(
+                height: 280,
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: AppColors.line),
+                ),
+                child: ListView.builder(
+                  itemCount: _lines.length,
+                  itemBuilder: (BuildContext context, int i) {
+                    final _ChatLine line = _lines[i];
+                    return Align(
+                      alignment: line.fromUser
+                          ? Alignment.centerRight
+                          : Alignment.centerLeft,
+                      child: Container(
+                        margin: const EdgeInsets.symmetric(vertical: 4),
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: line.fromUser
+                              ? AppColors.brandIndicator
+                              : AppColors.lightSurfaceAlt,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Text(line.text),
+                      ),
+                    );
+                  },
+                ),
+              ),
+              const SizedBox(height: AppSpacing.sm),
+              Row(
                 children: <Widget>[
-                  if (canOpenAgenda)
-                    OutlinedButton.icon(
-                      onPressed: () => context.go(Routes.agendaPath),
-                      icon: const Icon(Icons.calendar_month_outlined),
-                      label: const Text('Abrir agenda'),
+                  Expanded(
+                    child: TextField(
+                      controller: _controller,
+                      decoration: const InputDecoration(
+                        hintText: 'Ex.: quero remarcar minha consulta',
+                      ),
+                      onSubmitted: (_) => _send(),
                     ),
-                  if (canOpenReception)
-                    OutlinedButton.icon(
-                      onPressed: () => context.go(Routes.clinicReceptionPath),
-                      icon: const Icon(Icons.how_to_reg_rounded),
-                      label: const Text('Abrir recepção'),
-                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  FilledButton(
+                    onPressed: _send,
+                    child: const Text('Enviar'),
+                  ),
                 ],
               ),
             ],
@@ -127,51 +292,34 @@ class ReceptionistAiScreen extends ConsumerWidget {
   }
 }
 
-/// Retrato da Tia Cris em área de tamanho fixo (nunca cobre o conteúdo).
 class TiaCrisPortrait extends StatelessWidget {
-  const TiaCrisPortrait({this.size = 96, super.key});
+  const TiaCrisPortrait({super.key, this.size = 112});
 
   final double size;
 
   @override
   Widget build(BuildContext context) {
-    const String? asset = TiaCrisAssets.portrait;
-    return Semantics(
-      label: asset == null
-          ? 'Ilustração da Tia Cris ainda não disponível'
-          : 'Tia Cris',
-      image: true,
-      child: SizedBox.square(
-        dimension: size,
-        child: DecoratedBox(
-          decoration: BoxDecoration(
-            color: AppColors.softPink,
-            borderRadius: AppRadius.xlAll,
-            border: Border.all(color: AppColors.raspberrySoft),
-          ),
-          child: asset == null
-              ? Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: <Widget>[
-                    Icon(
-                      Icons.support_agent_rounded,
-                      size: size * 0.4,
-                      color: AppColors.navSelected,
-                    ),
-                    Text(
-                      'Ilustração\npendente',
-                      textAlign: TextAlign.center,
-                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                            color: AppColors.inkMuted,
-                          ),
-                    ),
-                  ],
-                )
-              : ClipRRect(
-                  borderRadius: AppRadius.xlAll,
-                  child: Image.asset(asset, fit: BoxFit.contain),
-                ),
+    final String? asset = TiaCrisAssets.portrait;
+    return SizedBox(
+      width: size,
+      height: size,
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          color: AppColors.brandIndicator,
+          borderRadius: BorderRadius.circular(24),
         ),
+        child: asset == null
+            ? const Center(
+                child: Text(
+                  'Ilustracao pendente',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(color: AppColors.inkMuted),
+                ),
+              )
+            : ClipRRect(
+                borderRadius: BorderRadius.circular(24),
+                child: Image.asset(asset, fit: BoxFit.cover),
+              ),
       ),
     );
   }
@@ -192,39 +340,27 @@ class _ScopeCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final ThemeData theme = Theme.of(context);
-    return AppCard(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: <Widget>[
-          Row(
-            children: <Widget>[
-              Icon(icon, color: color),
-              const SizedBox(width: AppSpacing.sm),
-              Text(
-                title,
-                style: theme.textTheme.titleMedium?.copyWith(
-                  color: AppColors.navy,
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: AppSpacing.sm),
-          for (final String item in items)
-            Padding(
-              padding: const EdgeInsets.only(top: AppSpacing.xs),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: <Widget>[
-                  Text('•  ', style: TextStyle(color: color)),
-                  Expanded(
-                    child: Text(item, style: theme.textTheme.bodyMedium),
-                  ),
-                ],
-              ),
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(AppSpacing.md),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            Row(
+              children: <Widget>[
+                Icon(icon, color: color),
+                const SizedBox(width: 8),
+                Text(title, style: const TextStyle(fontWeight: FontWeight.w700)),
+              ],
             ),
-        ],
+            const SizedBox(height: 8),
+            for (final String item in items)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 4),
+                child: Text('• $item'),
+              ),
+          ],
+        ),
       ),
     );
   }

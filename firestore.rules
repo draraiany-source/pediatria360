@@ -2077,6 +2077,57 @@ service cloud.firestore {
                                  careDocKinds(userCareSpecialty(request.auth.uid));
     }
 
+    // ---------------------------------------------------- Espaco Kids 360
+    // Colecoes sem dados clinicos. Proibido gravar encounter/prescricao/CID.
+    match /kids_waiting_sessions/{sessionId} {
+      allow read: if signedIn() && (
+        resource.data.createdByUid == request.auth.uid ||
+        isClinicReceptionOrAdmin(resource.data.clinicId) ||
+        isClinicAdmin(resource.data.clinicId)
+      );
+      allow create: if signedIn() &&
+                       request.resource.data.createdByUid == request.auth.uid &&
+                       request.resource.data.keys().hasAll(
+                         ['clinicId', 'createdByUid', 'createdAt', 'expiresAt']) &&
+                       !('encounterId' in request.resource.data) &&
+                       !('prescriptionId' in request.resource.data) &&
+                       !('diagnosis' in request.resource.data) &&
+                       isClinicReceptionOrAdmin(request.resource.data.clinicId);
+      allow update: if signedIn() && (
+                       resource.data.createdByUid == request.auth.uid ||
+                       isClinicReceptionOrAdmin(resource.data.clinicId)
+                     ) &&
+                     !request.resource.data.diff(resource.data).affectedKeys()
+                       .hasAny(['clinicId', 'createdByUid']) &&
+                     !('encounterId' in request.resource.data) &&
+                     !('diagnosis' in request.resource.data);
+      allow delete: if signedIn() && (
+                       resource.data.createdByUid == request.auth.uid ||
+                       isClinicAdmin(resource.data.clinicId)
+                     );
+    }
+
+    match /kids_play_progress/{progressId} {
+      allow read: if signedIn() && (
+        resource.data.ownerUid == request.auth.uid ||
+        (resource.data.keys().hasAny(['clinicId']) &&
+         resource.data.clinicId is string &&
+         isClinicReceptionOrAdmin(resource.data.clinicId))
+      );
+      allow create, update: if signedIn() &&
+                               request.resource.data.ownerUid == request.auth.uid &&
+                               progressId == request.auth.uid &&
+                               request.resource.data.keys().hasAll(
+                                 ['ownerUid', 'updatedAt', 'avatarId', 'totalStars']) &&
+                               !('encounterId' in request.resource.data) &&
+                               !('prescriptionId' in request.resource.data) &&
+                               !('diagnosis' in request.resource.data) &&
+                               !('cid' in request.resource.data) &&
+                               (resource == null ||
+                                resource.data.ownerUid == request.auth.uid);
+      allow delete: if signedIn() && resource.data.ownerUid == request.auth.uid;
+    }
+
     // Nada além do declarado acima. Uma collection nova nasce fechada, em vez
     // de nascer pública por esquecimento.
     match /{document=**} {

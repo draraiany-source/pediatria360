@@ -57,6 +57,23 @@ class AppConfig {
   /// Assinatura digital ICP-Brasil. Encounters usam hash interno, não ICP.
   static const bool icpDigitalSignatureEnabled = false;
 
+  /// Espaco Kids 360 (M3). Default off — ligar com --dart-define=KIDS_SPACE_ENABLED=true
+  /// e/ou Remote Config `kids_space_enabled`.
+  static const bool kidsSpaceRuntimeEnabled =
+      bool.fromEnvironment('KIDS_SPACE_ENABLED', defaultValue: false);
+
+  static const bool kidsKioskRuntimeEnabled =
+      bool.fromEnvironment('KIDS_KIOSK_ENABLED', defaultValue: false);
+
+  /// Atendimento automatico da Tia Cris (M2). A aba informativa continua
+  /// acessivel pela rota atual; o runtime de chat/agenda exige a flag.
+  static const bool tiaCrisRuntimeEnabled =
+      bool.fromEnvironment('TIA_CRIS_ENABLED', defaultValue: false);
+
+  static const bool tiaCrisBookingRuntimeEnabled =
+      bool.fromEnvironment('TIA_CRIS_BOOKING_ENABLED', defaultValue: false);
+
+
   /// App Check: ativar só com `--dart-define=ENABLE_APP_CHECK=true` após
   /// registrar apps no Console. Rules NÃO exigem token até você decidir.
   static const bool appCheckEnabled =

@@ -9,6 +9,10 @@ void main() {
       expect(AppConfig.voiceConsultationEnabled, isFalse);
       expect(AppConfig.tissOperatorEnabled, isFalse);
       expect(AppConfig.icpDigitalSignatureEnabled, isFalse);
+      expect(AppConfig.kidsSpaceRuntimeEnabled, isFalse);
+      expect(AppConfig.kidsKioskRuntimeEnabled, isFalse);
+      expect(AppConfig.tiaCrisRuntimeEnabled, isFalse);
+      expect(AppConfig.tiaCrisBookingRuntimeEnabled, isFalse);
     });
 
     test('App Check nao e obrigatorio sem dart-define', () {

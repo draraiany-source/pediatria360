@@ -173,6 +173,19 @@ class Routes {
   static const String receptionistAiPath = '/recepcionista-ia';
   static const String receptionistAiName = 'receptionist-ai';
 
+  /// Espaco Kids 360 (M3) — isolado do prontuario.
+  static const String kidsPath = '/kids';
+  static const String kidsName = 'kids';
+  static const String kidsPlayPath = '/kids/play/:gameId';
+  static const String kidsPlayName = 'kids-play';
+  static const String kidsGuardianPath = '/kids/responsavel';
+  static const String kidsGuardianName = 'kids-guardian';
+  static const String kidsKioskPath = '/kids/kiosk';
+  static const String kidsKioskName = 'kids-kiosk';
+
+  static String kidsPlay(String gameId) => '/kids/play/$gameId';
+
+
   static String clinicTriage(String appointmentId) =>
       '/consultorio/triagem/$appointmentId';
   static String clinicPatient360(String childId) =>

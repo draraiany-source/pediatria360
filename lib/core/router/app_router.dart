@@ -90,6 +90,11 @@ import '../services/remote_config_service.dart';
 import '../widgets/feature_unavailable.dart';
 import '../../features/receptionist_ai/presentation/receptionist_ai_screen.dart';
 import '../../features/shell/presentation/screens/patient_module_screen.dart';
+import '../../features/kids_space/presentation/screens/kids_guardian_screen.dart';
+import '../../features/kids_space/presentation/screens/kids_home_screen.dart';
+import '../../features/kids_space/presentation/screens/kids_kiosk_screen.dart';
+import '../../features/kids_space/presentation/screens/kids_play_screen.dart';
+import '../config/module_flags.dart';
 import 'route_authorization.dart';
 import 'routes.dart';
 
@@ -142,6 +147,20 @@ final Provider<GoRouter> routerProvider = Provider<GoRouter>((Ref ref) {
     // ------------------------------------------------------------- Guarda
     redirect: (BuildContext context, GoRouterState state) {
       final RemoteConfigService config = ref.read(remoteConfigProvider);
+      final String loc = state.matchedLocation;
+      if (loc == Routes.kidsPath ||
+          loc.startsWith('${Routes.kidsPath}/')) {
+        final bool kidsOn = ModuleFlags.kidsSpaceEnabled(config);
+        final bool kioskPath = loc == Routes.kidsKioskPath ||
+            loc.startsWith('${Routes.kidsKioskPath}/');
+        if (!kidsOn) {
+          return Routes.homePath;
+        }
+        if (kioskPath && !ModuleFlags.kidsKioskEnabled(config)) {
+          return Routes.kidsPath;
+        }
+      }
+
       final AsyncValue<AppUser?> auth = ref.read(authStateProvider);
       final AsyncValue<bool> onboarding = ref.read(onboardingSeenProvider);
 
@@ -966,6 +985,32 @@ final Provider<GoRouter> routerProvider = Provider<GoRouter>((Ref ref) {
             name: Routes.receptionistAiName,
             pageBuilder: (BuildContext context, GoRouterState state) =>
                 const NoTransitionPage<void>(child: ReceptionistAiScreen()),
+          ),
+          GoRoute(
+            path: Routes.kidsPath,
+            name: Routes.kidsName,
+            pageBuilder: (BuildContext context, GoRouterState state) =>
+                const NoTransitionPage<void>(child: KidsHomeScreen()),
+          ),
+          GoRoute(
+            path: Routes.kidsPlayPath,
+            name: Routes.kidsPlayName,
+            pageBuilder: (BuildContext context, GoRouterState state) =>
+                NoTransitionPage<void>(
+              child: KidsPlayScreen(gameId: state.pathParameters['gameId']!),
+            ),
+          ),
+          GoRoute(
+            path: Routes.kidsGuardianPath,
+            name: Routes.kidsGuardianName,
+            pageBuilder: (BuildContext context, GoRouterState state) =>
+                const NoTransitionPage<void>(child: KidsGuardianScreen()),
+          ),
+          GoRoute(
+            path: Routes.kidsKioskPath,
+            name: Routes.kidsKioskName,
+            pageBuilder: (BuildContext context, GoRouterState state) =>
+                const NoTransitionPage<void>(child: KidsKioskScreen()),
           ),
           GoRoute(
             path: Routes.clinicPath,
