@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/error/failures.dart';
+import '../../../../core/router/route_access.dart';
 import '../../../../core/router/routes.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_tokens.dart';
@@ -79,70 +80,77 @@ class BiAdminScreen extends ConsumerWidget {
           const SizedBox(height: AppSpacing.xl),
           const BrandSectionHeader(title: 'Modulos'),
           if (finance) ...<Widget>[
-            QuickAccessCard(
-              label: 'Financeiro',
-              subtitle: 'Dashboard e inadimplencia',
-              icon: Icons.account_balance_wallet_outlined,
-              color: AppColors.navy,
-              wide: true,
-              onTap: () => context.push(Routes.financePath),
-            ),
+            if (canOpenRoute(ref, Routes.financePath))
+              QuickAccessCard(
+                label: 'Financeiro',
+                subtitle: 'Dashboard e inadimplencia',
+                icon: Icons.account_balance_wallet_outlined,
+                color: AppColors.navy,
+                wide: true,
+                onTap: () => context.push(Routes.financePath),
+              ),
             const SizedBox(height: AppSpacing.sm),
-            QuickAccessCard(
-              label: 'Inadimplencia',
-              subtitle: 'Titulos em atraso',
-              icon: Icons.warning_amber_rounded,
-              color: AppColors.warning,
-              wide: true,
-              onTap: () => context.push(Routes.financeDelinquencyPath),
-            ),
+            if (canOpenRoute(ref, Routes.financeDelinquencyPath))
+              QuickAccessCard(
+                label: 'Inadimplencia',
+                subtitle: 'Titulos em atraso',
+                icon: Icons.warning_amber_rounded,
+                color: AppColors.warning,
+                wide: true,
+                onTap: () => context.push(Routes.financeDelinquencyPath),
+              ),
             const SizedBox(height: AppSpacing.sm),
-            QuickAccessCard(
-              label: 'Faturamento',
-              subtitle: 'Convenios e glosas',
-              icon: Icons.receipt_long_outlined,
-              color: AppColors.teal,
-              wide: true,
-              onTap: () => context.push(Routes.billingPath),
-            ),
+            if (canOpenRoute(ref, Routes.billingPath))
+              QuickAccessCard(
+                label: 'Faturamento',
+                subtitle: 'Convenios e glosas',
+                icon: Icons.receipt_long_outlined,
+                color: AppColors.teal,
+                wide: true,
+                onTap: () => context.push(Routes.billingPath),
+              ),
             const SizedBox(height: AppSpacing.sm),
-            QuickAccessCard(
-              label: 'Glosas',
-              subtitle: 'Recursos e perdas',
-              icon: Icons.gavel_outlined,
-              color: AppColors.raspberry,
-              wide: true,
-              onTap: () => context.push(Routes.billingGlosasPath),
-            ),
+            if (canOpenRoute(ref, Routes.billingGlosasPath))
+              QuickAccessCard(
+                label: 'Glosas',
+                subtitle: 'Recursos e perdas',
+                icon: Icons.gavel_outlined,
+                color: AppColors.raspberry,
+                wide: true,
+                onTap: () => context.push(Routes.billingGlosasPath),
+              ),
             const SizedBox(height: AppSpacing.sm),
-            QuickAccessCard(
-              label: 'Producao',
-              subtitle: 'Produtividade por profissional',
-              icon: Icons.bar_chart,
-              color: AppColors.brand,
-              wide: true,
-              onTap: () => context.push(Routes.financeProductionPath),
-            ),
+            if (canOpenRoute(ref, Routes.financeProductionPath))
+              QuickAccessCard(
+                label: 'Producao',
+                subtitle: 'Produtividade por profissional',
+                icon: Icons.bar_chart,
+                color: AppColors.brand,
+                wide: true,
+                onTap: () => context.push(Routes.financeProductionPath),
+              ),
           ],
           if (inventory) ...<Widget>[
             const SizedBox(height: AppSpacing.sm),
-            QuickAccessCard(
-              label: 'Estoque',
-              subtitle: 'Alertas e validade',
-              icon: Icons.inventory_2_outlined,
-              color: AppColors.tealDeep,
-              wide: true,
-              onTap: () => context.push(Routes.inventoryPath),
-            ),
+            if (canOpenRoute(ref, Routes.inventoryPath))
+              QuickAccessCard(
+                label: 'Estoque',
+                subtitle: 'Alertas e validade',
+                icon: Icons.inventory_2_outlined,
+                color: AppColors.tealDeep,
+                wide: true,
+                onTap: () => context.push(Routes.inventoryPath),
+              ),
           ],
-          QuickAccessCard(
-            label: 'Pendencias',
-            subtitle: 'Central operacional',
-            icon: Icons.inbox_outlined,
-            color: AppColors.honey,
-            wide: true,
-            onTap: () => context.push(Routes.clinicPendingPath),
-          ),
+          if (canOpenRoute(ref, Routes.clinicPendingPath))
+            QuickAccessCard(
+              label: 'Pendencias',
+              subtitle: 'Central operacional',
+              icon: Icons.inbox_outlined,
+              color: AppColors.honey,
+              wide: true,
+              onTap: () => context.push(Routes.clinicPendingPath),
+            ),
         ],
       ),
     );

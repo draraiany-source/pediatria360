@@ -25,7 +25,6 @@ class VoiceReviewScreen extends ConsumerStatefulWidget {
 class _VoiceReviewScreenState extends ConsumerState<VoiceReviewScreen> {
   String _template = 'SOAP';
   bool _structuring = false;
-  final Set<String> _ignored = <String>{};
 
   Future<void> _structure() async {
     setState(() => _structuring = true);
@@ -112,6 +111,15 @@ class _VoiceReviewScreenState extends ConsumerState<VoiceReviewScreen> {
                         icon: Icons.description_outlined,
                       )
                     else ...<Widget>[
+                      Text(
+                        'Campos marcados como "Vai para o rascunho" sao '
+                        'gravados no atendimento em rascunho. O que voce ja '
+                        'escreveu no atendimento nunca e substituido.',
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              color: AppColors.inkMuted,
+                            ),
+                      ),
+                      const SizedBox(height: AppSpacing.md),
                       _field(
                         context,
                         keyName: 'chiefComplaint',
@@ -120,9 +128,27 @@ class _VoiceReviewScreenState extends ConsumerState<VoiceReviewScreen> {
                       ),
                       _field(
                         context,
-                        keyName: 'hpi',
+                        keyName: 'historyOfPresentIllness',
                         title: 'Historia da doenca atual',
                         value: draft.historyOfPresentIllness,
+                      ),
+                      _field(
+                        context,
+                        keyName: 'allergies',
+                        title: 'Alergias',
+                        value: draft.allergies.join(', '),
+                      ),
+                      _field(
+                        context,
+                        keyName: 'currentMedications',
+                        title: 'Medicamentos em uso',
+                        value: draft.currentMedications.join(', '),
+                      ),
+                      _field(
+                        context,
+                        keyName: 'examNotes',
+                        title: 'Exame fisico',
+                        value: draft.examNotes,
                       ),
                       _field(
                         context,
@@ -138,21 +164,21 @@ class _VoiceReviewScreenState extends ConsumerState<VoiceReviewScreen> {
                       ),
                       _field(
                         context,
-                        keyName: 'evolution',
+                        keyName: null,
                         title: 'Evolucao ($_template)',
                         value: draft.evolutionText,
                       ),
                       if (draft.hypotheses.isNotEmpty)
                         _field(
                           context,
-                          keyName: 'hypotheses',
+                          keyName: null,
                           title: 'Hipotese(s)',
                           value: draft.hypotheses.join('; '),
                         ),
                       if (draft.suggestedCids.isNotEmpty)
                         _field(
                           context,
-                          keyName: 'cids',
+                          keyName: null,
                           title: 'CIDs sugeridos',
                           value: draft.suggestedCids.join(', '),
                         ),
@@ -175,67 +201,79 @@ class _VoiceReviewScreenState extends ConsumerState<VoiceReviewScreen> {
     );
   }
 
+  /// [keyName] nulo: sugestao so de leitura, que nao e gravada no prontuario.
   Widget _field(
     BuildContext context, {
-    required String keyName,
+    required String? keyName,
     required String title,
     required String value,
   }) {
-    if (_ignored.contains(keyName)) {
-      return const SizedBox.shrink();
-    }
     final String display =
         value.trim().isEmpty ? 'Nao informado' : value.trim();
+    final Set<String> ignored =
+        ref.watch(voiceIgnoredFieldsProvider(widget.sessionId));
+    final bool isIgnored = keyName != null && ignored.contains(keyName);
+    final TextTheme text = Theme.of(context).textTheme;
 
     return Padding(
       padding: const EdgeInsets.only(bottom: AppSpacing.md),
-      child: AppCard(
-        color: Colors.white,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: <Widget>[
-            Text(
-              title,
-              style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                    color: AppColors.navy,
-                    fontWeight: FontWeight.w800,
-                  ),
-            ),
-            const SizedBox(height: AppSpacing.xs),
-            Text(display),
-            const SizedBox(height: AppSpacing.sm),
-            Wrap(
-              spacing: AppSpacing.xs,
-              children: <Widget>[
-                TextButton(
-                  onPressed: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Sugestao aceita para o rascunho.'),
-                      ),
-                    );
-                  },
-                  child: const Text('Aceitar'),
+      child: Opacity(
+        opacity: isIgnored ? 0.55 : 1,
+        child: AppCard(
+          color: Colors.white,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              Text(
+                title,
+                style: text.titleSmall?.copyWith(
+                  color: AppColors.navy,
+                  fontWeight: FontWeight.w800,
                 ),
-                TextButton(
-                  onPressed: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text(
-                          'Edite no prontuario apos confirmar o rascunho.',
+              ),
+              const SizedBox(height: AppSpacing.xs),
+              Text(display),
+              const SizedBox(height: AppSpacing.sm),
+              if (keyName == null)
+                Text(
+                  'Sugestao da IA para consulta. Nao e gravada no prontuario.',
+                  style: text.bodySmall?.copyWith(color: AppColors.inkMuted),
+                )
+              else
+                Row(
+                  children: <Widget>[
+                    Icon(
+                      isIgnored
+                          ? Icons.block_rounded
+                          : Icons.check_circle_outline_rounded,
+                      size: 18,
+                      color: isIgnored ? AppColors.inkMuted : AppColors.brand,
+                    ),
+                    const SizedBox(width: AppSpacing.xs),
+                    Expanded(
+                      child: Text(
+                        isIgnored ? 'Ignorado' : 'Vai para o rascunho',
+                        style: text.bodySmall?.copyWith(
+                          fontWeight: FontWeight.w700,
                         ),
                       ),
-                    );
-                  },
-                  child: const Text('Editar depois'),
+                    ),
+                    TextButton(
+                      onPressed: () {
+                        final StateController<Set<String>> controller = ref
+                            .read(voiceIgnoredFieldsProvider(widget.sessionId)
+                                .notifier);
+                        controller.state = isIgnored
+                            ? (Set<String>.of(controller.state)
+                              ..remove(keyName))
+                            : <String>{...controller.state, keyName};
+                      },
+                      child: Text(isIgnored ? 'Incluir' : 'Ignorar'),
+                    ),
+                  ],
                 ),
-                TextButton(
-                  onPressed: () => setState(() => _ignored.add(keyName)),
-                  child: const Text('Ignorar'),
-                ),
-              ],
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

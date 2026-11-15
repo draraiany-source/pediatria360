@@ -14,6 +14,7 @@ import { onCall, HttpsError } from "firebase-functions/v2/https";
 import { onDocumentWritten } from "firebase-functions/v2/firestore";
 import { defineSecret } from "firebase-functions/params";
 import * as admin from "firebase-admin";
+import { FieldValue, Timestamp } from "firebase-admin/firestore";
 import * as logger from "firebase-functions/logger";
 
 admin.initializeApp();
@@ -61,8 +62,21 @@ export {
   issueClinicalDocument,
   cancelClinicalDocument,
   verifyDocument,
-  grantChildSummaryAccess,
+  checkChildAccess,
 } from "./emr";
+
+// Fluxo da clínica: solicitação de paciente novo, convite ao responsável
+// e equipe. Ver o cabeçalho de clinicFlow.ts.
+export {
+  createClinicIntake,
+  cancelClinicIntake,
+  renewClinicIntakeCode,
+  previewClinicIntake,
+  acceptClinicIntake,
+  lookupProfessional,
+  addClinicMember,
+  setClinicMemberStatus,
+} from "./clinicFlow";
 
 // Consultório 360 — consulta por voz / Prontuário IA.
 export {
@@ -96,6 +110,91 @@ export {
   registerDevice,
   unregisterDevice,
 } from "./notifications";
+
+// Agenda inteligente: horários reais, reserva com travas, remarcação, status,
+// lista de espera e configuração. Ver o cabeçalho de scheduling.ts.
+export {
+  getScheduleSlots,
+  scheduleAppointment,
+  rescheduleAppointment,
+  setAppointmentStatus,
+  joinWaitlist,
+  respondWaitlistOffer,
+  expireWaitlistOffers,
+  saveSchedulingSettings,
+  saveProfessionalSchedule,
+} from "./scheduling";
+
+// Central de automações, fila de mensagens e WhatsApp (sem envio simulado).
+export {
+  dispatchMessageQueue,
+  processMessageQueueNow,
+  saveAutomationRule,
+  setClinicAutomationsPaused,
+  saveWhatsAppSettings,
+  getWhatsAppStatus,
+  cancelQueuedMessage,
+  saveCommunicationPreferences,
+  whatsappWebhook,
+  updateInboxItem,
+} from "./automations";
+
+// Financeiro integrado: cobrança da consulta, operações idempotentes, webhook.
+export {
+  createCharge,
+  recordPayment,
+  applyDiscount,
+  refundPayment,
+  cancelCharge,
+  paymentWebhook,
+  getFinanceSummary,
+} from "./finance";
+
+// Anamnese e pré-consulta versionadas.
+export {
+  listAnamnesisTemplates,
+  saveAnamnesisTemplate,
+  startAnamnesis,
+  saveAnamnesisDraft,
+  submitAnamnesis,
+  amendAnamnesis,
+  getAnamnesisForVisit,
+  reviewAnamnesis,
+} from "./anamnesis";
+
+// CRM administrativo (sem conteúdo clínico).
+export {
+  onAppointmentWrittenCrm,
+  saveCrmCriteria,
+  getCrmContact,
+  addCrmNote,
+  saveCrmTask,
+  findCrmDuplicates,
+  requestCrmMerge,
+  reviewCrmMerge,
+  getCrmIndicators,
+} from "./crm";
+
+// Central de IA da gestão e propostas do assistente (com confirmação).
+export {
+  getManagementInsights,
+  askManagementAssistant,
+  prepareAssistantProposal,
+  confirmAssistantProposal,
+} from "./insights";
+
+// Marketing com consentimento, supressão e aprovação.
+export {
+  saveCampaignDraft,
+  previewCampaign,
+  approveCampaign,
+  cancelCampaign,
+  getCampaignMetrics,
+  unsubscribeMarketing,
+} from "./marketing";
+
+// Limites de uso e custo estimado.
+export { saveUsageLimits, getUsageDashboard } from "./usage";
 
 const REGION = "southamerica-east1";
 const ANTHROPIC_API_KEY = defineSecret("ANTHROPIC_API_KEY");
@@ -294,7 +393,7 @@ export const aiChat = onCall(
 
       if (childDoc.exists) {
         const child = childDoc.data() ?? {};
-        const birth = (child.birthDate as admin.firestore.Timestamp)?.toDate();
+        const birth = (child.birthDate as Timestamp)?.toDate();
         const months = birth
           ? Math.floor((Date.now() - birth.getTime()) / (1000 * 60 * 60 * 24 * 30.44))
           : null;
@@ -417,7 +516,7 @@ export const aiChat = onCall(
     }
 
     // ------------------------------------------------------------ Persistência
-    const now = admin.firestore.FieldValue.serverTimestamp();
+    const now = FieldValue.serverTimestamp();
     const batch = db.batch();
 
     if (!conversationId) {
@@ -432,7 +531,7 @@ export const aiChat = onCall(
     } else {
       batch.update(convRef, {
         updatedAt: now,
-        messageCount: admin.firestore.FieldValue.increment(2),
+        messageCount: FieldValue.increment(2),
       });
     }
 
@@ -455,7 +554,7 @@ export const aiChat = onCall(
     batch.set(
       usageRef,
       {
-        count: admin.firestore.FieldValue.increment(1),
+        count: FieldValue.increment(1),
         limit,
         unlimited,
         updatedAt: now,

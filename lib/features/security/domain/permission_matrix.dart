@@ -1,5 +1,6 @@
 import '../../../shared/domain/entities/app_user.dart';
 import '../../../shared/domain/entities/clinic_organization.dart';
+import '../../../core/config/app_config.dart';
 import '../../bi/domain/bi_access.dart';
 import '../../billing/domain/billing_access.dart';
 import '../../finance/domain/finance_access.dart';
@@ -123,6 +124,7 @@ class PermissionMatrix {
       case PermissionModule.messages:
         return user.role == UserRole.professional && action == PermissionAction.view;
       case PermissionModule.clinicalAi:
+        if (!AppConfig.voiceConsultationEnabled) return false;
         return _chart(role: role, user: user, action: action);
       case PermissionModule.finance:
         return _finance(user: user, membership: membership, action: action);

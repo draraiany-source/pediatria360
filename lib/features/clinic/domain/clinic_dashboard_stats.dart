@@ -2,9 +2,11 @@
 class ClinicDashboardStats {
   const ClinicDashboardStats({
     required this.todayAppointments,
+    required this.weekAppointments,
     required this.waiting,
     required this.inService,
     required this.finished,
+    required this.cancelledToday,
     required this.pendingReturns,
     required this.pendingVaccines,
     required this.pendingExams,
@@ -20,9 +22,11 @@ class ClinicDashboardStats {
 
   factory ClinicDashboardStats.empty() => const ClinicDashboardStats(
         todayAppointments: 0,
+        weekAppointments: 0,
         waiting: 0,
         inService: 0,
         finished: 0,
+        cancelledToday: 0,
         pendingReturns: 0,
         pendingVaccines: 0,
         pendingExams: 0,
@@ -37,9 +41,13 @@ class ClinicDashboardStats {
       );
 
   final int todayAppointments;
+
+  /// Consultas nos próximos 7 dias (incluindo hoje), do profissional.
+  final int weekAppointments;
   final int waiting;
   final int inService;
   final int finished;
+  final int cancelledToday;
   final int pendingReturns;
   final int pendingVaccines;
   final int pendingExams;

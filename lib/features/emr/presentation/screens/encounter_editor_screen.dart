@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 
 import '../../../../core/error/failures.dart';
 import '../../../../core/responsive/responsive.dart';
@@ -11,6 +10,7 @@ import '../../../../core/theme/app_tokens.dart';
 import '../../../../core/utils/result.dart';
 import '../../../../core/utils/validators.dart';
 import '../../../../core/widgets/app_widgets.dart';
+import '../../../../core/widgets/back_or_home_button.dart';
 import '../../../../core/widgets/state_views.dart';
 import '../../../../shared/domain/entities/clinical_record.dart';
 import '../../../../shared/domain/entities/encounter.dart';
@@ -184,7 +184,7 @@ class _EncounterEditorScreenState
     _autosave?.cancel();
     // Grava o que estiver pendente ao sair — sem isso, os últimos 2 segundos
     // de digitação se perdem ao fechar a tela.
-    unawaited(_save());
+    unawaited(_save(disposing: true));
     for (final TextEditingController c in _allControllers) {
       c
         ..removeListener(_scheduleSave)
@@ -258,14 +258,15 @@ class _EncounterEditorScreenState
   static String _num(double? v) =>
       v == null ? '' : v.toString().replaceAll('.', ',');
 
-  Future<void> _save() async {
-    if (_saving || !mounted) return;
+  /// Com [disposing], grava sem tocar no estado do widget (ja em descarte).
+  Future<void> _save({bool disposing = false}) async {
+    if (_saving || (!disposing && !mounted)) return;
 
     final Encounter? current =
         ref.read(encounterProvider(widget.encounterId)).valueOrNull;
     if (current == null || !current.isEditable) return;
 
-    setState(() => _saving = true);
+    if (!disposing) setState(() => _saving = true);
 
     final Result<void> result =
         await ref.read(encounterRepositoryProvider).updateDraft(
@@ -312,7 +313,7 @@ class _EncounterEditorScreenState
               plan: _composePlan(),
             );
 
-    if (!mounted) return;
+    if (disposing || !mounted) return;
 
     setState(() {
       _saving = false;
@@ -431,7 +432,7 @@ class _EncounterEditorScreenState
       return Scaffold(
         appBar: AppBar(
           leading: IconButton(
-            onPressed: () => context.pop(),
+            onPressed: () => context.popOrHome(),
             icon: const Icon(Icons.arrow_back_rounded),
             tooltip: 'Voltar',
           ),
@@ -468,7 +469,7 @@ class _EncounterEditorScreenState
           ],
         ),
         leading: IconButton(
-          onPressed: () => context.pop(),
+          onPressed: () => context.popOrHome(),
           icon: const Icon(Icons.arrow_back_rounded),
           tooltip: 'Voltar',
         ),

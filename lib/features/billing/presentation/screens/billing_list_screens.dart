@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/config/app_assets.dart';
 import '../../../../core/error/failures.dart';
 import '../../../../core/theme/app_tokens.dart';
 import '../../../../core/widgets/state_views.dart';
@@ -342,6 +343,7 @@ class _BillingListScaffold<T> extends StatelessWidget {
             return EmptyState(
               title: 'Vazio',
               message: emptyLabel,
+              illustration: AppAssets.capiLupa,
               actionLabel: 'Atualizar',
               onAction: onRetry,
             );

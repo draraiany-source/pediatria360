@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/error/failures.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_tokens.dart';
+import '../../../../core/widgets/back_or_home_button.dart';
 import '../../../../core/widgets/state_views.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../clinic_org/presentation/providers/clinic_org_providers.dart';
@@ -28,7 +29,7 @@ class AuditLogsScreen extends ConsumerWidget {
 
     if (!allowed) {
       return Scaffold(
-        appBar: AppBar(title: const Text('Auditoria')),
+        appBar: AppBar(leading: const BackOrHomeButton(), title: const Text('Auditoria')),
         body: UnauthorizedAccessView(
           module: PermissionModule.audit,
           reason: 'Somente administrador da clinica ou plataforma.',
@@ -47,6 +48,7 @@ class AuditLogsScreen extends ConsumerWidget {
     return Scaffold(
       backgroundColor: AppColors.lightBackground,
       appBar: AppBar(
+        leading: const BackOrHomeButton(),
         title: const Text('Auditoria'),
         backgroundColor: Colors.white,
         foregroundColor: AppColors.navy,

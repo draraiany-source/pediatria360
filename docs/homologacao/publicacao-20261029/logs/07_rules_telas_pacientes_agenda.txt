@@ -1,0 +1,36 @@
+npm warn Unknown env config "devdir". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+i  emulators: Starting emulators: firestore
+i  firestore: Firestore Emulator logging to firestore-debug.log
++  firestore: Firestore Emulator was started in standard edition.
++  firestore: Firestore Emulator UI websocket is running on 9150.
+i  Running script: npx jest --runInBand telas_pacientes_agenda
+npm warn Unknown env config "devdir". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+PASS ./telas_pacientes_agenda.test.js (24.503 s)
+  Pacientes: atendimentos do próprio profissional
+    √ profissional autenticado lista só os próprios atendimentos (2534 ms)
+    √ profissional de outra clínica não lista atendimentos da Dra. (384 ms)
+    √ recepção não lista prontuários da clínica (583 ms)
+    √ sem login a consulta é recusada (428 ms)
+  Agenda do profissional
+    √ profissional autenticado carrega a própria agenda (519 ms)
+    √ profissional não carrega a agenda de outro profissional (282 ms)
+  Agenda da clínica (recepção, enfermagem, gestão)
+    √ recepção com vínculo ativo nos dois lados carrega a agenda da clínica (395 ms)
+    √ enfermagem com vínculo ativo carrega a agenda da clínica (340 ms)
+    √ financeiro não carrega a agenda (fora do papel) (269 ms)
+    √ gestão da clínica B não carrega a agenda da clínica A (251 ms)
+    √ vínculo só no perfil do usuário (sem o lado da clínica) é recusado (379 ms)
+    √ vínculo desativado pela clínica é recusado (271 ms)
+
+Test Suites: 1 passed, 1 total
+Tests:       12 passed, 12 total
+Snapshots:   0 total
+Time:        24.753 s
+Ran all test suites matching /telas_pacientes_agenda/i.
++  Script exited successfully (code 0)
+i  emulators: Shutting down emulators.
+i  firestore: Stopping Firestore Emulator
+!  Firestore Emulator has exited upon receiving signal: SIGINT
+i  hub: Stopping emulator hub
+i  logging: Stopping Logging Emulator
+exit=0

@@ -14,9 +14,12 @@ import '../../../../core/theme/app_tokens.dart';
 import '../../../../core/utils/result.dart';
 import '../../../../core/utils/validators.dart';
 import '../../../../core/widgets/app_widgets.dart';
+import '../../../../core/widgets/back_or_home_button.dart';
+import '../../../../core/widgets/child_avatar.dart';
 import '../../../../core/widgets/clinical_ui.dart';
 import '../../../../core/widgets/skeleton.dart';
 import '../../../../core/widgets/state_views.dart';
+import '../../../../shared/domain/entities/app_user.dart';
 import '../../../../shared/domain/entities/child.dart';
 import '../../../../shared/domain/entities/clinical_record.dart';
 import '../../../../shared/domain/entities/encounter.dart';
@@ -24,6 +27,7 @@ import '../../../../shared/domain/entities/growth_record.dart';
 import '../../../../shared/domain/entities/vaccine.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../clinic_org/presentation/providers/clinic_org_providers.dart';
+import '../../../children/presentation/providers/child_access_providers.dart';
 import '../../../children/presentation/providers/children_providers.dart';
 import '../../../security/domain/permission_matrix.dart';
 import '../../../vaccines/domain/pni_calendar.dart';
@@ -43,11 +47,23 @@ final Provider<EncounterRepository> encounterRepositoryProvider =
   ),
 );
 
+/// O profissional só enxerga o que registrou; o responsável lê tudo da
+/// própria criança.
+final Provider<String?> clinicalAuthorFilterProvider = Provider<String?>(
+  (Ref ref) {
+    final AppUser? user = ref.watch(currentUserProvider);
+    return user != null && user.role.isProfessional ? user.uid : null;
+  },
+);
+
 final StreamProviderFamily<List<Encounter>, String> patientEncountersProvider =
     StreamProvider.family<List<Encounter>, String>(
   (Ref ref, String patientId) => ref
       .watch(encounterRepositoryProvider)
-      .watchPatientEncounters(patientId),
+      .watchPatientEncounters(
+        patientId,
+        professionalId: ref.watch(clinicalAuthorFilterProvider),
+      ),
 );
 
 final StreamProviderFamily<List<ClinicalDocument>, String>
@@ -55,13 +71,19 @@ final StreamProviderFamily<List<ClinicalDocument>, String>
     StreamProvider.family<List<ClinicalDocument>, String>(
   (Ref ref, String patientId) => ref
       .watch(encounterRepositoryProvider)
-      .watchPatientDocuments(patientId),
+      .watchPatientDocuments(
+        patientId,
+        professionalId: ref.watch(clinicalAuthorFilterProvider),
+      ),
 );
 
 final StreamProviderFamily<List<LabResult>, String> patientLabsProvider =
     StreamProvider.family<List<LabResult>, String>(
   (Ref ref, String patientId) =>
-      ref.watch(encounterRepositoryProvider).watchLabResults(patientId),
+      ref.watch(encounterRepositoryProvider).watchLabResults(
+            patientId,
+            professionalId: ref.watch(clinicalAuthorFilterProvider),
+          ),
 );
 
 /// Filtro da linha do tempo — `null` significa "todos os tipos". Um
@@ -163,16 +185,28 @@ class PatientTimelineScreen extends ConsumerWidget {
         ref.watch(patientDocumentsProvider(patientId));
     final AsyncValue<List<LabResult>> labs =
         ref.watch(patientLabsProvider(patientId));
-    final AsyncValue<List<GrowthRecord>> growth =
-        ref.watch(growthProvider(patientId));
-    final AsyncValue<List<VaccineDose>> vaccines =
-        ref.watch(vaccineDosesProvider(patientId));
-    final Child? child = ref.watch(childProvider(patientId)).valueOrNull;
-    final VaccineSummary vaccineSummary =
-        ref.watch(vaccineSummaryProvider(patientId));
 
+    // Crescimento/vacinas na subcoleção da família: só o dono (ou
+    // responsável vinculado) lê pelas regras. Profissional com grant NÃO
+    // consulta esse caminho — evita erro de permissão / carregamento eterno.
     final bool isProfessional =
-        ref.watch(currentUserProvider)?.canPrescribe ?? false;
+        ref.watch(currentUserProvider)?.role.isProfessional ?? false;
+    final AsyncValue<List<GrowthRecord>> growth = isProfessional
+        ? const AsyncValue<List<GrowthRecord>>.data(<GrowthRecord>[])
+        : ref.watch(growthProvider(patientId));
+    final AsyncValue<List<VaccineDose>> vaccines = isProfessional
+        ? const AsyncValue<List<VaccineDose>>.data(<VaccineDose>[])
+        : ref.watch(vaccineDosesProvider(patientId));
+    final Child? child =
+        ref.watch(clinicalChildProvider(patientId)).valueOrNull;
+    final VaccineSummary vaccineSummary = isProfessional
+        ? const VaccineSummary(
+            total: 0,
+            applied: 0,
+            overdue: 0,
+            upcoming: 0,
+          )
+        : ref.watch(vaccineSummaryProvider(patientId));
 
     final List<_TimelineEvent> allEvents = _buildTimeline(
       encounters.valueOrNull ?? const <Encounter>[],
@@ -221,7 +255,7 @@ class PatientTimelineScreen extends ConsumerWidget {
             ],
           ),
           leading: IconButton(
-            onPressed: () => context.pop(),
+            onPressed: () => context.popOrHome(),
             icon: const AppIcon(
               asset: AppIcons.back,
               size: 22,
@@ -331,28 +365,40 @@ class PatientTimelineScreen extends ConsumerWidget {
                       ),
                       ChartModuleLinkCard(
                         title: 'Caderneta de vacinas',
-                        message: vaccineSummary.total == 0
-                            ? 'Abra o módulo de vacinas para gerar ou '
-                                'consultar o calendário deste paciente.'
-                            : '${vaccineSummary.applied} aplicadas · '
-                                '${vaccineSummary.overdue} em atraso · '
-                                '${vaccineSummary.upcoming} próximas.',
+                        message: isProfessional
+                            ? 'A caderneta completa fica com a família. '
+                                'Com autorização de prontuário, registre doses '
+                                'relevantes na evolução da consulta.'
+                            : (vaccineSummary.total == 0
+                                ? 'Abra o módulo de vacinas para gerar ou '
+                                    'consultar o calendário deste paciente.'
+                                : '${vaccineSummary.applied} aplicadas · '
+                                    '${vaccineSummary.overdue} em atraso · '
+                                    '${vaccineSummary.upcoming} próximas.'),
                         icon: Icons.vaccines_outlined,
                         asset: AppIcons.vaccines,
                         color: AppColors.moduleVaccines,
-                        actionLabel: 'Abrir vacinas',
-                        onAction: () => context.push(Routes.vaccines(patientId)),
+                        actionLabel: isProfessional ? null : 'Abrir vacinas',
+                        onAction: isProfessional
+                            ? null
+                            : () => context.push(Routes.vaccines(patientId)),
                       ),
                       ChartModuleLinkCard(
                         title: 'Crescimento e curvas',
-                        message:
-                            'Acompanhe peso, altura, IMC e perímetro cefálico '
-                            'com referências da OMS.',
+                        message: isProfessional
+                            ? 'As curvas da família não são abertas pelo '
+                                'prontuário clínico. Use peso e altura da '
+                                'triagem e dos sinais vitais da consulta.'
+                            : 'Acompanhe peso, altura, IMC e perímetro '
+                                'cefálico com referências da OMS.',
                         icon: Icons.show_chart_rounded,
                         asset: AppIcons.growth,
                         color: AppColors.moduleGrowth,
-                        actionLabel: 'Abrir crescimento',
-                        onAction: () => context.push(Routes.growth(patientId)),
+                        actionLabel:
+                            isProfessional ? null : 'Abrir crescimento',
+                        onAction: isProfessional
+                            ? null
+                            : () => context.push(Routes.growth(patientId)),
                       ),
                       const ChartModuleLinkCard(
                         title: 'Desenvolvimento',
@@ -1520,19 +1566,11 @@ class _PatientSummaryCard extends StatelessWidget {
               children: <Widget>[
                 Row(
                   children: <Widget>[
-                    CircleAvatar(
+                    ChildAvatarImage(
+                      name: child.name,
+                      seed: child.id,
+                      photoUrl: child.photoUrl,
                       radius: 24,
-                      backgroundColor: AppColors.avatarFor(child.id),
-                      backgroundImage: child.photoUrl != null
-                          ? NetworkImage(child.photoUrl!)
-                          : null,
-                      child: child.photoUrl == null
-                          ? Text(
-                              child.initials,
-                              style: theme.textTheme.titleMedium
-                                  ?.copyWith(color: Colors.white),
-                            )
-                          : null,
                     ),
                     const SizedBox(width: AppSpacing.md),
                     Expanded(

@@ -6,6 +6,9 @@ import '../router/routes.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_tokens.dart';
 import '../../features/auth/presentation/providers/auth_providers.dart';
+import '../../features/clinic_org/presentation/providers/clinic_org_providers.dart';
+import '../../features/shell/domain/account_role_label.dart';
+import '../../features/workspace/presentation/providers/workspace_providers.dart';
 import '../../shared/domain/entities/app_user.dart';
 import '../theme/app_icons.dart';
 import 'app_icon.dart';
@@ -17,10 +20,20 @@ class PremiumTopBar extends ConsumerWidget {
     super.key,
     this.notificationCount = 0,
     this.onSearchSubmitted,
+    this.showSearch = true,
+    this.leading,
+    this.contextChip,
   });
 
   final int notificationCount;
+  final bool showSearch;
   final ValueChanged<String>? onSearchSubmitted;
+
+  /// Botão à esquerda (ex.: abrir o menu em telas médias).
+  final Widget? leading;
+
+  /// Contexto ativo exibido antes dos ícones (ex.: paciente em foco).
+  final Widget? contextChip;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -28,10 +41,13 @@ class PremiumTopBar extends ConsumerWidget {
     final ThemeData theme = Theme.of(context);
     final String name = user?.name.trim().isNotEmpty == true
         ? user!.name
-        : 'Profissional';
-    final String roleLabel = (user?.specialty ?? '').isNotEmpty
-        ? user!.specialty!
-        : (user?.role.isProfessional == true ? 'Pediatra' : 'Conta');
+        : 'Conta';
+    final String roleLabel = accountRoleLabel(
+      user: user,
+      membership: ref.watch(activeClinicMembershipProvider),
+      workspace: ref.watch(currentWorkspaceProvider),
+    );
+    final String? clinicName = ref.watch(activeClinicProvider).valueOrNull?.name;
 
     return Material(
       color: Colors.white,
@@ -43,7 +59,11 @@ class PremiumTopBar extends ConsumerWidget {
         ),
         child: Row(
           children: <Widget>[
-            Expanded(
+            if (leading != null) ...<Widget>[
+              leading!,
+              const SizedBox(width: AppSpacing.sm),
+            ],
+            if (!showSearch) const Spacer() else Expanded(
               child: ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: 560),
                 child: TextField(
@@ -53,10 +73,12 @@ class PremiumTopBar extends ConsumerWidget {
                       return;
                     }
                     if (q.trim().isEmpty) return;
-                    context.go(Routes.patientsPath);
+                    context.go(
+                      '${Routes.patientsPath}?q=${Uri.encodeQueryComponent(q.trim())}',
+                    );
                   },
                   decoration: InputDecoration(
-                    hintText: 'Buscar pacientes, consultas, documentos...',
+                    hintText: 'Buscar paciente pelo nome',
                     prefixIcon: const Icon(Icons.search_rounded),
                     filled: true,
                     fillColor: AppColors.lightBackground,
@@ -77,9 +99,13 @@ class PremiumTopBar extends ConsumerWidget {
                 ),
               ),
             ),
+            if (contextChip != null) ...<Widget>[
+              const SizedBox(width: AppSpacing.md),
+              Flexible(child: contextChip!),
+            ],
             const SizedBox(width: AppSpacing.md),
             IconButton(
-              tooltip: 'Notificacoes',
+              tooltip: 'Notificações',
               onPressed: () => context.go(Routes.notificationsPath),
               icon: Badge(
                 isLabelVisible: notificationCount > 0,
@@ -95,9 +121,46 @@ class PremiumTopBar extends ConsumerWidget {
               ),
             ),
             const SizedBox(width: AppSpacing.sm),
-            InkWell(
-              borderRadius: AppRadius.pillAll,
-              onTap: () => context.go(Routes.profilePath),
+            PopupMenuButton<String>(
+              key: const Key('topbar-account-menu'),
+              tooltip: 'Conta',
+              position: PopupMenuPosition.under,
+              onSelected: (String action) async {
+                switch (action) {
+                  case 'profile':
+                    context.go(Routes.profilePath);
+                  case 'settings':
+                    await context.push(Routes.settingsPath);
+                  case 'logout':
+                    final bool ok = await ref
+                        .read(authControllerProvider.notifier)
+                        .signOut();
+                    if (ok && context.mounted) context.go(Routes.loginPath);
+                }
+              },
+              itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
+                PopupMenuItem<String>(
+                  enabled: false,
+                  child: Text(
+                    clinicName == null || clinicName.isEmpty
+                        ? 'Sem clínica ativa'
+                        : 'Unidade: $clinicName',
+                  ),
+                ),
+                const PopupMenuDivider(),
+                const PopupMenuItem<String>(
+                  value: 'profile',
+                  child: Text('Meu perfil'),
+                ),
+                const PopupMenuItem<String>(
+                  value: 'settings',
+                  child: Text('Ajustes'),
+                ),
+                const PopupMenuItem<String>(
+                  value: 'logout',
+                  child: Text('Sair'),
+                ),
+              ],
               child: Padding(
                 padding: const EdgeInsets.symmetric(
                   horizontal: AppSpacing.sm,
@@ -107,9 +170,9 @@ class PremiumTopBar extends ConsumerWidget {
                   children: <Widget>[
                     CircleAvatar(
                       radius: 18,
-                      backgroundColor: AppColors.softBlue,
+                      backgroundColor: AppColors.softLilac,
                       child: Text(
-                        user?.initials ?? 'P',
+                        user?.initials ?? '?',
                         style: theme.textTheme.labelMedium?.copyWith(
                           color: AppColors.brand,
                           fontWeight: FontWeight.w800,

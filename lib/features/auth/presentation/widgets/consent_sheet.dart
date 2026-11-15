@@ -97,6 +97,17 @@ class _ConsentSheetState extends ConsumerState<_ConsentSheet> {
   bool get _canContinue => _acceptedTerms && _acceptedPrivacy && !_submitting;
 
   Future<void> _openDocument(String url) async {
+    if (url.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Este documento ainda não foi publicado. Versão de homologação: '
+            'não use com dados reais.',
+          ),
+        ),
+      );
+      return;
+    }
     final Uri uri = Uri.parse(url);
     if (await canLaunchUrl(uri)) {
       await launchUrl(uri, mode: LaunchMode.externalApplication);

@@ -10,6 +10,7 @@ import '../../../../core/services/bunny_service.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_tokens.dart';
 import '../../../../core/widgets/app_widgets.dart';
+import '../../../../core/widgets/back_or_home_button.dart';
 import '../../../../core/widgets/skeleton.dart';
 import '../../../../core/widgets/state_views.dart';
 import '../../../../shared/domain/entities/app_user.dart';
@@ -232,7 +233,7 @@ class CourseDetailScreen extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
-          onPressed: () => context.pop(),
+          onPressed: () => context.popOrHome(),
           icon: const Icon(Icons.arrow_back_rounded),
           tooltip: 'Voltar',
         ),
@@ -535,7 +536,7 @@ class LessonScreen extends ConsumerWidget {
       return Scaffold(
         appBar: AppBar(
           leading: IconButton(
-            onPressed: () => context.pop(),
+            onPressed: () => context.popOrHome(),
             icon: const Icon(Icons.arrow_back_rounded),
             tooltip: 'Voltar',
           ),
@@ -557,7 +558,7 @@ class LessonScreen extends ConsumerWidget {
       return Scaffold(
         appBar: AppBar(
           leading: IconButton(
-            onPressed: () => context.pop(),
+            onPressed: () => context.popOrHome(),
             icon: const Icon(Icons.arrow_back_rounded),
             tooltip: 'Voltar',
           ),
@@ -606,7 +607,7 @@ class LessonScreen extends ConsumerWidget {
           overflow: TextOverflow.ellipsis,
         ),
         leading: IconButton(
-          onPressed: () => context.pop(),
+          onPressed: () => context.popOrHome(),
           icon: const Icon(Icons.arrow_back_rounded),
           tooltip: 'Voltar',
         ),

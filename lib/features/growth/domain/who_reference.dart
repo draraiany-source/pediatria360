@@ -139,11 +139,12 @@ enum GrowthClassification {
 ///
 /// ## Sobre os dados
 ///
-/// A tabela vem de `assets/data/who_reference.json`. **Os valores que
-/// acompanham o repositório são aproximações de desenvolvimento**, geradas por
-/// `tool/generate_who_reference.py`, e precisam ser substituídas pelas tabelas
-/// LMS oficiais antes de qualquer uso clínico. O formato do arquivo é o mesmo,
-/// então a troca não exige mudança de código.
+/// A tabela vem de `assets/data/who_reference.json`: valores LMS oficiais da
+/// OMS (Padrões 2006, 0–5 anos; Referência 2007, 5–19 anos), copiados do
+/// repositório `WorldHealthOrganization/anthro` no commit registrado em
+/// `_origem` e amostrados por mês (idades intermediárias são interpoladas
+/// aqui). **A conferência clínica dessa amostragem ainda está pendente**
+/// (`_aviso` do arquivo); até lá o gráfico mostra o aviso.
 ///
 /// A **matemática** implementada aqui, essa sim, segue a fórmula publicada pela
 /// OMS e está coberta por testes:

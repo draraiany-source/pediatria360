@@ -13,19 +13,15 @@ import 'package:pediatria360/shared/domain/entities/clinic_organization.dart';
 /// integração/widget, fora do escopo desta rodada), testa se a decisão,
 /// dado um estado de sessão, é a correta.
 void main() {
-  AppUser user({
-    required UserRole role,
-    bool onboardingDone = true,
-  }) =>
-      AppUser(
-        uid: 'uid-teste',
-        email: 'teste@exemplo.com',
-        name: 'Usuário Teste',
-        role: role,
-        plan: UserPlan.free,
-        createdAt: DateTime(2026, 1, 1),
-        onboardingDone: onboardingDone,
-      );
+  AppUser user({required UserRole role, bool onboardingDone = true}) => AppUser(
+    uid: 'uid-teste',
+    email: 'teste@exemplo.com',
+    name: 'Usuário Teste',
+    role: role,
+    plan: UserPlan.free,
+    createdAt: DateTime(2026, 1, 1),
+    onboardingDone: onboardingDone,
+  );
 
   String? redirectFor({
     required String location,
@@ -35,16 +31,15 @@ void main() {
     bool onboardingLoading = false,
     bool seenOnboarding = true,
     ClinicMembership? clinicMembership,
-  }) =>
-      resolveRouteRedirect(
-        maintenanceMode: maintenanceMode,
-        location: location,
-        authLoading: authLoading,
-        onboardingLoading: onboardingLoading,
-        user: asUser,
-        seenOnboarding: seenOnboarding,
-        clinicMembership: clinicMembership,
-      );
+  }) => resolveRouteRedirect(
+    maintenanceMode: maintenanceMode,
+    location: location,
+    authLoading: authLoading,
+    onboardingLoading: onboardingLoading,
+    user: asUser,
+    seenOnboarding: seenOnboarding,
+    clinicMembership: clinicMembership,
+  );
 
   group('RESPONSÁVEL (parent)', () {
     final AppUser parent = user(role: UserRole.parent);
@@ -73,6 +68,21 @@ void main() {
     test('NÃO acessa /consultorio', () {
       expect(
         redirectFor(location: Routes.clinicPath, asUser: parent),
+        Routes.homePath,
+      );
+    });
+
+    test('acessa /biblioteca (nao confunde com o prefixo /bi)', () {
+      expect(redirectFor(location: Routes.libraryPath, asUser: parent), isNull);
+    });
+
+    test('NÃO acessa /bi nem sub-rotas de /bi', () {
+      expect(
+        redirectFor(location: Routes.biPath, asUser: parent),
+        Routes.homePath,
+      );
+      expect(
+        redirectFor(location: '${Routes.biPath}/clinico', asUser: parent),
         Routes.homePath,
       );
     });
@@ -108,10 +118,7 @@ void main() {
 
     test('acessa sub-rota de voz do consultorio', () {
       expect(
-        redirectFor(
-          location: Routes.clinicVoicePath,
-          asUser: professional,
-        ),
+        redirectFor(location: Routes.clinicVoicePath, asUser: professional),
         isNull,
       );
     });
@@ -156,6 +163,56 @@ void main() {
           clinicMembership: rec,
         ),
         Routes.homePath,
+      );
+    });
+
+    test('recepcao com membership NAO abre Paciente 360 nem triagem', () {
+      final ClinicMembership rec = ClinicMembership(
+        id: 'm1',
+        clinicId: 'c1',
+        userId: 'uid-teste',
+        role: ClinicRole.receptionist,
+        createdAt: DateTime(2026, 1, 1),
+      );
+      for (final String route in <String>[
+        '${Routes.clinicPath}/paciente/crianca-1/360',
+        '${Routes.clinicPath}/triagem/consulta-1',
+      ]) {
+        expect(
+          redirectFor(
+            location: route,
+            asUser: professional,
+            clinicMembership: rec,
+          ),
+          Routes.homePath,
+          reason: route,
+        );
+      }
+      expect(
+        redirectFor(
+          location: Routes.clinicReceptionPath,
+          asUser: professional,
+          clinicMembership: rec,
+        ),
+        isNull,
+      );
+    });
+
+    test('medico com membership abre Paciente 360', () {
+      final ClinicMembership doc = ClinicMembership(
+        id: 'm2',
+        clinicId: 'c1',
+        userId: 'uid-teste',
+        role: ClinicRole.physician,
+        createdAt: DateTime(2026, 1, 1),
+      );
+      expect(
+        redirectFor(
+          location: '${Routes.clinicPath}/paciente/crianca-1/360',
+          asUser: professional,
+          clinicMembership: doc,
+        ),
+        isNull,
       );
     });
   });
@@ -218,8 +275,10 @@ void main() {
 
   group('logado sem perfil definido', () {
     test('é obrigado a passar por /perfil-inicial', () {
-      final AppUser semPerfil =
-          user(role: UserRole.parent, onboardingDone: false);
+      final AppUser semPerfil = user(
+        role: UserRole.parent,
+        onboardingDone: false,
+      );
       expect(
         redirectFor(location: Routes.homePath, asUser: semPerfil),
         Routes.roleSetupPath,
@@ -227,8 +286,10 @@ void main() {
     });
 
     test('já em /perfil-inicial, fica', () {
-      final AppUser semPerfil =
-          user(role: UserRole.parent, onboardingDone: false);
+      final AppUser semPerfil = user(
+        role: UserRole.parent,
+        onboardingDone: false,
+      );
       expect(
         redirectFor(location: Routes.roleSetupPath, asUser: semPerfil),
         isNull,

@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../shared/domain/entities/app_user.dart';
 import '../../../../shared/domain/entities/clinic_organization.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
-import '../../../billing/domain/billing_aggregators.dart';
 import '../../../billing/domain/billing_models.dart';
 import '../../../billing/presentation/providers/billing_providers.dart';
 import '../../../clinic/domain/clinic_dashboard_stats.dart';

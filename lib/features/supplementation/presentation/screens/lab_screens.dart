@@ -6,6 +6,7 @@ import '../../../../core/router/routes.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_tokens.dart';
 import '../../../../core/utils/result.dart';
+import '../../../../core/widgets/back_or_home_button.dart';
 import '../../../../core/widgets/brand_ui.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../domain/lab_result.dart';
@@ -302,7 +303,7 @@ class _LabResultFormScreenState extends ConsumerState<LabResultFormScreen> {
         ),
       ),
     );
-    if (res.isSuccess) context.pop();
+    if (res.isSuccess) context.popOrHome();
   }
 
   @override

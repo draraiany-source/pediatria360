@@ -109,6 +109,7 @@ class BiAggregators {
         case AppointmentStatus.cancelled:
           cancelled += 1;
         case AppointmentStatus.requested:
+        case AppointmentStatus.awaitingConfirmation:
         case AppointmentStatus.confirmed:
         case AppointmentStatus.inProgress:
           break;

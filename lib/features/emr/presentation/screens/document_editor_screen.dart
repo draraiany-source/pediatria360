@@ -8,8 +8,11 @@ import '../../../../core/theme/app_tokens.dart';
 import '../../../../core/utils/result.dart';
 import '../../../../core/utils/validators.dart';
 import '../../../../core/widgets/app_widgets.dart';
+import '../../../../core/widgets/unsaved_changes_guard.dart';
 import '../../../../shared/domain/entities/clinical_record.dart';
 import '../../../../shared/domain/entities/encounter.dart';
+import '../../../clinic_org/presentation/providers/clinic_org_providers.dart'
+    show documentClinicNameProvider;
 import '../../../tools/domain/calculators.dart';
 import '../services/clinical_pdf_service.dart';
 import 'patient_timeline_screen.dart';
@@ -56,6 +59,16 @@ class _DocumentEditorScreenState
 
   bool _issuing = false;
 
+  // Revisao medica obrigatoria antes de emitir (receita).
+  bool _reviewPatient = false;
+  bool _reviewMeds = false;
+  bool _reviewPosology = false;
+  bool _authorizeEmit = false;
+  String _folder = 'meus';
+  final TextEditingController _modelSearch = TextEditingController();
+  final TextEditingController _aiPrompt = TextEditingController();
+
+
   bool get _isPrescription =>
       widget.type == ClinicalDocumentType.prescription;
 
@@ -75,6 +88,8 @@ class _DocumentEditorScreenState
     _specialty.dispose();
     _reason.dispose();
     _exams.dispose();
+    _modelSearch.dispose();
+    _aiPrompt.dispose();
     for (final _ItemDraft i in _items) {
       i.dispose();
     }
@@ -138,6 +153,62 @@ class _DocumentEditorScreenState
     }
   }
 
+  bool get _canAuthorizePrescription =>
+      _reviewPatient &&
+      _reviewMeds &&
+      _reviewPosology &&
+      _authorizeEmit;
+
+  void _applyBlankTemplate({required bool controlledHint}) {
+    for (final _ItemDraft i in _items) {
+      i.dispose();
+    }
+    _items
+      ..clear()
+      ..add(_ItemDraft.empty()..controlled = controlledHint);
+    setState(() {});
+  }
+
+  /// Organiza texto livre em rascunho de itens — nao inventa medicamento.
+  void _organizeAiDraft() {
+    final String raw = _aiPrompt.text.trim();
+    if (raw.isEmpty) {
+      _snack('Descreva o que deseja organizar no rascunho.');
+      return;
+    }
+    final List<String> lines = raw
+        .split(RegExp(r'[\n;]+'))
+        .map((String s) => s.trim())
+        .where((String s) => s.isNotEmpty)
+        .toList(growable: false);
+    if (lines.isEmpty) {
+      return;
+    }
+    for (final _ItemDraft i in _items) {
+      i.dispose();
+    }
+    _items.clear();
+    for (final String line in lines) {
+      final _ItemDraft draft = _ItemDraft.empty();
+      // Formato sugerido: "medicamento | apresentacao | dose | frequencia"
+      final List<String> parts = line.split('|').map((String s) => s.trim()).toList();
+      draft.drug.text = parts.isNotEmpty ? parts[0] : line;
+      if (parts.length > 1) draft.presentation.text = parts[1];
+      if (parts.length > 2) draft.dose.text = parts[2];
+      if (parts.length > 3) draft.frequency.text = parts[3];
+      _items.add(draft);
+    }
+    setState(() {
+      _reviewMeds = false;
+      _reviewPosology = false;
+      _authorizeEmit = false;
+    });
+    _snack(
+      'Rascunho organizado a partir do texto. Revise doses e alergias — '
+      'a IA nao emite nem assina.',
+    );
+  }
+
   Future<void> _issue() async {
     final String content = _isPrescription
         ? _content.text.trim()
@@ -155,6 +226,14 @@ class _DocumentEditorScreenState
 
     if (_isPrescription && items.isEmpty) {
       _snack('Adicione ao menos um medicamento.');
+      return;
+    }
+
+    if (_isPrescription && !_canAuthorizePrescription) {
+      _snack(
+        'Conclua a revisao medica e marque a autorizacao antes de emitir.',
+        error: true,
+      );
       return;
     }
 
@@ -176,7 +255,7 @@ class _DocumentEditorScreenState
         _snack('${widget.type.label} emitido.');
         await ClinicalPdfService.printDocument(
           document: document,
-          clinicName: 'Pediatria 360',
+          clinicName: ref.read(documentClinicNameProvider),
         );
         if (mounted) Navigator.of(context).pop();
       },
@@ -198,12 +277,64 @@ class _DocumentEditorScreenState
   @override
   Widget build(BuildContext context) {
     final ThemeData theme = Theme.of(context);
+    if (_isPrescription) {
+      return UnsavedChangesGuard(
+        isDirty: () => _dirty,
+        child: Scaffold(
+          backgroundColor: AppColors.lightBackground,
+          appBar: AppBar(
+            title: const Text('Receituario Inteligente'),
+            leading: IconButton(
+              onPressed: () => leaveWithConfirmation(context, dirty: _dirty),
+              icon: const Icon(Icons.close_rounded),
+              tooltip: 'Cancelar',
+            ),
+          ),
+          body: LayoutBuilder(
+            builder: (BuildContext context, BoxConstraints c) {
+              final bool wide = c.maxWidth >= 980;
+              final Widget models = _modelsColumn();
+              final Widget preview = _previewColumn(theme);
+              final Widget assist = _assistColumn();
+              if (wide) {
+                return Padding(
+                  padding: const EdgeInsets.all(AppSpacing.md),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: <Widget>[
+                      SizedBox(width: 260, child: models),
+                      const SizedBox(width: AppSpacing.md),
+                      Expanded(flex: 3, child: preview),
+                      const SizedBox(width: AppSpacing.md),
+                      SizedBox(width: 300, child: assist),
+                    ],
+                  ),
+                );
+              }
+              return ListView(
+                padding: const EdgeInsets.all(AppSpacing.md),
+                children: <Widget>[
+                  models,
+                  const SizedBox(height: AppSpacing.md),
+                  preview,
+                  const SizedBox(height: AppSpacing.md),
+                  assist,
+                  const SizedBox(height: AppSpacing.xxl),
+                ],
+              );
+            },
+          ),
+        ),
+      );
+    }
 
-    return Scaffold(
+    return UnsavedChangesGuard(
+      isDirty: () => _dirty,
+      child: Scaffold(
       appBar: AppBar(
         title: Text(widget.type.label),
         leading: IconButton(
-          onPressed: () => Navigator.of(context).pop(),
+          onPressed: () => leaveWithConfirmation(context, dirty: _dirty),
           icon: const Icon(Icons.close_rounded),
           tooltip: 'Cancelar',
         ),
@@ -234,26 +365,20 @@ class _DocumentEditorScreenState
               children: <Widget>[
                 _PatientCard(encounter: widget.encounter),
                 const SizedBox(height: AppSpacing.lg),
-
-                if (_isPrescription) ..._prescriptionFields(theme),
                 if (widget.type == ClinicalDocumentType.certificate)
                   ..._certificateFields(theme),
                 if (widget.type == ClinicalDocumentType.referral)
                   ..._referralFields(),
                 if (widget.type == ClinicalDocumentType.examRequest)
                   ..._examFields(),
-
-                if (!_isPrescription) ...<Widget>[
-                  const SectionHeader(title: 'Texto do documento'),
-                  AppTextField(
-                    label: 'Conteúdo',
-                    controller: _content,
-                    maxLines: 14,
-                    textCapitalization: TextCapitalization.sentences,
-                    helper: 'Revise antes de emitir — o conteúdo é seu.',
-                  ),
-                ],
-
+                const SectionHeader(title: 'Texto do documento'),
+                AppTextField(
+                  label: 'Conteúdo',
+                  controller: _content,
+                  maxLines: 14,
+                  textCapitalization: TextCapitalization.sentences,
+                  helper: 'Revise antes de emitir — o conteúdo é seu.',
+                ),
                 const SizedBox(height: AppSpacing.xl),
                 _SignatureNotice(),
               ],
@@ -261,8 +386,315 @@ class _DocumentEditorScreenState
           ),
         ],
       ),
+      ),
     );
   }
+
+  Widget _modelsColumn() {
+    final List<({String id, String label, IconData icon, Color color, bool controlled})>
+        folders = <({String id, String label, IconData icon, Color color, bool controlled})>[
+      (id: 'meus', label: 'Meus modelos', icon: Icons.folder_rounded, color: AppColors.brand, controlled: false),
+      (id: 'pueri', label: 'Puericultura', icon: Icons.folder_rounded, color: AppColors.success, controlled: false),
+      (id: 'geral', label: 'Cuidados gerais', icon: Icons.folder_rounded, color: AppColors.vital, controlled: false),
+      (id: 'sup', label: 'Suplementacao', icon: Icons.folder_rounded, color: AppColors.honey, controlled: false),
+      (id: 'clinica', label: 'Modelos da clinica', icon: Icons.folder_rounded, color: AppColors.navSelected, controlled: false),
+      (id: 'ctrl', label: 'Controle especial', icon: Icons.folder_rounded, color: AppColors.danger, controlled: true),
+    ];
+    return Material(
+      color: Colors.white,
+      borderRadius: AppRadius.xlAll,
+      child: ListView(
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+        padding: const EdgeInsets.all(AppSpacing.md),
+        children: <Widget>[
+          const Text(
+            'Modelos prontos',
+            style: TextStyle(fontWeight: FontWeight.w800, color: AppColors.navy),
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          TextField(
+            controller: _modelSearch,
+            decoration: const InputDecoration(
+              hintText: 'Buscar modelo...',
+              prefixIcon: Icon(Icons.search_rounded),
+              isDense: true,
+            ),
+            onChanged: (_) => setState(() {}),
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          for (final folder in folders)
+            if (_modelSearch.text.trim().isEmpty ||
+                folder.label.toLowerCase().contains(_modelSearch.text.trim().toLowerCase()))
+              ListTile(
+                dense: true,
+                selected: _folder == folder.id,
+                selectedTileColor: AppColors.brandIndicator,
+                leading: Icon(folder.icon, color: folder.color),
+                title: Text(folder.label),
+                trailing: const Icon(Icons.chevron_right_rounded, size: 18),
+                onTap: () {
+                  setState(() => _folder = folder.id);
+                  _applyBlankTemplate(controlledHint: folder.controlled);
+                  _snack(
+                    'Modelo em branco (${folder.label}). '
+                    'Preencha com dados reais — sem conteudo ficticio.',
+                  );
+                },
+              ),
+          const Divider(),
+          const ListTile(
+            dense: true,
+            leading: Icon(Icons.star_outline_rounded, color: AppColors.honey),
+            title: Text('Receita em branco'),
+          ),
+          FilledButton.icon(
+            onPressed: () => _applyBlankTemplate(controlledHint: false),
+            icon: const Icon(Icons.add_rounded),
+            label: const Text('Criar modelo / limpar'),
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          const Text(
+            'Favoritos da clinica aparecem quando houver modelos salvos '
+            'na conta. Nao listamos exemplos do mockup.',
+            style: TextStyle(fontSize: 12, color: AppColors.inkMuted),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _previewColumn(ThemeData theme) {
+    final Encounter e = widget.encounter;
+    return ListView(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      children: <Widget>[
+        Row(
+          children: <Widget>[
+            const Expanded(
+              child: Text(
+                'Previa do receituario',
+                style: TextStyle(
+                  fontWeight: FontWeight.w800,
+                  color: AppColors.navy,
+                ),
+              ),
+            ),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              decoration: BoxDecoration(
+                color: AppColors.softOrange,
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: const Text(
+                'Rascunho · nao emitido',
+                style: TextStyle(
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.warning,
+                  fontSize: 12,
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: AppSpacing.sm),
+        _PatientCard(encounter: e),
+        const SizedBox(height: AppSpacing.md),
+        Material(
+          color: Colors.white,
+          borderRadius: AppRadius.xlAll,
+          child: Padding(
+            padding: const EdgeInsets.all(AppSpacing.lg),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: <Widget>[
+                Text(
+                  'RECEITUARIO',
+                  textAlign: TextAlign.center,
+                  style: theme.textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.w900,
+                    color: AppColors.navy,
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.sm),
+                Text('Paciente: ${e.patientName ?? "—"}'),
+                Text(
+                  'Peso: ${e.vitals.weightKg == null ? "nao informado" : "${e.vitals.weightKg} kg"}',
+                ),
+                Text(
+                  'Alergias: ${e.anamnesis.allergies.isEmpty ? "conferir no prontuario" : e.anamnesis.allergies.join(", ")}',
+                ),
+                const Divider(height: 24),
+                ..._prescriptionFields(theme),
+                const SizedBox(height: AppSpacing.md),
+                const Text(
+                  'Preenchimento sujeito a avaliacao medica.',
+                  style: TextStyle(color: AppColors.inkMuted, fontSize: 12),
+                ),
+                const SizedBox(height: 4),
+                const Text(
+                  'Responsavel pela prescicao: medico autenticado · '
+                  'Assinatura pendente',
+                  style: TextStyle(fontWeight: FontWeight.w600, fontSize: 12),
+                ),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(height: AppSpacing.md),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: <Widget>[
+            OutlinedButton(
+              onPressed: () => _snack('Rascunho mantido nesta tela ate emitir.'),
+              child: const Text('Salvar rascunho'),
+            ),
+            OutlinedButton(
+              onPressed: () => _snack(
+                'Salvar como modelo da clinica chega na proxima iteracao.',
+              ),
+              child: const Text('Salvar como modelo'),
+            ),
+            OutlinedButton(
+              onPressed: () => _snack('Use Autorizar e assinar para PDF final.'),
+              child: const Text('Pre-visualizar'),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _assistColumn() {
+    final bool ready = _canAuthorizePrescription;
+    return ListView(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      children: <Widget>[
+        Material(
+          color: Colors.white,
+          borderRadius: AppRadius.xlAll,
+          child: Padding(
+            padding: const EdgeInsets.all(AppSpacing.md),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: <Widget>[
+                const Text(
+                  'Assistente IA — Tia Cris',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.navy,
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.sm),
+                const Text(
+                  'Criar rascunho com IA',
+                  style: TextStyle(fontWeight: FontWeight.w700),
+                ),
+                const SizedBox(height: 6),
+                TextField(
+                  controller: _aiPrompt,
+                  maxLines: 4,
+                  decoration: const InputDecoration(
+                    hintText:
+                        'Descreva o que deseja organizar no rascunho...\n'
+                        'Ex.: medicamento | apresentacao | dose | frequencia',
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.sm),
+                FilledButton.icon(
+                  onPressed: _organizeAiDraft,
+                  icon: const Icon(Icons.auto_awesome),
+                  label: const Text('Gerar rascunho'),
+                ),
+                const SizedBox(height: 6),
+                const Text(
+                  'A IA nao emite nem assina receitas.',
+                  style: TextStyle(fontSize: 12, color: AppColors.inkMuted),
+                ),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(height: AppSpacing.md),
+        Material(
+          color: Colors.white,
+          borderRadius: AppRadius.xlAll,
+          child: Padding(
+            padding: const EdgeInsets.all(AppSpacing.md),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: <Widget>[
+                const Text(
+                  'Revisao do medico',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.navy,
+                  ),
+                ),
+                CheckboxListTile(
+                  contentPadding: EdgeInsets.zero,
+                  value: _reviewPatient,
+                  onChanged: (bool? v) =>
+                      setState(() => _reviewPatient = v ?? false),
+                  title: const Text('Paciente e alergias conferidos'),
+                  controlAffinity: ListTileControlAffinity.leading,
+                ),
+                CheckboxListTile(
+                  contentPadding: EdgeInsets.zero,
+                  value: _reviewMeds,
+                  onChanged: (bool? v) =>
+                      setState(() => _reviewMeds = v ?? false),
+                  title: const Text('Medicamentos e doses revisados'),
+                  controlAffinity: ListTileControlAffinity.leading,
+                ),
+                CheckboxListTile(
+                  contentPadding: EdgeInsets.zero,
+                  value: _reviewPosology,
+                  onChanged: (bool? v) =>
+                      setState(() => _reviewPosology = v ?? false),
+                  title: const Text('Via, frequencia e duracao revisadas'),
+                  controlAffinity: ListTileControlAffinity.leading,
+                ),
+                CheckboxListTile(
+                  contentPadding: EdgeInsets.zero,
+                  value: _authorizeEmit,
+                  onChanged: (bool? v) =>
+                      setState(() => _authorizeEmit = v ?? false),
+                  title: const Text('Autorizo a emissao desta versao'),
+                  controlAffinity: ListTileControlAffinity.leading,
+                ),
+                const SizedBox(height: AppSpacing.sm),
+                FilledButton.icon(
+                  onPressed: ready && !_issuing ? _issue : null,
+                  icon: Icon(ready ? Icons.lock_open_rounded : Icons.lock_rounded),
+                  label: Text(
+                    _issuing ? 'Emitindo...' : 'Autorizar e assinar',
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  ready
+                      ? 'PDF final sera gerado apos autorizacao.'
+                      : 'Disponivel apos revisao e confirmacao do medico.',
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: AppColors.inkMuted,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  bool get _dirty => _isPrescription
+      ? _items.any((_ItemDraft i) => i.drug.text.trim().isNotEmpty)
+      : _content.text.trim() != _initialTemplate().trim();
 
   // ------------------------------------------------------------- Receita
 

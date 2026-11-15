@@ -1,6 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import '../../../../core/error/error_mapper.dart';
+import '../../../../core/error/failures.dart';
+import '../../../../core/utils/result.dart';
+import '../../../../core/widgets/state_views.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:printing/printing.dart';
@@ -12,7 +17,7 @@ import '../../../../shared/domain/entities/commerce.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../../shared/domain/entities/clinic_organization.dart';
 import '../../../clinic_org/presentation/providers/clinic_org_providers.dart'
-    show activeClinicMembershipProvider;
+    show activeClinicMembershipProvider, documentClinicNameProvider;
 import '../../data/finance_repository.dart';
 import '../../domain/finance_access.dart';
 import '../../domain/finance_models.dart';
@@ -35,7 +40,10 @@ class ReceivablesScreen extends ConsumerWidget {
       appBar: AppBar(title: const Text('Contas a receber')),
       body: async.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (Object e, _) => Center(child: Text('$e')),
+        error: (Object e, _) => ErrorState(
+          failure: ErrorMapper.map(e),
+          onRetry: () => ref.invalidate(financeReceivablesProvider),
+        ),
         data: (List<FinanceReceivable> list) {
           final List<FinanceReceivable> open = list
               .where((FinanceReceivable r) => r.effectiveStatus(now).isOpen)
@@ -57,7 +65,7 @@ class ReceivablesScreen extends ConsumerWidget {
                 child: ListTile(
                   title: Text(r.description.isNotEmpty ? r.description : r.id),
                   subtitle: Text(
-                    '${fmt.format(r.dueAt)} 뿯½ ${st.label} 뿯½ '
+                    '${fmt.format(r.dueAt)} • ${st.label} • '
                     'Aberto ${formatCents(r.openCents)}',
                   ),
                   isThreeLine: true,
@@ -72,27 +80,28 @@ class ReceivablesScreen extends ConsumerWidget {
                           value: 'pay',
                           child: Text('Registrar pagamento'),
                         ),
-                      const PopupMenuItem<String>(
-                        value: 'edit',
-                        child: Text('Editar valor'),
-                      ),
                       if (FinanceAccess.canManageLedger(
                         user: ref.read(currentUserProvider),
                         clinicMembership: ref.read(activeClinicMembershipProvider),
                       )) ...<PopupMenuItem<String>>[
                         const PopupMenuItem<String>(
-                          value: 'cancel',
-                          child: Text('Cancelar'),
+                          value: 'edit',
+                          child: Text('Editar valor'),
                         ),
                         const PopupMenuItem<String>(
-                          value: 'receipt',
-                          child: Text('Emitir recibo PDF'),
+                          value: 'cancel',
+                          child: Text('Cancelar cobrança'),
                         ),
+                        if (r.paidCents > 0)
+                          const PopupMenuItem<String>(
+                            value: 'receipt',
+                            child: Text('Pré-visualizar recibo'),
+                          ),
                       ],
                       if (r.appointmentId != null)
                         const PopupMenuItem<String>(
                           value: 'appt',
-                          child: Text('Abrir consulta'),
+                          child: Text('Abrir agenda'),
                         ),
                       if (r.childId != null)
                         const PopupMenuItem<String>(
@@ -124,50 +133,84 @@ class ReceivablesScreen extends ConsumerWidget {
 
     switch (action) {
       case 'pay':
-        final int? cents = await _amountDialog(context, r.openCents);
-        if (cents == null || cents <= 0) return;
-        await repo.registerPayment(
+        final _PaymentInput? input = await _paymentDialog(context, r.openCents);
+        if (input == null) return;
+        final Result<FinanceReceivable> result = await repo.registerPayment(
           receivable: r,
-          amountCents: cents,
-          method: PaymentMethodKind.pix,
+          amountCents: input.cents,
+          method: input.method,
           byUserId: uid,
           membership: membership,
         );
+        if (context.mounted) {
+          _feedback(context, result.failureOrNull, 'Pagamento registrado.');
+        }
       case 'edit':
-        final int? total = await _amountDialog(context, r.totalCents, title: 'Novo total');
+        final int? total = await _amountDialog(
+          context,
+          r.totalCents,
+          title: 'Novo total (centavos)',
+          min: r.paidCents > 0 ? r.paidCents : 1,
+        );
         if (total == null) return;
-        await repo.upsertReceivable(
+        final Result<void> result = await repo.upsertReceivable(
           r.copyWith(totalCents: total, updatedAt: DateTime.now()),
           membership: membership,
         );
+        if (context.mounted) {
+          _feedback(context, result.failureOrNull, 'Valor atualizado.');
+        }
       case 'cancel':
-        await repo.cancelReceivable(
+        if (r.paidCents > 0) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text(
+                'Esta cobrança já tem pagamento registrado. Use o estorno '
+                'antes de cancelar.',
+              ),
+            ),
+          );
+          return;
+        }
+        final bool confirmed = await _confirm(
+          context,
+          title: 'Cancelar cobrança?',
+          body: '${r.description.isNotEmpty ? r.description : r.id}\n'
+              'Valor: ${formatCents(r.totalCents)}. O cancelamento fica no '
+              'histórico e não pode ser desfeito por aqui.',
+          action: 'Cancelar cobrança',
+        );
+        if (!confirmed) return;
+        final Result<void> result = await repo.cancelReceivable(
           receivable: r,
           byUserId: uid,
           membership: membership,
         );
+        if (context.mounted) {
+          _feedback(context, result.failureOrNull, 'Cobrança cancelada.');
+        }
       case 'receipt':
         final FinanceReceipt receipt = FinanceReceipt(
           id: 'preview',
           ownerId: r.ownerId,
           receivableId: r.id,
-          amountCents: r.paidCents > 0 ? r.paidCents : r.totalCents,
-          method: PaymentMethodKind.pix,
+          amountCents: r.paidCents,
+          method: PaymentMethodKind.other,
           issuedAt: DateTime.now(),
           patientId: r.childId,
-          receiptNumber: 'PREVIEW',
+          receiptNumber: 'PRÉVIA — SEM VALOR DE RECIBO',
         );
         final bytes = await ReceiptPdfService.build(
           receipt: receipt,
           receivable: r,
-          clinicName: 'Consultorio',
+          clinicName: ref.read(documentClinicNameProvider),
         );
         if (context.mounted) {
           await Printing.layoutPdf(onLayout: (_) async => bytes);
         }
       case 'appt':
         if (r.appointmentId != null) {
-          context.push(Routes.appointment(r.appointmentId!));
+          context.go(Routes.agendaPath);
         }
       case 'patient':
         if (r.childId != null) {
@@ -177,33 +220,174 @@ class ReceivablesScreen extends ConsumerWidget {
     ref.invalidate(financeReceivablesProvider);
   }
 
-  Future<int?> _amountDialog(
-    BuildContext context,
-    int defaultCents, {
-    String title = 'Valor (centavos)',
+  void _feedback(BuildContext context, Failure? failure, String success) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          failure == null
+              ? success
+              : 'Não foi possível concluir: ${failure.message}',
+        ),
+      ),
+    );
+  }
+
+  Future<bool> _confirm(
+    BuildContext context, {
+    required String title,
+    required String body,
+    required String action,
   }) async {
-    final TextEditingController c =
-        TextEditingController(text: '$defaultCents');
-    final int? v = await showDialog<int>(
+    final bool? ok = await showDialog<bool>(
       context: context,
       builder: (BuildContext ctx) => AlertDialog(
         title: Text(title),
-        content: TextField(
-          controller: c,
-          keyboardType: TextInputType.number,
-          inputFormatters: <TextInputFormatter>[FilteringTextInputFormatter.digitsOnly],
-          decoration: const InputDecoration(labelText: 'Centavos'),
-        ),
+        content: Text(body),
         actions: <Widget>[
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancelar')),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Voltar'),
+          ),
           FilledButton(
-            onPressed: () => Navigator.pop(ctx, int.tryParse(c.text)),
-            child: const Text('OK'),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text(action),
           ),
         ],
+      ),
+    );
+    return ok == true;
+  }
+
+  Future<_PaymentInput?> _paymentDialog(
+    BuildContext context,
+    int openCents,
+  ) async {
+    final TextEditingController c = TextEditingController(text: '$openCents');
+    PaymentMethodKind method = PaymentMethodKind.pix;
+    String? error;
+    final _PaymentInput? v = await showDialog<_PaymentInput>(
+      context: context,
+      builder: (BuildContext ctx) => StatefulBuilder(
+        builder: (BuildContext ctx, StateSetter setLocal) => AlertDialog(
+          title: const Text('Registrar pagamento'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              Text('Em aberto: ${formatCents(openCents)}'),
+              TextField(
+                controller: c,
+                keyboardType: TextInputType.number,
+                inputFormatters: <TextInputFormatter>[
+                  FilteringTextInputFormatter.digitsOnly,
+                ],
+                decoration: const InputDecoration(
+                  labelText: 'Valor recebido (centavos)',
+                  helperText: 'Valor menor que o aberto fica como parcial.',
+                ),
+              ),
+              DropdownButton<PaymentMethodKind>(
+                value: method,
+                isExpanded: true,
+                items: PaymentMethodKind.values
+                    .map(
+                      (PaymentMethodKind m) =>
+                          DropdownMenuItem<PaymentMethodKind>(
+                        value: m,
+                        child: Text(m.label),
+                      ),
+                    )
+                    .toList(growable: false),
+                onChanged: (PaymentMethodKind? m) {
+                  if (m != null) setLocal(() => method = m);
+                },
+              ),
+              if (error != null)
+                Text(
+                  error!,
+                  style: TextStyle(color: Theme.of(ctx).colorScheme.error),
+                ),
+            ],
+          ),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Cancelar'),
+            ),
+            FilledButton(
+              onPressed: () {
+                final int cents = int.tryParse(c.text) ?? 0;
+                if (cents <= 0 || cents > openCents) {
+                  setLocal(
+                    () => error =
+                        'Informe um valor entre 1 e $openCents centavos.',
+                  );
+                  return;
+                }
+                Navigator.pop(ctx, _PaymentInput(cents, method));
+              },
+              child: const Text('Registrar'),
+            ),
+          ],
+        ),
       ),
     );
     c.dispose();
     return v;
   }
+
+  Future<int?> _amountDialog(
+    BuildContext context,
+    int defaultCents, {
+    String title = 'Valor (centavos)',
+    int min = 1,
+  }) async {
+    final TextEditingController c =
+        TextEditingController(text: '$defaultCents');
+    String? error;
+    final int? v = await showDialog<int>(
+      context: context,
+      builder: (BuildContext ctx) => StatefulBuilder(
+        builder: (BuildContext ctx, StateSetter setLocal) => AlertDialog(
+          title: Text(title),
+          content: TextField(
+            controller: c,
+            keyboardType: TextInputType.number,
+            inputFormatters: <TextInputFormatter>[
+              FilteringTextInputFormatter.digitsOnly,
+            ],
+            decoration: InputDecoration(
+              labelText: 'Centavos',
+              errorText: error,
+            ),
+          ),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Cancelar'),
+            ),
+            FilledButton(
+              onPressed: () {
+                final int value = int.tryParse(c.text) ?? 0;
+                if (value < min) {
+                  setLocal(() => error = 'O valor mínimo é $min centavos.');
+                  return;
+                }
+                Navigator.pop(ctx, value);
+              },
+              child: const Text('OK'),
+            ),
+          ],
+        ),
+      ),
+    );
+    c.dispose();
+    return v;
+  }
+}
+
+class _PaymentInput {
+  const _PaymentInput(this.cents, this.method);
+
+  final int cents;
+  final PaymentMethodKind method;
 }

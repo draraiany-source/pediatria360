@@ -7,6 +7,7 @@ import '../../../../core/theme/app_tokens.dart';
 import '../../../../core/utils/result.dart';
 import '../../../../core/utils/validators.dart';
 import '../../../../core/widgets/app_widgets.dart';
+import '../../../../core/widgets/back_or_home_button.dart';
 import '../../../../shared/domain/entities/pre_visit_questionnaire.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../telemedicine_screen.dart' show telemedicineRepositoryProvider;
@@ -190,7 +191,7 @@ class _PreVisitQuestionnaireFormScreenState
       appBar: AppBar(
         title: const Text('Antes da consulta'),
         leading: IconButton(
-          onPressed: () => context.pop(),
+          onPressed: () => context.popOrHome(),
           icon: const Icon(Icons.arrow_back_rounded),
           tooltip: 'Voltar',
         ),

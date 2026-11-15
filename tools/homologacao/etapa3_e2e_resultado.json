@@ -1,0 +1,706 @@
+[
+  {
+    "area": "agenda",
+    "name": "duas reservas simultaneas no mesmo horario: so uma passa",
+    "expected": "sim",
+    "observed": "sim",
+    "ok": true,
+    "note": ""
+  },
+  {
+    "area": "agenda",
+    "name": "a outra recebe already-exists",
+    "expected": "sim",
+    "observed": "sim",
+    "ok": true,
+    "note": ""
+  },
+  {
+    "area": "agenda",
+    "name": "exatamente uma consulta gravada no horario",
+    "expected": "sim",
+    "observed": "sim",
+    "ok": true,
+    "note": ""
+  },
+  {
+    "area": "agenda",
+    "name": "fora da grade e recusado",
+    "expected": "failed-precondition",
+    "observed": "failed-precondition",
+    "ok": true,
+    "note": "failed-precondition: Fora do horário de atendimento."
+  },
+  {
+    "area": "agenda",
+    "name": "sem concessao do titular nao marca",
+    "expected": "permission-denied",
+    "observed": "permission-denied",
+    "ok": true,
+    "note": "permission-denied: Responsável não confere com o cadastro da criança."
+  },
+  {
+    "area": "agenda",
+    "name": "financeiro nao marca",
+    "expected": "permission-denied",
+    "observed": "permission-denied",
+    "ok": true,
+    "note": "permission-denied: Sem permissão para organizar esta agenda."
+  },
+  {
+    "area": "agenda",
+    "name": "recepcao NAO muda horario direto no banco",
+    "expected": "permission-denied",
+    "observed": "permission-denied",
+    "ok": true,
+    "note": "permission-denied: 7 PERMISSION_DENIED: \nevaluation error at L658:24 for 'update' @ L658, false for 'update' @ L2083, false for 'update' @ L658, false for 'update' @ L2083"
+  },
+  {
+    "area": "agenda",
+    "name": "recepcao NAO cria consulta direto no banco",
+    "expected": "permission-denied",
+    "observed": "permission-denied",
+    "ok": true,
+    "note": "permission-denied: 7 PERMISSION_DENIED: \nfalse for 'create' @ L629, false for 'create' @ L2083, evaluation error at L658:24 for 'update' @ L658, false for 'update' @ L2083, false for 'create' @ L629, false for 'create' @ L2083"
+  },
+  {
+    "area": "lembretes",
+    "name": "consulta nova gera lembretes na fila",
+    "expected": "sim",
+    "observed": "sim",
+    "ok": true,
+    "note": ""
+  },
+  {
+    "area": "lembretes",
+    "name": "recepcao remarca pelo servidor",
+    "expected": "permitido",
+    "observed": "permitido",
+    "ok": true,
+    "note": ""
+  },
+  {
+    "area": "lembretes",
+    "name": "nenhum lembrete da versao antiga continua pendente",
+    "expected": "sim",
+    "observed": "sim",
+    "ok": true,
+    "note": ""
+  },
+  {
+    "area": "lembretes",
+    "name": "lembretes da nova versao pendentes",
+    "expected": "sim",
+    "observed": "sim",
+    "ok": true,
+    "note": ""
+  },
+  {
+    "area": "lembretes",
+    "name": "aviso de remarcacao nao e cancelado junto",
+    "expected": "sim",
+    "observed": "sim",
+    "ok": true,
+    "note": ""
+  },
+  {
+    "area": "lembretes",
+    "name": "lembretes antigos ficam registrados como cancelados",
+    "expected": "sim",
+    "observed": "sim",
+    "ok": true,
+    "note": ""
+  },
+  {
+    "area": "agenda",
+    "name": "historico registra criacao e remarcacao com motivo",
+    "expected": "sim",
+    "observed": "sim",
+    "ok": true,
+    "note": ""
+  },
+  {
+    "area": "agenda",
+    "name": "horario antigo fica livre apos remarcar",
+    "expected": "permitido",
+    "observed": "permitido",
+    "ok": true,
+    "note": ""
+  },
+  {
+    "area": "espera",
+    "name": "familia entra na lista de espera",
+    "expected": "permitido",
+    "observed": "permitido",
+    "ok": true,
+    "note": ""
+  },
+  {
+    "area": "espera",
+    "name": "entrada repetida nao duplica",
+    "expected": "sim",
+    "observed": "sim",
+    "ok": true,
+    "note": ""
+  },
+  {
+    "area": "espera",
+    "name": "cancelar sem motivo (equipe) e recusado",
+    "expected": "invalid-argument",
+    "observed": "invalid-argument",
+    "ok": true,
+    "note": "invalid-argument: Informe o motivo do cancelamento."
+  },
+  {
+    "area": "espera",
+    "name": "recepcao cancela com motivo",
+    "expected": "permitido",
+    "observed": "permitido",
+    "ok": true,
+    "note": ""
+  },
+  {
+    "area": "espera",
+    "name": "vaga liberada vira convite ao primeiro da fila",
+    "expected": "sim",
+    "observed": "sim",
+    "ok": true,
+    "note": ""
+  },
+  {
+    "area": "espera",
+    "name": "um unico aviso de convite por canal",
+    "expected": "sim",
+    "observed": "sim",
+    "ok": true,
+    "note": ""
+  },
+  {
+    "area": "espera",
+    "name": "horario reservado para o convidado: outra marcacao falha",
+    "expected": "already-exists",
+    "observed": "already-exists",
+    "ok": true,
+    "note": "already-exists: Horário indisponível."
+  },
+  {
+    "area": "espera",
+    "name": "convidado aceita e a consulta e criada",
+    "expected": "sim",
+    "observed": "sim",
+    "ok": true,
+    "note": ""
+  },
+  {
+    "area": "espera",
+    "name": "aceitar de novo nao duplica",
+    "expected": "failed-precondition",
+    "observed": "failed-precondition",
+    "ok": true,
+    "note": "failed-precondition: Este convite não está mais disponível."
+  },
+  {
+    "area": "assistente",
+    "name": "proposta exige confirmacao (nao reserva sozinha)",
+    "expected": "sim",
+    "observed": "sim",
+    "ok": true,
+    "note": ""
+  },
+  {
+    "area": "assistente",
+    "name": "antes de confirmar, nenhuma consulta criada",
+    "expected": "sim",
+    "observed": "sim",
+    "ok": true,
+    "note": ""
+  },
+  {
+    "area": "assistente",
+    "name": "horario ocupado entre proposta e confirmacao: revalida e recusa",
+    "expected": "already-exists",
+    "observed": "already-exists",
+    "ok": true,
+    "note": "already-exists: Horário indisponível."
+  },
+  {
+    "area": "assistente",
+    "name": "confirmacao valida cria a consulta",
+    "expected": "permitido",
+    "observed": "permitido",
+    "ok": true,
+    "note": ""
+  },
+  {
+    "area": "assistente",
+    "name": "confirmar duas vezes nao duplica",
+    "expected": "failed-precondition",
+    "observed": "failed-precondition",
+    "ok": true,
+    "note": "failed-precondition: Proposta já usada."
+  },
+  {
+    "area": "assistente",
+    "name": "proposta para crianca de outra familia",
+    "expected": "permission-denied",
+    "observed": "permission-denied",
+    "ok": true,
+    "note": "permission-denied: Criança não encontrada."
+  },
+  {
+    "area": "financeiro",
+    "name": "recepcao gera cobranca da consulta",
+    "expected": "permitido",
+    "observed": "permitido",
+    "ok": true,
+    "note": ""
+  },
+  {
+    "area": "financeiro",
+    "name": "cobranca repetida nao duplica",
+    "expected": "sim",
+    "observed": "sim",
+    "ok": true,
+    "note": ""
+  },
+  {
+    "area": "financeiro",
+    "name": "pagamento repetido (mesma chave, simultaneo) aceito sem erro",
+    "expected": "sim",
+    "observed": "sim",
+    "ok": true,
+    "note": ""
+  },
+  {
+    "area": "financeiro",
+    "name": "um unico recibo lancado",
+    "expected": "sim",
+    "observed": "sim",
+    "ok": true,
+    "note": ""
+  },
+  {
+    "area": "financeiro",
+    "name": "mesma chave com outro valor e recusada",
+    "expected": "already-exists",
+    "observed": "already-exists",
+    "ok": true,
+    "note": "already-exists: Esta chave já foi usada para outra operação."
+  },
+  {
+    "area": "financeiro",
+    "name": "pagar alem do total e recusado",
+    "expected": "failed-precondition",
+    "observed": "failed-precondition",
+    "ok": true,
+    "note": "failed-precondition: Valor maior que o saldo em aberto."
+  },
+  {
+    "area": "financeiro",
+    "name": "consulta marcada como paga pelo servidor",
+    "expected": "sim",
+    "observed": "sim",
+    "ok": true,
+    "note": ""
+  },
+  {
+    "area": "financeiro",
+    "name": "recepcao NAO estorna",
+    "expected": "permission-denied",
+    "observed": "permission-denied",
+    "ok": true,
+    "note": "permission-denied: Sem permissão financeira."
+  },
+  {
+    "area": "financeiro",
+    "name": "financeiro estorna com motivo",
+    "expected": "permitido",
+    "observed": "permitido",
+    "ok": true,
+    "note": ""
+  },
+  {
+    "area": "financeiro",
+    "name": "familia NAO registra pagamento",
+    "expected": "permission-denied",
+    "observed": "permission-denied",
+    "ok": true,
+    "note": "permission-denied: Sem permissão financeira."
+  },
+  {
+    "area": "financeiro",
+    "name": "webhook de pagamento sem assinatura valida e recusado",
+    "expected": "sim",
+    "observed": "sim",
+    "ok": true,
+    "note": ""
+  },
+  {
+    "area": "fila",
+    "name": "recepcao NAO executa a fila",
+    "expected": "permission-denied",
+    "observed": "permission-denied",
+    "ok": true,
+    "note": "permission-denied: Sem permissão."
+  },
+  {
+    "area": "fila",
+    "name": "gestao executa a fila da clinica",
+    "expected": "permitido",
+    "observed": "permitido",
+    "ok": true,
+    "note": ""
+  },
+  {
+    "area": "fila",
+    "name": "executar de novo nao duplica avisos",
+    "expected": "sim",
+    "observed": "sim",
+    "ok": true,
+    "note": ""
+  },
+  {
+    "area": "fila",
+    "name": "nenhum WhatsApp marcado como enviado sem provedor",
+    "expected": "sim",
+    "observed": "sim",
+    "ok": true,
+    "note": ""
+  },
+  {
+    "area": "whatsapp",
+    "name": "status informa bloqueio (nao pronto) e o que falta",
+    "expected": "sim",
+    "observed": "sim",
+    "ok": true,
+    "note": ""
+  },
+  {
+    "area": "whatsapp",
+    "name": "financeiro NAO consulta o canal",
+    "expected": "permission-denied",
+    "observed": "permission-denied",
+    "ok": true,
+    "note": "permission-denied: Sem permissão."
+  },
+  {
+    "area": "whatsapp",
+    "name": "verificacao do webhook com token errado e recusada",
+    "expected": "sim",
+    "observed": "sim",
+    "ok": true,
+    "note": ""
+  },
+  {
+    "area": "whatsapp",
+    "name": "evento sem assinatura e recusado",
+    "expected": "sim",
+    "observed": "sim",
+    "ok": true,
+    "note": ""
+  },
+  {
+    "area": "campanha",
+    "name": "recepcao NAO cria campanha",
+    "expected": "permission-denied",
+    "observed": "permission-denied",
+    "ok": true,
+    "note": "permission-denied: Somente a gestão."
+  },
+  {
+    "area": "campanha",
+    "name": "segmentacao por dado clinico e recusada",
+    "expected": "invalid-argument",
+    "observed": "invalid-argument",
+    "ok": true,
+    "note": "invalid-argument: Critério de segmentação não permitido: diagnosis"
+  },
+  {
+    "area": "campanha",
+    "name": "previa so conta quem consentiu",
+    "expected": "sim",
+    "observed": "sim",
+    "ok": true,
+    "note": ""
+  },
+  {
+    "area": "campanha",
+    "name": "quem criou NAO aprova a propria campanha",
+    "expected": "permission-denied",
+    "observed": "permission-denied",
+    "ok": true,
+    "note": "permission-denied: A aprovação precisa ser de outra pessoa da gestão."
+  },
+  {
+    "area": "campanha",
+    "name": "outra pessoa da gestao aprova",
+    "expected": "sim",
+    "observed": "sim",
+    "ok": true,
+    "note": ""
+  },
+  {
+    "area": "campanha",
+    "name": "descadastro cancela o envio pendente",
+    "expected": "sim",
+    "observed": "sim",
+    "ok": true,
+    "note": ""
+  },
+  {
+    "area": "campanha",
+    "name": "job da campanha fica cancelado",
+    "expected": "sim",
+    "observed": "sim",
+    "ok": true,
+    "note": ""
+  },
+  {
+    "area": "campanha",
+    "name": "responsavel entra na lista de supressao",
+    "expected": "sim",
+    "observed": "sim",
+    "ok": true,
+    "note": ""
+  },
+  {
+    "area": "ia",
+    "name": "recepcao NAO abre a Central de IA",
+    "expected": "permission-denied",
+    "observed": "permission-denied",
+    "ok": true,
+    "note": "permission-denied: A Central de IA é restrita à gestão autorizada."
+  },
+  {
+    "area": "ia",
+    "name": "profissional NAO abre a Central de IA",
+    "expected": "permission-denied",
+    "observed": "permission-denied",
+    "ok": true,
+    "note": "permission-denied: A Central de IA é restrita à gestão autorizada."
+  },
+  {
+    "area": "ia",
+    "name": "financeiro so recebe indicadores financeiros",
+    "expected": "sim",
+    "observed": "sim",
+    "ok": true,
+    "note": ""
+  },
+  {
+    "area": "ia",
+    "name": "pedido fora das operacoes permitidas nao executa nada",
+    "expected": "sim",
+    "observed": "sim",
+    "ok": true,
+    "note": ""
+  },
+  {
+    "area": "ia",
+    "name": "resposta traz periodo, filtros e fonte",
+    "expected": "sim",
+    "observed": "sim",
+    "ok": true,
+    "note": ""
+  },
+  {
+    "area": "ia",
+    "name": "valor recebido da IA confere com o backend",
+    "expected": "sim",
+    "observed": "sim",
+    "ok": true,
+    "note": ""
+  },
+  {
+    "area": "ia",
+    "name": "estorno da IA confere com o backend",
+    "expected": "sim",
+    "observed": "sim",
+    "ok": true,
+    "note": ""
+  },
+  {
+    "area": "ia",
+    "name": "financeiro ve painel sem dados de agenda",
+    "expected": "sim",
+    "observed": "sim",
+    "ok": true,
+    "note": ""
+  },
+  {
+    "area": "ia",
+    "name": "consultas registradas no log da central",
+    "expected": "sim",
+    "observed": "sim",
+    "ok": true,
+    "note": ""
+  },
+  {
+    "area": "ia",
+    "name": "mesma requisicao repetida nao consome cota de novo",
+    "expected": "permitido",
+    "observed": "permitido",
+    "ok": true,
+    "note": ""
+  },
+  {
+    "area": "ia",
+    "name": "limite diario de uso por usuario",
+    "expected": "resource-exhausted",
+    "observed": "resource-exhausted",
+    "ok": true,
+    "note": "resource-exhausted: Limite diário de uso da IA atingido."
+  },
+  {
+    "area": "ia",
+    "name": "vinculo inativado perde acesso na hora",
+    "expected": "permission-denied",
+    "observed": "permission-denied",
+    "ok": true,
+    "note": "permission-denied: A Central de IA é restrita à gestão autorizada."
+  },
+  {
+    "area": "anamnese",
+    "name": "familia abre a pre-consulta da propria consulta",
+    "expected": "permitido",
+    "observed": "permitido",
+    "ok": true,
+    "note": ""
+  },
+  {
+    "area": "anamnese",
+    "name": "outra familia NAO abre",
+    "expected": "not-found",
+    "observed": "not-found",
+    "ok": true,
+    "note": "not-found: Consulta não encontrada."
+  },
+  {
+    "area": "anamnese",
+    "name": "enviar sem obrigatorios e recusado",
+    "expected": "failed-precondition",
+    "observed": "failed-precondition",
+    "ok": true,
+    "note": "failed-precondition: Faltam campos obrigatórios: chiefComplaint, symptomDuration, hasAllergies, vaccinesUpToDate"
+  },
+  {
+    "area": "anamnese",
+    "name": "salvamento parcial",
+    "expected": "permitido",
+    "observed": "permitido",
+    "ok": true,
+    "note": ""
+  },
+  {
+    "area": "anamnese",
+    "name": "profissional ainda nao ve rascunho",
+    "expected": "sim",
+    "observed": "sim",
+    "ok": true,
+    "note": ""
+  },
+  {
+    "area": "anamnese",
+    "name": "envio",
+    "expected": "permitido",
+    "observed": "permitido",
+    "ok": true,
+    "note": ""
+  },
+  {
+    "area": "anamnese",
+    "name": "campo condicional oculto nao e gravado",
+    "expected": "sim",
+    "observed": "sim",
+    "ok": true,
+    "note": ""
+  },
+  {
+    "area": "anamnese",
+    "name": "campo condicional oculto nao e gravado",
+    "expected": "sim",
+    "observed": "sim",
+    "ok": true,
+    "note": ""
+  },
+  {
+    "area": "anamnese",
+    "name": "resposta enviada nao e sobrescrita",
+    "expected": "failed-precondition",
+    "observed": "failed-precondition",
+    "ok": true,
+    "note": "failed-precondition: Resposta já enviada. Use 'atualizar' para criar uma nova versão."
+  },
+  {
+    "area": "anamnese",
+    "name": "familia NAO altera direto no banco",
+    "expected": "permission-denied",
+    "observed": "permission-denied",
+    "ok": true,
+    "note": "permission-denied: 7 PERMISSION_DENIED: \nfalse for 'update' @ L1350, false for 'update' @ L2083"
+  },
+  {
+    "area": "anamnese",
+    "name": "recepcao NAO le a anamnese",
+    "expected": "permission-denied",
+    "observed": "permission-denied",
+    "ok": true,
+    "note": "permission-denied: \nevaluation error at L1346:22 for 'get' @ L1346, false for 'get' @ L2083, false for 'get' @ L1346, false for 'get' @ L2083"
+  },
+  {
+    "area": "anamnese",
+    "name": "recepcao NAO usa a callable do profissional",
+    "expected": "permission-denied",
+    "observed": "permission-denied",
+    "ok": true,
+    "note": "permission-denied: Somente o profissional da consulta."
+  },
+  {
+    "area": "anamnese",
+    "name": "profissional da consulta le como relato",
+    "expected": "sim",
+    "observed": "sim",
+    "ok": true,
+    "note": ""
+  },
+  {
+    "area": "anamnese",
+    "name": "resumo preliminar lista campos nao respondidos",
+    "expected": "sim",
+    "observed": "sim",
+    "ok": true,
+    "note": ""
+  },
+  {
+    "area": "anamnese",
+    "name": "atualizar cria nova versao",
+    "expected": "sim",
+    "observed": "sim",
+    "ok": true,
+    "note": ""
+  },
+  {
+    "area": "anamnese",
+    "name": "versao anterior intacta",
+    "expected": "sim",
+    "observed": "sim",
+    "ok": true,
+    "note": ""
+  },
+  {
+    "area": "anamnese",
+    "name": "revisao do profissional nao altera o relato",
+    "expected": "permitido",
+    "observed": "permitido",
+    "ok": true,
+    "note": ""
+  },
+  {
+    "area": "anamnese",
+    "name": "respostas iguais apos revisao",
+    "expected": "sim",
+    "observed": "sim",
+    "ok": true,
+    "note": ""
+  }
+]

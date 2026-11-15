@@ -4,7 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../../core/error/failures.dart';
+import '../../../../core/config/app_assets.dart';
+import '../../../../core/config/capi_pose.dart';
 import '../../../../core/config/dev_mode.dart';
 import '../../../../core/providers/core_providers.dart';
 import '../../../../core/responsive/responsive.dart';
@@ -14,9 +15,7 @@ import '../../../../core/theme/app_icons.dart';
 import '../../../../core/widgets/app_icon.dart';
 import '../../../../core/theme/app_tokens.dart';
 import '../../../../core/utils/clinical_access.dart';
-import '../../../../core/utils/result.dart';
 import '../../../../core/utils/validators.dart';
-import '../../../../core/widgets/app_widgets.dart';
 import '../../../../core/widgets/brand_ui.dart';
 import '../../../../core/widgets/clinical_ui.dart';
 import '../../../../core/widgets/skeleton.dart';
@@ -24,8 +23,11 @@ import '../../../../core/widgets/state_views.dart';
 import '../../../../shared/domain/entities/clinical_record.dart';
 import '../../../../shared/domain/entities/encounter.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
-import '../../../clinic_org/presentation/providers/clinic_org_providers.dart';
+import '../../../clinic_intake/presentation/clinic_intakes_screen.dart';
 import '../../../notifications/presentation/notification_center_screen.dart';
+import '../../../telemedicine/data/telemedicine_repository.dart';
+import '../../../telemedicine/presentation/telemedicine_screen.dart'
+    show myAgendaProvider;
 import 'patient_timeline_screen.dart';
 
 /// Um paciente na visão do profissional.
@@ -46,9 +48,10 @@ class PatientSummary {
     this.allergies = const <String>[],
   });
 
-  /// Uid do responsável — é a chave do prontuário.
+  /// Id da criança (`Encounter.patientId`). Mesmo valor que [childId].
   final String patientId;
 
+  /// Id da criança — use este para abrir 360 / linha do tempo.
   final String childId;
   final String name;
   final DateTime? birthDate;
@@ -87,22 +90,17 @@ class PatientSummary {
   }
 }
 
-/// Pacientes que o profissional já atendeu.
+/// Pacientes do profissional: atendimentos + crianças já na agenda.
 ///
-/// ## Por que derivar dos atendimentos e não de uma lista própria
-///
-/// Manter uma collection `professional_patients` exigiria sincronizar dois
-/// lugares e conviver com divergência. Os atendimentos já são a fonte de
-/// verdade do vínculo: quem eu atendi é quem tem atendimento meu.
+/// Encounters continuam sendo a fonte clínica (diagnóstico, rascunho,
+/// alergias da anamnese). A agenda inclui quem ainda não teve prontuário
+/// aberto — sem criar collection espelho.
 final StreamProvider<List<PatientSummary>> professionalPatientsProvider =
     StreamProvider<List<PatientSummary>>((Ref ref) {
   if (DevMode.isEnabled &&
       ref.watch(firebaseAuthProvider).currentUser == null) {
     return Stream<List<PatientSummary>>.error(
-      const PermissionFailure(
-        'Modo demonstração: entre com conta profissional verificada '
-        'para ver pacientes reais.',
-      ),
+      guestSessionFailure('Os pacientes reais'),
     );
   }
   final String? uid = ref.watch(currentUserProvider)?.uid;
@@ -110,27 +108,28 @@ final StreamProvider<List<PatientSummary>> professionalPatientsProvider =
     return Stream<List<PatientSummary>>.value(const <PatientSummary>[]);
   }
 
+  final List<Appointment> agenda =
+      ref.watch(myAgendaProvider).valueOrNull ?? const <Appointment>[];
+
   return ref
       .watch(encounterRepositoryProvider)
       .watchProfessionalEncounters(uid)
       .map((List<Encounter> encounters) {
-    final Map<String, List<Encounter>> byPatient =
-        <String, List<Encounter>>{};
+    final Map<String, PatientSummary> byChild = <String, PatientSummary>{};
 
+    final Map<String, List<Encounter>> encountersByChild =
+        <String, List<Encounter>>{};
     for (final Encounter e in encounters) {
-      byPatient.putIfAbsent(e.patientId, () => <Encounter>[]).add(e);
+      if (e.patientId.isEmpty) continue;
+      encountersByChild.putIfAbsent(e.patientId, () => <Encounter>[]).add(e);
     }
 
-    final List<PatientSummary> patients = <PatientSummary>[];
-
-    for (final MapEntry<String, List<Encounter>> entry in byPatient.entries) {
+    for (final MapEntry<String, List<Encounter>> entry
+        in encountersByChild.entries) {
       final List<Encounter> list = entry.value
         ..sort((Encounter a, Encounter b) =>
             b.startedAt.compareTo(a.startedAt));
-
       final Encounter latest = list.first;
-
-      // O nome mais recente prevalece: o cadastro pode ter sido corrigido.
       String? name;
       DateTime? birth;
       for (final Encounter e in list) {
@@ -138,27 +137,39 @@ final StreamProvider<List<PatientSummary>> professionalPatientsProvider =
         birth ??= e.patientBirthDate;
         if (name != null && birth != null) break;
       }
-
-      patients.add(
-        PatientSummary(
-          patientId: entry.key,
-          childId: entry.key,
-          name: name ?? 'Paciente sem nome',
-          birthDate: birth,
-          lastEncounterAt: latest.startedAt,
-          lastDiagnosis: latest.primaryDiagnosis?.description,
-          hasOpenDraft:
-              list.any((Encounter e) => e.status == EncounterStatus.draft),
-          encounterCount: list.length,
-          allergies: latest.anamnesis.allergies,
-        ),
+      byChild[entry.key] = PatientSummary(
+        patientId: entry.key,
+        childId: entry.key,
+        name: name ?? 'Paciente sem nome',
+        birthDate: birth,
+        lastEncounterAt: latest.startedAt,
+        lastDiagnosis: latest.primaryDiagnosis?.description,
+        hasOpenDraft:
+            list.any((Encounter e) => e.status == EncounterStatus.draft),
+        encounterCount: list.length,
+        allergies: latest.anamnesis.allergies,
       );
     }
 
-    patients.sort((PatientSummary a, PatientSummary b) =>
-        (b.lastEncounterAt ?? DateTime(0))
-            .compareTo(a.lastEncounterAt ?? DateTime(0)));
+    for (final Appointment a in agenda) {
+      final String? childId = a.childId;
+      if (childId == null || childId.isEmpty) continue;
+      if (byChild.containsKey(childId)) continue;
+      final String name = (a.childName ?? '').trim();
+      byChild[childId] = PatientSummary(
+        patientId: childId,
+        childId: childId,
+        name: name.isEmpty ? 'Paciente na agenda' : name,
+        lastEncounterAt: a.startsAt,
+        lastDiagnosis: a.reason,
+        encounterCount: 0,
+      );
+    }
 
+    final List<PatientSummary> patients = byChild.values.toList()
+      ..sort((PatientSummary a, PatientSummary b) =>
+          (b.lastEncounterAt ?? DateTime(0))
+              .compareTo(a.lastEncounterAt ?? DateTime(0)));
     return patients;
   });
 });
@@ -181,7 +192,9 @@ enum PatientFilter {
 /// É a porta de entrada do prontuário: daqui se chega à linha do tempo e, dela,
 /// ao atendimento.
 class ProfessionalPatientsScreen extends ConsumerStatefulWidget {
-  const ProfessionalPatientsScreen({super.key});
+  const ProfessionalPatientsScreen({super.key, this.initialQuery});
+
+  final String? initialQuery;
 
   @override
   ConsumerState<ProfessionalPatientsScreen> createState() =>
@@ -194,6 +207,39 @@ class _ProfessionalPatientsScreenState
   Timer? _debounce;
   String _query = '';
   PatientFilter _filter = PatientFilter.all;
+
+  @override
+  void initState() {
+    super.initState();
+    final String initial = widget.initialQuery?.trim() ?? '';
+    if (initial.isNotEmpty) {
+      _search.text = initial;
+      _query = initial;
+    }
+  }
+
+  Future<void> _pickFilter(BuildContext context) async {
+    final PatientFilter? picked = await showModalBottomSheet<PatientFilter>(
+      context: context,
+      showDragHandle: true,
+      builder: (BuildContext sheetContext) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            for (final PatientFilter f in PatientFilter.values)
+              ListTile(
+                title: Text(f.label),
+                trailing: f == _filter
+                    ? const Icon(Icons.check_rounded, color: AppColors.brand)
+                    : null,
+                onTap: () => Navigator.of(sheetContext).pop(f),
+              ),
+          ],
+        ),
+      ),
+    );
+    if (picked != null && mounted) setState(() => _filter = picked);
+  }
 
   @override
   void dispose() {
@@ -323,7 +369,7 @@ class _ProfessionalPatientsScreenState
                     title: 'Pacientes',
                     subtitle: 'Gerencie e acompanhe seus pacientes.',
                     trailing: TextButton.icon(
-                      onPressed: () {},
+                      onPressed: () => _pickFilter(context),
                       icon: const AppIcon(
                         asset: AppIcons.filter,
                         size: 18,
@@ -451,6 +497,7 @@ class _ProfessionalPatientsScreenState
                     return EmptyState(
                       icon: Icons.people_outline_rounded,
                       asset: AppIcons.patients,
+                      illustration: AppAssets.capiForPose(CapiPose.bracosAbertos),
                       title: 'Nenhum paciente ainda',
                       message:
                           'Os pacientes aparecem aqui depois do primeiro '
@@ -472,6 +519,7 @@ class _ProfessionalPatientsScreenState
                   if (patients.isEmpty) {
                     return EmptyState(
                       icon: Icons.search_off_rounded,
+                      illustration: AppAssets.capiLupa,
                       title: 'Nada encontrado',
                       message: _query.isNotEmpty
                           ? 'Nenhum paciente com "$_query".'
@@ -512,23 +560,11 @@ class _ProfessionalPatientsScreenState
     );
   }
 
-  /// Cadastro rápido de paciente, para quem chega sem conta no app.
-  ///
-  /// O prontuário é indexado pelo uid do responsável. Quando a família ainda
-  /// não tem conta, criamos um identificador provisório — o vínculo é feito
-  /// depois, quando o responsável se cadastrar com o mesmo e-mail.
+  // Paciente novo vira solicitacao provisoria (sem id de crianca nem
+  // prontuario). O atendimento so comeca depois que o responsavel aceita o
+  // convite e autoriza o acesso.
   Future<void> _newPatientSheet(BuildContext context) =>
-      showModalBottomSheet<void>(
-        context: context,
-        isScrollControlled: true,
-        useSafeArea: true,
-        builder: (BuildContext context) => Padding(
-          padding: EdgeInsets.only(
-            bottom: MediaQuery.viewInsetsOf(context).bottom,
-          ),
-          child: const _NewPatientSheet(),
-        ),
-      );
+      Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => const NewIntakeScreen()));
 }
 
 class _PatientCard extends ConsumerWidget {
@@ -624,164 +660,6 @@ class _PatientCard extends ConsumerWidget {
             color: AppColors.inkMuted.withValues(alpha: 0.85),
           ),
         ],
-      ),
-    );
-  }
-}
-
-/// Cadastro rápido no consultório.
-class _NewPatientSheet extends ConsumerStatefulWidget {
-  const _NewPatientSheet();
-
-  @override
-  ConsumerState<_NewPatientSheet> createState() => _NewPatientSheetState();
-}
-
-class _NewPatientSheetState extends ConsumerState<_NewPatientSheet> {
-  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
-  final TextEditingController _name = TextEditingController();
-  final TextEditingController _guardianEmail = TextEditingController();
-
-  DateTime? _birthDate;
-  bool _saving = false;
-
-  @override
-  void dispose() {
-    _name.dispose();
-    _guardianEmail.dispose();
-    super.dispose();
-  }
-
-  Future<void> _pickBirthDate() async {
-    final DateTime now = DateTime.now();
-    final DateTime? picked = await showDatePicker(
-      context: context,
-      initialDate: _birthDate ?? now,
-      firstDate: DateTime(now.year - 25),
-      lastDate: now,
-      helpText: 'Data de nascimento',
-      locale: const Locale('pt', 'BR'),
-    );
-    if (picked != null) setState(() => _birthDate = picked);
-  }
-
-  Future<void> _submit() async {
-    if (!_formKey.currentState!.validate()) return;
-
-    if (_birthDate == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Informe a data de nascimento.')),
-      );
-      return;
-    }
-
-    setState(() => _saving = true);
-
-    final String? uid = ref.read(currentUserProvider)?.uid;
-    if (uid == null) return;
-
-    // Identificador provisório do paciente. Quando o responsável criar conta
-    // com este e-mail, uma Function faz o vínculo e migra o prontuário.
-    final String provisionalId =
-        'pending_${_guardianEmail.text.trim().toLowerCase().hashCode.abs()}';
-
-    final Result<Encounter> created =
-        await ref.read(encounterRepositoryProvider).create(
-              patientId: provisionalId,
-              professionalId: uid,
-              professionalName: ref.read(currentUserProvider)?.name ?? '',
-              professionalCrm: ref.read(currentUserProvider)?.crm,
-              patientName: _name.text.trim(),
-              patientBirthDate: _birthDate,
-              type: EncounterType.routine,
-              clinicId: ref.read(activeClinicIdProvider).valueOrNull,
-            );
-
-    if (!mounted) return;
-    setState(() => _saving = false);
-
-    created.fold(
-      (Encounter e) {
-        Navigator.of(context).pop();
-        Navigator.of(context).push(
-          MaterialPageRoute<void>(
-            builder: (_) => PatientTimelineScreen(
-              patientId: provisionalId,
-              patientName: _name.text.trim(),
-            ),
-          ),
-        );
-      },
-      (Failure failure) => ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(failure.message)),
-      ),
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final ThemeData theme = Theme.of(context);
-
-    return Padding(
-      padding: const EdgeInsets.all(AppSpacing.xl),
-      child: Form(
-        key: _formKey,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: <Widget>[
-            Text('Novo paciente', style: theme.textTheme.headlineSmall),
-            const SizedBox(height: AppSpacing.lg),
-            AppTextField(
-              label: 'Nome da criança',
-              controller: _name,
-              textCapitalization: TextCapitalization.words,
-              validator: Validators.name,
-            ),
-            const SizedBox(height: AppSpacing.lg),
-            InkWell(
-              onTap: _pickBirthDate,
-              borderRadius: AppRadius.mdAll,
-              child: InputDecorator(
-                decoration: InputDecoration(
-                  labelText: 'Data de nascimento',
-                  prefixIcon: const Icon(Icons.cake_outlined, size: 20),
-                  helperText: _birthDate == null
-                      ? null
-                      : Formatters.pediatricAge(_birthDate!),
-                ),
-                child: Text(
-                  _birthDate == null
-                      ? 'Selecionar'
-                      : Formatters.date(_birthDate!),
-                  style: theme.textTheme.bodyLarge,
-                ),
-              ),
-            ),
-            const SizedBox(height: AppSpacing.lg),
-            AppTextField(
-              label: 'E-mail do responsável',
-              controller: _guardianEmail,
-              keyboardType: TextInputType.emailAddress,
-              helper: 'Usado para vincular o prontuário quando a família '
-                  'criar conta no aplicativo.',
-              validator: Validators.email,
-            ),
-            const SizedBox(height: AppSpacing.xl),
-            AppButton(
-              label: 'Cadastrar e iniciar atendimento',
-              isLoading: _saving,
-              onPressed: _submit,
-            ),
-            const SizedBox(height: AppSpacing.md),
-            Text(
-              'O prontuário fica vinculado à conta do responsável. Enquanto '
-              'ela não existir, o registro segue acessível a você.',
-              style: theme.textTheme.bodySmall,
-              textAlign: TextAlign.center,
-            ),
-          ],
-        ),
       ),
     );
   }

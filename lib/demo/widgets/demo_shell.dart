@@ -1,0 +1,208 @@
+import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+
+import '../../core/theme/app_colors.dart';
+import '../../core/theme/app_tokens.dart';
+import '../demo_session.dart';
+import 'demo_widgets.dart';
+import 'routine_widgets.dart';
+
+/// Moldura das telas autenticadas-simuladas: faixa de demonstracao em cima,
+/// navegacao embaixo (celular) ou na lateral (computador).
+class DemoShell extends StatelessWidget {
+  const DemoShell({required this.location, required this.child, super.key});
+
+  final String location;
+  final Widget child;
+
+  static const int _maxBottomItems = 5;
+
+  /// Nos fluxos clínicos o celular mostra só a barra de ações do fluxo
+  /// (Voltar, Cancelar, Salvar rascunho), sem a navegação de módulos.
+  bool get _inFlow =>
+      location.contains('/consulta/') ||
+      location.contains('/documentos/') ||
+      location.endsWith('/editar') ||
+      RegExp(r'^/rotina/[^/]+/').hasMatch(location);
+
+  @override
+  Widget build(BuildContext context) {
+    return ListenableBuilder(
+      listenable: demoSession,
+      builder: (BuildContext context, _) {
+        final List<DemoModule> modules = demoSession.modules;
+        final DemoModule? current = DemoModule.fromLocation(location);
+        final bool wide = MediaQuery.sizeOf(context).width >= 840;
+        // Cada rota bloqueia a semântica do que foi pintado antes dela no
+        // mesmo contêiner; sem isto a faixa e o menu lateral somem para
+        // leitores de tela.
+        final Widget page = Semantics(container: true, child: child);
+
+        return Scaffold(
+          backgroundColor: AppColors.lightBackground,
+          body: Column(
+            children: <Widget>[
+              const DemoBanner(),
+              if (demoSession.profile == DemoProfile.responsavel)
+                const DemoReminderBar(),
+              Expanded(
+                child: wide
+                    ? Row(
+                        children: <Widget>[
+                          _Rail(modules: modules, current: current),
+                          Expanded(child: page),
+                        ],
+                      )
+                    : page,
+              ),
+            ],
+          ),
+          bottomNavigationBar: wide || modules.isEmpty || _inFlow
+              ? null
+              : _BottomNav(modules: modules, current: current),
+        );
+      },
+    );
+  }
+}
+
+class _Rail extends StatelessWidget {
+  const _Rail({required this.modules, required this.current});
+
+  final List<DemoModule> modules;
+  final DemoModule? current;
+
+  @override
+  Widget build(BuildContext context) {
+    final int index = current == null ? -1 : modules.indexOf(current!);
+    return NavigationRail(
+      extended: MediaQuery.sizeOf(context).width >= 1200,
+      minExtendedWidth: 220,
+      backgroundColor: AppColors.navy,
+      indicatorColor: AppColors.brand,
+      selectedIconTheme: const IconThemeData(color: Colors.white),
+      unselectedIconTheme: const IconThemeData(color: Color(0xFFC9D6F2)),
+      selectedLabelTextStyle: Theme.of(context).textTheme.labelMedium?.copyWith(
+        color: Colors.white,
+        fontWeight: FontWeight.w800,
+      ),
+      unselectedLabelTextStyle: Theme.of(
+        context,
+      ).textTheme.labelMedium?.copyWith(color: const Color(0xFFC9D6F2)),
+      selectedIndex: index < 0 ? null : index,
+      labelType: MediaQuery.sizeOf(context).width >= 1200
+          ? NavigationRailLabelType.none
+          : NavigationRailLabelType.all,
+      leading: Padding(
+        padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
+        child: Column(
+          children: <Widget>[
+            const Icon(
+              Icons.child_care_rounded,
+              color: AppColors.teal,
+              size: 32,
+            ),
+            const SizedBox(height: AppSpacing.xs),
+            Text(
+              'Pedi360',
+              style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                color: Colors.white,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+          ],
+        ),
+      ),
+      onDestinationSelected: (int i) => context.go(modules[i].path),
+      destinations: <NavigationRailDestination>[
+        for (final DemoModule m in modules)
+          NavigationRailDestination(
+            icon: Icon(m.icon),
+            selectedIcon: Icon(m.selectedIcon),
+            label: Text(m.label),
+          ),
+      ],
+    );
+  }
+}
+
+class _BottomNav extends StatelessWidget {
+  const _BottomNav({required this.modules, required this.current});
+
+  final List<DemoModule> modules;
+  final DemoModule? current;
+
+  @override
+  Widget build(BuildContext context) {
+    final bool overflow = modules.length > DemoShell._maxBottomItems;
+    final List<DemoModule> primary = overflow
+        ? <DemoModule>[...modules.take(DemoShell._maxBottomItems - 1)]
+        : modules;
+    final List<DemoModule> extra = overflow
+        ? modules.skip(primary.length).toList()
+        : <DemoModule>[];
+
+    int selected = current == null ? -1 : primary.indexOf(current!);
+    if (selected < 0 && current != null && extra.contains(current)) {
+      selected = primary.length;
+    }
+
+    return DecoratedBox(
+      decoration: const BoxDecoration(
+        border: Border(top: BorderSide(color: AppColors.line)),
+      ),
+      child: NavigationBar(
+        backgroundColor: Colors.white,
+        selectedIndex: selected < 0 ? 0 : selected,
+        indicatorColor: selected < 0
+            ? Colors.transparent
+            : AppColors.brandIndicator,
+        onDestinationSelected: (int i) {
+          if (i < primary.length) {
+            context.go(primary[i].path);
+          } else {
+            _openMore(context, extra);
+          }
+        },
+        destinations: <NavigationDestination>[
+          for (final DemoModule m in primary)
+            NavigationDestination(
+              icon: Icon(m.icon),
+              selectedIcon: Icon(m.selectedIcon, color: AppColors.navy),
+              label: m.label,
+            ),
+          if (overflow)
+            const NavigationDestination(
+              icon: Icon(Icons.more_horiz_rounded),
+              label: 'Mais',
+            ),
+        ],
+      ),
+    );
+  }
+
+  void _openMore(BuildContext context, List<DemoModule> extra) {
+    showModalBottomSheet<void>(
+      context: context,
+      showDragHandle: true,
+      builder: (BuildContext sheet) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            for (final DemoModule m in extra)
+              ListTile(
+                leading: Icon(m.icon, color: AppColors.brand),
+                title: Text(m.label),
+                trailing: const Icon(Icons.chevron_right_rounded),
+                onTap: () {
+                  Navigator.of(sheet).pop();
+                  context.go(m.path);
+                },
+              ),
+            const SizedBox(height: AppSpacing.sm),
+          ],
+        ),
+      ),
+    );
+  }
+}

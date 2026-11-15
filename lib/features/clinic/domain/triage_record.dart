@@ -7,6 +7,7 @@ class TriageRecord {
     required this.professionalId,
     required this.recordedBy,
     required this.recordedAt,
+    this.clinicId,
     this.weightKg,
     this.heightCm,
     this.headCircumferenceCm,
@@ -27,6 +28,7 @@ class TriageRecord {
       appointmentId: (map['appointmentId'] as String?) ?? '',
       childId: (map['childId'] as String?) ?? '',
       professionalId: (map['professionalId'] as String?) ?? '',
+      clinicId: map['clinicId'] as String?,
       recordedBy: (map['recordedBy'] as String?) ?? '',
       recordedAt: DateTime.tryParse((map['recordedAt'] as String?) ?? '') ??
           DateTime.fromMillisecondsSinceEpoch(0),
@@ -51,6 +53,9 @@ class TriageRecord {
   final String professionalId;
   final String recordedBy;
   final DateTime recordedAt;
+
+  /// Clínica da consulta; autorizações restritas à clínica só valem com ela.
+  final String? clinicId;
   final double? weightKg;
   final double? heightCm;
   final double? headCircumferenceCm;
@@ -77,6 +82,7 @@ class TriageRecord {
         'childId': childId,
         'professionalId': professionalId,
         'recordedBy': recordedBy,
+        if (clinicId != null) 'clinicId': clinicId,
         'recordedAt': recordedAt.toIso8601String(),
         'weightKg': weightKg,
         'heightCm': heightCm,

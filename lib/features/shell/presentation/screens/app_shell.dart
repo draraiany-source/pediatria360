@@ -4,9 +4,11 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../shared/widgets/sync_banner.dart';
 
+import '../../../../core/config/app_assets.dart';
 import '../../../../core/providers/core_providers.dart';
 import '../../../../core/providers/sync_providers.dart';
 import '../../../../core/responsive/responsive.dart';
+import '../../../../core/router/route_access.dart';
 import '../../../../core/router/routes.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_tokens.dart';
@@ -15,10 +17,17 @@ import '../../../../core/widgets/app_icon.dart';
 import '../../../../core/widgets/premium_chrome.dart';
 import '../../../../core/widgets/state_views.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
+import '../../../clinic_org/presentation/providers/clinic_org_providers.dart';
 import '../../../notifications/presentation/notification_center_screen.dart';
+import '../../../workspace/domain/workspace_profile.dart';
+import '../../../workspace/presentation/providers/workspace_providers.dart';
 import '../../../../shared/domain/entities/app_user.dart';
+import '../../domain/account_role_label.dart';
+import '../../domain/main_menu.dart';
+import '../providers/selected_patient_provider.dart';
+import 'patient_module_screen.dart' show formatBirthDate;
 
-/// Destino da navegacao principal.
+/// Destino da navegação inferior / rail.
 class _Destination {
   const _Destination({
     required this.route,
@@ -26,7 +35,6 @@ class _Destination {
     required this.icon,
     required this.selectedIcon,
     this.asset,
-    this.professionalOnly = false,
     this.showUnreadBadge = false,
   });
 
@@ -34,219 +42,199 @@ class _Destination {
   final String label;
   final IconData icon;
   final IconData selectedIcon;
-  /// Icone premium (PNG). Se nulo, usa [icon]/selectedIcon].
+
+  /// Ícone premium (PNG). Se nulo, usa [icon]/[selectedIcon].
   final String? asset;
-  final bool professionalOnly;
   final bool showUnreadBadge;
 }
 
-/// Bottom / rail ? itens essenciais (mobile + tablet).
+const _Destination _home = _Destination(
+  route: Routes.homePath,
+  label: 'Início',
+  asset: AppIcons.home,
+  icon: Icons.home_outlined,
+  selectedIcon: Icons.home_rounded,
+);
+
+const _Destination _messages = _Destination(
+  route: Routes.notificationsPath,
+  label: 'Mensagens',
+  asset: AppIcons.messages,
+  icon: Icons.chat_bubble_outline_rounded,
+  selectedIcon: Icons.chat_bubble_rounded,
+  showUnreadBadge: true,
+);
+
+const _Destination _profile = _Destination(
+  route: Routes.profilePath,
+  label: 'Perfil',
+  asset: AppIcons.profile,
+  icon: Icons.person_outline_rounded,
+  selectedIcon: Icons.person_rounded,
+);
+
+const _Destination _agenda = _Destination(
+  route: Routes.agendaPath,
+  label: 'Agenda',
+  asset: AppIcons.schedule,
+  icon: Icons.calendar_month_outlined,
+  selectedIcon: Icons.calendar_month_rounded,
+);
+
+/// Barra inferior / rail da equipe clínica: atalhos; o menu completo fica
+/// na gaveta.
 const List<_Destination> _professionalPrimary = <_Destination>[
-  _Destination(
-    route: Routes.homePath,
-    label: 'Inicio',
-    asset: AppIcons.home,
-    icon: Icons.home_outlined,
-    selectedIcon: Icons.home_rounded,
-  ),
+  _home,
   _Destination(
     route: Routes.patientsPath,
     label: 'Pacientes',
     asset: AppIcons.patients,
     icon: Icons.groups_outlined,
     selectedIcon: Icons.groups_rounded,
-    professionalOnly: true,
   ),
-  _Destination(
-    route: Routes.agendaPath,
-    label: 'Agenda',
-    asset: AppIcons.schedule,
-    icon: Icons.calendar_month_outlined,
-    selectedIcon: Icons.calendar_month_rounded,
-    professionalOnly: true,
-  ),
-  _Destination(
-    route: Routes.notificationsPath,
-    label: 'Mensagens',
-    asset: AppIcons.messages,
-    icon: Icons.chat_bubble_outline_rounded,
-    selectedIcon: Icons.chat_bubble_rounded,
-    showUnreadBadge: true,
-  ),
-  _Destination(
-    route: Routes.profilePath,
-    label: 'Perfil',
-    asset: AppIcons.profile,
-    icon: Icons.person_outline_rounded,
-    selectedIcon: Icons.person_rounded,
-  ),
+  _agenda,
+  _messages,
 ];
 
-/// Sidebar desktop ? menu completo das referencias.
-const List<_Destination> _professionalSidebar = <_Destination>[
+const List<_Destination> _receptionPrimary = <_Destination>[
+  _home,
+  _agenda,
   _Destination(
-    route: Routes.homePath,
-    label: 'Inicio',
-    asset: AppIcons.home,
-    icon: Icons.home_outlined,
-    selectedIcon: Icons.home_rounded,
+    route: Routes.clinicReceptionPath,
+    label: 'Recepção',
+    asset: AppIcons.waitingQueue,
+    icon: Icons.how_to_reg_rounded,
+    selectedIcon: Icons.how_to_reg_rounded,
+  ),
+  _messages,
+];
+
+const List<_Destination> _financePrimary = <_Destination>[
+  _home,
+  _Destination(
+    route: Routes.financePath,
+    label: 'Financeiro',
+    asset: AppIcons.finance,
+    icon: Icons.receipt_long_outlined,
+    selectedIcon: Icons.receipt_long_rounded,
   ),
   _Destination(
-    route: Routes.patientsPath,
-    label: 'Pacientes',
-    asset: AppIcons.patients,
-    icon: Icons.groups_outlined,
-    selectedIcon: Icons.groups_rounded,
-    professionalOnly: true,
+    route: Routes.financeReportsPath,
+    label: 'Relatórios',
+    icon: Icons.bar_chart_rounded,
+    selectedIcon: Icons.bar_chart_rounded,
   ),
+  _messages,
+];
+
+const List<_Destination> _familyDestinations = <_Destination>[
+  _home,
   _Destination(
-    route: Routes.agendaPath,
-    label: 'Agenda',
+    route: Routes.telemedicinePath,
+    label: 'Calendário',
     asset: AppIcons.schedule,
     icon: Icons.calendar_month_outlined,
     selectedIcon: Icons.calendar_month_rounded,
-    professionalOnly: true,
   ),
   _Destination(
-    route: Routes.notificationsPath,
-    label: 'Mensagens',
-    asset: AppIcons.messages,
-    icon: Icons.chat_bubble_outline_rounded,
-    selectedIcon: Icons.chat_bubble_rounded,
-    showUnreadBadge: true,
-  ),
-  _Destination(
-    route: Routes.patientsPath,
-    label: 'Prontuario',
-    asset: AppIcons.medicalRecord,
-    icon: Icons.folder_shared_outlined,
-    selectedIcon: Icons.folder_shared_rounded,
-    professionalOnly: true,
+    route: Routes.clinicInvitePath,
+    label: 'Pré-consulta',
+    icon: Icons.assignment_outlined,
+    selectedIcon: Icons.assignment_rounded,
   ),
   _Destination(
     route: Routes.childrenPath,
-    label: 'Vacinas',
-    asset: AppIcons.vaccines,
-    icon: Icons.vaccines_outlined,
-    selectedIcon: Icons.vaccines_rounded,
+    label: 'Documentos',
+    asset: AppIcons.patients,
+    icon: Icons.folder_open_rounded,
+    selectedIcon: Icons.folder_open_rounded,
   ),
   _Destination(
-    route: Routes.telemedicinePath,
-    label: 'Telemedicina',
-    asset: AppIcons.telemedicine,
-    icon: Icons.videocam_outlined,
-    selectedIcon: Icons.videocam_rounded,
+    route: Routes.toolsPath,
+    label: 'Diário',
+    asset: AppIcons.stethoscope,
+    icon: Icons.menu_book_outlined,
+    selectedIcon: Icons.menu_book_rounded,
   ),
   _Destination(
     route: Routes.libraryPath,
     label: 'Biblioteca',
     asset: AppIcons.library,
-    icon: Icons.menu_book_outlined,
-    selectedIcon: Icons.menu_book_rounded,
+    icon: Icons.auto_stories_outlined,
+    selectedIcon: Icons.auto_stories_rounded,
   ),
+  _messages,
   _Destination(
-    route: Routes.clinicPath,
-    label: 'Consultorio',
-    asset: AppIcons.clinic,
-    icon: Icons.local_hospital_outlined,
-    selectedIcon: Icons.local_hospital_rounded,
-    professionalOnly: true,
-  ),
-  _Destination(
-    route: Routes.supplementPath,
-    label: 'Suplementacao',
-    asset: AppIcons.supplement,
-    icon: Icons.science_outlined,
-    selectedIcon: Icons.science_rounded,
-    professionalOnly: true,
-  ),
-  _Destination(
-    route: Routes.clinicOrgPath,
-    label: 'Minha clinica',
-    asset: AppIcons.clinic,
-    icon: Icons.apartment_outlined,
-    selectedIcon: Icons.apartment_rounded,
-    professionalOnly: true,
-  ),
-  _Destination(
-    route: Routes.profilePath,
-    label: 'Perfil',
-    asset: AppIcons.profile,
-    icon: Icons.person_outline_rounded,
-    selectedIcon: Icons.person_rounded,
+    route: Routes.kidsPath,
+    label: 'Kids',
+    icon: Icons.sports_esports_outlined,
+    selectedIcon: Icons.sports_esports_rounded,
   ),
 ];
 
-const List<_Destination> _familyDestinations = <_Destination>[
+const List<_Destination> _adminDestinations = <_Destination>[
+  _home,
   _Destination(
-    route: Routes.homePath,
-    label: 'Inicio',
-    asset: AppIcons.home,
-    icon: Icons.home_outlined,
-    selectedIcon: Icons.home_rounded,
-  ),
-  _Destination(
-    route: Routes.libraryPath,
-    label: 'Conteudos',
-    asset: AppIcons.library,
-    icon: Icons.menu_book_outlined,
-    selectedIcon: Icons.menu_book_rounded,
-  ),
-  _Destination(
-    route: Routes.toolsPath,
-    label: 'Cuidados',
-    asset: AppIcons.stethoscope,
-    icon: Icons.medical_services_outlined,
-    selectedIcon: Icons.medical_services_rounded,
+    route: Routes.adminPath,
+    label: 'Gestão',
+    icon: Icons.settings_outlined,
+    selectedIcon: Icons.settings_rounded,
   ),
   _Destination(
     route: Routes.notificationsPath,
-    label: 'Mensagens',
+    label: 'Alertas',
     asset: AppIcons.messages,
-    icon: Icons.chat_bubble_outline_rounded,
-    selectedIcon: Icons.chat_bubble_rounded,
+    icon: Icons.notifications_outlined,
+    selectedIcon: Icons.notifications_rounded,
     showUnreadBadge: true,
   ),
-  _Destination(
-    route: Routes.profilePath,
-    label: 'Perfil',
-    asset: AppIcons.profile,
-    icon: Icons.person_outline_rounded,
-    selectedIcon: Icons.person_rounded,
-  ),
+  _profile,
 ];
 
-/// Casca do app autenticado ? navegacao por papel.
+/// Item do menu lateral / gaveta.
+class _SideItem {
+  const _SideItem({
+    required this.label,
+    required this.icon,
+    required this.onTap,
+    this.badge = 0,
+  });
+
+  final String label;
+  final IconData icon;
+  final VoidCallback onTap;
+  final int badge;
+}
+
+/// Casca do app autenticado — navegação por papel.
 class AppShell extends ConsumerWidget {
   const AppShell({required this.child, required this.location, super.key});
 
   final Widget child;
   final String location;
 
-  List<_Destination> _primaryFor(AppUser? user) {
-    final bool isPro = user?.role.isProfessional ?? false;
-    final List<_Destination> base =
-        isPro ? _professionalPrimary : _familyDestinations;
-    return base
-        .where((_Destination d) => !d.professionalOnly || isPro)
-        .toList(growable: false);
-  }
+  /// A equipe da clínica usa o menu de 15 módulos; família e plataforma
+  /// mantêm os menus próprios.
+  static bool _usesMainMenu(WorkspaceProfile workspace) =>
+      workspace == WorkspaceProfile.professional ||
+      workspace == WorkspaceProfile.receptionist ||
+      workspace == WorkspaceProfile.finance;
 
-  List<_Destination> _sidebarFor(AppUser? user) {
-    final bool isPro = user?.role.isProfessional ?? false;
-    if (!isPro) return _primaryFor(user);
-    return _professionalSidebar
-        .where((_Destination d) => !d.professionalOnly || isPro)
-        .toList(growable: false);
-  }
+  static List<_Destination> _primaryFor(WorkspaceProfile workspace) =>
+      switch (workspace) {
+        WorkspaceProfile.patient => _familyDestinations,
+        WorkspaceProfile.admin => _adminDestinations,
+        WorkspaceProfile.receptionist => _receptionPrimary,
+        WorkspaceProfile.finance => _financePrimary,
+        WorkspaceProfile.professional => _professionalPrimary,
+      };
 
   int _indexFor(List<_Destination> destinations) {
-    int best = 0;
+    int best = -1;
     int bestLen = -1;
     for (int i = 0; i < destinations.length; i++) {
       final String route = destinations[i].route;
       if (location == route || location.startsWith('$route/')) {
-        // Prefer exact / longer matches; avoid Inicio swallowing everything.
         if (route.length > bestLen) {
           best = i;
           bestLen = route.length;
@@ -256,25 +244,90 @@ class AppShell extends ConsumerWidget {
     return best;
   }
 
-  void _go(BuildContext context, _Destination destination) {
-    if (location == destination.route ||
-        location.startsWith('${destination.route}/')) {
+  void _goRoute(BuildContext context, String route) {
+    if (location == route) return;
+    if (_isShellRoute(route)) {
+      context.go(route);
+    } else {
+      // Rotas fora do ShellRoute abrem por cima para manter o voltar.
+      context.push(route);
+    }
+  }
+
+  void _openEntry(BuildContext context, WidgetRef ref, MainMenuEntry entry) {
+    final SelectedPatient? patient = ref.read(selectedPatientProvider);
+    if (entry.module.patientScoped && patient != null) {
+      context.push(entry.module.patientRoute(patient.childId));
       return;
     }
-    context.go(destination.route);
+    _goRoute(context, entry.route);
+  }
+
+  static const List<String> _shellRoots = <String>[
+    Routes.homePath,
+    Routes.clinicPath,
+    Routes.agendaPath,
+    Routes.patientsPath,
+    Routes.notificationsPath,
+    Routes.libraryPath,
+    Routes.aiPath,
+    Routes.toolsPath,
+    Routes.profilePath,
+    Routes.receptionistAiPath,
+  ];
+
+  static bool _isShellRoute(String route) {
+    if (route.startsWith('${Routes.clinicPath}/')) {
+      return route.startsWith('${Routes.clinicPath}/modulo/');
+    }
+    return _shellRoots.any((String r) => route == r || route.startsWith('$r/'));
   }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final AppUser? user = ref.watch(currentUserProvider);
-    final List<_Destination> primary = _primaryFor(user);
-    final List<_Destination> sidebar = _sidebarFor(user);
-    final int primaryIndex = _indexFor(primary);
-    final int sidebarIndex = _indexFor(sidebar);
+    final WorkspaceProfile workspace = ref.watch(currentWorkspaceProvider);
     final int unread = ref.watch(unreadCountProvider);
-
     final bool isOnline = ref.watch(isOnlineProvider);
     final int pending = ref.watch(pendingSyncCountProvider);
+    final bool mainMenu = _usesMainMenu(workspace);
+
+    final List<_Destination> primary = _primaryFor(workspace)
+        .where((_Destination d) => canOpenRoute(ref, d.route))
+        .toList();
+    final int primaryIndex = _indexFor(primary);
+
+    final List<_SideItem> sideItems;
+    final int sideIndex;
+    if (mainMenu) {
+      final List<MainMenuEntry> entries =
+          buildMainMenu((String route) => canOpenRoute(ref, route));
+      sideItems = <_SideItem>[
+        for (final MainMenuEntry e in entries)
+          _SideItem(
+            label: e.label,
+            icon: e.icon,
+            onTap: () => _openEntry(context, ref, e),
+          ),
+      ];
+      sideIndex = activeMainMenuIndex(entries, location);
+    } else {
+      sideItems = <_SideItem>[
+        for (final _Destination d in primary)
+          _SideItem(
+            label: d.label,
+            icon: d.icon,
+            badge: d.showUnreadBadge ? unread : 0,
+            onTap: () => _goRoute(context, d.route),
+          ),
+      ];
+      sideIndex = primaryIndex;
+    }
+
+    final SelectedPatient? patient =
+        mainMenu ? ref.watch(selectedPatientProvider) : null;
+    final Widget? patientChip =
+        patient == null ? null : _SelectedPatientChip(patient: patient);
 
     final Widget content = Column(
       children: <Widget>[
@@ -286,17 +339,54 @@ class AppShell extends ConsumerWidget {
       ],
     );
 
+    Widget drawerFor(BuildContext context) => Drawer(
+          width: 288,
+          child: _MainMenuPanel(
+            items: sideItems,
+            selectedIndex: sideIndex,
+            user: user,
+            onItemTap: (int i) {
+              Navigator.of(context).pop();
+              sideItems[i].onTap();
+            },
+          ),
+        );
+
+    final bool showSearch = canOpenRoute(ref, Routes.patientsPath);
+
     return switch (context.screenSize) {
       ScreenSize.compact => Scaffold(
-          body: content,
-          bottomNavigationBar: NavigationBar(
-            selectedIndex: primaryIndex.clamp(0, primary.length - 1),
-            onDestinationSelected: (int i) => _go(context, primary[i]),
-            backgroundColor: Colors.white,
-            indicatorColor: AppColors.softBlue,
-            destinations: primary
-                .map(
-                  (_Destination d) => NavigationDestination(
+          drawer: mainMenu ? Builder(builder: drawerFor) : null,
+          body: Column(
+            children: <Widget>[
+              if (patientChip != null)
+                SafeArea(
+                  bottom: false,
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
+                    child: patientChip,
+                  ),
+                ),
+              Expanded(child: content),
+            ],
+          ),
+          bottomNavigationBar: Builder(
+            builder: (BuildContext context) => NavigationBar(
+              selectedIndex: primaryIndex < 0
+                  ? (mainMenu ? primary.length : 0)
+                  : primaryIndex,
+              onDestinationSelected: (int i) {
+                if (i == primary.length) {
+                  Scaffold.of(context).openDrawer();
+                } else {
+                  _goRoute(context, primary[i].route);
+                }
+              },
+              backgroundColor: Colors.white,
+              indicatorColor: AppColors.brandIndicator,
+              destinations: <NavigationDestination>[
+                for (final _Destination d in primary)
+                  NavigationDestination(
                     icon: _NavIcon(
                       icon: d.icon,
                       asset: d.asset,
@@ -311,86 +401,110 @@ class AppShell extends ConsumerWidget {
                     ),
                     label: d.label,
                   ),
-                )
-                .toList(),
+                if (mainMenu)
+                  const NavigationDestination(
+                    icon: Icon(Icons.menu_rounded),
+                    label: 'Menu',
+                    tooltip: 'Abrir menu completo',
+                  ),
+              ],
+            ),
           ),
         ),
       ScreenSize.medium || ScreenSize.expanded => Scaffold(
-          body: Column(
-            children: <Widget>[
-              PremiumTopBar(notificationCount: unread),
-              Expanded(
-                child: Row(
-                  children: <Widget>[
-                    NavigationRail(
-                      selectedIndex: primaryIndex.clamp(0, primary.length - 1),
-                      onDestinationSelected: (int i) =>
-                          _go(context, primary[i]),
-                      labelType: NavigationRailLabelType.all,
-                      backgroundColor: Colors.white,
-                      indicatorColor: AppColors.softBlue,
-                      selectedIconTheme: const IconThemeData(
-                        color: AppColors.brand,
-                        size: 24,
-                      ),
-                      unselectedIconTheme: const IconThemeData(
-                        color: AppColors.inkMuted,
-                        size: 22,
-                      ),
-                      selectedLabelTextStyle: const TextStyle(
-                        color: AppColors.brand,
-                        fontWeight: FontWeight.w800,
-                        fontSize: 12,
-                      ),
-                      unselectedLabelTextStyle: const TextStyle(
-                        color: AppColors.inkMuted,
-                        fontWeight: FontWeight.w600,
-                        fontSize: 12,
-                      ),
-                      destinations: primary
-                          .map(
-                            (_Destination d) => NavigationRailDestination(
-                              icon: d.asset != null
-                                  ? AppIcon(
-                                      asset: d.asset!,
-                                      size: AppIcon.nav,
-                                      fallback: d.icon,
-                                    )
-                                  : Icon(d.icon),
-                              selectedIcon: d.asset != null
-                                  ? AppIcon(
-                                      asset: d.asset!,
-                                      size: AppIcon.nav,
-                                      fallback: d.selectedIcon,
-                                    )
-                                  : Icon(d.selectedIcon),
+          drawer: mainMenu ? Builder(builder: drawerFor) : null,
+          body: Builder(
+            builder: (BuildContext context) => Column(
+              children: <Widget>[
+                PremiumTopBar(
+                  notificationCount: unread,
+                  showSearch: showSearch,
+                  contextChip: patientChip,
+                  leading: mainMenu
+                      ? IconButton(
+                          tooltip: 'Abrir menu completo',
+                          icon: const Icon(Icons.menu_rounded),
+                          color: AppColors.navy,
+                          onPressed: () => Scaffold.of(context).openDrawer(),
+                        )
+                      : null,
+                ),
+                Expanded(
+                  child: Row(
+                    children: <Widget>[
+                      NavigationRail(
+                        selectedIndex: primaryIndex < 0 ? null : primaryIndex,
+                        onDestinationSelected: (int i) =>
+                            _goRoute(context, primary[i].route),
+                        labelType: NavigationRailLabelType.all,
+                        backgroundColor: Colors.white,
+                        indicatorColor: AppColors.brandIndicator,
+                        selectedIconTheme: const IconThemeData(
+                          color: AppColors.brand,
+                          size: 24,
+                        ),
+                        unselectedIconTheme: const IconThemeData(
+                          color: AppColors.inkMuted,
+                          size: 22,
+                        ),
+                        selectedLabelTextStyle: const TextStyle(
+                          color: AppColors.brand,
+                          fontWeight: FontWeight.w800,
+                          fontSize: 12,
+                        ),
+                        unselectedLabelTextStyle: const TextStyle(
+                          color: AppColors.inkMuted,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 12,
+                        ),
+                        destinations: <NavigationRailDestination>[
+                          for (final _Destination d in primary)
+                            NavigationRailDestination(
+                              icon: _NavIcon(
+                                icon: d.icon,
+                                asset: d.asset,
+                                selected: false,
+                                badge: d.showUnreadBadge ? unread : 0,
+                              ),
+                              selectedIcon: _NavIcon(
+                                icon: d.selectedIcon,
+                                asset: d.asset,
+                                selected: true,
+                                badge: d.showUnreadBadge ? unread : 0,
+                              ),
                               label: Text(d.label),
                             ),
-                          )
-                          .toList(),
-                    ),
-                    const VerticalDivider(width: 1, color: AppColors.line),
-                    Expanded(child: content),
-                  ],
+                        ],
+                      ),
+                      const VerticalDivider(width: 1, color: AppColors.line),
+                      Expanded(child: content),
+                    ],
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ScreenSize.large => Scaffold(
           body: Row(
             children: <Widget>[
-              _PremiumSidebar(
-                destinations: sidebar,
-                selectedIndex: sidebarIndex.clamp(0, sidebar.length - 1),
-                onSelected: (int i) => _go(context, sidebar[i]),
-                user: user,
-                unread: unread,
+              SizedBox(
+                width: 272,
+                child: _MainMenuPanel(
+                  items: sideItems,
+                  selectedIndex: sideIndex,
+                  user: user,
+                  onItemTap: (int i) => sideItems[i].onTap(),
+                ),
               ),
               Expanded(
                 child: Column(
                   children: <Widget>[
-                    PremiumTopBar(notificationCount: unread),
+                    PremiumTopBar(
+                      notificationCount: unread,
+                      showSearch: showSearch,
+                      contextChip: patientChip,
+                    ),
                     Expanded(child: content),
                   ],
                 ),
@@ -418,69 +532,229 @@ class _NavIcon extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final Widget child = asset != null
-        ? AppIcon(
-            asset: asset!,
-            size: AppIcon.nav,
-            fallback: icon,
-          )
-        : Icon(
-            icon,
-            color: selected ? AppColors.brand : AppColors.inkMuted,
-          );
+        ? AppIcon(asset: asset!, size: AppIcon.nav, fallback: icon)
+        : Icon(icon, color: selected ? AppColors.brand : AppColors.inkMuted);
     if (badge <= 0) return child;
-    return Badge(
-      label: Text(badge > 9 ? '9+' : '$badge'),
-      child: child,
-    );
+    return Badge(label: Text(badge > 9 ? '9+' : '$badge'), child: child);
   }
 }
 
-class _PremiumSidebar extends ConsumerWidget {
-  const _PremiumSidebar({
-    required this.destinations,
-    required this.selectedIndex,
-    required this.onSelected,
-    required this.user,
-    required this.unread,
-  });
+/// Paciente em foco, com troca confirmada.
+class _SelectedPatientChip extends ConsumerWidget {
+  const _SelectedPatientChip({required this.patient});
 
-  final List<_Destination> destinations;
-  final int selectedIndex;
-  final ValueChanged<int> onSelected;
-  final AppUser? user;
-  final int unread;
+  final SelectedPatient patient;
+
+  Future<void> _switch(BuildContext context, WidgetRef ref) async {
+    final bool? confirmed = await showDialog<bool>(
+      context: context,
+      builder: (BuildContext context) => AlertDialog(
+        title: const Text('Trocar o paciente em foco?'),
+        content: Text(
+          'Paciente atual: ${patient.name}'
+          '${patient.birthDate == null ? '' : ' (nasc. ${formatBirthDate(patient.birthDate!)})'}.\n\n'
+          'Você vai escolher outro paciente. Confira nome e data de '
+          'nascimento antes de registrar qualquer dado.',
+        ),
+        actions: <Widget>[
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Cancelar'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('Escolher outro'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !context.mounted) return;
+    ref.read(selectedPatientProvider.notifier).state = null;
+    context.go(Routes.patientModule(MainMenuModule.chart.patientModuleSlug!));
+  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final ThemeData theme = Theme.of(context);
+    return Semantics(
+      label: 'Paciente em foco: ${patient.name}',
+      child: Container(
+        key: const Key('selected-patient-chip'),
+        padding: const EdgeInsets.only(left: 12, right: 4),
+        decoration: BoxDecoration(
+          color: AppColors.softLilac,
+          borderRadius: AppRadius.pillAll,
+          border: Border.all(color: AppColors.brandIndicator),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            const Icon(
+              Icons.person_pin_rounded,
+              size: 18,
+              color: AppColors.brand,
+            ),
+            const SizedBox(width: 6),
+            Flexible(
+              child: Text(
+                patient.birthDate == null
+                    ? patient.name
+                    : '${patient.name} · ${formatBirthDate(patient.birthDate!)}',
+                overflow: TextOverflow.ellipsis,
+                style: theme.textTheme.labelLarge?.copyWith(
+                  color: AppColors.navy,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+            TextButton(
+              onPressed: () => _switch(context, ref),
+              child: const Text('Trocar'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
 
-    return SizedBox(
-      width: 272,
-      child: Material(
-        color: Colors.white,
-        child: DecoratedBox(
-          decoration: const BoxDecoration(
-            border: Border(right: BorderSide(color: AppColors.line)),
-          ),
-          child: SafeArea(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: <Widget>[
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 22, 20, 12),
+/// Menu lateral roxo (desktop) e gaveta (celular / tablet).
+class _MainMenuPanel extends ConsumerWidget {
+  const _MainMenuPanel({
+    required this.items,
+    required this.selectedIndex,
+    required this.onItemTap,
+    required this.user,
+  });
+
+  final List<_SideItem> items;
+  final int selectedIndex;
+  final ValueChanged<int> onItemTap;
+  final AppUser? user;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final ThemeData theme = Theme.of(context);
+    final String roleLabel = accountRoleLabel(
+      user: user,
+      membership: ref.watch(activeClinicMembershipProvider),
+      workspace: ref.watch(currentWorkspaceProvider),
+    );
+
+    return DecoratedBox(
+      decoration: const BoxDecoration(gradient: AppColors.sidebarGradient),
+      child: SafeArea(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: <Widget>[
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 22, 20, 16),
+              child: Row(
+                children: <Widget>[
+                  Image.asset(
+                    AppAssets.logoLight,
+                    width: 40,
+                    height: 40,
+                    semanticLabel: 'Logotipo Pediatria360',
+                  ),
+                  const SizedBox(width: AppSpacing.md),
+                  Expanded(
+                    child: Text(
+                      'Pediatria360',
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w800,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Expanded(
+              child: ListView.builder(
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                itemCount: items.length,
+                itemBuilder: (BuildContext context, int i) {
+                  final _SideItem item = items[i];
+                  final bool selected = i == selectedIndex;
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 4),
+                    child: Semantics(
+                      selected: selected,
+                      button: true,
+                      child: Material(
+                        color: selected
+                            ? AppColors.navSelected
+                            : Colors.transparent,
+                        borderRadius: AppRadius.lgAll,
+                        child: InkWell(
+                          key: Key('menu-item-$i'),
+                          onTap: () => onItemTap(i),
+                          borderRadius: AppRadius.lgAll,
+                          hoverColor: Colors.white.withValues(alpha: 0.08),
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 14,
+                              vertical: 10,
+                            ),
+                            child: Row(
+                              children: <Widget>[
+                                Icon(
+                                  item.icon,
+                                  size: 22,
+                                  color: selected
+                                      ? Colors.white
+                                      : AppColors.sidebarMuted,
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Text(
+                                    item.label,
+                                    style: theme.textTheme.titleSmall?.copyWith(
+                                      color: selected
+                                          ? Colors.white
+                                          : AppColors.sidebarText,
+                                      fontWeight: selected
+                                          ? FontWeight.w800
+                                          : FontWeight.w600,
+                                    ),
+                                  ),
+                                ),
+                                if (item.badge > 0)
+                                  Badge(
+                                    label: Text(
+                                      item.badge > 9 ? '9+' : '${item.badge}',
+                                    ),
+                                  ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+            if (user != null)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(12, 8, 12, 4),
+                child: Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.08),
+                    borderRadius: AppRadius.lgAll,
+                  ),
                   child: Row(
                     children: <Widget>[
-                      Container(
-                        width: 42,
-                        height: 42,
-                        decoration: const BoxDecoration(
-                          color: AppColors.softBlue,
-                          borderRadius: AppRadius.mdAll,
-                        ),
-                        child: const AppIcon(
-                          asset: AppIcons.home,
-                          size: 28,
-                          fallback: Icons.favorite_rounded,
+                      CircleAvatar(
+                        radius: 18,
+                        backgroundColor: AppColors.navSelected,
+                        foregroundColor: Colors.white,
+                        child: Text(
+                          user!.initials,
+                          style: const TextStyle(fontWeight: FontWeight.w800),
                         ),
                       ),
                       const SizedBox(width: AppSpacing.md),
@@ -489,19 +763,19 @@ class _PremiumSidebar extends ConsumerWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: <Widget>[
                             Text(
-                              'Pediatria360',
-                              style: theme.textTheme.titleMedium?.copyWith(
-                                color: AppColors.navy,
-                                fontWeight: FontWeight.w800,
+                              user!.name,
+                              style: theme.textTheme.titleSmall?.copyWith(
+                                color: Colors.white,
+                                fontWeight: FontWeight.w700,
                               ),
                               overflow: TextOverflow.ellipsis,
                             ),
                             Text(
-                              'Cuidando de cada infancia',
-                              style: theme.textTheme.labelSmall?.copyWith(
-                                color: AppColors.inkMuted,
-                                fontWeight: FontWeight.w500,
+                              roleLabel,
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                color: AppColors.sidebarMuted,
                               ),
+                              overflow: TextOverflow.ellipsis,
                             ),
                           ],
                         ),
@@ -509,218 +783,34 @@ class _PremiumSidebar extends ConsumerWidget {
                     ],
                   ),
                 ),
-                const Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 16),
-                  child: Divider(height: 1, color: AppColors.line),
+              ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+              child: ListTile(
+                dense: true,
+                contentPadding: const EdgeInsets.symmetric(horizontal: 8),
+                leading: const Icon(
+                  Icons.logout_rounded,
+                  color: AppColors.sidebarText,
                 ),
-                const SizedBox(height: AppSpacing.md),
-                Expanded(
-                  child: ListView.builder(
-                    padding: const EdgeInsets.symmetric(horizontal: 12),
-                    itemCount: destinations.length,
-                    itemBuilder: (BuildContext context, int i) {
-                      final _Destination d = destinations[i];
-                      final bool selected = i == selectedIndex;
-                      final int badge =
-                          d.showUnreadBadge && unread > 0 ? unread : 0;
-                      return Padding(
-                        padding: const EdgeInsets.only(bottom: 6),
-                        child: Material(
-                          color: Colors.transparent,
-                          child: InkWell(
-                            onTap: () => onSelected(i),
-                            borderRadius: AppRadius.lgAll,
-                            child: AnimatedContainer(
-                              duration: AppMotion.fast,
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 14,
-                                vertical: 12,
-                              ),
-                              decoration: BoxDecoration(
-                                color: selected
-                                    ? AppColors.brand
-                                    : Colors.transparent,
-                                borderRadius: AppRadius.lgAll,
-                              ),
-                              child: Row(
-                                children: <Widget>[
-                                  d.asset != null
-                                      ? AppIcon(
-                                          asset: d.asset!,
-                                          size: AppIcon.nav,
-                                          fallback: selected
-                                              ? d.selectedIcon
-                                              : d.icon,
-                                        )
-                                      : Icon(
-                                          selected
-                                              ? d.selectedIcon
-                                              : d.icon,
-                                          size: 22,
-                                          color: selected
-                                              ? Colors.white
-                                              : AppColors.inkMuted,
-                                        ),
-                                  const SizedBox(width: 12),
-                                  Expanded(
-                                    child: Text(
-                                      d.label,
-                                      style: theme.textTheme.titleSmall
-                                          ?.copyWith(
-                                        color: selected
-                                            ? Colors.white
-                                            : AppColors.navy,
-                                        fontWeight: selected
-                                            ? FontWeight.w800
-                                            : FontWeight.w600,
-                                      ),
-                                    ),
-                                  ),
-                                  if (badge > 0)
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 7,
-                                        vertical: 2,
-                                      ),
-                                      decoration: BoxDecoration(
-                                        color: selected
-                                            ? Colors.white
-                                            : AppColors.danger,
-                                        borderRadius: AppRadius.pillAll,
-                                      ),
-                                      child: Text(
-                                        badge > 9 ? '9+' : '$badge',
-                                        style: TextStyle(
-                                          color: selected
-                                              ? AppColors.brand
-                                              : Colors.white,
-                                          fontSize: 11,
-                                          fontWeight: FontWeight.w800,
-                                        ),
-                                      ),
-                                    ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ),
-                      );
-                    },
+                title: Text(
+                  'Sair',
+                  style: theme.textTheme.titleSmall?.copyWith(
+                    color: AppColors.sidebarText,
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
-                if (user != null)
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
-                    child: Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: AppColors.lightBackground,
-                        borderRadius: AppRadius.lgAll,
-                        border: Border.all(color: AppColors.line),
-                      ),
-                      child: Row(
-                        children: <Widget>[
-                          CircleAvatar(
-                            radius: 20,
-                            backgroundColor: AppColors.softBlue,
-                            child: Text(
-                              user!.initials,
-                              style: theme.textTheme.labelMedium?.copyWith(
-                                color: AppColors.brand,
-                                fontWeight: FontWeight.w800,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: AppSpacing.md),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: <Widget>[
-                                Text(
-                                  user!.name,
-                                  style: theme.textTheme.titleSmall?.copyWith(
-                                    color: AppColors.navy,
-                                    fontWeight: FontWeight.w700,
-                                  ),
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                                Text(
-                                  _subtitleFor(user!),
-                                  style: theme.textTheme.bodySmall?.copyWith(
-                                    color: AppColors.inkMuted,
-                                  ),
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(12, 0, 12, 16),
-                  child: Column(
-                    children: <Widget>[
-                      ListTile(
-                        dense: true,
-                        contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                        ),
-                        leading: const Icon(
-                          Icons.settings_outlined,
-                          color: AppColors.inkMuted,
-                        ),
-                        title: Text(
-                          'Configuracoes',
-                          style: theme.textTheme.titleSmall?.copyWith(
-                            color: AppColors.navy,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                        onTap: () => context.go(Routes.profilePath),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: AppRadius.lgAll,
-                        ),
-                      ),
-                      ListTile(
-                        dense: true,
-                        contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                        ),
-                        leading: const Icon(
-                          Icons.logout_rounded,
-                          color: AppColors.danger,
-                        ),
-                        title: Text(
-                          'Sair',
-                          style: theme.textTheme.titleSmall?.copyWith(
-                            color: AppColors.danger,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                        onTap: () =>
-                            ref.read(authControllerProvider.notifier).signOut(),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: AppRadius.lgAll,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
+                onTap: () async {
+                  final bool ok =
+                      await ref.read(authControllerProvider.notifier).signOut();
+                  if (ok && context.mounted) context.go(Routes.loginPath);
+                },
+                shape: RoundedRectangleBorder(borderRadius: AppRadius.lgAll),
+              ),
             ),
-          ),
+          ],
         ),
       ),
     );
-  }
-
-  String _subtitleFor(AppUser user) {
-    final List<String> parts = <String>[];
-    if ((user.specialty ?? '').isNotEmpty) parts.add(user.specialty!);
-    if ((user.crm ?? '').isNotEmpty) parts.add('CRM ${user.crm}');
-    if (parts.isNotEmpty) return parts.join(' ? ');
-    return user.role.isProfessional ? 'Area profissional' : 'Area da familia';
   }
 }

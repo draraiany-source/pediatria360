@@ -1,4 +1,7 @@
+import 'dart:math';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_functions/cloud_functions.dart' hide Result;
 
 import '../../../core/utils/result.dart';
 import '../../../shared/domain/entities/clinic_organization.dart';
@@ -7,10 +10,53 @@ import '../../telemedicine/data/telemedicine_repository.dart';
 import '../domain/finance_models.dart';
 
 class FinanceRepository {
-  FinanceRepository({required FirebaseFirestore firestore})
-      : _firestore = firestore;
+  FinanceRepository({
+    required FirebaseFirestore firestore,
+    FirebaseFunctions? functions,
+  })  : _firestore = firestore,
+        _functions = functions;
 
   final FirebaseFirestore _firestore;
+  final FirebaseFunctions? _functions;
+
+  /// Chave de idempotência de uma ação de tela: repetir a chamada com a
+  /// mesma chave (toque duplo, nova tentativa após falha de rede) não
+  /// registra o pagamento duas vezes no servidor.
+  static String newIdempotencyKey() {
+    final Random r = Random.secure();
+    return List<String>.generate(
+      24,
+      (_) => 'abcdefghijklmnopqrstuvwxyz0123456789'[r.nextInt(36)],
+    ).join();
+  }
+
+  /// Pagamento de cobrança da clínica: calculado e gravado no servidor
+  /// (`recordPayment`), idempotente pela chave, com recibo e auditoria na
+  /// mesma transação.
+  Future<Result<FinanceReceivable>> _recordPaymentOnServer({
+    required FinanceReceivable receivable,
+    required int amountCents,
+    required PaymentMethodKind method,
+    required String idempotencyKey,
+  }) =>
+      guard(() async {
+        final HttpsCallableResult<dynamic> response =
+            await _functions!.httpsCallable('recordPayment').call(
+          <String, dynamic>{
+            'clinicId': receivable.clinicId,
+            'receivableId': receivable.id,
+            'amountCents': amountCents,
+            'method': method.name,
+            'idempotencyKey': idempotencyKey,
+          },
+        );
+        final Map<dynamic, dynamic> s = response.data as Map<dynamic, dynamic>;
+        return receivable.copyWith(
+          paidCents: (s['paidCents'] as num?)?.toInt() ?? receivable.paidCents,
+          status: ReceivableStatus.fromName(s['status'] as String?),
+          updatedAt: DateTime.now(),
+        );
+      });
 
   Map<String, dynamic> _ledgerPayload(
     Map<String, dynamic> data, {
@@ -38,8 +84,10 @@ class FinanceRepository {
   CollectionReference<Map<String, dynamic>> get _appointments =>
       _firestore.collection('appointments');
 
-  Stream<List<FinanceReceivable>> watchReceivables(String ownerId) => _receivables
-      .where('ownerId', isEqualTo: ownerId)
+  Stream<List<FinanceReceivable>> watchReceivables(String ownerId, {String? clinicId}) =>
+      (clinicId != null
+              ? _receivables.where('clinicId', isEqualTo: clinicId)
+              : _receivables.where('ownerId', isEqualTo: ownerId))
       .limit(500)
       .snapshots()
       .map(
@@ -48,8 +96,10 @@ class FinanceRepository {
             .toList(growable: false),
       );
 
-  Stream<List<FinancePayable>> watchPayables(String ownerId) => _payables
-      .where('ownerId', isEqualTo: ownerId)
+  Stream<List<FinancePayable>> watchPayables(String ownerId, {String? clinicId}) =>
+      (clinicId != null
+              ? _payables.where('clinicId', isEqualTo: clinicId)
+              : _payables.where('ownerId', isEqualTo: ownerId))
       .limit(500)
       .snapshots()
       .map(
@@ -57,8 +107,10 @@ class FinanceRepository {
             snap.docs.map(FinancePayable.fromFirestore).toList(growable: false),
       );
 
-  Stream<List<FinanceReceipt>> watchReceipts(String ownerId) => _receipts
-      .where('ownerId', isEqualTo: ownerId)
+  Stream<List<FinanceReceipt>> watchReceipts(String ownerId, {String? clinicId}) =>
+      (clinicId != null
+              ? _receipts.where('clinicId', isEqualTo: clinicId)
+              : _receipts.where('ownerId', isEqualTo: ownerId))
       .limit(500)
       .snapshots()
       .map(
@@ -101,6 +153,34 @@ class FinanceRepository {
     required PaymentMethodKind method,
     required String byUserId,
     bool issueReceipt = true,
+    ClinicMembership? membership,
+    String? unitId,
+    String? idempotencyKey,
+  }) =>
+      (receivable.clinicId != null && _functions != null)
+          ? _recordPaymentOnServer(
+              receivable: receivable,
+              amountCents: amountCents,
+              method: method,
+              idempotencyKey: idempotencyKey ?? newIdempotencyKey(),
+            )
+          : _registerPaymentLegacy(
+              receivable: receivable,
+              amountCents: amountCents,
+              method: method,
+              byUserId: byUserId,
+              issueReceipt: issueReceipt,
+              membership: membership,
+              unitId: unitId,
+            );
+
+  /// Livro-caixa pessoal (sem clínica) do modo legado.
+  Future<Result<FinanceReceivable>> _registerPaymentLegacy({
+    required FinanceReceivable receivable,
+    required int amountCents,
+    required PaymentMethodKind method,
+    required String byUserId,
+    required bool issueReceipt,
     ClinicMembership? membership,
     String? unitId,
   }) =>

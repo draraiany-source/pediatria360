@@ -13,21 +13,35 @@ import 'package:hive_flutter/hive_flutter.dart';
 
 import '../config/app_config.dart';
 import '../../firebase_options.dart';
+import 'app_check_bootstrap.dart';
 import 'app_logger.dart';
 import 'notification_service.dart';
 
 /// Inicializacao da infraestrutura, antes do primeiro frame.
 ///
-/// Ordem importa: Firebase -> Crashlytics (para capturar erros do proprio
-/// bootstrap) -> persistencia local -> emuladores (se pedido).
+/// Ordem importa: Firebase -> App Check (opcional) -> Crashlytics ->
+/// persistencia local -> emuladores (se pedido).
 class FirebaseBootstrap {
   const FirebaseBootstrap._();
 
   static Future<void> run() async {
+    if (AppConfig.isProduction && AppConfig.useFirebaseEmulator) {
+      throw StateError(
+        'Build ENV=prod não pode usar USE_FIREBASE_EMULATOR=true.',
+      );
+    }
+    final FirebaseOptions base = DefaultFirebaseOptions.currentPlatform;
+    const String demoProject = AppConfig.emulatorProjectId;
     await Firebase.initializeApp(
-      options: DefaultFirebaseOptions.currentPlatform,
+      options: AppConfig.useFirebaseEmulator && demoProject.isNotEmpty
+          ? base.copyWith(
+              projectId: demoProject,
+              storageBucket: '$demoProject.appspot.com',
+            )
+          : base,
     );
 
+    await AppCheckBootstrap.activateIfEnabled();
     await _setupCrashlytics();
     await _setupFirestore();
     await _setupHive();
@@ -78,7 +92,8 @@ class FirebaseBootstrap {
     const String host = AppConfig.emulatorHost;
     try {
       await FirebaseAuth.instance.useAuthEmulator(host, 9099);
-      FirebaseFirestore.instance.useFirestoreEmulator(host, 8080);
+      FirebaseFirestore.instance
+          .useFirestoreEmulator(host, AppConfig.firestoreEmulatorPort);
       await FirebaseStorage.instance.useStorageEmulator(host, 9199);
       FirebaseFunctions.instanceFor(region: 'southamerica-east1')
           .useFunctionsEmulator(host, 5001);

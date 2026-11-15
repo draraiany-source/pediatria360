@@ -5,6 +5,7 @@ import '../theme/app_shadows.dart';
 import '../theme/app_tokens.dart';
 import '../theme/app_typography.dart';
 import 'app_icon.dart';
+import 'child_avatar.dart';
 
 /// Card premium — sombra suave light / borda sutil no dark.
 class PremiumCard extends StatelessWidget {
@@ -27,30 +28,38 @@ class PremiumCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final ThemeData theme = Theme.of(context);
     final bool isDark = theme.brightness == Brightness.dark;
-    final Color? border = borderColor ??
-        (isDark ? AppColors.brand.withValues(alpha: 0.22) : null);
+    final Color border =
+        borderColor ??
+        (isDark ? AppColors.brand.withValues(alpha: 0.22) : AppColors.line);
 
     final Widget content = Padding(
       padding: padding ?? AppSpacing.card,
       child: child,
     );
 
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
+    // A sombra fica fora do Material: a tinta do Material e recortada no
+    // retangulo do cartao e deixaria cantos quadrados em volta da borda.
+    return DecoratedBox(
+      decoration: BoxDecoration(
         borderRadius: AppRadius.xlAll,
-        child: Ink(
-          decoration: BoxDecoration(
-            color: isDark ? AppColors.darkSurface : Colors.white,
-            borderRadius: AppRadius.xlAll,
-            border: border == null ? null : Border.all(color: border),
-            gradient: isDark ? AppColors.cardGlow : null,
-            boxShadow: glow
-                ? AppShadows.glow
-                : (isDark ? AppShadows.soft : AppShadows.card),
+        boxShadow: glow
+            ? AppShadows.glow
+            : (isDark ? AppShadows.soft : AppShadows.card),
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: AppRadius.xlAll,
+          child: Ink(
+            decoration: BoxDecoration(
+              color: isDark ? AppColors.darkSurface : Colors.white,
+              borderRadius: AppRadius.xlAll,
+              border: Border.all(color: border),
+              gradient: isDark ? AppColors.cardGlow : null,
+            ),
+            child: content,
           ),
-          child: content,
         ),
       ),
     );
@@ -343,29 +352,13 @@ class PersonAvatar extends StatelessWidget {
   final double radius;
   final String? photoUrl;
 
-  String get _initials {
-    final List<String> parts = name.trim().split(RegExp(r'\s+'));
-    if (parts.isEmpty || parts.first.isEmpty) return '?';
-    if (parts.length == 1) return parts.first[0].toUpperCase();
-    return '${parts.first[0]}${parts.last[0]}'.toUpperCase();
-  }
-
   @override
   Widget build(BuildContext context) {
-    return CircleAvatar(
+    return ChildAvatarImage(
+      name: name,
+      seed: seed,
+      photoUrl: photoUrl,
       radius: radius,
-      backgroundColor: AppColors.avatarFor(seed),
-      backgroundImage:
-          photoUrl != null && photoUrl!.isNotEmpty ? NetworkImage(photoUrl!) : null,
-      child: photoUrl != null && photoUrl!.isNotEmpty
-          ? null
-          : Text(
-              _initials,
-              style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w700,
-                  ),
-            ),
     );
   }
 }

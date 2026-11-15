@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../config/app_config.dart';
 import '../../features/auth/presentation/providers/auth_providers.dart';
 import '../../features/auth/presentation/screens/forgot_password_screen.dart';
 import '../../features/auth/presentation/screens/login_screen.dart';
@@ -11,6 +12,7 @@ import '../../features/auth/presentation/screens/role_setup_screen.dart';
 import '../../features/admin/presentation/admin_screen.dart';
 import '../../features/auth/presentation/screens/splash_screen.dart';
 import '../../features/clinic_org/presentation/providers/clinic_org_providers.dart';
+import '../../features/workspace/presentation/providers/workspace_providers.dart';
 import '../../features/clinic/presentation/screens/clinic_dashboard_screen.dart';
 import '../../features/finance/presentation/screens/cash_flow_screen.dart';
 import '../../features/finance/presentation/screens/delinquency_screen.dart';
@@ -34,15 +36,24 @@ import '../../features/security/presentation/screens/permission_matrix_screen.da
 import '../../features/clinic/presentation/screens/clinic_reception_screen.dart';
 import '../../features/pending/domain/pending_item.dart';
 import '../../features/pending/presentation/screens/crm_screen.dart';
+import '../../features/management/presentation/ai_hub_screen.dart';
+import '../../features/management/presentation/anamnesis_screens.dart';
+import '../../features/management/presentation/communication_screens.dart';
+import '../../features/management/presentation/management_hub_screen.dart';
+import '../../features/management/presentation/marketing_crm_settings_screens.dart';
 import '../../features/pending/presentation/screens/pending_center_screen.dart';
 import '../../features/clinic/presentation/screens/clinic_triage_screen.dart';
 import '../../features/clinic/presentation/screens/patient_360_screen.dart';
+import '../../features/emr/presentation/screens/prescriptions_hub_screen.dart';
 import '../../features/clinic/presentation/screens/voice_consent_screen.dart';
 import '../../features/clinic/presentation/screens/voice_final_review_screen.dart';
 import '../../features/clinic/presentation/screens/voice_home_screen.dart';
 import '../../features/clinic/presentation/screens/voice_live_screen.dart';
 import '../../features/clinic/presentation/screens/voice_review_screen.dart';
+import '../../features/clinic_intake/presentation/accept_invite_screen.dart';
+import '../../features/clinic_intake/presentation/clinic_intakes_screen.dart';
 import '../../features/clinic_org/presentation/screens/clinic_org_screens.dart';
+import '../../features/clinic_org/presentation/screens/clinic_team_screen.dart';
 import '../../features/supplementation/presentation/screens/calculator_prescription_screens.dart';
 import '../../features/supplementation/presentation/screens/lab_screens.dart';
 import '../../features/supplementation/presentation/screens/micronutrient_screens.dart';
@@ -65,15 +76,26 @@ import '../../features/library/presentation/screens/content_detail_screen.dart';
 import '../../features/library/presentation/screens/library_screen.dart';
 import '../../features/shop/presentation/screens/shop_screens.dart';
 import '../../features/telemedicine/presentation/professional_agenda_screen.dart';
+import '../../features/telemedicine/presentation/screens/booking_screens.dart';
 import '../../features/telemedicine/presentation/telemedicine_screen.dart';
 import '../../features/shell/presentation/screens/profile_tab.dart';
 import '../../features/tools/presentation/screens/tools_screen.dart';
 import '../../features/notifications/presentation/notification_center_screen.dart';
+import '../../features/workspace/domain/workspace_profile.dart';
 import '../../shared/domain/entities/app_user.dart';
+import '../../shared/domain/entities/clinic_organization.dart';
 import '../config/dev_mode.dart';
 import '../providers/core_providers.dart';
 import '../services/app_logger.dart';
 import '../services/remote_config_service.dart';
+import '../widgets/feature_unavailable.dart';
+import '../../features/receptionist_ai/presentation/receptionist_ai_screen.dart';
+import '../../features/shell/presentation/screens/patient_module_screen.dart';
+import '../../features/kids_space/presentation/screens/kids_guardian_screen.dart';
+import '../../features/kids_space/presentation/screens/kids_home_screen.dart';
+import '../../features/kids_space/presentation/screens/kids_kiosk_screen.dart';
+import '../../features/kids_space/presentation/screens/kids_play_screen.dart';
+import '../config/module_flags.dart';
 import 'route_authorization.dart';
 import 'routes.dart';
 
@@ -95,6 +117,14 @@ class _RouterRefresh extends ChangeNotifier {
     ref.listen<AsyncValue<bool>>(
       onboardingSeenProvider,
       (AsyncValue<bool>? _, AsyncValue<bool> __) => notifyListeners(),
+    );
+    ref.listen<ClinicMembership?>(
+      activeClinicMembershipProvider,
+      (ClinicMembership? _, ClinicMembership? __) => notifyListeners(),
+    );
+    ref.listen<WorkspaceProfile>(
+      currentWorkspaceProvider,
+      (WorkspaceProfile? _, WorkspaceProfile __) => notifyListeners(),
     );
   }
 }
@@ -118,6 +148,20 @@ final Provider<GoRouter> routerProvider = Provider<GoRouter>((Ref ref) {
     // ------------------------------------------------------------- Guarda
     redirect: (BuildContext context, GoRouterState state) {
       final RemoteConfigService config = ref.read(remoteConfigProvider);
+      final String loc = state.matchedLocation;
+      if (loc == Routes.kidsPath ||
+          loc.startsWith('${Routes.kidsPath}/')) {
+        final bool kidsOn = ModuleFlags.kidsSpaceEnabled(config);
+        final bool kioskPath = loc == Routes.kidsKioskPath ||
+            loc.startsWith('${Routes.kidsKioskPath}/');
+        if (!kidsOn) {
+          return Routes.homePath;
+        }
+        if (kioskPath && !ModuleFlags.kidsKioskEnabled(config)) {
+          return Routes.kidsPath;
+        }
+      }
+
       final AsyncValue<AppUser?> auth = ref.read(authStateProvider);
       final AsyncValue<bool> onboarding = ref.read(onboardingSeenProvider);
 
@@ -132,6 +176,7 @@ final Provider<GoRouter> routerProvider = Provider<GoRouter>((Ref ref) {
         seenOnboarding: onboarding.valueOrNull ?? false,
         unlockAllRoles: DevMode.isEnabled,
         clinicMembership: ref.read(activeClinicMembershipProvider),
+        workspace: ref.read(currentWorkspaceProvider),
       );
     },
 
@@ -200,6 +245,7 @@ final Provider<GoRouter> routerProvider = Provider<GoRouter>((Ref ref) {
             name: Routes.childDetailName,
             builder: (BuildContext context, GoRouterState state) =>
                 ChildDetailScreen(
+              key: ValueKey<String>(state.matchedLocation),
               childId: state.pathParameters['childId']!,
             ),
             routes: <RouteBase>[
@@ -208,6 +254,7 @@ final Provider<GoRouter> routerProvider = Provider<GoRouter>((Ref ref) {
                 name: Routes.growthName,
                 builder: (BuildContext context, GoRouterState state) =>
                     GrowthScreen(
+                  key: ValueKey<String>(state.matchedLocation),
                   childId: state.pathParameters['childId']!,
                 ),
               ),
@@ -216,6 +263,7 @@ final Provider<GoRouter> routerProvider = Provider<GoRouter>((Ref ref) {
                 name: Routes.vaccinesName,
                 builder: (BuildContext context, GoRouterState state) =>
                     VaccinesScreen(
+                  key: ValueKey<String>(state.matchedLocation),
                   childId: state.pathParameters['childId']!,
                 ),
               ),
@@ -318,7 +366,18 @@ final Provider<GoRouter> routerProvider = Provider<GoRouter>((Ref ref) {
         builder: (BuildContext context, GoRouterState state) =>
             const TelemedicineScreen(),
       ),
-
+      GoRoute(
+        path: Routes.familyBookingPath,
+        name: Routes.familyBookingName,
+        builder: (BuildContext context, GoRouterState state) =>
+            const FamilyBookingScreen(),
+      ),
+      GoRoute(
+        path: Routes.clinicBookingPath,
+        name: Routes.clinicBookingName,
+        builder: (BuildContext context, GoRouterState state) =>
+            const ClinicBookingScreen(),
+      ),
 
 
       GoRoute(
@@ -332,6 +391,21 @@ final Provider<GoRouter> routerProvider = Provider<GoRouter>((Ref ref) {
         name: Routes.clinicOrgCreateName,
         builder: (BuildContext context, GoRouterState state) =>
             const CreateClinicScreen(),
+      ),
+      GoRoute(
+        path: Routes.clinicTeamPath,
+        name: Routes.clinicTeamName,
+        builder: (BuildContext context, GoRouterState state) =>
+            const ClinicTeamScreen(),
+      ),
+
+      // Convite da clínica: o responsável confirma a solicitação e escolhe
+      // o acesso.
+      GoRoute(
+        path: Routes.clinicInvitePath,
+        name: Routes.clinicInviteName,
+        builder: (BuildContext context, GoRouterState state) =>
+            const AcceptInviteScreen(),
       ),
 
       // Suplementacao Pediatrica (profissional - fora do shell).
@@ -379,6 +453,7 @@ final Provider<GoRouter> routerProvider = Provider<GoRouter>((Ref ref) {
         name: Routes.supplementLabDetailName,
         builder: (BuildContext context, GoRouterState state) =>
             LabExamDetailScreen(
+          key: ValueKey<String>(state.matchedLocation),
           examId: state.pathParameters['examId']!,
           childId: state.uri.queryParameters['childId'],
         ),
@@ -404,6 +479,7 @@ final Provider<GoRouter> routerProvider = Provider<GoRouter>((Ref ref) {
         name: Routes.supplementPrescriptionViewName,
         builder: (BuildContext context, GoRouterState state) =>
             SupplementPrescriptionViewScreen(
+          key: ValueKey<String>(state.matchedLocation),
           prescriptionId: state.pathParameters['rxId']!,
         ),
       ),
@@ -477,6 +553,12 @@ final Provider<GoRouter> routerProvider = Provider<GoRouter>((Ref ref) {
             const ClinicReceptionScreen(),
       ),
       GoRoute(
+        path: Routes.clinicIntakesPath,
+        name: Routes.clinicIntakesName,
+        builder: (BuildContext context, GoRouterState state) =>
+            const ClinicIntakesScreen(),
+      ),
+      GoRoute(
         path: Routes.clinicPendingPath,
         name: Routes.clinicPendingName,
         builder: (BuildContext context, GoRouterState state) {
@@ -501,6 +583,63 @@ final Provider<GoRouter> routerProvider = Provider<GoRouter>((Ref ref) {
         name: Routes.clinicCrmName,
         builder: (BuildContext context, GoRouterState state) =>
             const ClinicCrmScreen(),
+      ),
+      GoRoute(
+        path: Routes.managementPath,
+        name: Routes.managementName,
+        builder: (BuildContext context, GoRouterState state) =>
+            const ManagementHubScreen(),
+      ),
+      GoRoute(
+        path: Routes.managementCrmPath,
+        name: Routes.managementCrmName,
+        builder: (BuildContext context, GoRouterState state) =>
+            const ManagementCrmScreen(),
+      ),
+      GoRoute(
+        path: Routes.managementAnamnesisPath,
+        name: Routes.managementAnamnesisName,
+        builder: (BuildContext context, GoRouterState state) =>
+            const AnamnesisReviewScreen(),
+      ),
+      GoRoute(
+        path: Routes.managementCommunicationPath,
+        name: Routes.managementCommunicationName,
+        builder: (BuildContext context, GoRouterState state) =>
+            const CommunicationScreen(),
+      ),
+      GoRoute(
+        path: Routes.managementAutomationsPath,
+        name: Routes.managementAutomationsName,
+        builder: (BuildContext context, GoRouterState state) =>
+            const AutomationsScreen(),
+      ),
+      GoRoute(
+        path: Routes.managementMarketingPath,
+        name: Routes.managementMarketingName,
+        builder: (BuildContext context, GoRouterState state) =>
+            const MarketingScreen(),
+      ),
+      GoRoute(
+        path: Routes.managementAiPath,
+        name: Routes.managementAiName,
+        builder: (BuildContext context, GoRouterState state) =>
+            const AiHubScreen(),
+      ),
+      GoRoute(
+        path: Routes.managementSettingsPath,
+        name: Routes.managementSettingsName,
+        builder: (BuildContext context, GoRouterState state) =>
+            const ManagementSettingsScreen(),
+      ),
+      GoRoute(
+        path: Routes.familyAnamnesisPath,
+        name: Routes.familyAnamnesisName,
+        builder: (BuildContext context, GoRouterState state) =>
+            FamilyAnamnesisScreen(
+          key: ValueKey<String>(state.matchedLocation),
+          appointmentId: state.pathParameters['appointmentId'] ?? '',
+        ),
       ),
       GoRoute(
         path: Routes.financePath,
@@ -705,6 +844,7 @@ final Provider<GoRouter> routerProvider = Provider<GoRouter>((Ref ref) {
         name: Routes.clinicTriageName,
         builder: (BuildContext context, GoRouterState state) =>
             ClinicTriageScreen(
+          key: ValueKey<String>(state.matchedLocation),
           appointmentId: state.pathParameters['appointmentId']!,
         ),
       ),
@@ -713,44 +853,108 @@ final Provider<GoRouter> routerProvider = Provider<GoRouter>((Ref ref) {
         name: Routes.clinicPatient360Name,
         builder: (BuildContext context, GoRouterState state) =>
             Patient360Screen(
+          key: ValueKey<String>(state.matchedLocation),
+          childId: state.pathParameters['childId']!,
+        ),
+      ),
+      GoRoute(
+        path: Routes.clinicPrescriptionsPath,
+        name: Routes.clinicPrescriptionsName,
+        builder: (BuildContext context, GoRouterState state) =>
+            PrescriptionsHubScreen(
+          key: ValueKey<String>(state.matchedLocation),
+          childId: state.pathParameters['childId']!,
+        ),
+      ),
+      GoRoute(
+        path: Routes.clinicGrowthPath,
+        name: Routes.clinicGrowthName,
+        builder: (BuildContext context, GoRouterState state) =>
+            GrowthScreen(
+          key: ValueKey<String>(state.matchedLocation),
           childId: state.pathParameters['childId']!,
         ),
       ),
       GoRoute(
         path: Routes.clinicVoicePath,
         name: Routes.clinicVoiceName,
-        builder: (BuildContext context, GoRouterState state) =>
-            const VoiceHomeScreen(),
+        builder: (BuildContext context, GoRouterState state) {
+          if (!AppConfig.voiceConsultationEnabled) {
+            return const FeatureUnavailableScreen(
+              title: 'Consulta com IA',
+              message:
+                  'A gravacao assistida e o prontuario por voz ainda nao '
+                  'estao disponiveis nesta versao de teste. Use o prontuario '
+                  'manual no editor de atendimento.',
+            );
+          }
+          return const VoiceHomeScreen();
+        },
         routes: <RouteBase>[
           GoRoute(
             path: 'consentimento',
             name: Routes.clinicVoiceConsentName,
-            builder: (BuildContext context, GoRouterState state) =>
-                const VoiceConsentScreen(),
+            builder: (BuildContext context, GoRouterState state) {
+              if (!AppConfig.voiceConsultationEnabled) {
+                return const FeatureUnavailableScreen(
+                  title: 'Consulta com IA',
+                  message:
+                      'Funcao fora do escopo deste teste fechado.',
+                );
+              }
+              return const VoiceConsentScreen();
+            },
           ),
           GoRoute(
             path: 'sessao/:sessionId',
             name: Routes.clinicVoiceLiveName,
-            builder: (BuildContext context, GoRouterState state) =>
-                VoiceLiveScreen(
-              sessionId: state.pathParameters['sessionId']!,
-            ),
+            builder: (BuildContext context, GoRouterState state) {
+              if (!AppConfig.voiceConsultationEnabled) {
+                return const FeatureUnavailableScreen(
+                  title: 'Consulta com IA',
+                  message:
+                      'Funcao fora do escopo deste teste fechado.',
+                );
+              }
+              return VoiceLiveScreen(
+                key: ValueKey<String>(state.matchedLocation),
+                sessionId: state.pathParameters['sessionId']!,
+              );
+            },
           ),
           GoRoute(
             path: 'revisao/:sessionId',
             name: Routes.clinicVoiceReviewName,
-            builder: (BuildContext context, GoRouterState state) =>
-                VoiceReviewScreen(
-              sessionId: state.pathParameters['sessionId']!,
-            ),
+            builder: (BuildContext context, GoRouterState state) {
+              if (!AppConfig.voiceConsultationEnabled) {
+                return const FeatureUnavailableScreen(
+                  title: 'Consulta com IA',
+                  message:
+                      'Funcao fora do escopo deste teste fechado.',
+                );
+              }
+              return VoiceReviewScreen(
+                key: ValueKey<String>(state.matchedLocation),
+                sessionId: state.pathParameters['sessionId']!,
+              );
+            },
           ),
           GoRoute(
             path: 'final/:sessionId',
             name: Routes.clinicVoiceFinalName,
-            builder: (BuildContext context, GoRouterState state) =>
-                VoiceFinalReviewScreen(
-              sessionId: state.pathParameters['sessionId']!,
-            ),
+            builder: (BuildContext context, GoRouterState state) {
+              if (!AppConfig.voiceConsultationEnabled) {
+                return const FeatureUnavailableScreen(
+                  title: 'Consulta com IA',
+                  message:
+                      'Funcao fora do escopo deste teste fechado.',
+                );
+              }
+              return VoiceFinalReviewScreen(
+                key: ValueKey<String>(state.matchedLocation),
+                sessionId: state.pathParameters['sessionId']!,
+              );
+            },
           ),
         ],
       ),
@@ -785,6 +989,49 @@ final Provider<GoRouter> routerProvider = Provider<GoRouter>((Ref ref) {
                 const NoTransitionPage<void>(child: HomeScreen()),
           ),
           GoRoute(
+            path: Routes.patientModulePath,
+            name: Routes.patientModuleName,
+            pageBuilder: (BuildContext context, GoRouterState state) =>
+                NoTransitionPage<void>(
+              child: PatientModuleScreen(
+                key: ValueKey<String>(state.matchedLocation),
+                moduleSlug: state.pathParameters['module']!,
+              ),
+            ),
+          ),
+          GoRoute(
+            path: Routes.receptionistAiPath,
+            name: Routes.receptionistAiName,
+            pageBuilder: (BuildContext context, GoRouterState state) =>
+                const NoTransitionPage<void>(child: ReceptionistAiScreen()),
+          ),
+          GoRoute(
+            path: Routes.kidsPath,
+            name: Routes.kidsName,
+            pageBuilder: (BuildContext context, GoRouterState state) =>
+                const NoTransitionPage<void>(child: KidsHomeScreen()),
+          ),
+          GoRoute(
+            path: Routes.kidsPlayPath,
+            name: Routes.kidsPlayName,
+            pageBuilder: (BuildContext context, GoRouterState state) =>
+                NoTransitionPage<void>(
+              child: KidsPlayScreen(gameId: state.pathParameters['gameId']!),
+            ),
+          ),
+          GoRoute(
+            path: Routes.kidsGuardianPath,
+            name: Routes.kidsGuardianName,
+            pageBuilder: (BuildContext context, GoRouterState state) =>
+                const NoTransitionPage<void>(child: KidsGuardianScreen()),
+          ),
+          GoRoute(
+            path: Routes.kidsKioskPath,
+            name: Routes.kidsKioskName,
+            pageBuilder: (BuildContext context, GoRouterState state) =>
+                const NoTransitionPage<void>(child: KidsKioskScreen()),
+          ),
+          GoRoute(
             path: Routes.clinicPath,
             name: Routes.clinicName,
             pageBuilder: (BuildContext context, GoRouterState state) =>
@@ -804,8 +1051,10 @@ final Provider<GoRouter> routerProvider = Provider<GoRouter>((Ref ref) {
             path: Routes.patientsPath,
             name: Routes.patientsName,
             pageBuilder: (BuildContext context, GoRouterState state) =>
-                const NoTransitionPage<void>(
-              child: ProfessionalPatientsScreen(),
+                NoTransitionPage<void>(
+              child: ProfessionalPatientsScreen(
+                initialQuery: state.uri.queryParameters['q'],
+              ),
             ),
           ),
           GoRoute(

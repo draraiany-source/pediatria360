@@ -50,9 +50,14 @@ class EncounterRepository {
   // ------------------------------------------------------------- Leitura
 
   /// Atendimentos de um paciente, do mais recente para o mais antigo.
-  Stream<List<Encounter>> watchPatientEncounters(String patientId) =>
-      _encounters
-          .where('patientId', isEqualTo: patientId)
+  Stream<List<Encounter>> watchPatientEncounters(
+    String patientId, {
+    String? professionalId,
+  }) =>
+      _byAuthor(
+        _encounters.where('patientId', isEqualTo: patientId),
+        professionalId,
+      )
           .orderBy('startedAt', descending: true)
           .limit(100)
           .snapshots()
@@ -62,6 +67,16 @@ class EncounterRepository {
           );
 
   /// Atendimentos que o profissional conduziu.
+  /// As regras só liberam ao profissional o que ele mesmo registrou; sem este
+  /// filtro a consulta inteira é recusada, mesmo havendo autorização.
+  Query<Map<String, dynamic>> _byAuthor(
+    Query<Map<String, dynamic>> query,
+    String? professionalId,
+  ) =>
+      professionalId == null
+          ? query
+          : query.where('professionalId', isEqualTo: professionalId);
+
   Stream<List<Encounter>> watchProfessionalEncounters(String professionalId) =>
       _encounters
           .where('professionalId', isEqualTo: professionalId)
@@ -118,6 +133,32 @@ class EncounterRepository {
         final String id = _uuid.v4();
         final DateTime now = DateTime.now();
 
+        // As regras só aceitam o atendimento com concessão `chartWrite` do
+        // responsável para esta criança (valendo nesta clínica). Consulta
+        // marcada não concede nada: quem autoriza é o responsável, na tela
+        // de autorizações ou ao aceitar o convite da clínica. A consulta
+        // abaixo só antecipa a recusa com uma mensagem clara.
+        bool? authorized;
+        try {
+          final HttpsCallableResult<dynamic> res = await _functions
+              .httpsCallable('checkChildAccess')
+              .call(<String, dynamic>{
+            'childId': patientId,
+            'clinicId': clinicId,
+          });
+          final Object? data = res.data;
+          if (data is Map) authorized = data['chartWrite'] == true;
+        } on FirebaseFunctionsException {
+          // Sem resposta, a decisão fica com as regras, na gravação abaixo.
+        }
+        if (authorized == false) {
+          throw const PermissionFailure(
+            'O responsável ainda não autorizou o acesso ao prontuário desta '
+            'criança para você (ou a autorização venceu ou foi revogada). '
+            'Peça a autorização pelo app da família.',
+          );
+        }
+
         await _encounters.doc(id).set(<String, dynamic>{
           'patientId': patientId,
           'professionalId': professionalId,
@@ -142,18 +183,6 @@ class EncounterRepository {
           'attachmentIds': <String>[],
           'updatedAt': FieldValue.serverTimestamp(),
         });
-
-        // Concede a leitura do resumo de segurança da criança (nome, idade,
-        // alergia) — não bloqueia a criação do atendimento se falhar. O
-        // atendimento em si já está gravado e é o que importa; a concessão é
-        // um extra de UX (mostrar o card de segurança na linha do tempo),
-        // não um requisito para atender.
-        unawaited(
-          _functions
-              .httpsCallable('grantChildSummaryAccess')
-              .call(<String, dynamic>{'childId': patientId})
-              .then((_) {}, onError: (_) {}),
-        );
 
         return Encounter(
           id: id,
@@ -271,9 +300,14 @@ class EncounterRepository {
                 s.docs.map(_documentFrom).toList(growable: false),
           );
 
-  Stream<List<ClinicalDocument>> watchPatientDocuments(String patientId) =>
-      _documents
-          .where('patientId', isEqualTo: patientId)
+  Stream<List<ClinicalDocument>> watchPatientDocuments(
+    String patientId, {
+    String? professionalId,
+  }) =>
+      _byAuthor(
+        _documents.where('patientId', isEqualTo: patientId),
+        professionalId,
+      )
           .orderBy('issuedAt', descending: true)
           .limit(100)
           .snapshots()
@@ -392,9 +426,16 @@ class EncounterRepository {
 
   // -------------------------------------------------------------- Exames
 
-  Stream<List<LabResult>> watchLabResults(String patientId) => _firestore
-      .collection('lab_results')
-      .where('patientId', isEqualTo: patientId)
+  Stream<List<LabResult>> watchLabResults(
+    String patientId, {
+    String? professionalId,
+  }) =>
+      _byAuthor(
+        _firestore
+            .collection('lab_results')
+            .where('patientId', isEqualTo: patientId),
+        professionalId,
+      )
       .orderBy('collectedAt', descending: true)
       .limit(200)
       .snapshots()

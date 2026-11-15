@@ -20,6 +20,11 @@ class RemoteFlag {
   static const String maintenanceMessage = 'maintenance_message';
   static const String featuredCourseId = 'featured_course_id';
   static const String vaccineCalendarVersion = 'vaccine_calendar_version';
+  static const String kidsSpaceEnabled = 'kids_space_enabled';
+  static const String kidsKioskEnabled = 'kids_kiosk_enabled';
+  static const String tiaCrisEnabled = 'tia_cris_enabled';
+  static const String tiaCrisBookingEnabled = 'tia_cris_booking_enabled';
+
 
   static final Map<String, Object> defaults = <String, Object>{
     aiEnabled: true,
@@ -37,7 +42,12 @@ class RemoteFlag {
         'Estamos em manutencao. Voltamos em alguns minutos.',
     featuredCourseId: '',
     vaccineCalendarVersion: 1,
+    kidsSpaceEnabled: false,
+    kidsKioskEnabled: false,
+    tiaCrisEnabled: false,
+    tiaCrisBookingEnabled: false,
   };
+
 }
 
 /// Acesso tipado ao Remote Config.
@@ -99,4 +109,10 @@ class RemoteConfigService {
   String get maintenanceMessage => getString(RemoteFlag.maintenanceMessage);
   int get minSupportedBuild => getInt(RemoteFlag.minSupportedBuild);
   String get featuredCourseId => getString(RemoteFlag.featuredCourseId);
+  int get vaccineCalendarVersion => getInt(RemoteFlag.vaccineCalendarVersion);
+  bool get kidsSpaceEnabled => getBool(RemoteFlag.kidsSpaceEnabled);
+  bool get kidsKioskEnabled => getBool(RemoteFlag.kidsKioskEnabled);
+  bool get tiaCrisEnabled => getBool(RemoteFlag.tiaCrisEnabled);
+  bool get tiaCrisBookingEnabled => getBool(RemoteFlag.tiaCrisBookingEnabled);
+
 }

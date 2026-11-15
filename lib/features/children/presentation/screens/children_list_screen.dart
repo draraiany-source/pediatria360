@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/config/app_assets.dart';
+import '../../../../core/config/capi_pose.dart';
 import '../../../../core/error/error_mapper.dart';
 import '../../../../core/responsive/responsive.dart';
 import '../../../../core/router/routes.dart';
@@ -49,7 +50,7 @@ class ChildrenListScreen extends ConsumerWidget {
           if (list.isEmpty) {
             return EmptyState(
               icon: Icons.child_care_rounded,
-              animation: AppAssets.lottieEmpty,
+              illustration: AppAssets.capiForPose(CapiPose.bracosAbertos),
               title: 'Nenhuma criança ainda',
               message: 'Cadastre a primeira para acompanhar crescimento, '
                   'vacinas e marcos do desenvolvimento.',
@@ -94,6 +95,7 @@ class _ChildCard extends ConsumerWidget {
               PersonAvatar(
                 name: child.name,
                 seed: child.id,
+                photoUrl: child.photoUrl,
                 radius: 28,
               ),
               const SizedBox(width: AppSpacing.lg),

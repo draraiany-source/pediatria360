@@ -3,7 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
+import '../../../../core/config/app_config.dart';
 import '../../../../core/error/failures.dart';
+import '../../../../core/router/route_access.dart';
 import '../../../../core/router/routes.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_icons.dart';
@@ -39,7 +41,10 @@ final StreamProviderFamily<List<Appointment>, String>
     StreamProvider.family<List<Appointment>, String>((Ref ref, String childId) {
   return ref
       .watch(telemedicineRepositoryProvider)
-      .watchChildAppointments(childId);
+      .watchChildAppointments(
+        childId,
+        professionalId: ref.watch(clinicalAuthorFilterProvider),
+      );
 });
 
 /// Hub Paciente 360 — resume dados reais e aponta para módulos existentes.
@@ -717,79 +722,110 @@ class _TimelineTab extends StatelessWidget {
   }
 }
 
-class _ModulesTab extends StatelessWidget {
+class _ModulesTab extends ConsumerWidget {
   const _ModulesTab({required this.childId});
 
   final String childId;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final bool isProfessional =
+        ref.watch(currentUserProvider)?.role.isProfessional ?? false;
+
+    void familyCareBlocked() {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Crescimento e vacinas da caderneta familiar ficam com o '
+            'responsável. No consultório, use triagem e sinais vitais da '
+            'consulta.',
+          ),
+        ),
+      );
+    }
+
     return ListView(
       padding: const EdgeInsets.all(AppSpacing.lg),
       children: <Widget>[
         const BrandSectionHeader(title: 'Acompanhar'),
-        QuickAccessCard(
-          label: 'Prontuário / pacientes',
-          subtitle: 'Linha do tempo e atendimentos',
-          icon: Icons.folder_shared_outlined,
-          asset: AppIcons.medicalRecord,
-          color: AppColors.brand,
-          wide: true,
-          onTap: () => context.go(Routes.patientsPath),
-        ),
-        const SizedBox(height: AppSpacing.sm),
+        if (canOpenRoute(ref, Routes.patientsPath)) ...<Widget>[
+          QuickAccessCard(
+            label: 'Prontuário / pacientes',
+            subtitle: 'Linha do tempo e atendimentos',
+            icon: Icons.folder_shared_outlined,
+            asset: AppIcons.medicalRecord,
+            color: AppColors.brand,
+            wide: true,
+            onTap: () => context.go(Routes.patientsPath),
+          ),
+          const SizedBox(height: AppSpacing.sm),
+        ],
         QuickAccessCard(
           label: 'Crescimento',
-          subtitle: 'Peso, altura e curvas',
+          subtitle: isProfessional
+              ? 'Curvas da família: use triagem na consulta'
+              : 'Peso, altura e curvas',
           icon: Icons.show_chart_rounded,
           asset: AppIcons.growth,
           color: AppColors.teal,
           wide: true,
-          onTap: () => context.push(Routes.growth(childId)),
+          onTap: isProfessional
+              ? familyCareBlocked
+              : () => context.push(Routes.growth(childId)),
         ),
         const SizedBox(height: AppSpacing.sm),
         QuickAccessCard(
           label: 'Vacinas',
-          subtitle: 'Calendário e doses',
+          subtitle: isProfessional
+              ? 'Caderneta familiar: registro na evolução'
+              : 'Calendário e doses',
           icon: Icons.vaccines_outlined,
           asset: AppIcons.vaccines,
           color: AppColors.raspberry,
           wide: true,
-          onTap: () => context.push(Routes.vaccines(childId)),
+          onTap: isProfessional
+              ? familyCareBlocked
+              : () => context.push(Routes.vaccines(childId)),
         ),
         const SizedBox(height: AppSpacing.sm),
-        QuickAccessCard(
-          label: 'Consulta com IA',
-          subtitle: 'Iniciar gravação assistida',
-          icon: Icons.mic_rounded,
-          asset: AppIcons.microphone,
-          color: AppColors.navy,
-          wide: true,
-          onTap: () => context.push(
-            '${Routes.clinicVoicePath}?childId=$childId',
+        if (AppConfig.voiceConsultationEnabled &&
+            canOpenRoute(ref, Routes.clinicVoicePath)) ...<Widget>[
+          QuickAccessCard(
+            label: 'Consulta com IA',
+            subtitle: 'Iniciar gravação assistida',
+            icon: Icons.mic_rounded,
+            asset: AppIcons.microphone,
+            color: AppColors.navy,
+            wide: true,
+            onTap: () => context.push(
+              '${Routes.clinicVoicePath}?childId=$childId',
+            ),
           ),
-        ),
-        const SizedBox(height: AppSpacing.sm),
-        QuickAccessCard(
-          label: 'Suplementação',
-          subtitle: 'Exames, calculadora e acompanhamento',
-          icon: Icons.science_outlined,
-          color: AppColors.tealDeep,
-          wide: true,
-          onTap: () => context.push(
-            Routes.supplementWithChild(Routes.supplementPath, childId),
+          const SizedBox(height: AppSpacing.sm),
+        ],
+        if (canOpenRoute(ref, Routes.supplementPath)) ...<Widget>[
+          QuickAccessCard(
+            label: 'Suplementação',
+            subtitle: 'Exames, calculadora e acompanhamento',
+            icon: Icons.science_outlined,
+            color: AppColors.tealDeep,
+            wide: true,
+            onTap: () => context.push(
+              Routes.supplementWithChild(Routes.supplementPath, childId),
+            ),
           ),
-        ),
-        const SizedBox(height: AppSpacing.sm),
-        QuickAccessCard(
-          label: 'Recepção',
-          subtitle: 'Fila e check-in do dia',
-          icon: Icons.how_to_reg_rounded,
-          asset: AppIcons.waitingQueue,
-          color: AppColors.honey,
-          wide: true,
-          onTap: () => context.push(Routes.clinicReceptionPath),
-        ),
+          const SizedBox(height: AppSpacing.sm),
+        ],
+        if (canOpenRoute(ref, Routes.clinicReceptionPath))
+          QuickAccessCard(
+            label: 'Recepção',
+            subtitle: 'Fila e check-in do dia',
+            icon: Icons.how_to_reg_rounded,
+            asset: AppIcons.waitingQueue,
+            color: AppColors.honey,
+            wide: true,
+            onTap: () => context.push(Routes.clinicReceptionPath),
+          ),
       ],
     );
   }
@@ -851,10 +887,11 @@ class _PatientFinanceSummary extends ConsumerWidget {
                             color: AppColors.navy,
                           ),
                     ),
-                    TextButton(
-                      onPressed: () => context.push(Routes.financePath),
-                      child: const Text('Ver modulo'),
-                    ),
+                    if (canOpenRoute(ref, Routes.financePath))
+                      TextButton(
+                        onPressed: () => context.push(Routes.financePath),
+                        child: const Text('Ver modulo'),
+                      ),
                   ],
                 ),
                 Text('Saldo em aberto: ${formatCents(openBalance)}'),

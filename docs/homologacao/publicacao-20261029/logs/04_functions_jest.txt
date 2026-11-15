@@ -1,0 +1,25 @@
+node.exe : PASS src/insightsCore.test.ts (16.555 s)
+No linha:1 caractere:1
++ & "C:\Program Files\nodejs/node.exe" "C:\Program Files\nodejs/node_mo ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (PASS src/insightsCore.test.ts (16.555 s):String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+PASS src/crmCore.test.ts (17.855 s)
+PASS src/marketingCore.test.ts (18.432 s)
+PASS src/intake.test.ts
+PASS src/schedulingCore.test.ts
+PASS src/financeCore.test.ts
+PASS src/whatsapp.test.ts
+PASS src/anamnesisCore.test.ts
+PASS src/automationCore.test.ts
+PASS src/booking.test.ts
+PASS src/childAccess.test.ts (8.515 s)
+PASS src/voice.test.ts (13.276 s)
+
+Test Suites: 12 passed, 12 total
+Tests:       104 passed, 104 total
+Snapshots:   0 total
+Time:        35.601 s
+Ran all test suites.
+exit=0

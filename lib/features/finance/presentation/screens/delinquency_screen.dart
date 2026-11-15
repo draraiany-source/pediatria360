@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import '../../../../core/error/error_mapper.dart';
+import '../../../../core/widgets/state_views.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
@@ -23,7 +26,10 @@ class DelinquencyScreen extends ConsumerWidget {
       appBar: AppBar(title: const Text('Inadimplencia')),
       body: async.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (Object e, _) => Center(child: Text('$e')),
+        error: (Object e, _) => ErrorState(
+          failure: ErrorMapper.map(e),
+          onRetry: () => ref.invalidate(financeReceivablesProvider),
+        ),
         data: (List<FinanceReceivable> list) {
           final List<FinanceReceivable> overdue = list
               .where(

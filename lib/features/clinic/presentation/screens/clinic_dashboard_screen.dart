@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/config/app_config.dart';
 import '../../../../core/error/failures.dart';
 import '../../../../core/router/routes.dart';
 import '../../../../core/theme/app_colors.dart';
@@ -68,16 +69,18 @@ class ClinicDashboardScreen extends ConsumerWidget {
                       _KpiGrid(stats: stats),
                       const SizedBox(height: AppSpacing.xl),
                       const BrandSectionHeader(title: 'Atalhos'),
-                      QuickAccessCard(
-                        label: 'Iniciar consulta com IA',
-                        subtitle: 'Gravacao, rascunho e revisao medica',
-                        icon: Icons.mic_rounded,
-                        asset: AppIcons.microphone,
-                        color: AppColors.raspberry,
-                        wide: true,
-                        onTap: () => context.push(Routes.clinicVoicePath),
-                      ),
-                      const SizedBox(height: AppSpacing.sm),
+                      if (AppConfig.voiceConsultationEnabled) ...<Widget>[
+                        QuickAccessCard(
+                          label: 'Iniciar consulta com IA',
+                          subtitle: 'Gravacao, rascunho e revisao medica',
+                          icon: Icons.mic_rounded,
+                          asset: AppIcons.microphone,
+                          color: AppColors.raspberry,
+                          wide: true,
+                          onTap: () => context.push(Routes.clinicVoicePath),
+                        ),
+                        const SizedBox(height: AppSpacing.sm),
+                      ],
                       QuickAccessCard(
                         label: 'Recepcao',
                         subtitle: 'Fila e check-in do dia',
@@ -224,9 +227,11 @@ class _KpiGrid extends StatelessWidget {
   Widget build(BuildContext context) {
     final List<_Kpi> items = <_Kpi>[
       _Kpi('Hoje', '${stats.todayAppointments}', AppColors.brand),
+      _Kpi('7 dias', '${stats.weekAppointments}', AppColors.vital),
       _Kpi('Espera', '${stats.waiting}', AppColors.honey),
       _Kpi('Em sala', '${stats.inService}', AppColors.teal),
       _Kpi('Concluidas', '${stats.finished}', AppColors.navy),
+      _Kpi('Canceladas', '${stats.cancelledToday}', AppColors.inkMuted),
       _Kpi('Retornos', '${stats.pendingReturns}', AppColors.raspberry),
       _Kpi(
         'Faltas',

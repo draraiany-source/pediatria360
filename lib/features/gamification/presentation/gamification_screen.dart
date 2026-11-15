@@ -11,6 +11,7 @@ import '../../../core/router/routes.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_tokens.dart';
 import '../../../core/widgets/app_widgets.dart';
+import '../../../core/widgets/back_or_home_button.dart';
 import '../../../core/widgets/glass_card.dart';
 import '../../../core/widgets/skeleton.dart';
 import '../../../core/widgets/state_views.dart';
@@ -458,7 +459,7 @@ class LeaderboardScreen extends ConsumerWidget {
       appBar: AppBar(
         title: const Text('Ranking'),
         leading: IconButton(
-          onPressed: () => context.pop(),
+          onPressed: () => context.popOrHome(),
           icon: const Icon(Icons.arrow_back_rounded),
           tooltip: 'Voltar',
         ),

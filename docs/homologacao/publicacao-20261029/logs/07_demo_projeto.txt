@@ -1,0 +1,16 @@
+Conferencia das contas ficticias no projeto publicado pediatria360-app - 04/11/2026
+Metodo: login real (Identity Toolkit, chave web publica) + Firestore REST com o token de cada conta.
+Senhas omitidas deste log.
+
+Login das 3 contas: OK
+Profissional: agenda propria (professionalId) -> PERMITIDO, docs=1
+Recepcao: agenda da clinica (clinicId) -> PERMITIDO, docs=1
+Familia: consultas proprias (patientId) -> PERMITIDO, docs=1
+Familia: crianca propria -> PERMITIDO
+[negativo] Familia: agenda da clinica -> NEGADO 403 PERMISSION_DENIED
+[negativo] Recepcao: ficha da crianca -> NEGADO 403
+[negativo] Profissional: agenda de outra clinica -> NEGADO 403 PERMISSION_DENIED
+
+Deploy firestore (regras + indices): Deploy complete
+Deploy storage: Firebase Storage has not been set up on project 'pediatria360-app'
+Deploy functions: project must be on the Blaze (pay-as-you-go) plan

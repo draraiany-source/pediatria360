@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../../core/config/dev_mode.dart';
 import '../../../../core/error/failures.dart';
@@ -34,6 +35,8 @@ final Provider<AuthRepository> authRepositoryProvider = Provider<AuthRepository>
       // Apaga tudo que ficou no aparelho: cache de leitura e banco local.
       await ref.read(cacheServiceProvider).clear();
       await ref.read(localDatabaseProvider)?.wipe();
+      final SharedPreferences prefs = await SharedPreferences.getInstance();
+      await prefs.remove('p360_active_workspace');
     },
   ),
 );

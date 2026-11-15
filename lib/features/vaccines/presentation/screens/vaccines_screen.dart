@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 
+import '../../../../core/config/app_assets.dart';
+import '../../../../core/config/capi_pose.dart';
 import '../../../../core/responsive/responsive.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/app_icon.dart';
@@ -9,6 +10,7 @@ import '../../../../core/theme/app_icons.dart';
 import '../../../../core/theme/app_tokens.dart';
 import '../../../../core/utils/validators.dart';
 import '../../../../core/widgets/app_widgets.dart';
+import '../../../../core/widgets/back_or_home_button.dart';
 import '../../../../core/widgets/clinical_ui.dart';
 import '../../../../core/widgets/skeleton.dart';
 import '../../../../core/widgets/state_views.dart';
@@ -72,7 +74,7 @@ class _VaccinesScreenState extends ConsumerState<VaccinesScreen> {
           ],
         ),
         leading: IconButton(
-          onPressed: () => context.pop(),
+          onPressed: () => context.popOrHome(),
           icon: const AppIcon(
             asset: AppIcons.back,
             size: 22,
@@ -189,6 +191,7 @@ class _VaccinesScreenState extends ConsumerState<VaccinesScreen> {
             return EmptyState(
               icon: Icons.vaccines_outlined,
               asset: AppIcons.vaccineCard,
+              illustration: AppAssets.capiForPose(CapiPose.boasVindas),
               title: 'Calendário não gerado',
               message: 'Vamos montar o calendário do PNI a partir da data '
                   'de nascimento de ${child.firstName}.',

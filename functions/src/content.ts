@@ -15,6 +15,7 @@
 
 import { onCall, HttpsError } from "firebase-functions/v2/https";
 import * as admin from "firebase-admin";
+import { FieldValue } from "firebase-admin/firestore";
 import * as logger from "firebase-functions/logger";
 
 const REGION = "southamerica-east1";
@@ -176,11 +177,11 @@ export const saveContent = onCall({ region: REGION }, async (request) => {
       published: publish,
       searchTerms: buildSearchTerms(merged),
       currentVersion: nextVersion,
-      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      updatedAt: FieldValue.serverTimestamp(),
       updatedBy: actor.uid,
       ...(existing.exists
         ? {}
-        : { createdAt: admin.firestore.FieldValue.serverTimestamp() }),
+        : { createdAt: FieldValue.serverTimestamp() }),
     };
 
     tx.set(ref, payload, { merge: partial === true });
@@ -196,7 +197,7 @@ export const saveContent = onCall({ region: REGION }, async (request) => {
       published: publish,
       authorUid: actor.uid,
       authorName: actor.name,
-      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      createdAt: FieldValue.serverTimestamp(),
     });
 
     return versionRef.id;
@@ -208,7 +209,7 @@ export const saveContent = onCall({ region: REGION }, async (request) => {
     versionId,
     actorUid: actor.uid,
     note,
-    createdAt: admin.firestore.FieldValue.serverTimestamp(),
+    createdAt: FieldValue.serverTimestamp(),
   });
 
   logger.info("Conteúdo salvo", { contentId: ref.id, publish });
@@ -255,7 +256,7 @@ export const restoreContentVersion = onCall(
         ...snapshot,
         searchTerms: buildSearchTerms(snapshot),
         currentVersion: nextVersion,
-        updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+        updatedAt: FieldValue.serverTimestamp(),
         updatedBy: actor.uid,
       });
 
@@ -271,7 +272,7 @@ export const restoreContentVersion = onCall(
         authorUid: actor.uid,
         authorName: actor.name,
         restoredFrom: versionId,
-        createdAt: admin.firestore.FieldValue.serverTimestamp(),
+        createdAt: FieldValue.serverTimestamp(),
       });
 
       return nextVersion;
@@ -284,7 +285,7 @@ export const restoreContentVersion = onCall(
       newVersion,
       actorUid: actor.uid,
       note,
-      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      createdAt: FieldValue.serverTimestamp(),
     });
 
     logger.warn("Conteúdo restaurado", { contentId, versionId, actor: actor.uid });

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/error/failures.dart';
+import '../../../../core/router/route_access.dart';
 import '../../../../core/router/routes.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_tokens.dart';
@@ -98,14 +99,15 @@ class BiReceptionScreen extends ConsumerWidget {
                 .toList(growable: false),
           ),
           const SizedBox(height: AppSpacing.xl),
-          QuickAccessCard(
-            label: 'Recepcao ao vivo',
-            subtitle: 'Fila e check-in',
-            icon: Icons.how_to_reg_rounded,
-            color: AppColors.teal,
-            wide: true,
-            onTap: () => context.push(Routes.clinicReceptionPath),
-          ),
+          if (canOpenRoute(ref, Routes.clinicReceptionPath))
+            QuickAccessCard(
+              label: 'Recepcao ao vivo',
+              subtitle: 'Fila e check-in',
+              icon: Icons.how_to_reg_rounded,
+              color: AppColors.teal,
+              wide: true,
+              onTap: () => context.push(Routes.clinicReceptionPath),
+            ),
         ],
       ),
     );

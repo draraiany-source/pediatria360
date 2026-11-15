@@ -10,6 +10,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_icons.dart';
 import '../../../../core/theme/app_tokens.dart';
 import '../../../../core/widgets/app_icon.dart';
+import '../../../../core/widgets/back_or_home_button.dart';
 import '../../../../core/widgets/brand_ui.dart';
 import '../../../../core/widgets/state_views.dart';
 import '../../../telemedicine/data/telemedicine_repository.dart';
@@ -133,6 +134,7 @@ class _ClinicReceptionScreenState extends ConsumerState<ClinicReceptionScreen>
     return Scaffold(
       backgroundColor: AppColors.lightBackground,
       appBar: AppBar(
+        leading: const BackOrHomeButton(),
         title: const Text('Recepção'),
         backgroundColor: Colors.white,
         foregroundColor: AppColors.navy,

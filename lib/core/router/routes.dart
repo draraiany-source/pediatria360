@@ -124,6 +124,10 @@ class Routes {
   static const String telemedicineName = 'telemedicine';
   static const String agendaPath = '/agenda';
   static const String agendaName = 'agenda';
+  static const String clinicBookingPath = '/agenda/agendar';
+  static const String clinicBookingName = 'clinic-booking';
+  static const String familyBookingPath = '/agendar-consulta';
+  static const String familyBookingName = 'family-booking';
   static const String appointmentDetailPath = ':appointmentId';
   static const String appointmentDetailName = 'appointment-detail';
   static const String consultationRoomPath = ':appointmentId/consulta';
@@ -137,6 +141,8 @@ class Routes {
   static const String clinicName = 'clinic';
   static const String clinicReceptionPath = '/consultorio/recepcao';
   static const String clinicReceptionName = 'clinic-reception';
+  static const String clinicIntakesPath = '/consultorio/solicitacoes';
+  static const String clinicIntakesName = 'clinic-intakes';
   static const String clinicPendingPath = '/consultorio/pendencias';
   static const String clinicPendingName = 'clinic-pending';
   static const String clinicCrmPath = '/consultorio/crm';
@@ -146,6 +152,12 @@ class Routes {
   static const String clinicPatient360Path =
       '/consultorio/paciente/:childId/360';
   static const String clinicPatient360Name = 'clinic-patient-360';
+  static const String clinicPrescriptionsPath =
+      '/consultorio/paciente/:childId/prescricoes';
+  static const String clinicPrescriptionsName = 'clinic-prescriptions';
+  static const String clinicGrowthPath =
+      '/consultorio/paciente/:childId/crescimento';
+  static const String clinicGrowthName = 'clinic-growth';
   static const String clinicVoicePath = '/consultorio/ia';
   static const String clinicVoiceName = 'clinic-voice';
   static const String clinicVoiceConsentPath = '/consultorio/ia/consentimento';
@@ -158,10 +170,36 @@ class Routes {
   static const String clinicVoiceFinalPath = '/consultorio/ia/final/:sessionId';
   static const String clinicVoiceFinalName = 'clinic-voice-final';
 
+  /// Módulo clínico do menu que exige paciente selecionado.
+  static const String patientModulePath = '/consultorio/modulo/:module';
+  static const String patientModuleName = 'patient-module';
+  static String patientModule(String module) => '/consultorio/modulo/$module';
+
+  /// Aba exclusiva da recepcionista IA (Tia Cris).
+  static const String receptionistAiPath = '/recepcionista-ia';
+  static const String receptionistAiName = 'receptionist-ai';
+
+  /// Espaco Kids 360 (M3) — isolado do prontuario.
+  static const String kidsPath = '/kids';
+  static const String kidsName = 'kids';
+  static const String kidsPlayPath = '/kids/play/:gameId';
+  static const String kidsPlayName = 'kids-play';
+  static const String kidsGuardianPath = '/kids/responsavel';
+  static const String kidsGuardianName = 'kids-guardian';
+  static const String kidsKioskPath = '/kids/kiosk';
+  static const String kidsKioskName = 'kids-kiosk';
+
+  static String kidsPlay(String gameId) => '/kids/play/$gameId';
+
+
   static String clinicTriage(String appointmentId) =>
       '/consultorio/triagem/$appointmentId';
   static String clinicPatient360(String childId) =>
       '/consultorio/paciente/$childId/360';
+  static String clinicPrescriptions(String childId) =>
+      '/consultorio/paciente/$childId/prescricoes';
+  static String clinicGrowth(String childId) =>
+      '/consultorio/paciente/$childId/crescimento';
   static String clinicVoiceLive(String sessionId) =>
       '/consultorio/ia/sessao/$sessionId';
   static String clinicVoiceReview(String sessionId) =>
@@ -311,6 +349,36 @@ class Routes {
   static const String clinicOrgName = 'clinic-org';
   static const String clinicOrgCreatePath = '/clinica/nova';
   static const String clinicOrgCreateName = 'clinic-org-create';
+  static const String clinicTeamPath = '/clinica/equipe';
+  static const String clinicTeamName = 'clinic-team';
+
+  // Convite da clínica (responsável).
+  static const String clinicInvitePath = '/convite-clinica';
+  static const String clinicInviteName = 'clinic-invite';
+
+  // Gestao integrada (Etapa 3)
+  static const String managementPath = '/gestao';
+  static const String managementName = 'management';
+  static const String managementCrmPath = '/gestao/crm';
+  static const String managementCrmName = 'management-crm';
+  static const String managementAnamnesisPath = '/gestao/anamnese';
+  static const String managementAnamnesisName = 'management-anamnesis';
+  static const String managementCommunicationPath = '/gestao/comunicacao';
+  static const String managementCommunicationName = 'management-communication';
+  static const String managementAutomationsPath = '/gestao/automacoes';
+  static const String managementAutomationsName = 'management-automations';
+  static const String managementMarketingPath = '/gestao/marketing';
+  static const String managementMarketingName = 'management-marketing';
+  static const String managementAiPath = '/gestao/ia';
+  static const String managementAiName = 'management-ai';
+  static const String managementSettingsPath = '/gestao/configuracoes';
+  static const String managementSettingsName = 'management-settings';
+
+  // Pre-consulta da familia (anamnese), por consulta.
+  static const String familyAnamnesisPath = '/pre-consulta/:appointmentId';
+  static const String familyAnamnesisName = 'family-anamnesis';
+  static String familyAnamnesis(String appointmentId) =>
+      '/pre-consulta/$appointmentId';
 
   // Conta
   static const String settingsPath = '/ajustes';
