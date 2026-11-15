@@ -22,7 +22,7 @@ import '../../../telemedicine/data/telemedicine_repository.dart';
 import '../../../telemedicine/presentation/telemedicine_screen.dart'
     show myAppointmentsProvider;
 
-/// Portal visual da Area do Paciente e da Familia (mockup 01).
+/// Portal visual da Area da Familia (mockups 01 e 03).
 /// Reaproveita rotas/providers reais — nao inventa consultas nem contadores.
 class FamilyPortalHome extends ConsumerWidget {
   const FamilyPortalHome({required this.user, super.key});
@@ -96,7 +96,7 @@ class FamilyPortalHome extends ConsumerWidget {
             ),
             children: <Widget>[
               Text(
-                'Area do Paciente e da Familia',
+                'Area da Familia',
                 style: theme.textTheme.headlineSmall?.copyWith(
                   color: AppColors.navy,
                   fontWeight: FontWeight.w800,
@@ -104,7 +104,9 @@ class FamilyPortalHome extends ConsumerWidget {
               ),
               const SizedBox(height: 4),
               Text(
-                'Saude, cuidados e rotina em um so lugar. Ola, $greeting.',
+                active == null
+                    ? 'Ola, $greeting! Cadastre uma crianca para acompanhar a rotina.'
+                    : 'Ola, $greeting! Vamos cuidar da rotina do ${active.firstName}?',
                 style: theme.textTheme.bodyMedium?.copyWith(
                   color: AppColors.inkMuted,
                 ),
@@ -147,12 +149,12 @@ class FamilyPortalHome extends ConsumerWidget {
                       onTap: () => context.push(Routes.clinicInvitePath),
                     ),
                     _StatusCard(
-                      title: 'Mensagens',
-                      value: unread == 0 ? 'Nenhuma nova' : '$unread nova(s)',
+                      title: 'Novas orientacoes',
+                      value: 'Ver biblioteca da familia',
                       color: AppColors.softBlue,
                       accent: AppColors.vital,
-                      icon: Icons.chat_bubble_outline_rounded,
-                      onTap: () => context.push(Routes.notificationsPath),
+                      icon: Icons.menu_book_outlined,
+                      onTap: () => context.go(Routes.libraryPath),
                     ),
                   ];
                   if (wide) {
@@ -184,11 +186,8 @@ class FamilyPortalHome extends ConsumerWidget {
                     onAdd: () => context.push(Routes.familyBookingPath),
                     onOpenAgenda: () => context.push(Routes.telemedicinePath),
                   );
-                  final Widget vaccines = _VaccineWalletCard(
-                    child: active,
-                    onOpen: active == null
-                        ? () => context.push(Routes.childrenPath)
-                        : () => context.push(Routes.vaccines(active.id)),
+                  final Widget pre = _PreConsultaCard(
+                    onFill: () => context.push(Routes.clinicInvitePath),
                   );
                   if (wide) {
                     return Row(
@@ -196,7 +195,7 @@ class FamilyPortalHome extends ConsumerWidget {
                       children: <Widget>[
                         Expanded(flex: 3, child: calendar),
                         const SizedBox(width: AppSpacing.md),
-                        Expanded(flex: 2, child: vaccines),
+                        Expanded(flex: 2, child: pre),
                       ],
                     );
                   }
@@ -204,22 +203,53 @@ class FamilyPortalHome extends ConsumerWidget {
                     children: <Widget>[
                       calendar,
                       const SizedBox(height: AppSpacing.md),
-                      vaccines,
+                      pre,
                     ],
                   );
                 },
               ),
               const SizedBox(height: AppSpacing.lg),
-              Text(
-                'Acompanhar',
-                style: theme.textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w800,
-                  color: AppColors.navy,
+              _RoutineModules(
+                activeChild: active,
+                kidsOn: kidsOn,
+                unread: unread,
+              ),
+              const SizedBox(height: AppSpacing.lg),
+              _VaccineWalletCard(
+                child: active,
+                onOpen: active == null
+                    ? () => context.push(Routes.childrenPath)
+                    : () => context.push(Routes.vaccines(active.id)),
+              ),
+              const SizedBox(height: AppSpacing.lg),
+              AppCard(
+                color: AppColors.softLilac,
+                child: Row(
+                  children: <Widget>[
+                    const Expanded(
+                      child: Text(
+                        'Precisa de ajuda com agendamento?',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w800,
+                          color: AppColors.navy,
+                        ),
+                      ),
+                    ),
+                    FilledButton.icon(
+                      onPressed: () {
+                        if (canOpenRoute(ref, Routes.receptionistAiPath)) {
+                          context.push(Routes.receptionistAiPath);
+                        } else {
+                          context.go(Routes.aiPath);
+                        }
+                      },
+                      icon: const Icon(Icons.chat_bubble_outline_rounded),
+                      label: const Text('Conversar com a Tia Cris'),
+                    ),
+                  ],
                 ),
               ),
-              const SizedBox(height: AppSpacing.sm),
-              _ModulesGrid(activeChild: active, kidsOn: kidsOn),
-              const SizedBox(height: AppSpacing.lg),
+              const SizedBox(height: AppSpacing.md),
               Wrap(
                 spacing: AppSpacing.md,
                 runSpacing: AppSpacing.sm,
@@ -230,23 +260,16 @@ class FamilyPortalHome extends ConsumerWidget {
                     label: const Text('Equipe de cuidado'),
                   ),
                   TextButton.icon(
-                    onPressed: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text(
-                            'Pagamentos e recibos aparecem quando houver '
-                            'lancamentos vinculados a sua conta.',
-                          ),
-                        ),
-                      );
-                    },
-                    icon: const Icon(Icons.receipt_long_outlined, size: 18),
-                    label: const Text('Pagamentos e recibos'),
-                  ),
-                  TextButton.icon(
                     onPressed: () => context.push(Routes.profilePath),
                     icon: const Icon(Icons.family_restroom_rounded, size: 18),
                     label: const Text('Responsaveis e permissoes'),
+                  ),
+                  TextButton.icon(
+                    onPressed: () => context.push(Routes.notificationsPath),
+                    icon: const Icon(Icons.notifications_outlined, size: 18),
+                    label: Text(
+                      unread == 0 ? 'Mensagens' : 'Mensagens ($unread)',
+                    ),
                   ),
                 ],
               ),
@@ -558,128 +581,127 @@ class _VaccineWalletCard extends StatelessWidget {
   }
 }
 
-class _ModulesGrid extends StatelessWidget {
-  const _ModulesGrid({required this.activeChild, required this.kidsOn});
+class _PreConsultaCard extends StatelessWidget {
+  const _PreConsultaCard({required this.onFill});
+  final VoidCallback onFill;
+
+  @override
+  Widget build(BuildContext context) {
+    return AppCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: <Widget>[
+          const Text(
+            'Pre-consulta',
+            style: TextStyle(fontWeight: FontWeight.w800, color: AppColors.navy),
+          ),
+          const SizedBox(height: 6),
+          const Text(
+            'Envie duvidas e informacoes antes do atendimento. '
+            'O formulario abre quando houver convite da clinica.',
+            style: TextStyle(color: AppColors.inkMuted),
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          const _CheckHint(icon: Icons.chat_bubble_outline, label: 'Queixas e duvidas'),
+          const _CheckHint(icon: Icons.medication_outlined, label: 'Medicamentos em uso'),
+          const _CheckHint(icon: Icons.image_outlined, label: 'Fotos e exames'),
+          const SizedBox(height: AppSpacing.md),
+          FilledButton(
+            onPressed: onFill,
+            child: const Text('Preencher pre-consulta'),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _CheckHint extends StatelessWidget {
+  const _CheckHint({required this.icon, required this.label});
+  final IconData icon;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 6),
+      child: Row(
+        children: <Widget>[
+          Icon(icon, size: 18, color: AppColors.brand),
+          const SizedBox(width: 8),
+          Text(label),
+        ],
+      ),
+    );
+  }
+}
+
+class _RoutineModules extends StatelessWidget {
+  const _RoutineModules({
+    required this.activeChild,
+    required this.kidsOn,
+    required this.unread,
+  });
+
   final Child? activeChild;
   final bool kidsOn;
+  final int unread;
 
   @override
   Widget build(BuildContext context) {
     final String? id = activeChild?.id;
-    final List<_ModuleItem> items = <_ModuleItem>[
-      _ModuleItem(
-        title: 'Crescimento',
-        subtitle: 'Medidas e historico',
-        icon: Icons.show_chart_rounded,
-        color: AppColors.softTeal,
-        onTap: id == null
-            ? () => context.push(Routes.childrenPath)
-            : () => context.push(Routes.growth(id)),
-      ),
-      _ModuleItem(
-        title: 'Exames e documentos',
-        subtitle: 'Enviar e consultar arquivos',
-        icon: Icons.folder_open_rounded,
-        color: AppColors.softBlue,
-        onTap: id == null
-            ? () => context.push(Routes.childrenPath)
-            : () => context.push(Routes.childDetail(id)),
-      ),
-      _ModuleItem(
-        title: 'Receitas e medicamentos',
-        subtitle: 'Prescricoes e lembretes',
-        icon: Icons.medication_outlined,
-        color: AppColors.softPink,
-        onTap: id == null
-            ? () => context.push(Routes.childrenPath)
-            : () => context.push(Routes.childDetail(id)),
-      ),
-      _ModuleItem(
-        title: 'Diario infantil',
-        subtitle: 'Sono, alimentacao e registros',
-        icon: Icons.menu_book_outlined,
-        color: AppColors.softYellow,
-        onTap: () => context.go(Routes.toolsPath),
-      ),
-      _ModuleItem(
-        title: 'Biblioteca e orientacoes',
-        subtitle: 'Conteudos revisados pela equipe',
-        icon: Icons.auto_stories_outlined,
-        color: AppColors.softLilac,
-        onTap: () => context.go(Routes.libraryPath),
-      ),
-      _ModuleItem(
-        title: 'Desenvolvimento',
-        subtitle: 'Conquistas e duvidas da familia',
-        icon: Icons.stars_rounded,
-        color: AppColors.softBlue,
-        onTap: id == null
-            ? () => context.push(Routes.childrenPath)
-            : () => context.push(Routes.childDetail(id)),
-      ),
-      if (kidsOn)
-        _ModuleItem(
-          title: 'Espaco Kids',
-          subtitle: 'Jogos da sala de espera',
-          icon: Icons.sports_esports_outlined,
-          color: AppColors.softOrange,
-          onTap: () => context.go(Routes.kidsPath),
-        ),
-    ];
-
     return LayoutBuilder(
       builder: (BuildContext context, BoxConstraints c) {
-        final int cols = c.maxWidth > 900 ? 3 : (c.maxWidth > 560 ? 2 : 1);
-        return GridView.count(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          crossAxisCount: cols,
-          mainAxisSpacing: 10,
-          crossAxisSpacing: 10,
-          childAspectRatio: 2.4,
+        final bool wide = c.maxWidth > 700;
+        final List<Widget> cards = <Widget>[
+          _DiaryCard(onRegister: () => context.go(Routes.toolsPath)),
+          _DocsCard(
+            onOpen: id == null
+                ? () => context.push(Routes.childrenPath)
+                : () => context.push(Routes.childDetail(id)),
+          ),
+          _SimpleModuleCard(
+            title: 'Biblioteca da familia',
+            subtitle: 'Conteudos revisados pela equipe. Sem capas ilustrativas.',
+            action: 'Explorar biblioteca',
+            color: AppColors.softLilac,
+            onTap: () => context.go(Routes.libraryPath),
+          ),
+          _SimpleModuleCard(
+            title: 'Orientacoes personalizadas',
+            subtitle: 'Liberadas pela clinica quando houver conteudo real.',
+            action: 'Ler orientacoes',
+            color: AppColors.softMint,
+            onTap: () => context.go(Routes.libraryPath),
+          ),
+        ];
+        if (kidsOn) {
+          cards.add(
+            _SimpleModuleCard(
+              title: 'Espaco Kids',
+              subtitle: 'Jogos da sala de espera',
+              action: 'Abrir',
+              color: AppColors.softOrange,
+              onTap: () => context.go(Routes.kidsPath),
+            ),
+          );
+        }
+        if (wide) {
+          return Wrap(
+            spacing: AppSpacing.md,
+            runSpacing: AppSpacing.md,
+            children: <Widget>[
+              for (final Widget w in cards)
+                SizedBox(width: (c.maxWidth - AppSpacing.md) / 2, child: w),
+            ],
+          );
+        }
+        return Column(
           children: <Widget>[
-            for (final _ModuleItem m in items)
-              AppCard(
-                onTap: m.onTap,
-                child: Row(
-                  children: <Widget>[
-                    Container(
-                      width: 44,
-                      height: 44,
-                      decoration: BoxDecoration(
-                        color: m.color,
-                        borderRadius: BorderRadius.circular(14),
-                      ),
-                      child: Icon(m.icon, color: AppColors.navy),
-                    ),
-                    const SizedBox(width: AppSpacing.sm),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: <Widget>[
-                          Text(
-                            m.title,
-                            style: const TextStyle(
-                              fontWeight: FontWeight.w800,
-                              color: AppColors.navy,
-                            ),
-                          ),
-                          Text(
-                            m.subtitle,
-                            style: const TextStyle(
-                              color: AppColors.inkMuted,
-                              fontSize: 12,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const Icon(Icons.chevron_right_rounded,
-                        color: AppColors.inkMuted),
-                  ],
-                ),
-              ),
+            for (final Widget w in cards) ...<Widget>[
+              w,
+              const SizedBox(height: AppSpacing.md),
+            ],
           ],
         );
       },
@@ -687,18 +709,132 @@ class _ModulesGrid extends StatelessWidget {
   }
 }
 
-class _ModuleItem {
-  const _ModuleItem({
+class _DiaryCard extends StatelessWidget {
+  const _DiaryCard({required this.onRegister});
+  final VoidCallback onRegister;
+
+  @override
+  Widget build(BuildContext context) {
+    return AppCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: <Widget>[
+          const Text(
+            'Diario infantil',
+            style: TextStyle(fontWeight: FontWeight.w800, color: AppColors.navy),
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: const <Widget>[
+              _QuickChip(icon: Icons.local_drink_outlined, label: 'Mamadas'),
+              _QuickChip(icon: Icons.restaurant_outlined, label: 'Alimentacao'),
+              _QuickChip(icon: Icons.bedtime_outlined, label: 'Sono'),
+              _QuickChip(icon: Icons.baby_changing_station, label: 'Fraldas'),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          const Text(
+            'Registros aparecem quando a familia salvar dados reais '
+            'nas ferramentas de cuidados.',
+            style: TextStyle(fontSize: 12, color: AppColors.inkMuted),
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          FilledButton.tonal(
+            onPressed: onRegister,
+            child: const Text('+ Registrar rotina'),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _QuickChip extends StatelessWidget {
+  const _QuickChip({required this.icon, required this.label});
+  final IconData icon;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Chip(
+      avatar: Icon(icon, size: 16),
+      label: Text(label),
+      backgroundColor: AppColors.softYellow,
+    );
+  }
+}
+
+class _DocsCard extends StatelessWidget {
+  const _DocsCard({required this.onOpen});
+  final VoidCallback onOpen;
+
+  @override
+  Widget build(BuildContext context) {
+    return AppCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: <Widget>[
+          const Text(
+            'Receitas e documentos',
+            style: TextStyle(fontWeight: FontWeight.w800, color: AppColors.navy),
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          const Text(
+            'Receitas e declaracoes liberadas pelo medico aparecem aqui. '
+            'Nao listamos exemplos do mockup.',
+            style: TextStyle(color: AppColors.inkMuted),
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          OutlinedButton(
+            onPressed: onOpen,
+            child: const Text('Ver documentos'),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SimpleModuleCard extends StatelessWidget {
+  const _SimpleModuleCard({
     required this.title,
     required this.subtitle,
-    required this.icon,
+    required this.action,
     required this.color,
     required this.onTap,
   });
 
   final String title;
   final String subtitle;
-  final IconData icon;
+  final String action;
   final Color color;
   final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return AppCard(
+      color: color,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: <Widget>[
+          Text(
+            title,
+            style: const TextStyle(
+              fontWeight: FontWeight.w800,
+              color: AppColors.navy,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(subtitle, style: const TextStyle(color: AppColors.inkMuted)),
+          const SizedBox(height: AppSpacing.sm),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: TextButton(onPressed: onTap, child: Text(action)),
+          ),
+        ],
+      ),
+    );
+  }
 }

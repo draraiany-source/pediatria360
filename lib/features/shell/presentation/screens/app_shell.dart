@@ -131,31 +131,37 @@ const List<_Destination> _familyDestinations = <_Destination>[
   _home,
   _Destination(
     route: Routes.telemedicinePath,
-    label: 'Agenda',
+    label: 'Calendário',
     asset: AppIcons.schedule,
     icon: Icons.calendar_month_outlined,
     selectedIcon: Icons.calendar_month_rounded,
   ),
   _Destination(
+    route: Routes.clinicInvitePath,
+    label: 'Pré-consulta',
+    icon: Icons.assignment_outlined,
+    selectedIcon: Icons.assignment_rounded,
+  ),
+  _Destination(
     route: Routes.childrenPath,
-    label: 'Saúde',
+    label: 'Documentos',
     asset: AppIcons.patients,
-    icon: Icons.child_care_outlined,
-    selectedIcon: Icons.child_care_rounded,
+    icon: Icons.folder_open_rounded,
+    selectedIcon: Icons.folder_open_rounded,
   ),
   _Destination(
     route: Routes.toolsPath,
-    label: 'Rotina',
+    label: 'Diário',
     asset: AppIcons.stethoscope,
-    icon: Icons.checklist_rtl_rounded,
-    selectedIcon: Icons.checklist_rtl_rounded,
+    icon: Icons.menu_book_outlined,
+    selectedIcon: Icons.menu_book_rounded,
   ),
   _Destination(
     route: Routes.libraryPath,
     label: 'Biblioteca',
     asset: AppIcons.library,
-    icon: Icons.menu_book_outlined,
-    selectedIcon: Icons.menu_book_rounded,
+    icon: Icons.auto_stories_outlined,
+    selectedIcon: Icons.auto_stories_rounded,
   ),
   _messages,
   _Destination(
@@ -164,7 +170,6 @@ const List<_Destination> _familyDestinations = <_Destination>[
     icon: Icons.sports_esports_outlined,
     selectedIcon: Icons.sports_esports_rounded,
   ),
-  _profile,
 ];
 
 const List<_Destination> _adminDestinations = <_Destination>[
