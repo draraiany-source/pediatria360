@@ -95,7 +95,10 @@ String? resolveRouteRedirect({
     final ClinicRole? role = clinicMembership != null && clinicMembership.active
         ? clinicMembership.role
         : null;
+    // Familia acessa a persona administrativa (sem chart): o proprio screen
+    // so mostra atalhos clinicos/agenda se canOpenRoute liberar.
     final bool allowed = user.role.isAdmin ||
+        user.role == UserRole.parent ||
         role == ClinicRole.clinicAdmin ||
         role == ClinicRole.receptionist;
     return allowed ? null : Routes.homePath;

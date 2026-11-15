@@ -25,6 +25,7 @@ import '../../../telemedicine/presentation/agenda_providers.dart'
 import '../../domain/workspace_profile.dart';
 import '../providers/workspace_providers.dart';
 import '../widgets/workspace_switcher.dart';
+import 'family_portal_home.dart';
 
 /// Home por area de trabalho — sem numeros ilustrativos.
 class WorkspaceHomeScreen extends ConsumerWidget {
@@ -43,7 +44,7 @@ class WorkspaceHomeScreen extends ConsumerWidget {
           WorkspaceProfile.professional => _ProfessionalHome(user: user),
           WorkspaceProfile.receptionist => _ReceptionHome(user: user),
           WorkspaceProfile.finance => _FinanceHome(user: user),
-          WorkspaceProfile.patient => _PatientHome(user: user),
+          WorkspaceProfile.patient => FamilyPortalHome(user: user),
         },
       ),
     );
@@ -742,90 +743,4 @@ class _FinanceHome extends ConsumerWidget {
   }
 }
 
-// --------------------------------------------------------------------------- Patient
-
-class _PatientHome extends ConsumerWidget {
-  const _PatientHome({required this.user});
-  final AppUser? user;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final String name = user?.firstName.isNotEmpty == true
-        ? user!.firstName
-        : 'familia';
-
-    return ListView(
-      children: <Widget>[
-        _HomeHeader(
-          title: 'Ola, $name',
-          subtitle: WorkspaceProfile.patient.homeSubtitle,
-          capiPose: CapiPose.aceno,
-        ),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: <Widget>[
-              _NavTile(
-                title: 'Minhas criancas',
-                subtitle: 'Cadastro e acompanhamento',
-                icon: Icons.child_care_outlined,
-                color: AppColors.brand,
-                onTap: () => context.push(Routes.childrenPath),
-              ),
-              const SizedBox(height: AppSpacing.sm),
-              _NavTile(
-                title: 'Biblioteca e orientacoes',
-                subtitle: 'Conteudos confiaveis por fase',
-                icon: Icons.menu_book_outlined,
-                color: AppColors.honey,
-                onTap: () => context.go(Routes.libraryPath),
-              ),
-              const SizedBox(height: AppSpacing.sm),
-              _NavTile(
-                title: 'Cuidados e ferramentas',
-                subtitle: 'Primeiros socorros e calculadoras',
-                icon: Icons.medical_services_outlined,
-                color: AppColors.teal,
-                onTap: () => context.go(Routes.toolsPath),
-              ),
-              const SizedBox(height: AppSpacing.sm),
-              _NavTile(
-                title: 'IA educativa',
-                subtitle: 'Duvidas gerais — nao substitui consulta',
-                icon: Icons.smart_toy_outlined,
-                color: AppColors.raspberry,
-                onTap: () => context.go(Routes.aiPath),
-              ),
-              const SizedBox(height: AppSpacing.sm),
-              _NavTile(
-                title: 'Mensagens',
-                subtitle: 'Notificacoes da conta',
-                icon: Icons.notifications_outlined,
-                color: AppColors.navy,
-                onTap: () => context.push(Routes.notificationsPath),
-              ),
-              const SizedBox(height: AppSpacing.sm),
-              _NavTile(
-                title: 'Convite da clinica',
-                subtitle: 'Confirmar consulta com o codigo recebido',
-                icon: Icons.mark_email_read_outlined,
-                color: AppColors.violet,
-                onTap: () => context.push(Routes.clinicInvitePath),
-              ),
-              const SizedBox(height: AppSpacing.md),
-              const FeatureOffBanner(
-                text:
-                    'Agendamento online, exames e documentos compartilhados '
-                    'pelo consultorio aparecem quando houver dados vinculados '
-                    'as suas criancas. Ensino (biblioteca/cursos) permanece '
-                    'disponivel neste perfil.',
-              ),
-              const SizedBox(height: AppSpacing.xxl),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-}
+// Portal da familia: ver family_portal_home.dart (FamilyPortalHome).

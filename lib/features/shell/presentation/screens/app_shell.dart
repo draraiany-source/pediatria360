@@ -130,20 +130,40 @@ const List<_Destination> _financePrimary = <_Destination>[
 const List<_Destination> _familyDestinations = <_Destination>[
   _home,
   _Destination(
+    route: Routes.telemedicinePath,
+    label: 'Agenda',
+    asset: AppIcons.schedule,
+    icon: Icons.calendar_month_outlined,
+    selectedIcon: Icons.calendar_month_rounded,
+  ),
+  _Destination(
+    route: Routes.childrenPath,
+    label: 'Saúde',
+    asset: AppIcons.patients,
+    icon: Icons.child_care_outlined,
+    selectedIcon: Icons.child_care_rounded,
+  ),
+  _Destination(
+    route: Routes.toolsPath,
+    label: 'Rotina',
+    asset: AppIcons.stethoscope,
+    icon: Icons.checklist_rtl_rounded,
+    selectedIcon: Icons.checklist_rtl_rounded,
+  ),
+  _Destination(
     route: Routes.libraryPath,
-    label: 'Conteúdos',
+    label: 'Biblioteca',
     asset: AppIcons.library,
     icon: Icons.menu_book_outlined,
     selectedIcon: Icons.menu_book_rounded,
   ),
-  _Destination(
-    route: Routes.toolsPath,
-    label: 'Cuidados',
-    asset: AppIcons.stethoscope,
-    icon: Icons.medical_services_outlined,
-    selectedIcon: Icons.medical_services_rounded,
-  ),
   _messages,
+  _Destination(
+    route: Routes.kidsPath,
+    label: 'Kids',
+    icon: Icons.sports_esports_outlined,
+    selectedIcon: Icons.sports_esports_rounded,
+  ),
   _profile,
 ];
 
