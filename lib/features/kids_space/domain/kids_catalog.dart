@@ -28,8 +28,8 @@ class KidsGameInfo {
   static const List<KidsGameInfo> all = <KidsGameInfo>[
     KidsGameInfo(
       id: KidsGameId.memory,
-      title: 'Memoria colorida',
-      subtitle: 'Encontre os pares',
+      title: 'Memoria do Ursinho',
+      subtitle: 'Encontre os pares de figuras',
       minAgeBand: KidsAgeBand.toddler,
       caption: 'Vamos achar os pares iguais!',
     ),
@@ -49,8 +49,8 @@ class KidsGameInfo {
     ),
     KidsGameInfo(
       id: KidsGameId.puzzle,
-      title: 'Quebra-cabeca',
-      subtitle: 'Monte a sequencia',
+      title: 'Quebra-cabeca da Tia Cris',
+      subtitle: 'Monte uma imagem divertida',
       minAgeBand: KidsAgeBand.preschool,
       caption: 'Monte a figura na ordem!',
     ),
@@ -63,8 +63,8 @@ class KidsGameInfo {
     ),
     KidsGameInfo(
       id: KidsGameId.hygieneFood,
-      title: 'Higiene e lanche',
-      subtitle: 'Escolhas saudaveis',
+      title: 'Pequeno Doutor',
+      subtitle: 'Cuide do ursinho de faz de conta',
       minAgeBand: KidsAgeBand.toddler,
       caption: 'O que vem primeiro: lavar as maos ou comer?',
     ),
