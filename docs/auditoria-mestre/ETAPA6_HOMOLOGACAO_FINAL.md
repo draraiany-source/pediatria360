@@ -220,3 +220,12 @@ Item com evidência **A** (código inspecionado) **e** classificação atribuíd
 | White-label por clínica | Não evidenciado como completo — NI/PAR |
 
 Cobranças reais: **não ativadas**.
+
+
+## 10. Homologacao web (15/11/2026 — pos PROMPT finalizacao)
+
+- Channel: `https://pediatria360-app--homologacao-modulos-20261115-4bpud8tz.web.app` (expira 29/11/2026)
+- Build: `7398894` com `KIDS_SPACE_ENABLED=true` e `TIA_CRIS_ENABLED=true`; login obrigatorio; dados ficticios
+- GitHub: branch `audit/modulos-integracao-20261115`; PR https://github.com/draraiany-source/pediatria360/pull/8
+- Producao/lojas: **nao** publicados
+
