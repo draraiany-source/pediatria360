@@ -104,6 +104,10 @@ enum MainMenuModule {
             Routes.clinicPrescriptionsPath,
             '/consultorio/paciente/',
           ],
+        MainMenuModule.growth => const <String>[
+            Routes.clinicGrowthPath,
+            '/consultorio/paciente/',
+          ],
         MainMenuModule.settings => const <String>[
             Routes.managementSettingsPath,
             Routes.settingsPath,
@@ -125,12 +129,13 @@ enum MainMenuModule {
         MainMenuModule.exams =>
           Routes.supplementWithChild(Routes.supplementLabsPath, childId),
         MainMenuModule.prescriptions => Routes.clinicPrescriptions(childId),
+        MainMenuModule.growth => Routes.clinicGrowth(childId),
         _ => Routes.clinicPatient360(childId),
       };
 
   /// Aviso para módulos que ainda abrem o Paciente 360, ou nulo.
   String? get provisionalNotice => switch (this) {
-        MainMenuModule.vaccines || MainMenuModule.growth =>
+        MainMenuModule.vaccines =>
           '$label ainda não tem tela clínica: a tela atual é da área da '
               'família e não abre pelo cadastro da clínica. Por enquanto, '
               'abre o Paciente 360 do paciente selecionado.',

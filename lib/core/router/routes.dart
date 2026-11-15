@@ -155,6 +155,9 @@ class Routes {
   static const String clinicPrescriptionsPath =
       '/consultorio/paciente/:childId/prescricoes';
   static const String clinicPrescriptionsName = 'clinic-prescriptions';
+  static const String clinicGrowthPath =
+      '/consultorio/paciente/:childId/crescimento';
+  static const String clinicGrowthName = 'clinic-growth';
   static const String clinicVoicePath = '/consultorio/ia';
   static const String clinicVoiceName = 'clinic-voice';
   static const String clinicVoiceConsentPath = '/consultorio/ia/consentimento';
@@ -195,6 +198,8 @@ class Routes {
       '/consultorio/paciente/$childId/360';
   static String clinicPrescriptions(String childId) =>
       '/consultorio/paciente/$childId/prescricoes';
+  static String clinicGrowth(String childId) =>
+      '/consultorio/paciente/$childId/crescimento';
   static String clinicVoiceLive(String sessionId) =>
       '/consultorio/ia/sessao/$sessionId';
   static String clinicVoiceReview(String sessionId) =>

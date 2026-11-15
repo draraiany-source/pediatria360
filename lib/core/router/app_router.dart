@@ -867,6 +867,15 @@ final Provider<GoRouter> routerProvider = Provider<GoRouter>((Ref ref) {
         ),
       ),
       GoRoute(
+        path: Routes.clinicGrowthPath,
+        name: Routes.clinicGrowthName,
+        builder: (BuildContext context, GoRouterState state) =>
+            GrowthScreen(
+          key: ValueKey<String>(state.matchedLocation),
+          childId: state.pathParameters['childId']!,
+        ),
+      ),
+      GoRoute(
         path: Routes.clinicVoicePath,
         name: Routes.clinicVoiceName,
         builder: (BuildContext context, GoRouterState state) {

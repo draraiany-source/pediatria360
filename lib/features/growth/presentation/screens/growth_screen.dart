@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../../core/responsive/responsive.dart';
+import '../../../../core/router/routes.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_tokens.dart';
 import '../../../../core/utils/validators.dart';
 import '../../../../core/widgets/app_widgets.dart';
 import '../../../../core/widgets/back_or_home_button.dart';
-import '../../../../core/widgets/clinical_ui.dart';
 import '../../../../core/widgets/skeleton.dart';
 import '../../../../core/widgets/state_views.dart';
 import '../../../../shared/domain/entities/child.dart';
@@ -28,6 +28,11 @@ class GrowthScreen extends ConsumerStatefulWidget {
 class _GrowthScreenState extends ConsumerState<GrowthScreen> {
   GrowthIndicator _indicator = GrowthIndicator.weightForAge;
 
+
+  // Comparar avaliacoes (ids de registros reais).
+  String? _compareFromId;
+  String? _compareToId;
+
   @override
   Widget build(BuildContext context) {
     final ThemeData theme = Theme.of(context);
@@ -42,8 +47,6 @@ class _GrowthScreenState extends ConsumerState<GrowthScreen> {
       return const Scaffold(body: LoadingState());
     }
 
-    // Perímetro cefálico some do seletor depois dos 3 anos: deixa de compor o
-    // acompanhamento de rotina e um seletor inútil só atrapalha.
     final List<GrowthIndicator> available = GrowthIndicator.values
         .where((GrowthIndicator i) => child.ageInMonths <= i.maxAgeMonths)
         .toList(growable: false);
@@ -52,144 +55,153 @@ class _GrowthScreenState extends ConsumerState<GrowthScreen> {
       _indicator = available.first;
     }
 
+    final GrowthAssessment? currentAssessment = assessments
+        .cast<GrowthAssessment?>()
+        .firstWhere(
+          (GrowthAssessment? a) => a?.indicator == _indicator,
+          orElse: () => null,
+        );
+
     return Scaffold(
+      backgroundColor: AppColors.lightBackground,
       appBar: AppBar(
-        title: Text('Crescimento · ${child.firstName}'),
+        title: const Text('Crescimento — Registros e Evolucao'),
         leading: IconButton(
           onPressed: () => context.popOrHome(),
           icon: const Icon(Icons.arrow_back_rounded),
           tooltip: 'Voltar',
         ),
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => _openForm(context, child),
-        icon: const Icon(Icons.add_rounded),
-        label: const Text('Nova medição'),
-      ),
       body: Column(
         children: <Widget>[
-          if (who.valueOrNull?.warning != null) DataWarningBanner(text: who.valueOrNull!.warning!),
+          if (who.valueOrNull?.warning != null)
+            DataWarningBanner(text: who.valueOrNull!.warning!),
           Expanded(
             child: records.when(
-        loading: () => const SkeletonList(itemCount: 4, itemHeight: 64),
-        error: (Object e, StackTrace s) => EmptyState(
-          icon: Icons.error_outline_rounded,
-          title: 'Não foi possível carregar',
-          message: 'Tente novamente em instantes.',
-          actionLabel: 'Recarregar',
-          onAction: () => ref.invalidate(growthProvider(widget.childId)),
-        ),
-        data: (List<GrowthRecord> list) {
-          if (list.isEmpty) {
-            return EmptyState(
-              icon: Icons.show_chart_rounded,
-              title: 'Sem medições ainda',
-              message: 'Registre peso e altura para ver a curva de '
-                  '${child.firstName} comparada à referência da OMS.',
-              actionLabel: 'Registrar medição',
-              onAction: () => _openForm(context, child),
-            );
-          }
-
-          return ListView(
-            padding: const EdgeInsets.fromLTRB(
-              AppSpacing.lg,
-              AppSpacing.lg,
-              AppSpacing.lg,
-              96,
-            ),
-            children: <Widget>[
-              ContentBounds(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: <Widget>[
-                    if (assessments.isNotEmpty) ...<Widget>[
-                      _AssessmentRow(assessments: assessments),
-                      const SizedBox(height: AppSpacing.lg),
-                    ],
-                    SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
-                      child: Row(
-                        children: <Widget>[
-                          for (final GrowthIndicator i in available)
-                            Padding(
-                              padding:
-                                  const EdgeInsets.only(right: AppSpacing.sm),
-                              child: ChoiceChip(
-                                label: Text(i.shortLabel),
-                                selected: _indicator == i,
-                                onSelected: (_) =>
-                                    setState(() => _indicator = i),
-                              ),
-                            ),
-                        ],
+              loading: () => const SkeletonList(itemCount: 4, itemHeight: 64),
+              error: (Object e, StackTrace s) => EmptyState(
+                icon: Icons.error_outline_rounded,
+                title: 'Nao foi possivel carregar',
+                message: 'Tente novamente em instantes.',
+                actionLabel: 'Recarregar',
+                onAction: () => ref.invalidate(growthProvider(widget.childId)),
+              ),
+              data: (List<GrowthRecord> list) {
+                return LayoutBuilder(
+                  builder: (BuildContext context, BoxConstraints c) {
+                    final bool wide = c.maxWidth >= 980;
+                    final Widget header = _PatientHeader(
+                      child: child,
+                      onSwitch: () => context.push(
+                        Routes.patientModule('crescimento'),
                       ),
-                    ),
-                    const SizedBox(height: AppSpacing.lg),
-                    SurfaceCard(
-                      padding: const EdgeInsets.all(AppSpacing.md),
-                      child: who.when(
-                          loading: () => const AspectRatio(
-                            aspectRatio: 1.35,
-                            child: LoadingState(),
-                          ),
-                          error: (Object e, StackTrace s) => const AspectRatio(
-                            aspectRatio: 1.35,
-                            child: EmptyState(
-                              icon: Icons.insert_chart_outlined,
-                              title: 'Referência indisponível',
-                              message: 'Não foi possível carregar a tabela '
-                                  'da OMS.',
+                    );
+                    final Widget table = _MeasuresPanel(
+                      child: child,
+                      records: list,
+                      indicator: _indicator,
+                      available: available,
+                      onSelectIndicator: (GrowthIndicator i) =>
+                          setState(() => _indicator = i),
+                      onAdd: () => _openForm(context, child),
+                      onEdit: (GrowthRecord r) =>
+                          _openForm(context, child, record: r),
+                      onDelete: (GrowthRecord r) =>
+                          _confirmDelete(context, r),
+                    );
+                    final Widget chart = _ChartPanel(
+                      child: child,
+                      records: list,
+                      indicator: _indicator,
+                      available: available,
+                      who: who,
+                      assessment: currentAssessment,
+                      onSelectIndicator: (GrowthIndicator i) =>
+                          setState(() => _indicator = i),
+                      compareFromId: _compareFromId,
+                      compareToId: _compareToId,
+                      onCompareFrom: (String? id) =>
+                          setState(() => _compareFromId = id),
+                      onCompareTo: (String? id) =>
+                          setState(() => _compareToId = id),
+                    );
+                    final Widget footer = _GrowthFooter(
+                      onImport: () => _toast(
+                        'Importacao de medidas chega quando houver '
+                        'integracao com a fonte clinica.',
+                      ),
+                      onHistory: () => _toast(
+                        'O historico de alteracoes usa as medicoes '
+                        'listadas na tabela.',
+                      ),
+                      onExport: () => _toast(
+                        'Exportacao da tabela ainda nao esta disponivel '
+                        'nesta versao.',
+                      ),
+                      onPrint: () => _toast(
+                        'Use a captura do grafico do sistema ou aguarde '
+                        'a impressao dedicada.',
+                      ),
+                    );
+
+                    if (wide) {
+                      return ListView(
+                        padding: const EdgeInsets.all(AppSpacing.lg),
+                        children: <Widget>[
+                          Text(
+                            'Registre as medidas por data e acompanhe a evolucao.',
+                            style: theme.textTheme.bodyMedium?.copyWith(
+                              color: AppColors.inkMuted,
                             ),
                           ),
-                          data: (WhoReference reference) => Column(
+                          const SizedBox(height: AppSpacing.md),
+                          header,
+                          const SizedBox(height: AppSpacing.md),
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: <Widget>[
-                              GrowthChart(
-                                indicator: _indicator,
-                                child: child,
-                                records: list,
-                                reference: reference,
-                              ),
-                              const SizedBox(height: AppSpacing.md),
-                              const GrowthChartLegend(),
+                              Expanded(flex: 5, child: table),
+                              const SizedBox(width: AppSpacing.md),
+                              Expanded(flex: 4, child: chart),
                             ],
                           ),
-                        ),
-                    ),
-                    const SectionHeader(
-                      title: 'Histórico',
-                      eyebrow: 'Medições',
-                    ),
-                  ],
-                ),
-              ),
-              for (final GrowthRecord record in list.reversed)
-                ContentBounds(
-                  child: _RecordTile(
-                    record: record,
-                    child: child,
-                    onEdit: () => _openForm(context, child, record: record),
-                    onDelete: () => _confirmDelete(context, record),
-                  ),
-                ),
-              const SizedBox(height: AppSpacing.xl),
-              ContentBounds(
-                child: Text(
-                  'A avaliação segue os padrões de crescimento da OMS. Um '
-                  'ponto fora da faixa não é diagnóstico: o que o pediatra '
-                  'observa é a trajetória ao longo do tempo.',
-                  style: theme.textTheme.bodySmall,
-                  textAlign: TextAlign.center,
-                ),
-              ),
-            ],
-          );
-        },
-      ),
+                          const SizedBox(height: AppSpacing.lg),
+                          footer,
+                        ],
+                      );
+                    }
+
+                    return ListView(
+                      padding: const EdgeInsets.fromLTRB(
+                        AppSpacing.lg,
+                        AppSpacing.md,
+                        AppSpacing.lg,
+                        AppSpacing.xxl,
+                      ),
+                      children: <Widget>[
+                        header,
+                        const SizedBox(height: AppSpacing.md),
+                        table,
+                        const SizedBox(height: AppSpacing.md),
+                        chart,
+                        const SizedBox(height: AppSpacing.lg),
+                        footer,
+                      ],
+                    );
+                  },
+                );
+              },
+            ),
           ),
         ],
       ),
     );
+  }
+
+  void _toast(String message) {
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(SnackBar(content: Text(message)));
   }
 
   Future<void> _openForm(
@@ -241,158 +253,589 @@ class _GrowthScreenState extends ConsumerState<GrowthScreen> {
   }
 }
 
-/// Faixa horizontal com o resultado de cada indicador.
-class _AssessmentRow extends StatelessWidget {
-  const _AssessmentRow({required this.assessments});
+/// Formulário de medição, aberto como bottom sheet.
 
-  final List<GrowthAssessment> assessments;
-
-  Color _colorFor(GrowthClassification c) => switch (c) {
-        GrowthClassification.severelyLow ||
-        GrowthClassification.severelyHigh =>
-          AppColors.danger,
-        GrowthClassification.low || GrowthClassification.high =>
-          AppColors.warning,
-        GrowthClassification.attention => AppColors.honey,
-        GrowthClassification.adequate => AppColors.success,
-      };
+class _PatientHeader extends StatelessWidget {
+  const _PatientHeader({required this.child, required this.onSwitch});
+  final Child child;
+  final VoidCallback onSwitch;
 
   @override
   Widget build(BuildContext context) {
-    final ThemeData theme = Theme.of(context);
-
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      child: Row(
-        children: <Widget>[
-          for (final GrowthAssessment a in assessments)
-            Padding(
-              padding: const EdgeInsets.only(right: AppSpacing.md),
-              child: SizedBox(
-                width: 172,
-                child: Card(
-                  child: Padding(
-                    padding: const EdgeInsets.all(AppSpacing.lg),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: <Widget>[
-                        Text(
-                          a.indicator.shortLabel,
-                          style: theme.textTheme.bodySmall,
-                        ),
-                        const SizedBox(height: AppSpacing.xs),
-                        DataValue(
-                          value: Formatters.decimal(a.value),
-                          unit: a.indicator.unit,
-                          size: 20,
-                        ),
-                        const SizedBox(height: AppSpacing.sm),
-                        AppTag(
-                          label: a.classification.labelFor(a.indicator),
-                          color: _colorFor(a.classification),
-                        ),
-                        const SizedBox(height: AppSpacing.sm),
-                        Text(
-                          'Percentil ${a.percentile.round()}  ·  '
-                          'z ${a.zScore >= 0 ? '+' : ''}'
-                          '${a.zScore.toStringAsFixed(1)}',
-                          style: theme.textTheme.bodySmall,
-                        ),
-                      ],
+    return Material(
+      color: Colors.white,
+      borderRadius: AppRadius.xlAll,
+      child: Padding(
+        padding: const EdgeInsets.all(AppSpacing.md),
+        child: Row(
+          children: <Widget>[
+            CircleAvatar(
+              backgroundColor: AppColors.brandIndicator,
+              child: Text(
+                child.initials,
+                style: const TextStyle(
+                  fontWeight: FontWeight.w800,
+                  color: AppColors.navy,
+                ),
+              ),
+            ),
+            const SizedBox(width: AppSpacing.md),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  Text(
+                    child.name,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w800,
+                      color: AppColors.navy,
                     ),
                   ),
-                ),
+                  Text(
+                    Formatters.pediatricAge(child.birthDate),
+                    style: const TextStyle(color: AppColors.inkMuted),
+                  ),
+                ],
               ),
             ),
-        ],
-      ),
-    );
-  }
-}
-
-class _RecordTile extends StatelessWidget {
-  const _RecordTile({
-    required this.record,
-    required this.child,
-    required this.onEdit,
-    required this.onDelete,
-  });
-
-  final GrowthRecord record;
-  final Child child;
-  final VoidCallback onEdit;
-  final VoidCallback onDelete;
-
-  @override
-  Widget build(BuildContext context) {
-    final ThemeData theme = Theme.of(context);
-
-    final List<String> parts = <String>[
-      if (record.weightKg != null)
-        '${Formatters.decimal(record.weightKg!, digits: 2)} kg',
-      if (record.heightCm != null)
-        '${Formatters.decimal(record.heightCm!)} cm',
-      if (record.headCircumferenceCm != null)
-        'PC ${Formatters.decimal(record.headCircumferenceCm!)} cm',
-    ];
-
-    return Padding(
-      padding: const EdgeInsets.only(bottom: AppSpacing.sm),
-      child: Card(
-        child: ListTile(
-          contentPadding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.lg,
-            vertical: AppSpacing.sm,
-          ),
-          title: Row(
-            children: <Widget>[
-              Text(
-                Formatters.date(record.measuredAt),
-                style: theme.textTheme.titleSmall,
-              ),
-              const SizedBox(width: AppSpacing.sm),
-              Text(
-                Formatters.pediatricAge(child.birthDate, at: record.measuredAt),
-                style: theme.textTheme.bodySmall,
-              ),
-              if (record.pendingSync) ...<Widget>[
-                const SizedBox(width: AppSpacing.sm),
-                Icon(
-                  Icons.cloud_upload_outlined,
-                  size: 13,
-                  color: theme.colorScheme.onSurfaceVariant,
-                ),
-              ],
-            ],
-          ),
-          subtitle: Padding(
-            padding: const EdgeInsets.only(top: AppSpacing.xs),
-            child: Text(
-              parts.isEmpty ? 'Sem valores' : parts.join('   ·   '),
-              style: theme.textTheme.bodyMedium,
+            OutlinedButton.icon(
+              onPressed: onSwitch,
+              icon: const Icon(Icons.swap_horiz_rounded),
+              label: const Text('Trocar paciente'),
             ),
-          ),
-          trailing: PopupMenuButton<String>(
-            onSelected: (String value) =>
-                value == 'editar' ? onEdit() : onDelete(),
-            itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
-              const PopupMenuItem<String>(
-                value: 'editar',
-                child: Text('Editar'),
-              ),
-              const PopupMenuItem<String>(
-                value: 'excluir',
-                child: Text('Excluir'),
-              ),
-            ],
-          ),
+          ],
         ),
       ),
     );
   }
 }
 
-/// Formulário de medição, aberto como bottom sheet.
+class _MeasuresPanel extends StatelessWidget {
+  const _MeasuresPanel({
+    required this.child,
+    required this.records,
+    required this.indicator,
+    required this.available,
+    required this.onSelectIndicator,
+    required this.onAdd,
+    required this.onEdit,
+    required this.onDelete,
+  });
+
+  final Child child;
+  final List<GrowthRecord> records;
+  final GrowthIndicator indicator;
+  final List<GrowthIndicator> available;
+  final ValueChanged<GrowthIndicator> onSelectIndicator;
+  final VoidCallback onAdd;
+  final ValueChanged<GrowthRecord> onEdit;
+  final ValueChanged<GrowthRecord> onDelete;
+
+  String _tabLabel(GrowthIndicator i) => switch (i) {
+        GrowthIndicator.weightForAge => 'Peso',
+        GrowthIndicator.heightForAge => 'Estatura',
+        GrowthIndicator.bmiForAge => 'IMC',
+        GrowthIndicator.headForAge => 'Perimetro cefalico',
+      };
+
+  @override
+  Widget build(BuildContext context) {
+    final List<GrowthRecord> sorted = List<GrowthRecord>.from(records)
+      ..sort((GrowthRecord a, GrowthRecord b) =>
+          b.measuredAt.compareTo(a.measuredAt));
+
+    return Material(
+      color: Colors.white,
+      borderRadius: AppRadius.xlAll,
+      child: Padding(
+        padding: const EdgeInsets.all(AppSpacing.md),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: <Widget>[
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                children: <Widget>[
+                  for (final GrowthIndicator i in available)
+                    Padding(
+                      padding: const EdgeInsets.only(right: 8),
+                      child: ChoiceChip(
+                        label: Text(_tabLabel(i)),
+                        selected: indicator == i,
+                        onSelected: (_) => onSelectIndicator(i),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+            const SizedBox(height: AppSpacing.md),
+            const Text(
+              'Tabela de medidas',
+              style: TextStyle(fontWeight: FontWeight.w800, color: AppColors.navy),
+            ),
+            const SizedBox(height: AppSpacing.sm),
+            if (sorted.isEmpty)
+              const Padding(
+                padding: EdgeInsets.symmetric(vertical: AppSpacing.lg),
+                child: Text(
+                  'Nenhuma medicao salva. Adicione uma avaliacao com dados reais.',
+                  style: TextStyle(color: AppColors.inkMuted),
+                ),
+              )
+            else
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: DataTable(
+                  headingRowHeight: 40,
+                  dataRowMinHeight: 40,
+                  dataRowMaxHeight: 52,
+                  columns: const <DataColumn>[
+                    DataColumn(label: Text('Data')),
+                    DataColumn(label: Text('Idade')),
+                    DataColumn(label: Text('Peso (kg)')),
+                    DataColumn(label: Text('Estatura (cm)')),
+                    DataColumn(label: Text('PC (cm)')),
+                    DataColumn(label: Text('IMC')),
+                    DataColumn(label: Text('Acoes')),
+                  ],
+                  rows: <DataRow>[
+                    for (final GrowthRecord r in sorted)
+                      DataRow(
+                        cells: <DataCell>[
+                          DataCell(Text(Formatters.date(r.measuredAt))),
+                          DataCell(Text(
+                            Formatters.pediatricAge(
+                              child.birthDate,
+                              at: r.measuredAt,
+                            ),
+                          )),
+                          DataCell(Text(
+                            r.weightKg == null
+                                ? '—'
+                                : Formatters.decimal(r.weightKg!, digits: 2),
+                          )),
+                          DataCell(Text(
+                            r.heightCm == null
+                                ? '—'
+                                : Formatters.decimal(r.heightCm!),
+                          )),
+                          DataCell(Text(
+                            r.headCircumferenceCm == null
+                                ? '—'
+                                : Formatters.decimal(r.headCircumferenceCm!),
+                          )),
+                          DataCell(Text(
+                            r.bmi == null
+                                ? '—'
+                                : Formatters.decimal(r.bmi!, digits: 1),
+                          )),
+                          DataCell(
+                            Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: <Widget>[
+                                IconButton(
+                                  tooltip: 'Editar',
+                                  icon: const Icon(Icons.edit_outlined, size: 18),
+                                  onPressed: () => onEdit(r),
+                                ),
+                                IconButton(
+                                  tooltip: 'Excluir',
+                                  icon: const Icon(Icons.delete_outline, size: 18),
+                                  onPressed: () => onDelete(r),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                  ],
+                ),
+              ),
+            const SizedBox(height: AppSpacing.sm),
+            const Text(
+              'Idade e IMC calculados apos preencher os dados necessarios.',
+              style: TextStyle(fontSize: 12, color: AppColors.inkMuted),
+            ),
+            const SizedBox(height: AppSpacing.md),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: <Widget>[
+                FilledButton.icon(
+                  onPressed: onAdd,
+                  icon: const Icon(Icons.add_rounded),
+                  label: const Text('Adicionar avaliacao'),
+                ),
+                OutlinedButton(
+                  onPressed: onAdd,
+                  child: const Text('Salvar medidas'),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ChartPanel extends StatelessWidget {
+  const _ChartPanel({
+    required this.child,
+    required this.records,
+    required this.indicator,
+    required this.available,
+    required this.who,
+    required this.assessment,
+    required this.onSelectIndicator,
+    required this.compareFromId,
+    required this.compareToId,
+    required this.onCompareFrom,
+    required this.onCompareTo,
+  });
+
+  final Child child;
+  final List<GrowthRecord> records;
+  final GrowthIndicator indicator;
+  final List<GrowthIndicator> available;
+  final AsyncValue<WhoReference> who;
+  final GrowthAssessment? assessment;
+  final ValueChanged<GrowthIndicator> onSelectIndicator;
+  final String? compareFromId;
+  final String? compareToId;
+  final ValueChanged<String?> onCompareFrom;
+  final ValueChanged<String?> onCompareTo;
+
+  @override
+  Widget build(BuildContext context) {
+    final List<GrowthRecord> sorted = List<GrowthRecord>.from(records)
+      ..sort((GrowthRecord a, GrowthRecord b) =>
+          a.measuredAt.compareTo(b.measuredAt));
+
+    return Column(
+      children: <Widget>[
+        Material(
+          color: Colors.white,
+          borderRadius: AppRadius.xlAll,
+          child: Padding(
+            padding: const EdgeInsets.all(AppSpacing.md),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: <Widget>[
+                const Text(
+                  'Evolucao no grafico',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.navy,
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.sm),
+                Row(
+                  children: <Widget>[
+                    Expanded(
+                      child: DropdownButtonFormField<GrowthIndicator>(
+                        initialValue: available.contains(indicator)
+                            ? indicator
+                            : (available.isEmpty ? null : available.first),
+                        decoration: const InputDecoration(
+                          labelText: 'Indicador',
+                          isDense: true,
+                        ),
+                        items: <DropdownMenuItem<GrowthIndicator>>[
+                          for (final GrowthIndicator i in available)
+                            DropdownMenuItem<GrowthIndicator>(
+                              value: i,
+                              child: Text(i.shortLabel),
+                            ),
+                        ],
+                        onChanged: (GrowthIndicator? v) {
+                          if (v != null) onSelectIndicator(v);
+                        },
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    const Expanded(
+                      child: InputDecorator(
+                        decoration: InputDecoration(
+                          labelText: 'Referencia',
+                          isDense: true,
+                        ),
+                        child: Text('Curvas OMS'),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: AppSpacing.md),
+                who.when(
+                  loading: () => const AspectRatio(
+                    aspectRatio: 1.35,
+                    child: LoadingState(),
+                  ),
+                  error: (Object e, StackTrace s) => const AspectRatio(
+                    aspectRatio: 1.35,
+                    child: EmptyState(
+                      icon: Icons.insert_chart_outlined,
+                      title: 'Referencia indisponivel',
+                      message: 'Nao foi possivel carregar a tabela da OMS.',
+                    ),
+                  ),
+                  data: (WhoReference reference) {
+                    if (records.isEmpty) {
+                      return const AspectRatio(
+                        aspectRatio: 1.35,
+                        child: Center(
+                          child: Padding(
+                            padding: EdgeInsets.all(AppSpacing.lg),
+                            child: Text(
+                              'As medidas salvas aparecerao aqui. '
+                              'Selecione a referencia oficial (OMS) para '
+                              'visualizar a curva.',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(color: AppColors.inkMuted),
+                            ),
+                          ),
+                        ),
+                      );
+                    }
+                    return Column(
+                      children: <Widget>[
+                        GrowthChart(
+                          indicator: indicator,
+                          child: child,
+                          records: records,
+                          reference: reference,
+                        ),
+                        const SizedBox(height: AppSpacing.sm),
+                        const GrowthChartLegend(),
+                      ],
+                    );
+                  },
+                ),
+                const SizedBox(height: AppSpacing.md),
+                Row(
+                  children: <Widget>[
+                    Expanded(
+                      child: Text(
+                        assessment == null
+                            ? 'Percentil —'
+                            : 'Percentil ${assessment!.percentile.round()}',
+                        style: const TextStyle(fontWeight: FontWeight.w700),
+                      ),
+                    ),
+                    Expanded(
+                      child: Text(
+                        assessment == null
+                            ? 'Escore Z —'
+                            : 'Escore Z ${assessment!.zScore >= 0 ? '+' : ''}'
+                                '${assessment!.zScore.toStringAsFixed(1)}',
+                        style: const TextStyle(fontWeight: FontWeight.w700),
+                        textAlign: TextAlign.end,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(height: AppSpacing.md),
+        Material(
+          color: Colors.white,
+          borderRadius: AppRadius.xlAll,
+          child: Padding(
+            padding: const EdgeInsets.all(AppSpacing.md),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: <Widget>[
+                const Text(
+                  'Comparar avaliacoes',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.navy,
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.sm),
+                DropdownButtonFormField<String>(
+                  initialValue: compareFromId,
+                  decoration: const InputDecoration(
+                    labelText: 'Avaliacao inicial',
+                    isDense: true,
+                  ),
+                  items: <DropdownMenuItem<String>>[
+                    for (final GrowthRecord r in sorted)
+                      DropdownMenuItem<String>(
+                        value: r.id,
+                        child: Text(Formatters.date(r.measuredAt)),
+                      ),
+                  ],
+                  onChanged: sorted.isEmpty ? null : onCompareFrom,
+                ),
+                const SizedBox(height: 8),
+                DropdownButtonFormField<String>(
+                  initialValue: compareToId,
+                  decoration: const InputDecoration(
+                    labelText: 'Avaliacao final',
+                    isDense: true,
+                  ),
+                  items: <DropdownMenuItem<String>>[
+                    for (final GrowthRecord r in sorted)
+                      DropdownMenuItem<String>(
+                        value: r.id,
+                        child: Text(Formatters.date(r.measuredAt)),
+                      ),
+                  ],
+                  onChanged: sorted.isEmpty ? null : onCompareTo,
+                ),
+                const SizedBox(height: AppSpacing.sm),
+                FilledButton(
+                  onPressed: () {
+                    final GrowthRecord? a = sorted
+                        .cast<GrowthRecord?>()
+                        .firstWhere(
+                          (GrowthRecord? r) => r?.id == compareFromId,
+                          orElse: () => null,
+                        );
+                    final GrowthRecord? b = sorted
+                        .cast<GrowthRecord?>()
+                        .firstWhere(
+                          (GrowthRecord? r) => r?.id == compareToId,
+                          orElse: () => null,
+                        );
+                    if (a == null || b == null) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Selecione duas avaliacoes salvas.'),
+                        ),
+                      );
+                      return;
+                    }
+                    final StringBuffer buf = StringBuffer()
+                      ..writeln(
+                        '${Formatters.date(a.measuredAt)} → '
+                        '${Formatters.date(b.measuredAt)}',
+                      );
+                    if (a.weightKg != null && b.weightKg != null) {
+                      buf.writeln(
+                        'Peso: ${Formatters.decimal(a.weightKg!, digits: 2)} → '
+                        '${Formatters.decimal(b.weightKg!, digits: 2)} kg '
+                        '(Δ ${(b.weightKg! - a.weightKg!).toStringAsFixed(2)})',
+                      );
+                    }
+                    if (a.heightCm != null && b.heightCm != null) {
+                      buf.writeln(
+                        'Estatura: ${Formatters.decimal(a.heightCm!)} → '
+                        '${Formatters.decimal(b.heightCm!)} cm '
+                        '(Δ ${(b.heightCm! - a.heightCm!).toStringAsFixed(1)})',
+                      );
+                    }
+                    if (a.bmi != null && b.bmi != null) {
+                      buf.writeln(
+                        'IMC: ${Formatters.decimal(a.bmi!, digits: 1)} → '
+                        '${Formatters.decimal(b.bmi!, digits: 1)}',
+                      );
+                    }
+                    showDialog<void>(
+                      context: context,
+                      builder: (BuildContext ctx) => AlertDialog(
+                        title: const Text('Comparacao'),
+                        content: Text(buf.toString()),
+                        actions: <Widget>[
+                          TextButton(
+                            onPressed: () => Navigator.pop(ctx),
+                            child: const Text('Fechar'),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                  child: const Text('Comparar'),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _GrowthFooter extends StatelessWidget {
+  const _GrowthFooter({
+    required this.onImport,
+    required this.onHistory,
+    required this.onExport,
+    required this.onPrint,
+  });
+
+  final VoidCallback onImport;
+  final VoidCallback onHistory;
+  final VoidCallback onExport;
+  final VoidCallback onPrint;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: <Widget>[
+        Material(
+          color: AppColors.softLilac,
+          borderRadius: AppRadius.xlAll,
+          child: const Padding(
+            padding: EdgeInsets.all(AppSpacing.md),
+            child: Wrap(
+              spacing: 16,
+              runSpacing: 8,
+              children: <Widget>[
+                Text('1. Registrar medidas',
+                    style: TextStyle(fontWeight: FontWeight.w700)),
+                Text('2. Validar e salvar',
+                    style: TextStyle(fontWeight: FontWeight.w700)),
+                Text('3. Visualizar evolucao',
+                    style: TextStyle(fontWeight: FontWeight.w700)),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(height: AppSpacing.md),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: <Widget>[
+            OutlinedButton.icon(
+              onPressed: onImport,
+              icon: const Icon(Icons.cloud_upload_outlined),
+              label: const Text('Importar medidas'),
+            ),
+            OutlinedButton.icon(
+              onPressed: onHistory,
+              icon: const Icon(Icons.history_rounded),
+              label: const Text('Historico de alteracoes'),
+            ),
+            OutlinedButton.icon(
+              onPressed: onExport,
+              icon: const Icon(Icons.download_outlined),
+              label: const Text('Exportar tabela'),
+            ),
+            OutlinedButton.icon(
+              onPressed: onPrint,
+              icon: const Icon(Icons.print_outlined),
+              label: const Text('Imprimir grafico'),
+            ),
+          ],
+        ),
+        const SizedBox(height: AppSpacing.md),
+        const Text(
+          'A avaliacao segue os padroes de crescimento da OMS. Um ponto '
+          'fora da faixa nao e diagnostico: o pediatra observa a trajetoria.',
+          style: TextStyle(fontSize: 12, color: AppColors.inkMuted),
+          textAlign: TextAlign.center,
+        ),
+      ],
+    );
+  }
+}
+
+
 class GrowthFormSheet extends ConsumerStatefulWidget {
   const GrowthFormSheet({required this.childId, this.record, super.key});
 

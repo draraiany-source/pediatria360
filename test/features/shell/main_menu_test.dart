@@ -239,11 +239,15 @@ void main() {
     );
     for (final MainMenuModule m in <MainMenuModule>[
       MainMenuModule.vaccines,
-      MainMenuModule.growth,
     ]) {
       expect(m.patientRoute('c9'), Routes.clinicPatient360('c9'));
       expect(m.provisionalNotice, isNotNull, reason: m.label);
     }
+    expect(
+      MainMenuModule.growth.patientRoute('c9'),
+      Routes.clinicGrowth('c9'),
+    );
+    expect(MainMenuModule.growth.provisionalNotice, isNull);
     expect(
       MainMenuModule.prescriptions.patientRoute('c9'),
       Routes.clinicPrescriptions('c9'),
