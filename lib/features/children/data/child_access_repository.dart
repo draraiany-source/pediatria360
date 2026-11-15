@@ -124,4 +124,44 @@ class ChildAccessRepository {
           specialty: data['specialty'] as String?,
         );
       });
+
+  /// Consulta o servidor: escopos ativos e, se houver concessão, o
+  /// `ownerUid` da criança (necessário para ler o cadastro no caminho
+  /// `users/{dono}/children/{id}`). Sem concessão, `ownerUid` vem nulo.
+  Future<Result<ChildAccessCheck>> checkAccess({
+    required String childId,
+    String? clinicId,
+  }) =>
+      guard(() async {
+        final HttpsCallableResult<dynamic> res = await _functions
+            .httpsCallable('checkChildAccess')
+            .call(<String, dynamic>{
+          'childId': childId,
+          if (clinicId != null && clinicId.isNotEmpty) 'clinicId': clinicId,
+        });
+        final Map<dynamic, dynamic> data = res.data as Map<dynamic, dynamic>;
+        return ChildAccessCheck(
+          summary: data['summary'] == true,
+          chartWrite: data['chartWrite'] == true,
+          state: (data['state'] as String?) ?? 'none',
+          ownerUid: data['ownerUid'] as String?,
+        );
+      });
+}
+
+/// Resultado de [ChildAccessRepository.checkAccess].
+class ChildAccessCheck {
+  const ChildAccessCheck({
+    required this.summary,
+    required this.chartWrite,
+    required this.state,
+    this.ownerUid,
+  });
+
+  final bool summary;
+  final bool chartWrite;
+  final String state;
+  final String? ownerUid;
+
+  bool get canReadCadastro => summary || chartWrite;
 }

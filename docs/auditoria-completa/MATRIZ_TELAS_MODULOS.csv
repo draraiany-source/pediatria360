@@ -1,0 +1,46 @@
+modulo,rota,perfil,arquivos_chave,persistencia,estado,evidencia,problema,gravidade,correcao
+Auth Splash,/ ,publico,splash,n/a,INT,codigo,,P3,
+Onboarding,/onboarding,publico,onboarding,local,INT,codigo,,P3,
+Login,/login,publico,auth screens,Firebase Auth,INT,docs 28/10 + codigo,,P2,revalidar UI
+Registro,/registro,publico,register,Auth+Firestore,INT,codigo,,P2,
+Recuperar senha,/recuperar-senha,publico,forgot,Auth,INT,codigo,,P3,
+Perfil inicial,/perfil-inicial,autenticado,role setup,Firestore user,INT,codigo,,P2,
+Inicio,/inicio,todos perfis,WorkspaceHome/FamilyPortalHome,providers,PAR,UI refs 01/03 aplicadas,FAB Tia Cris depende flag/rota,P2,flags homolog
+Biblioteca,/biblioteca,familia+,library_screen,conteudo,INT,codigo,,P2,
+IA educativa,/ia,familia+,ai screens,chat,PAR,codigo,nao clinica,P2,
+Ferramentas,/ferramentas,familia+,tools,local calc,INT,codigo,diario aponta tools,P3,
+Perfil,/perfil,autenticado,profile_tab,user,INT,codigo,,P3,
+Criancas,/criancas,familia,children_list,users/uid/children,FT,codigo+providers,,P2,
+Crescimento familia,/criancas/:id/crescimento,familia,GrowthScreen+WHO,growth_records,FT,who tests+UI etapa4,,P2,
+Vacinas familia,/criancas/:id/vacinas,familia,VaccinesScreen,vaccine_doses,INT,codigo,,P2,
+Telemedicina,/telemedicina,familia/pro,telemedicine,appointments,PAR,booking tests historico,,P2,
+Agenda,/agenda,staff,professional agenda,appointments,PAR,FASE1 permissao guest,convidado sem auth,P1,guestSessionFailure ja no codigo
+Agendar familia,/agendar-consulta,familia,booking,appointments,PAR,codigo,,P2,
+Consultorio,/consultorio,pro,clinic dashboard,encounters/appts,PAR,WIP stats week,KPIs vacina 0 intencional,P2,
+Recepcao,/consultorio/recepcao,recepcao,reception,appts,INT,codigo,,P2,
+Pendencias,/consultorio/pendencias,recepcao,pending,appts,INT,codigo,,P2,
+Triagem,/consultorio/triagem/:id,pro,triage,appts,INT,codigo,,P2,
+Paciente 360,/consultorio/paciente/:id/360,pro,patient_360,encounters+docs,PAR,FASE2,growth familia bloqueado por regra,P1,mensagem explicita
+Prescricoes hub,/consultorio/paciente/:id/prescricoes,pro,PrescriptionsHub+DocumentEditor,clinical docs,PAR,UI etapa2+checklist,modelos persistentes ausentes,P2,
+Crescimento clinico,/consultorio/paciente/:id/crescimento,pro,GrowthScreen gate,sem growth_records,PAR,P1 corrigido nesta sessao,antes lia growth errado,P1,gate profissional
+Modulo seletor,/consultorio/modulo/:module,pro,PatientModuleScreen,selectedPatient,FT,main_menu_test,,P2,
+IA voz consulta,/consultorio/ia*,pro+flag,voice screens,sessions,PAR/BLQ,flag voice,sem inventar clinico,P1,consentimento obrigatorio
+Recepcionista IA,/recepcionista-ia,admin/recepcao/parent,receptionist_ai_screen,intent local+agenda,PAR,tia_cris tests,flag off default,P1,habilitar so homolog
+Kids home,/kids,familia+flag,kids_home,kids_play_progress,PAR,kids tests+UI etapa5,flag off,P1,
+Kids play,/kids/play/:gameId,familia+flag,kids_play,progress,FT engines,kids tests,,P2,
+Kids responsavel,/kids/responsavel,familia+flag,kids_guardian,progress prefs,INT,codigo,sem clinico,P2,
+Kids kiosk,/kids/kiosk,flag kiosk,kids_kiosk,progress,PAR,codigo,flag off,P2,
+Financeiro,/financeiro*,finance/pro,finance screens,lancamentos,PAR,codigo,recalc e2e NT,P2,
+Faturamento,/faturamento*,finance,billing,guias,PAR/BLQ,codigo,TISS operadora,BLQ,
+BI,/bi*,admin/pro,bi screens,agregados,PAR,codigo,,P3,
+Auditoria,/auditoria,admin,audit,logs,INT,codigo,,P2,
+Permissoes,/permissoes,admin,permissions,membership,INT,codigo,,P1,IDOR rules historico
+Clinica org,/clinica*,clinicAdmin,clinic_org,memberships,INT,codigo,,P2,
+Convite clinica,/convite-clinica,familia,invite,codes,INT,codigo,,P2,
+Gestao,/gestao*,admin,management,CRM etc,PAR,codigo,WhatsApp Meta BLQ,BLQ,
+Suplementacao,/suplementacao*,pro,supplement,labs/rx,PAR,codigo,,P2,
+Pacientes lista,/pacientes,pro,professional_patients,encounters,PAR,FASE1/2,guest msg,P1,
+Notificacoes,/avisos,todos,notification_center,notifications,INT,WIP local,,P3,
+Admin,/admin*,admin,admin content,CMS,INT,codigo,,P3,
+Loja/cursos,/loja /cursos,familia,shop/courses,catalog,PAR,codigo,pagamentos BLQ,BLQ,
+404/manutencao,/404 /manutencao,publico,shell,n/a,FT,codigo,,P3,

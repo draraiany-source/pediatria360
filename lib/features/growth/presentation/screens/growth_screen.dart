@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/responsive/responsive.dart';
 import '../../../../core/router/routes.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_tokens.dart';
@@ -12,7 +13,10 @@ import '../../../../core/widgets/skeleton.dart';
 import '../../../../core/widgets/state_views.dart';
 import '../../../../shared/domain/entities/child.dart';
 import '../../../../shared/domain/entities/growth_record.dart';
+import '../../../auth/presentation/providers/auth_providers.dart';
+import '../../../children/presentation/providers/child_access_providers.dart';
 import '../../../children/presentation/providers/children_providers.dart';
+import '../../../../shared/domain/entities/app_user.dart';
 import '../../domain/who_reference.dart';
 import '../widgets/growth_chart.dart';
 
@@ -36,10 +40,48 @@ class _GrowthScreenState extends ConsumerState<GrowthScreen> {
   @override
   Widget build(BuildContext context) {
     final ThemeData theme = Theme.of(context);
-    final Child? child = ref.watch(childProvider(widget.childId)).valueOrNull;
+    final AppUser? user = ref.watch(currentUserProvider);
+    final bool isProfessional = user?.role.isProfessional == true;
+    // Profissional: cadastro via grant (clinicalChild). Familia: childProvider.
+    // Growth/vacinas da caderneta familiar continuam so para o dono — regras.
+    final Child? child = isProfessional
+        ? ref.watch(clinicalChildProvider(widget.childId)).valueOrNull
+        : ref.watch(childProvider(widget.childId)).valueOrNull;
+    final AsyncValue<WhoReference> who = ref.watch(whoReferenceProvider);
+
+    if (isProfessional) {
+      return Scaffold(
+        backgroundColor: AppColors.lightBackground,
+        appBar: AppBar(
+          title: const Text('Crescimento — Registros e Evolucao'),
+          leading: IconButton(
+            onPressed: () => context.popOrHome(),
+            icon: const Icon(Icons.arrow_back_rounded),
+          ),
+        ),
+        body: ContentBounds(
+          padding: const EdgeInsets.all(AppSpacing.lg),
+          child: EmptyState(
+            icon: Icons.show_chart_rounded,
+            title: child == null
+                ? 'Crescimento da caderneta familiar'
+                : 'Crescimento · ${child.firstName}',
+            message:
+                'As curvas OMS da caderneta (peso/estatura/PC) ficam na '
+                'area da familia e so o responsavel vinculado le esses '
+                'registros. No consultorio, use sinais vitais e evolucao '
+                'do atendimento assinado — sem abrir growth_records alheios.',
+            actionLabel: 'Abrir Paciente 360',
+            onAction: () => context.push(
+              Routes.clinicPatient360(widget.childId),
+            ),
+          ),
+        ),
+      );
+    }
+
     final AsyncValue<List<GrowthRecord>> records =
         ref.watch(growthProvider(widget.childId));
-    final AsyncValue<WhoReference> who = ref.watch(whoReferenceProvider);
     final List<GrowthAssessment> assessments =
         ref.watch(latestAssessmentsProvider(widget.childId));
 

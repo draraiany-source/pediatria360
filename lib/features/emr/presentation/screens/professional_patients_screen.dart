@@ -25,6 +25,9 @@ import '../../../../shared/domain/entities/encounter.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../clinic_intake/presentation/clinic_intakes_screen.dart';
 import '../../../notifications/presentation/notification_center_screen.dart';
+import '../../../telemedicine/data/telemedicine_repository.dart';
+import '../../../telemedicine/presentation/telemedicine_screen.dart'
+    show myAgendaProvider;
 import 'patient_timeline_screen.dart';
 
 /// Um paciente na visão do profissional.
@@ -45,9 +48,10 @@ class PatientSummary {
     this.allergies = const <String>[],
   });
 
-  /// Uid do responsável — é a chave do prontuário.
+  /// Id da criança (`Encounter.patientId`). Mesmo valor que [childId].
   final String patientId;
 
+  /// Id da criança — use este para abrir 360 / linha do tempo.
   final String childId;
   final String name;
   final DateTime? birthDate;
@@ -86,13 +90,11 @@ class PatientSummary {
   }
 }
 
-/// Pacientes que o profissional já atendeu.
+/// Pacientes do profissional: atendimentos + crianças já na agenda.
 ///
-/// ## Por que derivar dos atendimentos e não de uma lista própria
-///
-/// Manter uma collection `professional_patients` exigiria sincronizar dois
-/// lugares e conviver com divergência. Os atendimentos já são a fonte de
-/// verdade do vínculo: quem eu atendi é quem tem atendimento meu.
+/// Encounters continuam sendo a fonte clínica (diagnóstico, rascunho,
+/// alergias da anamnese). A agenda inclui quem ainda não teve prontuário
+/// aberto — sem criar collection espelho.
 final StreamProvider<List<PatientSummary>> professionalPatientsProvider =
     StreamProvider<List<PatientSummary>>((Ref ref) {
   if (DevMode.isEnabled &&
@@ -106,27 +108,28 @@ final StreamProvider<List<PatientSummary>> professionalPatientsProvider =
     return Stream<List<PatientSummary>>.value(const <PatientSummary>[]);
   }
 
+  final List<Appointment> agenda =
+      ref.watch(myAgendaProvider).valueOrNull ?? const <Appointment>[];
+
   return ref
       .watch(encounterRepositoryProvider)
       .watchProfessionalEncounters(uid)
       .map((List<Encounter> encounters) {
-    final Map<String, List<Encounter>> byPatient =
-        <String, List<Encounter>>{};
+    final Map<String, PatientSummary> byChild = <String, PatientSummary>{};
 
+    final Map<String, List<Encounter>> encountersByChild =
+        <String, List<Encounter>>{};
     for (final Encounter e in encounters) {
-      byPatient.putIfAbsent(e.patientId, () => <Encounter>[]).add(e);
+      if (e.patientId.isEmpty) continue;
+      encountersByChild.putIfAbsent(e.patientId, () => <Encounter>[]).add(e);
     }
 
-    final List<PatientSummary> patients = <PatientSummary>[];
-
-    for (final MapEntry<String, List<Encounter>> entry in byPatient.entries) {
+    for (final MapEntry<String, List<Encounter>> entry
+        in encountersByChild.entries) {
       final List<Encounter> list = entry.value
         ..sort((Encounter a, Encounter b) =>
             b.startedAt.compareTo(a.startedAt));
-
       final Encounter latest = list.first;
-
-      // O nome mais recente prevalece: o cadastro pode ter sido corrigido.
       String? name;
       DateTime? birth;
       for (final Encounter e in list) {
@@ -134,27 +137,39 @@ final StreamProvider<List<PatientSummary>> professionalPatientsProvider =
         birth ??= e.patientBirthDate;
         if (name != null && birth != null) break;
       }
-
-      patients.add(
-        PatientSummary(
-          patientId: entry.key,
-          childId: entry.key,
-          name: name ?? 'Paciente sem nome',
-          birthDate: birth,
-          lastEncounterAt: latest.startedAt,
-          lastDiagnosis: latest.primaryDiagnosis?.description,
-          hasOpenDraft:
-              list.any((Encounter e) => e.status == EncounterStatus.draft),
-          encounterCount: list.length,
-          allergies: latest.anamnesis.allergies,
-        ),
+      byChild[entry.key] = PatientSummary(
+        patientId: entry.key,
+        childId: entry.key,
+        name: name ?? 'Paciente sem nome',
+        birthDate: birth,
+        lastEncounterAt: latest.startedAt,
+        lastDiagnosis: latest.primaryDiagnosis?.description,
+        hasOpenDraft:
+            list.any((Encounter e) => e.status == EncounterStatus.draft),
+        encounterCount: list.length,
+        allergies: latest.anamnesis.allergies,
       );
     }
 
-    patients.sort((PatientSummary a, PatientSummary b) =>
-        (b.lastEncounterAt ?? DateTime(0))
-            .compareTo(a.lastEncounterAt ?? DateTime(0)));
+    for (final Appointment a in agenda) {
+      final String? childId = a.childId;
+      if (childId == null || childId.isEmpty) continue;
+      if (byChild.containsKey(childId)) continue;
+      final String name = (a.childName ?? '').trim();
+      byChild[childId] = PatientSummary(
+        patientId: childId,
+        childId: childId,
+        name: name.isEmpty ? 'Paciente na agenda' : name,
+        lastEncounterAt: a.startsAt,
+        lastDiagnosis: a.reason,
+        encounterCount: 0,
+      );
+    }
 
+    final List<PatientSummary> patients = byChild.values.toList()
+      ..sort((PatientSummary a, PatientSummary b) =>
+          (b.lastEncounterAt ?? DateTime(0))
+              .compareTo(a.lastEncounterAt ?? DateTime(0)));
     return patients;
   });
 });

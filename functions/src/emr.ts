@@ -520,16 +520,21 @@ export const checkChildAccess = onCall(
 
     const ownerId = await childOwnerUid(childId);
     if (!ownerId) {
-      return { summary: false, chartWrite: false, state: "none" };
+      return { summary: false, chartWrite: false, state: "none", ownerUid: null };
     }
 
     const grant = (await grantRef(ownerId, childId, actor.uid).get()).data();
     const now = Date.now();
     const clinic = typeof clinicId === "string" && clinicId ? clinicId : null;
+    const summary = grantAllows(grant, "summary", now, clinic);
+    const chartWrite = grantAllows(grant, "chartWrite", now, clinic);
+    // ownerUid só com concessão ativa: conhecer o childId não basta para
+    // descobrir o responsável (evita enumeração).
     return {
-      summary: grantAllows(grant, "summary", now, clinic),
-      chartWrite: grantAllows(grant, "chartWrite", now, clinic),
+      summary,
+      chartWrite,
       state: grantState(grant, now),
+      ownerUid: summary || chartWrite ? ownerId : null,
     };
   }
 );

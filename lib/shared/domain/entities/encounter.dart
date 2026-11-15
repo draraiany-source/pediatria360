@@ -39,7 +39,10 @@ class Encounter extends Equatable {
 
   final String id;
 
-  /// Uid do responsável dono do cadastro da criança.
+  /// Id da **criança** (mesmo id de `users/{dono}/children/{id}` e
+  /// `child_registry`). Não é o uid do responsável — as regras e o
+  /// backend (`checkChildAccess`, `canWriteChart`) tratam este campo
+  /// como `childId`.
   final String patientId;
 
   final String professionalId;

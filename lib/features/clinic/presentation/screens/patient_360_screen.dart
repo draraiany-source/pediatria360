@@ -729,6 +729,21 @@ class _ModulesTab extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final bool isProfessional =
+        ref.watch(currentUserProvider)?.role.isProfessional ?? false;
+
+    void familyCareBlocked() {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Crescimento e vacinas da caderneta familiar ficam com o '
+            'responsável. No consultório, use triagem e sinais vitais da '
+            'consulta.',
+          ),
+        ),
+      );
+    }
+
     return ListView(
       padding: const EdgeInsets.all(AppSpacing.lg),
       children: <Widget>[
@@ -747,22 +762,30 @@ class _ModulesTab extends ConsumerWidget {
         ],
         QuickAccessCard(
           label: 'Crescimento',
-          subtitle: 'Peso, altura e curvas',
+          subtitle: isProfessional
+              ? 'Curvas da família: use triagem na consulta'
+              : 'Peso, altura e curvas',
           icon: Icons.show_chart_rounded,
           asset: AppIcons.growth,
           color: AppColors.teal,
           wide: true,
-          onTap: () => context.push(Routes.growth(childId)),
+          onTap: isProfessional
+              ? familyCareBlocked
+              : () => context.push(Routes.growth(childId)),
         ),
         const SizedBox(height: AppSpacing.sm),
         QuickAccessCard(
           label: 'Vacinas',
-          subtitle: 'Calendário e doses',
+          subtitle: isProfessional
+              ? 'Caderneta familiar: registro na evolução'
+              : 'Calendário e doses',
           icon: Icons.vaccines_outlined,
           asset: AppIcons.vaccines,
           color: AppColors.raspberry,
           wide: true,
-          onTap: () => context.push(Routes.vaccines(childId)),
+          onTap: isProfessional
+              ? familyCareBlocked
+              : () => context.push(Routes.vaccines(childId)),
         ),
         const SizedBox(height: AppSpacing.sm),
         if (AppConfig.voiceConsultationEnabled &&

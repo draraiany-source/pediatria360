@@ -190,6 +190,7 @@ class ClinicRepository {
         int inService = 0;
         int finished = 0;
         int noShow = 0;
+        int cancelledToday = 0;
 
         for (final QueryDocumentSnapshot<Map<String, dynamic>> doc
             in snap.docs) {
@@ -213,6 +214,7 @@ class ClinicRepository {
             case ClinicWorkflowStatus.noShow:
               noShow++;
             case ClinicWorkflowStatus.cancelled:
+              cancelledToday++;
             case ClinicWorkflowStatus.rescheduled:
               break;
           }
@@ -300,9 +302,11 @@ class ClinicRepository {
 
         return ClinicDashboardStats(
           todayAppointments: snap.docs.length,
+          weekAppointments: upcomingSnap.docs.length,
           waiting: waiting,
           inService: inService,
           finished: finished,
+          cancelledToday: cancelledToday,
           pendingReturns: pendingReturns,
           // Vacinas/exames cross-collection: ainda sem join seguro — manter 0
           // com transparencia na UI (nao inventar).
@@ -334,9 +338,11 @@ class ClinicRepository {
         }
         return ClinicDashboardStats(
           todayAppointments: s.todayAppointments,
+          weekAppointments: s.weekAppointments,
           waiting: s.waiting,
           inService: s.inService,
           finished: s.finished,
+          cancelledToday: s.cancelledToday,
           pendingReturns: s.pendingReturns,
           pendingVaccines: s.pendingVaccines,
           pendingExams: s.pendingExams,

@@ -126,6 +126,26 @@ class ChildrenRepositoryImpl implements ChildrenRepository {
       });
 
   @override
+  Stream<Child?> watchChildOfOwner({
+    required String ownerId,
+    required String childId,
+  }) {
+    if (ownerId.isEmpty || childId.isEmpty) {
+      return Stream<Child?>.value(null);
+    }
+    return _firestore
+        .collection(FirestorePaths.users)
+        .doc(ownerId)
+        .collection(FirestorePaths.children)
+        .doc(childId)
+        .snapshots()
+        .map((DocumentSnapshot<Map<String, dynamic>> snap) {
+      if (!snap.exists) return null;
+      return ChildMapper.fromFirestore(snap);
+    });
+  }
+
+  @override
   Future<Result<Child>> saveChild(Child child) => guard(() async {
         final String ownerId = _uid();
         final bool isNew = child.id.isEmpty;

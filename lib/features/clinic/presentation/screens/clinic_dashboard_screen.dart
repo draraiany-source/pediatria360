@@ -227,9 +227,11 @@ class _KpiGrid extends StatelessWidget {
   Widget build(BuildContext context) {
     final List<_Kpi> items = <_Kpi>[
       _Kpi('Hoje', '${stats.todayAppointments}', AppColors.brand),
+      _Kpi('7 dias', '${stats.weekAppointments}', AppColors.vital),
       _Kpi('Espera', '${stats.waiting}', AppColors.honey),
       _Kpi('Em sala', '${stats.inService}', AppColors.teal),
       _Kpi('Concluidas', '${stats.finished}', AppColors.navy),
+      _Kpi('Canceladas', '${stats.cancelledToday}', AppColors.inkMuted),
       _Kpi('Retornos', '${stats.pendingReturns}', AppColors.raspberry),
       _Kpi(
         'Faltas',

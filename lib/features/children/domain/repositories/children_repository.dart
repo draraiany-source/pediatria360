@@ -14,6 +14,13 @@ abstract class ChildrenRepository {
 
   Stream<Child?> watchChild(String childId);
 
+  /// Cadastro de uma criança sob o dono informado (ex.: profissional com
+  /// concessão `summary` que já resolveu o `ownerUid` via `checkChildAccess`).
+  Stream<Child?> watchChildOfOwner({
+    required String ownerId,
+    required String childId,
+  });
+
   Future<Result<Child>> saveChild(Child child);
 
   Future<Result<void>> deleteChild(String childId);
