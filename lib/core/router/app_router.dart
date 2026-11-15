@@ -44,6 +44,7 @@ import '../../features/management/presentation/marketing_crm_settings_screens.da
 import '../../features/pending/presentation/screens/pending_center_screen.dart';
 import '../../features/clinic/presentation/screens/clinic_triage_screen.dart';
 import '../../features/clinic/presentation/screens/patient_360_screen.dart';
+import '../../features/emr/presentation/screens/prescriptions_hub_screen.dart';
 import '../../features/clinic/presentation/screens/voice_consent_screen.dart';
 import '../../features/clinic/presentation/screens/voice_final_review_screen.dart';
 import '../../features/clinic/presentation/screens/voice_home_screen.dart';
@@ -852,6 +853,15 @@ final Provider<GoRouter> routerProvider = Provider<GoRouter>((Ref ref) {
         name: Routes.clinicPatient360Name,
         builder: (BuildContext context, GoRouterState state) =>
             Patient360Screen(
+          key: ValueKey<String>(state.matchedLocation),
+          childId: state.pathParameters['childId']!,
+        ),
+      ),
+      GoRoute(
+        path: Routes.clinicPrescriptionsPath,
+        name: Routes.clinicPrescriptionsName,
+        builder: (BuildContext context, GoRouterState state) =>
+            PrescriptionsHubScreen(
           key: ValueKey<String>(state.matchedLocation),
           childId: state.pathParameters['childId']!,
         ),

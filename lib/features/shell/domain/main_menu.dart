@@ -100,6 +100,10 @@ enum MainMenuModule {
         MainMenuModule.receptionistAi => const <String>[
             Routes.receptionistAiPath,
           ],
+        MainMenuModule.prescriptions => const <String>[
+            Routes.clinicPrescriptionsPath,
+            '/consultorio/paciente/',
+          ],
         MainMenuModule.settings => const <String>[
             Routes.managementSettingsPath,
             Routes.settingsPath,
@@ -115,11 +119,12 @@ enum MainMenuModule {
 
   /// Destino do módulo para um paciente já selecionado.
   ///
-  /// Só Exames tem tela clínica própria; os demais abrem o Paciente 360 até
-  /// ganharem a sua (ver [provisionalNotice]).
+  /// Exames e Prescrições têm tela própria; os demais abrem o Paciente 360
+  /// até ganharem a sua (ver [provisionalNotice]).
   String patientRoute(String childId) => switch (this) {
         MainMenuModule.exams =>
           Routes.supplementWithChild(Routes.supplementLabsPath, childId),
+        MainMenuModule.prescriptions => Routes.clinicPrescriptions(childId),
         _ => Routes.clinicPatient360(childId),
       };
 
@@ -129,7 +134,6 @@ enum MainMenuModule {
           '$label ainda não tem tela clínica: a tela atual é da área da '
               'família e não abre pelo cadastro da clínica. Por enquanto, '
               'abre o Paciente 360 do paciente selecionado.',
-        MainMenuModule.prescriptions ||
         MainMenuModule.wellChild ||
         MainMenuModule.multidisciplinary =>
           '$label ainda não tem tela própria: abre o Paciente 360 '
