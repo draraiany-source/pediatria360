@@ -7,11 +7,14 @@ import '../../../core/widgets/crismed_ui.dart';
 import '../../library/presentation/screens/library_screen.dart';
 import '../../notifications/presentation/notification_center_screen.dart';
 
+export 'reference_layouts.dart';
+
 class CrismedClinicalAiScreen extends StatefulWidget {
   const CrismedClinicalAiScreen({super.key});
 
   @override
-  State<CrismedClinicalAiScreen> createState() => _CrismedClinicalAiScreenState();
+  State<CrismedClinicalAiScreen> createState() =>
+      _CrismedClinicalAiScreenState();
 }
 
 class _CrismedClinicalAiScreenState extends State<CrismedClinicalAiScreen> {
@@ -64,13 +67,19 @@ class _CrismedClinicalAiScreenState extends State<CrismedClinicalAiScreen> {
             primaryLabel: _recording ? 'Parar' : 'Gravar',
             onPrimary: () {
               if (!_consent) {
-                crismedToast(context, 'O consentimento LGPD precisa estar marcado.');
+                crismedToast(
+                  context,
+                  'O consentimento LGPD precisa estar marcado.',
+                );
                 return;
               }
               setState(() => _recording = !_recording);
               if (_recording) _tick();
             },
-            onAi: () => crismedToast(context, 'A IA sugere texto para revisão. Não diagnostica.'),
+            onAi: () => crismedToast(
+              context,
+              'A IA sugere texto para revisão. Não diagnostica.',
+            ),
           ),
           const SizedBox(height: 12),
           const CrismedPatientCard(
@@ -90,11 +99,16 @@ class _CrismedClinicalAiScreenState extends State<CrismedClinicalAiScreen> {
                 Row(
                   children: <Widget>[
                     Icon(
-                      _recording ? Icons.graphic_eq_rounded : Icons.mic_none_rounded,
+                      _recording
+                          ? Icons.graphic_eq_rounded
+                          : Icons.mic_none_rounded,
                       color: _recording ? AppColors.raspberry : AppColors.brand,
                     ),
                     const SizedBox(width: 8),
-                    Text(clock, style: const TextStyle(fontWeight: FontWeight.w800)),
+                    Text(
+                      clock,
+                      style: const TextStyle(fontWeight: FontWeight.w800),
+                    ),
                     const Spacer(),
                     const Text('Onda ilustrativa'),
                   ],
@@ -111,7 +125,9 @@ class _CrismedClinicalAiScreenState extends State<CrismedClinicalAiScreen> {
                   contentPadding: EdgeInsets.zero,
                   value: _consent,
                   activeThumbColor: AppColors.success,
-                  title: const Text('Consentimento LGPD para transcrever esta consulta'),
+                  title: const Text(
+                    'Consentimento LGPD para transcrever esta consulta',
+                  ),
                   onChanged: (bool v) => setState(() => _consent = v),
                 ),
               ],
@@ -122,7 +138,8 @@ class _CrismedClinicalAiScreenState extends State<CrismedClinicalAiScreen> {
             maxLines: 4,
             decoration: InputDecoration(
               labelText: 'Transcrição editável (exemplo)',
-              hintText: 'Mãe: ela tossiu a noite toda.\nMédico: vamos ver a garganta.',
+              hintText:
+                  'Mãe: ela tossiu a noite toda.\nMédico: vamos ver a garganta.',
             ),
           ),
           const SizedBox(height: 8),
@@ -139,7 +156,10 @@ class _CrismedClinicalAiScreenState extends State<CrismedClinicalAiScreen> {
             ),
           ),
           const SizedBox(height: 8),
-          const Text('Sugestões de documentos', style: TextStyle(fontWeight: FontWeight.w800)),
+          const Text(
+            'Sugestões de documentos',
+            style: TextStyle(fontWeight: FontWeight.w800),
+          ),
           for (final String doc in const <String>[
             'Receituário',
             'Atestado',
@@ -183,7 +203,9 @@ class _WavePainter extends CustomPainter {
       ..style = PaintingStyle.stroke;
     final Path path = Path();
     for (double x = 0; x <= size.width; x += 8) {
-      final double y = size.height / 2 + (active ? 10 : 4) * ((x / 16).floor().isEven ? -1 : 1);
+      final double y =
+          size.height / 2 +
+          (active ? 10 : 4) * ((x / 16).floor().isEven ? -1 : 1);
       if (x == 0) {
         path.moveTo(x, y);
       } else {
@@ -194,7 +216,8 @@ class _WavePainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(covariant _WavePainter oldDelegate) => oldDelegate.active != active;
+  bool shouldRepaint(covariant _WavePainter oldDelegate) =>
+      oldDelegate.active != active;
 }
 
 class CrismedNotificationsScreen extends StatefulWidget {
@@ -205,7 +228,8 @@ class CrismedNotificationsScreen extends StatefulWidget {
       _CrismedNotificationsScreenState();
 }
 
-class _CrismedNotificationsScreenState extends State<CrismedNotificationsScreen> {
+class _CrismedNotificationsScreenState
+    extends State<CrismedNotificationsScreen> {
   bool _whatsapp = true;
   bool _sms = false;
   bool _email = true;
@@ -235,16 +259,43 @@ class _CrismedNotificationsScreenState extends State<CrismedNotificationsScreen>
             title: 'Notificações e lembretes',
             subtitle: 'WhatsApp, SMS, e-mail e família',
             icon: Icons.forum_rounded,
-            onAi: () => crismedToast(context, 'Automação de texto sugerida, sem disparo real.'),
+            onAi: () => crismedToast(
+              context,
+              'Automação de texto sugerida, sem disparo real.',
+            ),
           ),
           const SizedBox(height: 12),
           const CrismedWrap(
             minWidth: 150,
             children: <Widget>[
-              CrismedKpi(label: 'Mensagens', value: '86', icon: Icons.send_rounded, color: AppColors.brand, delta: 'ex.'),
-              CrismedKpi(label: 'Entrega', value: '94%', icon: Icons.done_all_rounded, color: AppColors.success, delta: 'ex.'),
-              CrismedKpi(label: 'Leitura', value: '71%', icon: Icons.mark_email_read_outlined, color: AppColors.moduleLibrary, delta: 'ex.'),
-              CrismedKpi(label: 'Confirmações', value: '38', icon: Icons.event_available_rounded, color: AppColors.raspberry, delta: 'ex.'),
+              CrismedKpi(
+                label: 'Mensagens',
+                value: '86',
+                icon: Icons.send_rounded,
+                color: AppColors.brand,
+                delta: 'ex.',
+              ),
+              CrismedKpi(
+                label: 'Entrega',
+                value: '94%',
+                icon: Icons.done_all_rounded,
+                color: AppColors.success,
+                delta: 'ex.',
+              ),
+              CrismedKpi(
+                label: 'Leitura',
+                value: '71%',
+                icon: Icons.mark_email_read_outlined,
+                color: AppColors.moduleLibrary,
+                delta: 'ex.',
+              ),
+              CrismedKpi(
+                label: 'Confirmações',
+                value: '38',
+                icon: Icons.event_available_rounded,
+                color: AppColors.raspberry,
+                delta: 'ex.',
+              ),
             ],
           ),
           const SizedBox(height: 12),
@@ -278,8 +329,12 @@ class _CrismedNotificationsScreenState extends State<CrismedNotificationsScreen>
           const SizedBox(height: 8),
           SwitchListTile(
             value: _family,
-            title: const Text('Preferências da família e permissão de recebimento'),
-            subtitle: const Text('Consentimento LGPD ilustrativo — não grava nesta tela.'),
+            title: const Text(
+              'Preferências da família e permissão de recebimento',
+            ),
+            subtitle: const Text(
+              'Consentimento LGPD ilustrativo — não grava nesta tela.',
+            ),
             onChanged: (bool v) => setState(() => _family = v),
           ),
           const CrismedCard(
@@ -332,17 +387,23 @@ class _CrismedKidsScreenState extends State<CrismedKidsScreen> {
     return CrismedScaffold(
       body: CrismedBody(
         sample: true,
-        sampleMessage: 'Jogos, histórias e conquistas ilustrativos. Sem conteúdo clínico.',
+        sampleMessage:
+            'Jogos, histórias e conquistas ilustrativos. Sem conteúdo clínico.',
         children: <Widget>[
           CrismedPageHeader(
-            title: widget.stories ? 'Histórias e entretenimento' : 'Espaço Kids',
+            title: widget.stories
+                ? 'Histórias e entretenimento'
+                : 'Espaço Kids',
             subtitle: 'Faixa ${ages[_age]} anos',
             icon: Icons.toys_rounded,
             primaryLabel: widget.stories ? 'Jogos' : 'Histórias',
             onPrimary: () => context.go(
               widget.stories ? Routes.kidsPath : Routes.storiesPath,
             ),
-            onAi: () => crismedToast(context, 'A Tia Cris sugere uma história curta para a idade (exemplo).'),
+            onAi: () => crismedToast(
+              context,
+              'A Tia Cris sugere uma história curta para a idade (exemplo).',
+            ),
           ),
           const SizedBox(height: 12),
           CrismedPillTabs(
@@ -372,7 +433,11 @@ class _CrismedKidsScreenState extends State<CrismedKidsScreen> {
                 CrismedSectionTitle('Trilha e conquistas'),
                 Text('Habilidade da semana: nomear cores (exemplo).'),
                 SizedBox(height: 8),
-                LinearProgressIndicator(value: 0.4, color: AppColors.raspberry, backgroundColor: AppColors.softPink),
+                LinearProgressIndicator(
+                  value: 0.4,
+                  color: AppColors.raspberry,
+                  backgroundColor: AppColors.softPink,
+                ),
                 SizedBox(height: 8),
                 Text('Controle parental: tempo de tela ilustrativo, 20 min.'),
               ],
@@ -417,7 +482,10 @@ class CrismedDiaryScreen extends StatelessWidget {
           label: 'Salvar o dia',
           icon: Icons.save_rounded,
           primary: true,
-          onPressed: () => crismedToast(context, 'Registro local de exemplo. Não grava no prontuário.'),
+          onPressed: () => crismedToast(
+            context,
+            'Registro local de exemplo. Não grava no prontuário.',
+          ),
         ),
       ],
       body: const CrismedBody(
@@ -434,10 +502,22 @@ class CrismedDiaryScreen extends StatelessWidget {
             children: <Widget>[
               _Mini('Sono', Icons.bedtime_rounded, AppColors.brand),
               _Mini('Alimentação', Icons.restaurant_rounded, AppColors.honey),
-              _Mini('Medicamentos', Icons.medication_rounded, AppColors.raspberry),
+              _Mini(
+                'Medicamentos',
+                Icons.medication_rounded,
+                AppColors.raspberry,
+              ),
               _Mini('Sintomas', Icons.thermostat_rounded, AppColors.danger),
-              _Mini('Humor', Icons.sentiment_satisfied_alt_rounded, AppColors.success),
-              _Mini('Atividades', Icons.directions_run_rounded, AppColors.moduleExams),
+              _Mini(
+                'Humor',
+                Icons.sentiment_satisfied_alt_rounded,
+                AppColors.success,
+              ),
+              _Mini(
+                'Atividades',
+                Icons.directions_run_rounded,
+                AppColors.moduleExams,
+              ),
             ],
           ),
           SizedBox(height: 12),
@@ -472,14 +552,46 @@ class CrismedPatientAreaScreen extends StatelessWidget {
           CrismedWrap(
             minWidth: 140,
             children: <Widget>[
-              _Jump('Calendário', Icons.calendar_month_rounded, () => context.go(Routes.agendaPath)),
-              _Jump('Pré-consulta', Icons.fact_check_rounded, () => context.go(Routes.preVisitPath)),
-              _Jump('Vacinas', Icons.vaccines_rounded, () => context.go(Routes.vaccinationHubPath)),
-              _Jump('Receitas', Icons.description_rounded, () => context.go(Routes.prescriptionsPath)),
-              _Jump('Exames', Icons.biotech_rounded, () => context.go(Routes.examsHubPath)),
-              _Jump('Orientações', Icons.lightbulb_rounded, () => context.go(Routes.libraryPath)),
-              _Jump('Biblioteca', Icons.menu_book_rounded, () => context.go(Routes.libraryPath)),
-              _Jump('Diário', Icons.edit_note_rounded, () => context.go(Routes.diaryPath)),
+              _Jump(
+                'Calendário',
+                Icons.calendar_month_rounded,
+                () => context.go(Routes.agendaPath),
+              ),
+              _Jump(
+                'Pré-consulta',
+                Icons.fact_check_rounded,
+                () => context.go(Routes.preVisitPath),
+              ),
+              _Jump(
+                'Vacinas',
+                Icons.vaccines_rounded,
+                () => context.go(Routes.vaccinationHubPath),
+              ),
+              _Jump(
+                'Receitas',
+                Icons.description_rounded,
+                () => context.go(Routes.prescriptionsPath),
+              ),
+              _Jump(
+                'Exames',
+                Icons.biotech_rounded,
+                () => context.go(Routes.examsHubPath),
+              ),
+              _Jump(
+                'Orientações',
+                Icons.lightbulb_rounded,
+                () => context.go(Routes.libraryPath),
+              ),
+              _Jump(
+                'Biblioteca',
+                Icons.menu_book_rounded,
+                () => context.go(Routes.libraryPath),
+              ),
+              _Jump(
+                'Diário',
+                Icons.edit_note_rounded,
+                () => context.go(Routes.diaryPath),
+              ),
             ],
           ),
           const SizedBox(height: 12),
@@ -503,7 +615,9 @@ class CrismedPatientAreaScreen extends StatelessWidget {
                   ),
                 ),
                 SizedBox(height: 8),
-                Text('Responsáveis e acessos: mãe com leitura, pai com diário (exemplo).'),
+                Text(
+                  'Responsáveis e acessos: mãe com leitura, pai com diário (exemplo).',
+                ),
               ],
             ),
           ),
@@ -578,7 +692,10 @@ class _CrismedPreVisitScreenState extends State<CrismedPreVisitScreen> {
             icon: Icons.fact_check_rounded,
           ),
           const SizedBox(height: 12),
-          Text('Passo ${_step + 1} de 4', style: const TextStyle(fontWeight: FontWeight.w800)),
+          Text(
+            'Passo ${_step + 1} de 4',
+            style: const TextStyle(fontWeight: FontWeight.w800),
+          ),
           const SizedBox(height: 8),
           LinearProgressIndicator(
             value: (_step + 1) / 4,
@@ -587,13 +704,21 @@ class _CrismedPreVisitScreenState extends State<CrismedPreVisitScreen> {
           ),
           const SizedBox(height: 12),
           if (_step == 0) ...<Widget>[
-            const TextField(decoration: InputDecoration(labelText: 'Queixa principal')),
+            const TextField(
+              decoration: InputDecoration(labelText: 'Queixa principal'),
+            ),
             const SizedBox(height: 8),
             const Text('Sintomas'),
             Wrap(
               spacing: 8,
               children: <Widget>[
-                for (final String s in const <String>['Febre', 'Tosse', 'Dor', 'Vômito', 'Diarreia'])
+                for (final String s in const <String>[
+                  'Febre',
+                  'Tosse',
+                  'Dor',
+                  'Vômito',
+                  'Diarreia',
+                ])
                   FilterChip(
                     label: Text(s),
                     selected: _symptoms.contains(s),
@@ -609,12 +734,16 @@ class _CrismedPreVisitScreenState extends State<CrismedPreVisitScreen> {
             ),
           ] else if (_step == 1)
             const TextField(
-              decoration: InputDecoration(labelText: 'Há quanto tempo? Histórico e medicamentos'),
+              decoration: InputDecoration(
+                labelText: 'Há quanto tempo? Histórico e medicamentos',
+              ),
               maxLines: 4,
             )
           else if (_step == 2)
             const TextField(
-              decoration: InputDecoration(labelText: 'Alergias, dúvidas e anexos (descrição)'),
+              decoration: InputDecoration(
+                labelText: 'Alergias, dúvidas e anexos (descrição)',
+              ),
               maxLines: 4,
             )
           else ...<Widget>[
@@ -625,7 +754,9 @@ class _CrismedPreVisitScreenState extends State<CrismedPreVisitScreen> {
             ),
             SwitchListTile(
               value: _lgpd,
-              title: const Text('Consentimento LGPD para compartilhar com a pediatra'),
+              title: const Text(
+                'Consentimento LGPD para compartilhar com a pediatra',
+              ),
               onChanged: (bool v) => setState(() => _lgpd = v),
             ),
           ],
@@ -676,8 +807,16 @@ class CrismedLibraryHubScreen extends StatelessWidget {
               _Mini('Alimentação', Icons.restaurant_rounded, AppColors.honey),
               _Mini('Febre', Icons.thermostat_rounded, AppColors.raspberry),
               _Mini('Vacinas', Icons.vaccines_rounded, AppColors.success),
-              _Mini('Desenvolvimento', Icons.child_care_rounded, AppColors.moduleLibrary),
-              _Mini('Segurança', Icons.health_and_safety_rounded, AppColors.moduleExams),
+              _Mini(
+                'Desenvolvimento',
+                Icons.child_care_rounded,
+                AppColors.moduleLibrary,
+              ),
+              _Mini(
+                'Segurança',
+                Icons.health_and_safety_rounded,
+                AppColors.moduleExams,
+              ),
             ],
           ),
           const SizedBox(height: 12),
@@ -719,10 +858,34 @@ class CrismedPlansScreen extends StatelessWidget {
           CrismedWrap(
             minWidth: 150,
             children: <Widget>[
-              CrismedKpi(label: 'Assinantes', value: '42', icon: Icons.groups_rounded, color: AppColors.brand, delta: 'ex.'),
-              CrismedKpi(label: 'MRR', value: 'R\$ 18 mil', icon: Icons.payments_rounded, color: AppColors.success, delta: 'ex.'),
-              CrismedKpi(label: 'Churn', value: '2%', icon: Icons.trending_down_rounded, color: AppColors.honey, delta: 'ex.'),
-              CrismedKpi(label: 'Indicações', value: '7', icon: Icons.share_rounded, color: AppColors.raspberry, delta: 'ex.'),
+              CrismedKpi(
+                label: 'Assinantes',
+                value: '42',
+                icon: Icons.groups_rounded,
+                color: AppColors.brand,
+                delta: 'ex.',
+              ),
+              CrismedKpi(
+                label: 'MRR',
+                value: 'R\$ 18 mil',
+                icon: Icons.payments_rounded,
+                color: AppColors.success,
+                delta: 'ex.',
+              ),
+              CrismedKpi(
+                label: 'Churn',
+                value: '2%',
+                icon: Icons.trending_down_rounded,
+                color: AppColors.honey,
+                delta: 'ex.',
+              ),
+              CrismedKpi(
+                label: 'Indicações',
+                value: '7',
+                icon: Icons.share_rounded,
+                color: AppColors.raspberry,
+                delta: 'ex.',
+              ),
             ],
           ),
           SizedBox(height: 12),
@@ -764,10 +927,22 @@ class _Plan extends StatelessWidget {
           if (highlight)
             const Text(
               'Mais escolhido',
-              style: TextStyle(color: AppColors.raspberry, fontWeight: FontWeight.w800),
+              style: TextStyle(
+                color: AppColors.raspberry,
+                fontWeight: FontWeight.w800,
+              ),
             ),
-          Text(name, style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 18)),
-          Text(price, style: const TextStyle(color: AppColors.brand, fontWeight: FontWeight.w800)),
+          Text(
+            name,
+            style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 18),
+          ),
+          Text(
+            price,
+            style: const TextStyle(
+              color: AppColors.brand,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
         ],
       ),
     );
@@ -788,7 +963,8 @@ class CrismedHomologationScreen extends StatelessWidget {
     return CrismedScaffold(
       body: CrismedBody(
         sample: true,
-        sampleMessage: 'Painel de publicação ilustrativo. Não dispara build nem loja.',
+        sampleMessage:
+            'Painel de publicação ilustrativo. Não dispara build nem loja.',
         children: <Widget>[
           const CrismedPageHeader(
             title: 'Homologação e monitoramento',
@@ -797,7 +973,9 @@ class CrismedHomologationScreen extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           CrismedCard(
-            child: Text('Etapa atual (exemplo): Homologação · ${steps.length} passos no fluxo.'),
+            child: Text(
+              'Etapa atual (exemplo): Homologação · ${steps.length} passos no fluxo.',
+            ),
           ),
           SizedBox(height: 8),
           _MiniRow(),
@@ -874,7 +1052,9 @@ class _CrismedVoiceChatScreenState extends State<CrismedVoiceChatScreen> {
           const Align(
             alignment: Alignment.centerLeft,
             child: CrismedCard(
-              child: Text('Olá, sou a Tia Cris. Posso ajudar com horário e orientações gerais. Não faço diagnóstico.'),
+              child: Text(
+                'Olá, sou a Tia Cris. Posso ajudar com horário e orientações gerais. Não faço diagnóstico.',
+              ),
             ),
           ),
           const SizedBox(height: 8),
@@ -889,10 +1069,16 @@ class _CrismedVoiceChatScreenState extends State<CrismedVoiceChatScreen> {
           Wrap(
             spacing: 8,
             children: <Widget>[
-              for (final String c in const <String>['Horários', 'Vacinas', 'Endereço', 'Falar com a equipe'])
+              for (final String c in const <String>[
+                'Horários',
+                'Vacinas',
+                'Endereço',
+                'Falar com a equipe',
+              ])
                 ActionChip(
                   label: Text(c),
-                  onPressed: () => crismedToast(context, 'Comando de exemplo: $c'),
+                  onPressed: () =>
+                      crismedToast(context, 'Comando de exemplo: $c'),
                 ),
             ],
           ),
@@ -923,7 +1109,8 @@ class CrismedReceptionistScreen extends StatelessWidget {
       ],
       body: CrismedBody(
         sample: true,
-        sampleMessage: 'Fila ilustrativa. A recepção operacional abre no botão Recepção.',
+        sampleMessage:
+            'Fila ilustrativa. A recepção operacional abre no botão Recepção.',
         children: <Widget>[
           CrismedPageHeader(
             title: 'IA recepcionista',
@@ -971,76 +1158,6 @@ class CrismedPrescriptionsScreen extends StatelessWidget {
       ),
       routeLabel: 'Suplementação',
       route: Routes.supplementPrescriptionPath,
-    );
-  }
-}
-
-class CrismedExamsScreen extends StatelessWidget {
-  const CrismedExamsScreen({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return CrismedSimpleHub(
-      title: 'Exames',
-      subtitle: 'Pedidos, laudos e pendências',
-      icon: Icons.biotech_rounded,
-      sampleMessage:
-          'Pedidos ilustrativos. O registro laboratorial real fica no módulo de exames.',
-      body:
-          'Hemograma pendente, eas conferido e laudo de imagem aguardando — exemplos. O laboratório de suplementação e o estoque continuam nos fluxos atuais.',
-      routeLabel: 'Abrir exames',
-      route: Routes.supplementLabsPath,
-    );
-  }
-}
-
-class CrismedChildcareScreen extends StatelessWidget {
-  const CrismedChildcareScreen({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return const CrismedSimpleHub(
-      title: 'Puericultura',
-      subtitle: 'Consultas de rotina por idade',
-      icon: Icons.child_care_rounded,
-      sampleMessage: 'Roteiro ilustrativo de puericultura. A evolução assinada fica no prontuário.',
-      body:
-          'Grade por idade: neonatal, 1 mês, 2 meses, 4 meses, 6 meses, 9 meses, 12 meses e anual. Marcos, vacinas e curva entram como checklist visual, sem gravar consulta.',
-    );
-  }
-}
-
-class CrismedMultiScreen extends StatelessWidget {
-  const CrismedMultiScreen({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return const CrismedSimpleHub(
-      title: 'Multidisciplinar',
-      subtitle: 'Equipe em torno da criança',
-      icon: Icons.diversity_3_rounded,
-      sampleMessage: 'Encaminhamentos ilustrativos. Não cria tarefa no prontuário.',
-      body:
-          'Fonoaudiologia, nutrição, psicologia, fisioterapia e odontologia em cards. Cada área mostra status de exemplo (aguardando, em curso, alta).',
-    );
-  }
-}
-
-class CrismedFinanceHubScreen extends StatelessWidget {
-  const CrismedFinanceHubScreen({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return const CrismedSimpleHub(
-      title: 'Financeiro',
-      subtitle: 'Caixa, receber e resultado',
-      icon: Icons.account_balance_wallet_rounded,
-      sampleMessage:
-          'Resumo ilustrativo. Lançamentos reais abrem no financeiro já existente.',
-      body:
-          'A receber, a pagar, fluxo de caixa, DRE e inadimplência continuam nos módulos atuais, com as mesmas permissões.',
-      routeLabel: 'Abrir financeiro',
-      route: Routes.financePath,
     );
   }
 }
@@ -1109,7 +1226,10 @@ class CrismedSimpleHub extends StatelessWidget {
             icon: icon,
             primaryLabel: primaryLabel,
             onPrimary: onPrimary,
-            onAi: () => crismedToast(context, 'A IA da Tia Cris resume esta tela. Não grava dado clínico.'),
+            onAi: () => crismedToast(
+              context,
+              'A IA da Tia Cris resume esta tela. Não grava dado clínico.',
+            ),
           ),
           const SizedBox(height: 12),
           CrismedCard(child: Text(body)),

@@ -65,7 +65,6 @@ import '../../features/ai/presentation/screens/ai_chat_screen.dart';
 import '../../features/library/presentation/screens/content_detail_screen.dart';
 import '../../features/shop/presentation/screens/shop_screens.dart';
 import '../../features/telemedicine/presentation/telemedicine_screen.dart';
-import '../../features/shell/presentation/screens/profile_tab.dart';
 import '../../features/tools/presentation/screens/tools_screen.dart';
 import '../../shared/domain/entities/app_user.dart';
 import '../config/dev_mode.dart';
@@ -75,10 +74,12 @@ import '../services/remote_config_service.dart';
 import 'route_authorization.dart';
 import 'routes.dart';
 
-final GlobalKey<NavigatorState> _rootNavigatorKey =
-    GlobalKey<NavigatorState>(debugLabel: 'root');
-final GlobalKey<NavigatorState> _shellNavigatorKey =
-    GlobalKey<NavigatorState>(debugLabel: 'shell');
+final GlobalKey<NavigatorState> _rootNavigatorKey = GlobalKey<NavigatorState>(
+  debugLabel: 'root',
+);
+final GlobalKey<NavigatorState> _shellNavigatorKey = GlobalKey<NavigatorState>(
+  debugLabel: 'shell',
+);
 
 /// Faz o GoRouter reavaliar o `redirect` quando um provider muda.
 ///
@@ -197,25 +198,19 @@ final Provider<GoRouter> routerProvider = Provider<GoRouter>((Ref ref) {
             path: Routes.childDetailPath,
             name: Routes.childDetailName,
             builder: (BuildContext context, GoRouterState state) =>
-                ChildDetailScreen(
-              childId: state.pathParameters['childId']!,
-            ),
+                ChildDetailScreen(childId: state.pathParameters['childId']!),
             routes: <RouteBase>[
               GoRoute(
                 path: Routes.growthPath,
                 name: Routes.growthName,
                 builder: (BuildContext context, GoRouterState state) =>
-                    GrowthScreen(
-                  childId: state.pathParameters['childId']!,
-                ),
+                    GrowthScreen(childId: state.pathParameters['childId']!),
               ),
               GoRoute(
                 path: Routes.vaccinesPath,
                 name: Routes.vaccinesName,
                 builder: (BuildContext context, GoRouterState state) =>
-                    VaccinesScreen(
-                  childId: state.pathParameters['childId']!,
-                ),
+                    VaccinesScreen(childId: state.pathParameters['childId']!),
               ),
             ],
           ),
@@ -233,18 +228,16 @@ final Provider<GoRouter> routerProvider = Provider<GoRouter>((Ref ref) {
             path: Routes.courseDetailPath,
             name: Routes.courseDetailName,
             builder: (BuildContext context, GoRouterState state) =>
-                CourseDetailScreen(
-              courseId: state.pathParameters['courseId']!,
-            ),
+                CourseDetailScreen(courseId: state.pathParameters['courseId']!),
             routes: <RouteBase>[
               GoRoute(
                 path: 'aula/:lessonId',
                 name: Routes.lessonName,
                 builder: (BuildContext context, GoRouterState state) =>
                     LessonScreen(
-                  courseId: state.pathParameters['courseId']!,
-                  lessonId: state.pathParameters['lessonId']!,
-                ),
+                      courseId: state.pathParameters['courseId']!,
+                      lessonId: state.pathParameters['lessonId']!,
+                    ),
               ),
             ],
           ),
@@ -285,8 +278,8 @@ final Provider<GoRouter> routerProvider = Provider<GoRouter>((Ref ref) {
             name: Routes.productDetailName,
             builder: (BuildContext context, GoRouterState state) =>
                 ProductDetailScreen(
-              productId: state.pathParameters['productId']!,
-            ),
+                  productId: state.pathParameters['productId']!,
+                ),
           ),
         ],
       ),
@@ -317,8 +310,6 @@ final Provider<GoRouter> routerProvider = Provider<GoRouter>((Ref ref) {
             const TelemedicineScreen(),
       ),
 
-
-
       GoRoute(
         path: Routes.clinicOrgPath,
         name: Routes.clinicOrgName,
@@ -338,8 +329,8 @@ final Provider<GoRouter> routerProvider = Provider<GoRouter>((Ref ref) {
         name: Routes.supplementName,
         builder: (BuildContext context, GoRouterState state) =>
             SupplementDashboardScreen(
-          childId: state.uri.queryParameters['childId'],
-        ),
+              childId: state.uri.queryParameters['childId'],
+            ),
       ),
       GoRoute(
         path: Routes.supplementMicronutrientsPath,
@@ -352,67 +343,64 @@ final Provider<GoRouter> routerProvider = Provider<GoRouter>((Ref ref) {
         name: Routes.supplementMicronutrientName,
         builder: (BuildContext context, GoRouterState state) =>
             MicronutrientDetailScreen(
-          micronutrientId: state.pathParameters['id']!,
-        ),
+              micronutrientId: state.pathParameters['id']!,
+            ),
       ),
       GoRoute(
         path: Routes.supplementLabRegisterPath,
         name: Routes.supplementLabRegisterName,
         builder: (BuildContext context, GoRouterState state) =>
             LabResultFormScreen(
-          childId: state.uri.queryParameters['childId'],
-          examId: state.uri.queryParameters['examId'],
-        ),
+              childId: state.uri.queryParameters['childId'],
+              examId: state.uri.queryParameters['examId'],
+            ),
       ),
       GoRoute(
         path: Routes.supplementLabAiPath,
         name: Routes.supplementLabAiName,
         builder: (BuildContext context, GoRouterState state) =>
-            LabAiInterpretScreen(
-          childId: state.uri.queryParameters['childId'],
-        ),
+            LabAiInterpretScreen(childId: state.uri.queryParameters['childId']),
       ),
       GoRoute(
         path: Routes.supplementLabDetailPath,
         name: Routes.supplementLabDetailName,
         builder: (BuildContext context, GoRouterState state) =>
             LabExamDetailScreen(
-          examId: state.pathParameters['examId']!,
-          childId: state.uri.queryParameters['childId'],
-        ),
+              examId: state.pathParameters['examId']!,
+              childId: state.uri.queryParameters['childId'],
+            ),
       ),
       GoRoute(
         path: Routes.supplementLabsPath,
         name: Routes.supplementLabsName,
-        builder: (BuildContext context, GoRouterState state) => LabExamsScreen(
-          childId: state.uri.queryParameters['childId'],
-        ),
+        builder: (BuildContext context, GoRouterState state) =>
+            LabExamsScreen(childId: state.uri.queryParameters['childId']),
       ),
       GoRoute(
         path: Routes.supplementCalculatorPath,
         name: Routes.supplementCalculatorName,
         builder: (BuildContext context, GoRouterState state) =>
             SupplementCalculatorScreen(
-          micronutrientId: state.uri.queryParameters['micronutrientId'],
-          childId: state.uri.queryParameters['childId'],
-        ),
+              micronutrientId: state.uri.queryParameters['micronutrientId'],
+              childId: state.uri.queryParameters['childId'],
+            ),
       ),
       GoRoute(
         path: Routes.supplementPrescriptionViewPath,
         name: Routes.supplementPrescriptionViewName,
         builder: (BuildContext context, GoRouterState state) =>
             SupplementPrescriptionViewScreen(
-          prescriptionId: state.pathParameters['rxId']!,
-        ),
+              prescriptionId: state.pathParameters['rxId']!,
+            ),
       ),
       GoRoute(
         path: Routes.supplementPrescriptionPath,
         name: Routes.supplementPrescriptionName,
         builder: (BuildContext context, GoRouterState state) =>
             SupplementPrescriptionScreen(
-          micronutrientId: state.uri.queryParameters['micronutrientId'],
-          childId: state.uri.queryParameters['childId'],
-        ),
+              micronutrientId: state.uri.queryParameters['micronutrientId'],
+              childId: state.uri.queryParameters['childId'],
+            ),
       ),
       GoRoute(
         path: Routes.supplementProtocolsPath,
@@ -431,32 +419,30 @@ final Provider<GoRouter> routerProvider = Provider<GoRouter>((Ref ref) {
         name: Routes.supplementParentName,
         builder: (BuildContext context, GoRouterState state) =>
             ParentGuidanceScreen(
-          micronutrientId: state.uri.queryParameters['micronutrientId'],
-        ),
+              micronutrientId: state.uri.queryParameters['micronutrientId'],
+            ),
       ),
       GoRoute(
         path: Routes.supplementAiPath,
         name: Routes.supplementAiName,
         builder: (BuildContext context, GoRouterState state) =>
-            SupplementAiScreen(
-          childId: state.uri.queryParameters['childId'],
-        ),
+            SupplementAiScreen(childId: state.uri.queryParameters['childId']),
       ),
       GoRoute(
         path: Routes.supplementHistoryPath,
         name: Routes.supplementHistoryName,
         builder: (BuildContext context, GoRouterState state) =>
             SupplementHistoryScreen(
-          childId: state.uri.queryParameters['childId'],
-        ),
+              childId: state.uri.queryParameters['childId'],
+            ),
       ),
       GoRoute(
         path: Routes.supplementChartsPath,
         name: Routes.supplementChartsName,
         builder: (BuildContext context, GoRouterState state) =>
             SupplementChartsScreen(
-          childId: state.uri.queryParameters['childId'],
-        ),
+              childId: state.uri.queryParameters['childId'],
+            ),
       ),
       GoRoute(
         path: Routes.supplementFavoritesPath,
@@ -504,15 +490,17 @@ final Provider<GoRouter> routerProvider = Provider<GoRouter>((Ref ref) {
         path: Routes.financePath,
         name: Routes.financeName,
         builder: (BuildContext context, GoRouterState state) =>
-            FinanceDashboardScreen(initialTab: state.uri.queryParameters['tab']),
+            FinanceDashboardScreen(
+              initialTab: state.uri.queryParameters['tab'],
+            ),
         routes: <RouteBase>[
           GoRoute(
             path: 'receber',
             name: Routes.financeReceivablesName,
             builder: (BuildContext context, GoRouterState state) =>
                 ReceivablesScreen(
-              highlightId: state.uri.queryParameters['receivableId'],
-            ),
+                  highlightId: state.uri.queryParameters['receivableId'],
+                ),
           ),
           GoRoute(
             path: 'pagar',
@@ -599,8 +587,8 @@ final Provider<GoRouter> routerProvider = Provider<GoRouter>((Ref ref) {
             name: Routes.billingPatientInsuranceName,
             builder: (BuildContext context, GoRouterState state) =>
                 PatientInsuranceScreen(
-              childId: state.uri.queryParameters['childId'],
-            ),
+                  childId: state.uri.queryParameters['childId'],
+                ),
           ),
         ],
       ),
@@ -620,7 +608,9 @@ final Provider<GoRouter> routerProvider = Provider<GoRouter>((Ref ref) {
             path: 'lotes',
             name: Routes.inventoryLotsName,
             builder: (BuildContext context, GoRouterState state) =>
-                InventoryLotsScreen(itemId: state.uri.queryParameters['itemId']),
+                InventoryLotsScreen(
+                  itemId: state.uri.queryParameters['itemId'],
+                ),
           ),
           GoRoute(
             path: 'movimentos',
@@ -703,16 +693,14 @@ final Provider<GoRouter> routerProvider = Provider<GoRouter>((Ref ref) {
         name: Routes.clinicTriageName,
         builder: (BuildContext context, GoRouterState state) =>
             ClinicTriageScreen(
-          appointmentId: state.pathParameters['appointmentId']!,
-        ),
+              appointmentId: state.pathParameters['appointmentId']!,
+            ),
       ),
       GoRoute(
         path: Routes.clinicPatient360Path,
         name: Routes.clinicPatient360Name,
         builder: (BuildContext context, GoRouterState state) =>
-            Patient360Screen(
-          childId: state.pathParameters['childId']!,
-        ),
+            Patient360Screen(childId: state.pathParameters['childId']!),
       ),
       GoRoute(
         path: Routes.clinicVoicePath,
@@ -730,25 +718,23 @@ final Provider<GoRouter> routerProvider = Provider<GoRouter>((Ref ref) {
             path: 'sessao/:sessionId',
             name: Routes.clinicVoiceLiveName,
             builder: (BuildContext context, GoRouterState state) =>
-                VoiceLiveScreen(
-              sessionId: state.pathParameters['sessionId']!,
-            ),
+                VoiceLiveScreen(sessionId: state.pathParameters['sessionId']!),
           ),
           GoRoute(
             path: 'revisao/:sessionId',
             name: Routes.clinicVoiceReviewName,
             builder: (BuildContext context, GoRouterState state) =>
                 VoiceReviewScreen(
-              sessionId: state.pathParameters['sessionId']!,
-            ),
+                  sessionId: state.pathParameters['sessionId']!,
+                ),
           ),
           GoRoute(
             path: 'final/:sessionId',
             name: Routes.clinicVoiceFinalName,
             builder: (BuildContext context, GoRouterState state) =>
                 VoiceFinalReviewScreen(
-              sessionId: state.pathParameters['sessionId']!,
-            ),
+                  sessionId: state.pathParameters['sessionId']!,
+                ),
           ),
         ],
       ),
@@ -758,9 +744,7 @@ final Provider<GoRouter> routerProvider = Provider<GoRouter>((Ref ref) {
         path: '/biblioteca/artigo/:articleId',
         name: Routes.articleDetailName,
         builder: (BuildContext context, GoRouterState state) =>
-            ContentDetailScreen(
-          contentId: state.pathParameters['articleId']!,
-        ),
+            ContentDetailScreen(contentId: state.pathParameters['articleId']!),
       ),
       GoRoute(
         path: '/ia/conversa/:conversationId',
@@ -786,41 +770,33 @@ final Provider<GoRouter> routerProvider = Provider<GoRouter>((Ref ref) {
             path: Routes.clinicPath,
             name: Routes.clinicName,
             pageBuilder: (BuildContext context, GoRouterState state) =>
-                const NoTransitionPage<void>(
-              child: ClinicDashboardScreen(),
-            ),
+                const NoTransitionPage<void>(child: ClinicDashboardScreen()),
           ),
           GoRoute(
             path: Routes.agendaPath,
             name: Routes.agendaName,
             pageBuilder: (BuildContext context, GoRouterState state) =>
-                const NoTransitionPage<void>(
-              child: CrismedAgendaScreen(),
-            ),
+                const NoTransitionPage<void>(child: CrismedAgendaScreen()),
           ),
           GoRoute(
             path: Routes.patientsPath,
             name: Routes.patientsName,
             pageBuilder: (BuildContext context, GoRouterState state) =>
-                const NoTransitionPage<void>(
-              child: CrismedPatientsScreen(),
-            ),
+                const NoTransitionPage<void>(child: CrismedPatientsScreen()),
           ),
           GoRoute(
             path: Routes.notificationsPath,
             name: Routes.notificationsName,
             pageBuilder: (BuildContext context, GoRouterState state) =>
                 const NoTransitionPage<void>(
-              child: CrismedNotificationsScreen(),
-            ),
+                  child: CrismedNotificationsScreen(),
+                ),
           ),
           GoRoute(
             path: Routes.libraryPath,
             name: Routes.libraryName,
             pageBuilder: (BuildContext context, GoRouterState state) =>
-                const NoTransitionPage<void>(
-              child: CrismedLibraryHubScreen(),
-            ),
+                const NoTransitionPage<void>(child: CrismedLibraryHubScreen()),
           ),
           GoRoute(
             path: Routes.consultasPath,
@@ -839,8 +815,8 @@ final Provider<GoRouter> routerProvider = Provider<GoRouter>((Ref ref) {
             name: Routes.prescriptionsName,
             pageBuilder: (BuildContext context, GoRouterState state) =>
                 const NoTransitionPage<void>(
-              child: CrismedPrescriptionsScreen(),
-            ),
+                  child: CrismedPrescriptionsScreen(),
+                ),
           ),
           GoRoute(
             path: Routes.examsHubPath,
@@ -852,9 +828,7 @@ final Provider<GoRouter> routerProvider = Provider<GoRouter>((Ref ref) {
             path: Routes.vaccinationHubPath,
             name: Routes.vaccinationHubName,
             pageBuilder: (BuildContext context, GoRouterState state) =>
-                const NoTransitionPage<void>(
-              child: CrismedVaccinationScreen(),
-            ),
+                const NoTransitionPage<void>(child: CrismedVaccinationScreen()),
           ),
           GoRoute(
             path: Routes.growthHubPath,
@@ -875,12 +849,28 @@ final Provider<GoRouter> routerProvider = Provider<GoRouter>((Ref ref) {
                 const NoTransitionPage<void>(child: CrismedMultiScreen()),
           ),
           GoRoute(
+            path: Routes.unitsPath,
+            name: Routes.unitsName,
+            pageBuilder: (BuildContext context, GoRouterState state) =>
+                const NoTransitionPage<void>(child: CrismedUnitsScreen()),
+          ),
+          GoRoute(
+            path: Routes.insuranceHubPath,
+            name: Routes.insuranceHubName,
+            pageBuilder: (BuildContext context, GoRouterState state) =>
+                const NoTransitionPage<void>(child: CrismedInsuranceScreen()),
+          ),
+          GoRoute(
+            path: Routes.aiHubPath,
+            name: Routes.aiHubName,
+            pageBuilder: (BuildContext context, GoRouterState state) =>
+                const NoTransitionPage<void>(child: CrismedAiHubScreen()),
+          ),
+          GoRoute(
             path: Routes.financeHubPath,
             name: Routes.financeHubName,
             pageBuilder: (BuildContext context, GoRouterState state) =>
-                const NoTransitionPage<void>(
-              child: CrismedFinanceHubScreen(),
-            ),
+                const NoTransitionPage<void>(child: CrismedFinanceHubScreen()),
           ),
           GoRoute(
             path: Routes.reportsHubPath,
@@ -898,9 +888,7 @@ final Provider<GoRouter> routerProvider = Provider<GoRouter>((Ref ref) {
             path: Routes.patientAreaPath,
             name: Routes.patientAreaName,
             pageBuilder: (BuildContext context, GoRouterState state) =>
-                const NoTransitionPage<void>(
-              child: CrismedPatientAreaScreen(),
-            ),
+                const NoTransitionPage<void>(child: CrismedPatientAreaScreen()),
           ),
           GoRoute(
             path: Routes.kidsPath,
@@ -913,16 +901,16 @@ final Provider<GoRouter> routerProvider = Provider<GoRouter>((Ref ref) {
             name: Routes.storiesName,
             pageBuilder: (BuildContext context, GoRouterState state) =>
                 const NoTransitionPage<void>(
-              child: CrismedKidsScreen(stories: true),
-            ),
+                  child: CrismedKidsScreen(stories: true),
+                ),
           ),
           GoRoute(
             path: Routes.homologationPath,
             name: Routes.homologationName,
             pageBuilder: (BuildContext context, GoRouterState state) =>
                 const NoTransitionPage<void>(
-              child: CrismedHomologationScreen(),
-            ),
+                  child: CrismedHomologationScreen(),
+                ),
           ),
           GoRoute(
             path: Routes.diaryPath,
@@ -947,8 +935,8 @@ final Provider<GoRouter> routerProvider = Provider<GoRouter>((Ref ref) {
             name: Routes.receptionistName,
             pageBuilder: (BuildContext context, GoRouterState state) =>
                 const NoTransitionPage<void>(
-              child: CrismedReceptionistScreen(),
-            ),
+                  child: CrismedReceptionistScreen(),
+                ),
           ),
           GoRoute(
             path: Routes.voiceChatPath,
@@ -972,7 +960,7 @@ final Provider<GoRouter> routerProvider = Provider<GoRouter>((Ref ref) {
             path: Routes.profilePath,
             name: Routes.profileName,
             pageBuilder: (BuildContext context, GoRouterState state) =>
-                const NoTransitionPage<void>(child: ProfileTab()),
+                const NoTransitionPage<void>(child: CrismedSettingsScreen()),
           ),
         ],
       ),

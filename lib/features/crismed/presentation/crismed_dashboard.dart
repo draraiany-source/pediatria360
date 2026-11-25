@@ -24,10 +24,12 @@ class CrismedDashboard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final AppUser? user = ref.watch(currentUserProvider);
-    final AsyncValue<List<PatientSummary>> patientsAsync =
-        ref.watch(professionalPatientsProvider);
-    final AsyncValue<List<Appointment>> agendaAsync =
-        ref.watch(unitScopedMyAgendaProvider);
+    final AsyncValue<List<PatientSummary>> patientsAsync = ref.watch(
+      professionalPatientsProvider,
+    );
+    final AsyncValue<List<Appointment>> agendaAsync = ref.watch(
+      unitScopedMyAgendaProvider,
+    );
 
     final List<PatientSummary> patients =
         patientsAsync.valueOrNull ?? const <PatientSummary>[];
@@ -39,15 +41,16 @@ class CrismedDashboard extends ConsumerWidget {
     final DateTime now = DateTime.now();
     final DateTime start = DateTime(now.year, now.month, now.day);
     final DateTime end = start.add(const Duration(days: 1));
-    final List<Appointment> today = agenda
-        .where(
-          (Appointment a) =>
-              !a.startsAt.isBefore(start) && a.startsAt.isBefore(end),
-        )
-        .toList(growable: false)
-      ..sort(
-        (Appointment a, Appointment b) => a.startsAt.compareTo(b.startsAt),
-      );
+    final List<Appointment> today =
+        agenda
+            .where(
+              (Appointment a) =>
+                  !a.startsAt.isBefore(start) && a.startsAt.isBefore(end),
+            )
+            .toList(growable: false)
+          ..sort(
+            (Appointment a, Appointment b) => a.startsAt.compareTo(b.startsAt),
+          );
 
     final String name = user?.firstName.isNotEmpty == true
         ? 'Dra. ${user!.firstName}'
@@ -59,11 +62,7 @@ class CrismedDashboard extends ConsumerWidget {
         padding: const EdgeInsets.fromLTRB(20, 16, 20, 28),
         children: <Widget>[
           if (sample) const CrismedSampleBanner(),
-          _Greeting(
-            greeting: _greeting(now),
-            name: name,
-            date: _longDate(now),
-          ),
+          _Greeting(name: name, date: _longDate(now)),
           const SizedBox(height: 16),
           const CrismedSectionTitle('Ações Rápidas'),
           _ShortcutRow(onOpen: (String route) => context.go(route)),
@@ -194,12 +193,6 @@ class CrismedDashboard extends ConsumerWidget {
   }
 }
 
-String _greeting(DateTime now) {
-  if (now.hour < 12) return 'Bom dia';
-  if (now.hour < 18) return 'Boa tarde';
-  return 'Boa noite';
-}
-
 String _longDate(DateTime now) {
   const List<String> days = <String>[
     'segunda-feira',
@@ -228,13 +221,8 @@ String _longDate(DateTime now) {
 }
 
 class _Greeting extends StatelessWidget {
-  const _Greeting({
-    required this.greeting,
-    required this.name,
-    required this.date,
-  });
+  const _Greeting({required this.name, required this.date});
 
-  final String greeting;
   final String name;
   final String date;
 
@@ -250,7 +238,7 @@ class _Greeting extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
             Text(
-              '$greeting, $name',
+              'Olá, $name',
               style: theme.textTheme.headlineSmall?.copyWith(
                 color: AppColors.navy,
                 fontWeight: FontWeight.w800,
@@ -288,7 +276,11 @@ class _ChipSelect extends StatelessWidget {
         color: Colors.white,
         borderRadius: AppRadius.pillAll,
         boxShadow: const <BoxShadow>[
-          BoxShadow(color: Color(0x143C2463), blurRadius: 10, offset: Offset(0, 4)),
+          BoxShadow(
+            color: Color(0x143C2463),
+            blurRadius: 10,
+            offset: Offset(0, 4),
+          ),
         ],
       ),
       child: Row(
@@ -298,9 +290,9 @@ class _ChipSelect extends StatelessWidget {
           const SizedBox(width: 6),
           Text(
             label,
-            style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                  color: AppColors.navy,
-                ),
+            style: Theme.of(
+              context,
+            ).textTheme.labelLarge?.copyWith(color: AppColors.navy),
           ),
         ],
       ),
@@ -317,17 +309,67 @@ class _ShortcutRow extends StatelessWidget {
   Widget build(BuildContext context) {
     const List<(String, IconData, Color, String)> items =
         <(String, IconData, Color, String)>[
-      ('Nova Consulta', Icons.medical_services_rounded, AppColors.brand, Routes.consultasPath),
-      ('Novo Paciente', Icons.person_add_alt_1_rounded, AppColors.raspberry, Routes.patientsPath),
-      ('Registrar Vacina', Icons.vaccines_rounded, AppColors.moduleVaccines, Routes.vaccinationHubPath),
-      ('Atualizar Crescimento', Icons.show_chart_rounded, AppColors.success, Routes.growthHubPath),
-      ('Puericultura', Icons.child_care_rounded, AppColors.moduleLibrary, Routes.childcarePath),
-      ('Solicitar Exame', Icons.biotech_rounded, AppColors.moduleExams, Routes.examsHubPath),
-      ('Nova Receita', Icons.description_rounded, AppColors.moduleMedications, Routes.prescriptionsPath),
-      ('Emitir Atestado', Icons.verified_rounded, AppColors.honey, Routes.consultasPath),
-      ('Lançamento Financeiro', Icons.payments_rounded, AppColors.tealDeep, Routes.financeHubPath),
-      ('Gerar Relatório', Icons.insights_rounded, AppColors.brandSoft, Routes.reportsHubPath),
-    ];
+          (
+            'Nova Consulta',
+            Icons.medical_services_rounded,
+            AppColors.brand,
+            Routes.consultasPath,
+          ),
+          (
+            'Novo Paciente',
+            Icons.person_add_alt_1_rounded,
+            AppColors.raspberry,
+            Routes.patientsPath,
+          ),
+          (
+            'Registrar Vacina',
+            Icons.vaccines_rounded,
+            AppColors.moduleVaccines,
+            Routes.vaccinationHubPath,
+          ),
+          (
+            'Atualizar Crescimento',
+            Icons.show_chart_rounded,
+            AppColors.success,
+            Routes.growthHubPath,
+          ),
+          (
+            'Puericultura',
+            Icons.child_care_rounded,
+            AppColors.moduleLibrary,
+            Routes.childcarePath,
+          ),
+          (
+            'Solicitar Exame',
+            Icons.biotech_rounded,
+            AppColors.moduleExams,
+            Routes.examsHubPath,
+          ),
+          (
+            'Nova Receita',
+            Icons.description_rounded,
+            AppColors.moduleMedications,
+            Routes.prescriptionsPath,
+          ),
+          (
+            'Emitir Atestado',
+            Icons.verified_rounded,
+            AppColors.honey,
+            Routes.consultasPath,
+          ),
+          (
+            'Lançamento Financeiro',
+            Icons.payments_rounded,
+            AppColors.tealDeep,
+            Routes.financeHubPath,
+          ),
+          (
+            'Gerar Relatório',
+            Icons.insights_rounded,
+            AppColors.brandSoft,
+            Routes.reportsHubPath,
+          ),
+        ];
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
       child: Row(
@@ -342,15 +384,19 @@ class _ShortcutRow extends StatelessWidget {
                   width: 112,
                   child: Column(
                     children: <Widget>[
-                      CrismedIconBubble(icon: item.$2, color: item.$3, size: 52),
+                      CrismedIconBubble(
+                        icon: item.$2,
+                        color: item.$3,
+                        size: 52,
+                      ),
                       const SizedBox(height: 6),
                       Text(
                         item.$1,
                         textAlign: TextAlign.center,
                         style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                              color: AppColors.navy,
-                              fontWeight: FontWeight.w700,
-                            ),
+                          color: AppColors.navy,
+                          fontWeight: FontWeight.w700,
+                        ),
                       ),
                     ],
                   ),
@@ -448,7 +494,11 @@ class _Status extends StatelessWidget {
       ),
       child: Text(
         label,
-        style: TextStyle(color: color, fontSize: 11, fontWeight: FontWeight.w800),
+        style: TextStyle(
+          color: color,
+          fontSize: 11,
+          fontWeight: FontWeight.w800,
+        ),
       ),
     );
   }
@@ -460,7 +510,14 @@ class _BarsCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     const List<double> values = <double>[42, 48, 45, 60, 58, 72];
-    const List<String> months = <String>['Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov'];
+    const List<String> months = <String>[
+      'Jun',
+      'Jul',
+      'Ago',
+      'Set',
+      'Out',
+      'Nov',
+    ];
     return CrismedCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -468,9 +525,9 @@ class _BarsCard extends StatelessWidget {
           const CrismedSectionTitle('Evolução de consultas'),
           Text(
             'Últimos 6 meses (exemplo visual)',
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: AppColors.inkMuted,
-                ),
+            style: Theme.of(
+              context,
+            ).textTheme.bodySmall?.copyWith(color: AppColors.inkMuted),
           ),
           const SizedBox(height: 12),
           SizedBox(
@@ -496,7 +553,10 @@ class _BarsCard extends StatelessWidget {
                           padding: const EdgeInsets.only(top: 6),
                           child: Text(
                             months[i],
-                            style: const TextStyle(fontSize: 11, color: AppColors.inkMuted),
+                            style: const TextStyle(
+                              fontSize: 11,
+                              color: AppColors.inkMuted,
+                            ),
                           ),
                         );
                       },
@@ -614,9 +674,16 @@ class _Legend extends StatelessWidget {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: <Widget>[
-        Container(width: 8, height: 8, decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
+        Container(
+          width: 8,
+          height: 8,
+          decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+        ),
         const SizedBox(width: 4),
-        Text(label, style: const TextStyle(fontSize: 12, color: AppColors.navy)),
+        Text(
+          label,
+          style: const TextStyle(fontSize: 12, color: AppColors.navy),
+        ),
       ],
     );
   }
@@ -694,7 +761,13 @@ class _Band extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: <Widget>[
-        SizedBox(width: 80, child: Text(label, style: const TextStyle(fontWeight: FontWeight.w700))),
+        SizedBox(
+          width: 80,
+          child: Text(
+            label,
+            style: const TextStyle(fontWeight: FontWeight.w700),
+          ),
+        ),
         Expanded(
           child: ClipRRect(
             borderRadius: AppRadius.pillAll,
@@ -707,7 +780,10 @@ class _Band extends StatelessWidget {
           ),
         ),
         const SizedBox(width: 8),
-        Text(value, style: const TextStyle(color: AppColors.inkMuted, fontSize: 12)),
+        Text(
+          value,
+          style: const TextStyle(color: AppColors.inkMuted, fontSize: 12),
+        ),
       ],
     );
   }
@@ -718,10 +794,15 @@ class _AlertsCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const List<(IconData, String, String)> alerts = <(IconData, String, String)>[
+    const List<(IconData, String, String)>
+    alerts = <(IconData, String, String)>[
       (Icons.vaccines_outlined, 'Vacina atrasada', 'Theo Nunes · pentavalente'),
       (Icons.science_outlined, 'Exame sem laudo', 'Lívia Costa · hemograma'),
-      (Icons.event_busy_outlined, 'Retorno sem confirmação', 'Miguel Alves · 7 dias'),
+      (
+        Icons.event_busy_outlined,
+        'Retorno sem confirmação',
+        'Miguel Alves · 7 dias',
+      ),
     ];
     return CrismedCard(
       child: Column(
@@ -736,7 +817,11 @@ class _AlertsCard extends StatelessWidget {
           for (final (IconData, String, String) alert in alerts)
             ListTile(
               contentPadding: EdgeInsets.zero,
-              leading: CrismedIconBubble(icon: alert.$1, color: AppColors.warning, size: 36),
+              leading: CrismedIconBubble(
+                icon: alert.$1,
+                color: AppColors.warning,
+                size: 36,
+              ),
               title: Text(alert.$2),
               subtitle: Text(alert.$3),
             ),

@@ -33,46 +33,192 @@ class _Destination {
 }
 
 const List<_Destination> _professionalSidebar = <_Destination>[
-  _Destination(route: Routes.homePath, label: 'Dashboard', icon: Icons.dashboard_rounded),
-  _Destination(route: Routes.agendaPath, label: 'Agenda', icon: Icons.calendar_month_rounded, professionalOnly: true),
-  _Destination(route: Routes.patientsPath, label: 'Pacientes', icon: Icons.groups_rounded, professionalOnly: true),
-  _Destination(route: Routes.consultasPath, label: 'Consultas', icon: Icons.medical_services_rounded, professionalOnly: true),
-  _Destination(route: Routes.chartHubPath, label: 'Prontuário', icon: Icons.folder_shared_rounded, professionalOnly: true),
-  _Destination(route: Routes.prescriptionsPath, label: 'Prescrições', icon: Icons.description_rounded, professionalOnly: true),
-  _Destination(route: Routes.examsHubPath, label: 'Exames', icon: Icons.biotech_rounded, professionalOnly: true),
-  _Destination(route: Routes.vaccinationHubPath, label: 'Vacinação', icon: Icons.vaccines_rounded, professionalOnly: true),
-  _Destination(route: Routes.growthHubPath, label: 'Crescimento', icon: Icons.show_chart_rounded, professionalOnly: true),
-  _Destination(route: Routes.childcarePath, label: 'Puericultura', icon: Icons.child_care_rounded, professionalOnly: true),
-  _Destination(route: Routes.multidisciplinaryPath, label: 'Multidisciplinar', icon: Icons.diversity_3_rounded, professionalOnly: true),
-  _Destination(route: Routes.financeHubPath, label: 'Financeiro', icon: Icons.account_balance_wallet_rounded, professionalOnly: true),
-  _Destination(route: Routes.reportsHubPath, label: 'Relatórios', icon: Icons.insights_rounded, professionalOnly: true),
-  _Destination(route: Routes.clinicalAiPath, label: 'IA Clínica', icon: Icons.auto_awesome_rounded, professionalOnly: true),
-  _Destination(route: Routes.patientAreaPath, label: 'Área do Paciente', icon: Icons.family_restroom_rounded),
-  _Destination(route: Routes.profilePath, label: 'Configurações', icon: Icons.settings_rounded),
+  _Destination(
+    route: Routes.homePath,
+    label: 'Dashboard',
+    icon: Icons.dashboard_rounded,
+  ),
+  _Destination(
+    route: Routes.agendaPath,
+    label: 'Agenda',
+    icon: Icons.calendar_month_rounded,
+    professionalOnly: true,
+  ),
+  _Destination(
+    route: Routes.patientsPath,
+    label: 'Pacientes',
+    icon: Icons.groups_rounded,
+    professionalOnly: true,
+  ),
+  _Destination(
+    route: Routes.consultasPath,
+    label: 'Consultas',
+    icon: Icons.medical_services_rounded,
+    professionalOnly: true,
+  ),
+  _Destination(
+    route: Routes.chartHubPath,
+    label: 'Prontuário',
+    icon: Icons.folder_shared_rounded,
+    professionalOnly: true,
+  ),
+  _Destination(
+    route: Routes.prescriptionsPath,
+    label: 'Prescrições',
+    icon: Icons.description_rounded,
+    professionalOnly: true,
+  ),
+  _Destination(
+    route: Routes.examsHubPath,
+    label: 'Exames',
+    icon: Icons.biotech_rounded,
+    professionalOnly: true,
+  ),
+  _Destination(
+    route: Routes.vaccinationHubPath,
+    label: 'Vacinação',
+    icon: Icons.vaccines_rounded,
+    professionalOnly: true,
+  ),
+  _Destination(
+    route: Routes.growthHubPath,
+    label: 'Crescimento',
+    icon: Icons.show_chart_rounded,
+    professionalOnly: true,
+  ),
+  _Destination(
+    route: Routes.childcarePath,
+    label: 'Puericultura',
+    icon: Icons.child_care_rounded,
+    professionalOnly: true,
+  ),
+  _Destination(
+    route: Routes.multidisciplinaryPath,
+    label: 'Multidisciplinar',
+    icon: Icons.diversity_3_rounded,
+    professionalOnly: true,
+  ),
+  _Destination(
+    route: Routes.financeHubPath,
+    label: 'Financeiro',
+    icon: Icons.account_balance_wallet_rounded,
+    professionalOnly: true,
+  ),
+  _Destination(
+    route: Routes.reportsHubPath,
+    label: 'Relatórios',
+    icon: Icons.insights_rounded,
+    professionalOnly: true,
+  ),
+  _Destination(
+    route: Routes.clinicalAiPath,
+    label: 'IA Clínica',
+    icon: Icons.auto_awesome_rounded,
+    professionalOnly: true,
+  ),
+  _Destination(
+    route: Routes.aiHubPath,
+    label: 'Central de IA',
+    icon: Icons.psychology_rounded,
+    professionalOnly: true,
+  ),
+  _Destination(
+    route: Routes.unitsPath,
+    label: 'Unidades',
+    icon: Icons.apartment_rounded,
+    professionalOnly: true,
+  ),
+  _Destination(
+    route: Routes.insuranceHubPath,
+    label: 'Convênios',
+    icon: Icons.health_and_safety_rounded,
+    professionalOnly: true,
+  ),
+  _Destination(
+    route: Routes.patientAreaPath,
+    label: 'Área do Paciente',
+    icon: Icons.family_restroom_rounded,
+  ),
+  _Destination(
+    route: Routes.profilePath,
+    label: 'Configurações',
+    icon: Icons.settings_rounded,
+  ),
 ];
 
 const List<_Destination> _professionalPrimary = <_Destination>[
-  _Destination(route: Routes.homePath, label: 'Início', icon: Icons.dashboard_rounded),
-  _Destination(route: Routes.agendaPath, label: 'Agenda', icon: Icons.calendar_month_rounded, professionalOnly: true),
-  _Destination(route: Routes.patientsPath, label: 'Pacientes', icon: Icons.groups_rounded, professionalOnly: true),
-  _Destination(route: Routes.consultasPath, label: 'Consultas', icon: Icons.medical_services_rounded, professionalOnly: true),
+  _Destination(
+    route: Routes.homePath,
+    label: 'Início',
+    icon: Icons.dashboard_rounded,
+  ),
+  _Destination(
+    route: Routes.agendaPath,
+    label: 'Agenda',
+    icon: Icons.calendar_month_rounded,
+    professionalOnly: true,
+  ),
+  _Destination(
+    route: Routes.patientsPath,
+    label: 'Pacientes',
+    icon: Icons.groups_rounded,
+    professionalOnly: true,
+  ),
+  _Destination(
+    route: Routes.consultasPath,
+    label: 'Consultas',
+    icon: Icons.medical_services_rounded,
+    professionalOnly: true,
+  ),
   _Destination(route: '__menu__', label: 'Mais', icon: Icons.menu_rounded),
 ];
 
 const List<_Destination> _familyDestinations = <_Destination>[
-  _Destination(route: Routes.homePath, label: 'Início', icon: Icons.home_rounded),
-  _Destination(route: Routes.patientAreaPath, label: 'Família', icon: Icons.family_restroom_rounded),
+  _Destination(
+    route: Routes.homePath,
+    label: 'Início',
+    icon: Icons.home_rounded,
+  ),
+  _Destination(
+    route: Routes.patientAreaPath,
+    label: 'Família',
+    icon: Icons.family_restroom_rounded,
+  ),
   _Destination(route: Routes.kidsPath, label: 'Kids', icon: Icons.toys_rounded),
-  _Destination(route: Routes.diaryPath, label: 'Diário', icon: Icons.menu_book_rounded),
-  _Destination(route: Routes.libraryPath, label: 'Biblioteca', icon: Icons.local_library_rounded),
-  _Destination(route: Routes.profilePath, label: 'Configurações', icon: Icons.settings_rounded),
+  _Destination(
+    route: Routes.diaryPath,
+    label: 'Diário',
+    icon: Icons.menu_book_rounded,
+  ),
+  _Destination(
+    route: Routes.libraryPath,
+    label: 'Biblioteca',
+    icon: Icons.local_library_rounded,
+  ),
+  _Destination(
+    route: Routes.profilePath,
+    label: 'Configurações',
+    icon: Icons.settings_rounded,
+  ),
 ];
 
 const List<_Destination> _familyPrimary = <_Destination>[
-  _Destination(route: Routes.homePath, label: 'Início', icon: Icons.home_rounded),
-  _Destination(route: Routes.patientAreaPath, label: 'Família', icon: Icons.family_restroom_rounded),
+  _Destination(
+    route: Routes.homePath,
+    label: 'Início',
+    icon: Icons.home_rounded,
+  ),
+  _Destination(
+    route: Routes.patientAreaPath,
+    label: 'Família',
+    icon: Icons.family_restroom_rounded,
+  ),
   _Destination(route: Routes.kidsPath, label: 'Kids', icon: Icons.toys_rounded),
-  _Destination(route: Routes.libraryPath, label: 'Biblioteca', icon: Icons.local_library_rounded),
+  _Destination(
+    route: Routes.libraryPath,
+    label: 'Biblioteca',
+    icon: Icons.local_library_rounded,
+  ),
   _Destination(route: '__menu__', label: 'Mais', icon: Icons.menu_rounded),
 ];
 
@@ -85,7 +231,9 @@ class AppShell extends ConsumerWidget {
 
   List<_Destination> _sidebarFor(AppUser? user) {
     final bool isPro = user?.role.isProfessional ?? false;
-    final List<_Destination> base = isPro ? _professionalSidebar : _familyDestinations;
+    final List<_Destination> base = isPro
+        ? _professionalSidebar
+        : _familyDestinations;
     return base
         .where((_Destination d) => !d.professionalOnly || isPro)
         .toList(growable: false);
@@ -93,7 +241,9 @@ class AppShell extends ConsumerWidget {
 
   List<_Destination> _primaryFor(AppUser? user) {
     final bool isPro = user?.role.isProfessional ?? false;
-    final List<_Destination> base = isPro ? _professionalPrimary : _familyPrimary;
+    final List<_Destination> base = isPro
+        ? _professionalPrimary
+        : _familyPrimary;
     return base
         .where((_Destination d) => !d.professionalOnly || isPro)
         .toList(growable: false);
@@ -118,17 +268,23 @@ class AppShell extends ConsumerWidget {
   bool _matches(List<_Destination> destinations) {
     for (final _Destination d in destinations) {
       if (d.route == '__menu__') continue;
-      if (location == d.route || location.startsWith('${d.route}/')) return true;
+      if (location == d.route || location.startsWith('${d.route}/'))
+        return true;
     }
     return false;
   }
 
-  void _go(BuildContext context, _Destination destination, List<_Destination> menu) {
+  void _go(
+    BuildContext context,
+    _Destination destination,
+    List<_Destination> menu,
+  ) {
     if (destination.route == '__menu__') {
       _openMenu(context, menu);
       return;
     }
-    if (location == destination.route || location.startsWith('${destination.route}/')) {
+    if (location == destination.route ||
+        location.startsWith('${destination.route}/')) {
       return;
     }
     context.go(destination.route);
@@ -180,7 +336,8 @@ class AppShell extends ConsumerWidget {
       ],
     );
 
-    final bool wide = context.screenSize == ScreenSize.expanded ||
+    final bool wide =
+        context.screenSize == ScreenSize.expanded ||
         context.screenSize == ScreenSize.large;
 
     if (!wide) {
@@ -192,10 +349,7 @@ class AppShell extends ConsumerWidget {
           onDestinationSelected: (int i) => _go(context, primary[i], sidebar),
           destinations: <NavigationDestination>[
             for (final _Destination d in primary)
-              NavigationDestination(
-                icon: Icon(d.icon),
-                label: d.label,
-              ),
+              NavigationDestination(icon: Icon(d.icon), label: d.label),
           ],
         ),
       );
@@ -282,13 +436,18 @@ class _CrismedSidebar extends ConsumerWidget {
                   return Padding(
                     padding: const EdgeInsets.only(bottom: 4),
                     child: Material(
-                      color: selected ? AppColors.pinkActive : Colors.transparent,
+                      color: selected
+                          ? AppColors.pinkActive
+                          : Colors.transparent,
                       borderRadius: AppRadius.lgAll,
                       child: InkWell(
                         onTap: () => onSelected(i),
                         borderRadius: AppRadius.lgAll,
                         child: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 10,
+                          ),
                           child: Row(
                             children: <Widget>[
                               Icon(d.icon, size: 20, color: Colors.white),
@@ -298,7 +457,9 @@ class _CrismedSidebar extends ConsumerWidget {
                                   d.label,
                                   style: theme.textTheme.labelLarge?.copyWith(
                                     color: Colors.white,
-                                    fontWeight: selected ? FontWeight.w800 : FontWeight.w600,
+                                    fontWeight: selected
+                                        ? FontWeight.w800
+                                        : FontWeight.w600,
                                   ),
                                 ),
                               ),
@@ -316,7 +477,8 @@ class _CrismedSidebar extends ConsumerWidget {
               child: TiaCrisMascot(height: 108),
             ),
             TextButton.icon(
-              onPressed: () => ref.read(authControllerProvider.notifier).signOut(),
+              onPressed: () =>
+                  ref.read(authControllerProvider.notifier).signOut(),
               icon: const Icon(Icons.logout_rounded, color: Colors.white),
               label: const Text('Sair', style: TextStyle(color: Colors.white)),
             ),

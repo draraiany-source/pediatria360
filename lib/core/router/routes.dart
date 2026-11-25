@@ -91,7 +91,8 @@ class Routes {
   static const String aiChatPath = 'conversa/:conversationId';
   static const String aiChatName = 'ai-chat';
 
-  static String aiChat(String conversationId) => '$aiPath/conversa/$conversationId';
+  static String aiChat(String conversationId) =>
+      '$aiPath/conversa/$conversationId';
 
   // Cursos e streaming
   static const String coursesPath = '/cursos';
@@ -239,7 +240,8 @@ class Routes {
   static const String supplementName = 'supplement';
   static const String supplementMicronutrientsPath =
       '/suplementacao/micronutrientes';
-  static const String supplementMicronutrientsName = 'supplement-micronutrients';
+  static const String supplementMicronutrientsName =
+      'supplement-micronutrients';
   static const String supplementMicronutrientPath =
       '/suplementacao/micronutrientes/:id';
   static const String supplementMicronutrientName = 'supplement-micronutrient';
@@ -305,7 +307,6 @@ class Routes {
   static const String leaderboardPath = '/ranking';
   static const String leaderboardName = 'leaderboard';
 
-
   // Organizacao / clinica (multitenant FASE 1b)
   static const String clinicOrgPath = '/clinica';
   static const String clinicOrgName = 'clinic-org';
@@ -329,6 +330,12 @@ class Routes {
   static const String childcareName = 'puericultura';
   static const String multidisciplinaryPath = '/multidisciplinar';
   static const String multidisciplinaryName = 'multidisciplinar';
+  static const String unitsPath = '/unidades';
+  static const String unitsName = 'unidades';
+  static const String insuranceHubPath = '/convenios';
+  static const String insuranceHubName = 'convenios';
+  static const String aiHubPath = '/central-ia';
+  static const String aiHubName = 'central-ia';
   static const String financeHubPath = '/painel-financeiro';
   static const String financeHubName = 'painel-financeiro';
   static const String reportsHubPath = '/relatorios';

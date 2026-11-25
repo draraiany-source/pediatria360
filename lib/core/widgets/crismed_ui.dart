@@ -22,7 +22,9 @@ class CrismedLogo extends StatelessWidget {
       width: size,
       height: size,
       decoration: BoxDecoration(
-        color: onDark ? Colors.white.withValues(alpha: 0.16) : AppColors.softLilac,
+        color: onDark
+            ? Colors.white.withValues(alpha: 0.16)
+            : AppColors.softLilac,
         borderRadius: BorderRadius.circular(size * 0.32),
       ),
       child: Icon(Icons.monitor_heart_rounded, color: fg, size: size * 0.58),
@@ -53,9 +55,9 @@ class TiaCrisMascot extends StatelessWidget {
         Text(
           'Tia Cris',
           style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                color: Colors.white,
-                fontWeight: FontWeight.w800,
-              ),
+            color: Colors.white,
+            fontWeight: FontWeight.w800,
+          ),
         ),
       ],
     );
@@ -96,11 +98,7 @@ class CrismedCard extends StatelessWidget {
       clipBehavior: Clip.antiAlias,
       child: onTap == null
           ? inner
-          : InkWell(
-              onTap: onTap,
-              borderRadius: AppRadius.xlAll,
-              child: inner,
-            ),
+          : InkWell(onTap: onTap, borderRadius: AppRadius.xlAll, child: inner),
     );
   }
 }
@@ -149,16 +147,20 @@ class CrismedSampleBanner extends StatelessWidget {
       ),
       child: Row(
         children: <Widget>[
-          const Icon(Icons.science_outlined, color: AppColors.warning, size: 18),
+          const Icon(
+            Icons.science_outlined,
+            color: AppColors.warning,
+            size: 18,
+          ),
           const SizedBox(width: 8),
           Expanded(
             child: Text(
               message ??
                   'Dados de exemplo — esta sessão não tem registros reais deste módulo.',
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: AppColors.navy,
-                    fontWeight: FontWeight.w600,
-                  ),
+                color: AppColors.navy,
+                fontWeight: FontWeight.w600,
+              ),
             ),
           ),
         ],
@@ -222,15 +224,15 @@ class CrismedPageHeader extends StatelessWidget {
           spacing: 8,
           runSpacing: 8,
           children: <Widget>[
-            OutlinedButton.icon(
+            FilledButton.icon(
               onPressed: onAi,
               icon: const Icon(Icons.auto_awesome_rounded, size: 18),
               label: const Text('IA da Tia Cris'),
-              style: OutlinedButton.styleFrom(
-                foregroundColor: AppColors.brand,
-                backgroundColor: AppColors.softLilac,
-                side: const BorderSide(color: AppColors.brandSoft),
-                minimumSize: const Size(0, 44),
+              style: FilledButton.styleFrom(
+                backgroundColor: AppColors.brand,
+                foregroundColor: Colors.white,
+                minimumSize: const Size(0, 42),
+                padding: const EdgeInsets.symmetric(horizontal: 14),
               ),
             ),
             if (primaryLabel != null)
@@ -239,9 +241,10 @@ class CrismedPageHeader extends StatelessWidget {
                 icon: const Icon(Icons.add_rounded, size: 18),
                 label: Text(primaryLabel!),
                 style: FilledButton.styleFrom(
-                  backgroundColor: AppColors.action,
+                  backgroundColor: const Color(0xFF6A45B0),
                   foregroundColor: Colors.white,
-                  minimumSize: const Size(0, 44),
+                  minimumSize: const Size(0, 42),
+                  padding: const EdgeInsets.symmetric(horizontal: 14),
                 ),
               ),
           ],
@@ -249,11 +252,7 @@ class CrismedPageHeader extends StatelessWidget {
         if (stacked) {
           return Column(
             crossAxisAlignment: CrossAxisAlignment.start,
-            children: <Widget>[
-              titles,
-              const SizedBox(height: 12),
-              buttons,
-            ],
+            children: <Widget>[titles, const SizedBox(height: 12), buttons],
           );
         }
         return Row(
@@ -302,7 +301,10 @@ class CrismedKpi extends StatelessWidget {
               const Spacer(),
               if (delta != null)
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 3,
+                  ),
                   decoration: BoxDecoration(
                     color: (positive ? AppColors.success : AppColors.danger)
                         .withValues(alpha: 0.12),
@@ -329,7 +331,9 @@ class CrismedKpi extends StatelessWidget {
           const SizedBox(height: 2),
           Text(
             label,
-            style: theme.textTheme.bodySmall?.copyWith(color: AppColors.inkMuted),
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: AppColors.inkMuted,
+            ),
           ),
         ],
       ),
@@ -480,15 +484,15 @@ class _Metric extends StatelessWidget {
           Text(
             value,
             style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                  color: AppColors.brand,
-                  fontWeight: FontWeight.w800,
-                ),
+              color: AppColors.brand,
+              fontWeight: FontWeight.w800,
+            ),
           ),
           Text(
             label,
-            style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                  color: AppColors.inkMuted,
-                ),
+            style: Theme.of(
+              context,
+            ).textTheme.labelSmall?.copyWith(color: AppColors.inkMuted),
           ),
         ],
       ),
@@ -565,9 +569,9 @@ class CrismedClinicFooter extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final TextStyle? style = Theme.of(context).textTheme.labelSmall?.copyWith(
-          color: AppColors.inkMuted,
-        );
+    final TextStyle? style = Theme.of(
+      context,
+    ).textTheme.labelSmall?.copyWith(color: AppColors.inkMuted);
     return Padding(
       padding: const EdgeInsets.only(top: 8),
       child: Wrap(
@@ -597,15 +601,227 @@ class CrismedSectionTitle extends StatelessWidget {
       child: Text(
         text,
         style: Theme.of(context).textTheme.titleMedium?.copyWith(
-              color: AppColors.navy,
-              fontWeight: FontWeight.w800,
-            ),
+          color: AppColors.navy,
+          fontWeight: FontWeight.w800,
+        ),
       ),
     );
   }
 }
 
 /// Página padrão: banner opcional, conteúdo rolável e barra de ações.
+/// Paciente ilustrativo das referências. Só aparece com o aviso de exemplo.
+class CrismedDemoPatient {
+  const CrismedDemoPatient._();
+
+  static const String name = 'Enzo Gabriel';
+  static const String age = '5 anos e 2 meses';
+  static const String birth = '20/08/2021';
+  static const String weight = '18,4 kg';
+  static const String height = '112 cm';
+  static const String bmi = '14,7';
+  static const String percentile = 'P62';
+}
+
+class CrismedPatientBanner extends StatelessWidget {
+  const CrismedPatientBanner({
+    required this.name,
+    required this.age,
+    this.birth,
+    this.weight,
+    this.height,
+    this.bmi,
+    this.percentile,
+    this.example = false,
+    this.onChart,
+    super.key,
+  });
+
+  final String name;
+  final String age;
+  final String? birth;
+  final String? weight;
+  final String? height;
+  final String? bmi;
+  final String? percentile;
+  final bool example;
+  final VoidCallback? onChart;
+
+  @override
+  Widget build(BuildContext context) {
+    final ThemeData theme = Theme.of(context);
+    return CrismedCard(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      child: Row(
+        children: <Widget>[
+          CircleAvatar(
+            radius: 26,
+            backgroundColor: AppColors.softLilac,
+            child: Text(
+              name.isEmpty ? '?' : name.characters.first.toUpperCase(),
+              style: theme.textTheme.titleLarge?.copyWith(
+                color: AppColors.brand,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                Text(
+                  name,
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.navy,
+                  ),
+                ),
+                Text(
+                  birth == null ? age : '$age  ·  Nasc.: $birth',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: AppColors.inkMuted,
+                  ),
+                ),
+                if (example)
+                  Text(
+                    'Dados de exemplo',
+                    style: theme.textTheme.labelSmall?.copyWith(
+                      color: AppColors.warning,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+              ],
+            ),
+          ),
+          if (weight != null)
+            _PillMetric(
+              icon: Icons.monitor_weight_outlined,
+              label: 'Peso',
+              value: weight!,
+              extra: percentile,
+            ),
+          if (height != null) ...<Widget>[
+            const SizedBox(width: 8),
+            _PillMetric(
+              icon: Icons.height_rounded,
+              label: 'Estatura',
+              value: height!,
+              extra: percentile,
+            ),
+          ],
+          if (bmi != null) ...<Widget>[
+            const SizedBox(width: 8),
+            _PillMetric(
+              icon: Icons.speed_rounded,
+              label: 'IMC',
+              value: bmi!,
+              extra: percentile,
+            ),
+          ],
+          if (onChart != null) ...<Widget>[
+            const SizedBox(width: 8),
+            OutlinedButton.icon(
+              onPressed: onChart,
+              icon: const Icon(Icons.folder_shared_outlined, size: 16),
+              label: const Text('Ver Prontuário'),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _PillMetric extends StatelessWidget {
+  const _PillMetric({
+    required this.icon,
+    required this.label,
+    required this.value,
+    this.extra,
+  });
+
+  final IconData icon;
+  final String label;
+  final String value;
+  final String? extra;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      decoration: BoxDecoration(
+        color: AppColors.softLilac,
+        borderRadius: AppRadius.lgAll,
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: <Widget>[
+          Icon(icon, size: 16, color: AppColors.brand),
+          const SizedBox(width: 6),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              Text(
+                label,
+                style: const TextStyle(fontSize: 10, color: AppColors.inkMuted),
+              ),
+              Text(
+                extra == null ? value : '$value  $extra',
+                style: const TextStyle(
+                  fontWeight: FontWeight.w800,
+                  color: AppColors.navy,
+                  fontSize: 12,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class CrismedCheckLine extends StatelessWidget {
+  const CrismedCheckLine(
+    this.label, {
+    this.trailing,
+    this.ok = true,
+    super.key,
+  });
+
+  final String label;
+  final String? trailing;
+  final bool ok;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 3),
+      child: Row(
+        children: <Widget>[
+          Icon(
+            ok ? Icons.check_circle_rounded : Icons.error_outline_rounded,
+            size: 16,
+            color: ok ? AppColors.success : AppColors.warning,
+          ),
+          const SizedBox(width: 8),
+          Expanded(child: Text(label, style: const TextStyle(fontSize: 13))),
+          if (trailing != null)
+            Text(
+              trailing!,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+                color: ok ? AppColors.inkMuted : AppColors.warning,
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
 class CrismedScaffold extends StatelessWidget {
   const CrismedScaffold({
     required this.body,
@@ -622,9 +838,7 @@ class CrismedScaffold extends StatelessWidget {
       backgroundColor: AppColors.lightBackground,
       body: Column(
         children: <Widget>[
-          Expanded(
-            child: body,
-          ),
+          Expanded(child: body),
           if (actions.isNotEmpty) CrismedActionBar(actions: actions),
         ],
       ),
@@ -686,7 +900,8 @@ class CrismedWrap extends StatelessWidget {
           spacing: spacing,
           runSpacing: spacing,
           children: <Widget>[
-            for (final Widget child in children) SizedBox(width: width, child: child),
+            for (final Widget child in children)
+              SizedBox(width: width, child: child),
           ],
         );
       },

@@ -16,7 +16,8 @@ class CrismedAgendaScreen extends ConsumerStatefulWidget {
   const CrismedAgendaScreen({super.key});
 
   @override
-  ConsumerState<CrismedAgendaScreen> createState() => _CrismedAgendaScreenState();
+  ConsumerState<CrismedAgendaScreen> createState() =>
+      _CrismedAgendaScreenState();
 }
 
 class _CrismedAgendaScreenState extends ConsumerState<CrismedAgendaScreen> {
@@ -26,13 +27,22 @@ class _CrismedAgendaScreenState extends ConsumerState<CrismedAgendaScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final AsyncValue<List<Appointment>> async =
-        ref.watch(unitScopedMyAgendaProvider);
+    final AsyncValue<List<Appointment>> async = ref.watch(
+      unitScopedMyAgendaProvider,
+    );
     final List<Appointment> all = async.valueOrNull ?? const <Appointment>[];
     final bool sample = !async.isLoading && all.isEmpty;
-    final DateTime day = DateTime(_selected.year, _selected.month, _selected.day);
+    final DateTime day = DateTime(
+      _selected.year,
+      _selected.month,
+      _selected.day,
+    );
     final List<Appointment> ofDay = all.where((Appointment a) {
-      final DateTime d = DateTime(a.startsAt.year, a.startsAt.month, a.startsAt.day);
+      final DateTime d = DateTime(
+        a.startsAt.year,
+        a.startsAt.month,
+        a.startsAt.day,
+      );
       return d == day;
     }).toList();
 
@@ -57,7 +67,17 @@ class _CrismedAgendaScreenState extends ConsumerState<CrismedAgendaScreen> {
 
     final List<_Slot> visible = _filter == 0
         ? slots
-        : slots.where((_Slot s) => s.status == const <String>['Confirmada', 'Aguardando', 'Encaixe'][_filter - 1]).toList();
+        : slots
+              .where(
+                (_Slot s) =>
+                    s.status ==
+                    const <String>[
+                      'Confirmada',
+                      'Aguardando',
+                      'Encaixe',
+                    ][_filter - 1],
+              )
+              .toList();
 
     return CrismedScaffold(
       actions: <CrismedActionSpec>[
@@ -85,12 +105,18 @@ class _CrismedAgendaScreenState extends ConsumerState<CrismedAgendaScreen> {
             subtitle: _view == 0
                 ? 'Visão do dia'
                 : _view == 1
-                    ? 'Visão da semana'
-                    : 'Visão do mês',
+                ? 'Visão da semana'
+                : 'Visão do mês',
             icon: Icons.calendar_month_rounded,
             primaryLabel: 'Encaixe',
-            onPrimary: () => crismedToast(context, 'Encaixe visual — use a agenda operacional para gravar.'),
-            onAi: () => crismedToast(context, 'Sugestão da IA: concentrar retornos após as 14h (exemplo).'),
+            onPrimary: () => crismedToast(
+              context,
+              'Encaixe visual — use a agenda operacional para gravar.',
+            ),
+            onAi: () => crismedToast(
+              context,
+              'Sugestão da IA: concentrar retornos após as 14h (exemplo).',
+            ),
           ),
           const SizedBox(height: 14),
           CrismedWrap(
@@ -142,7 +168,12 @@ class _CrismedAgendaScreenState extends ConsumerState<CrismedAgendaScreen> {
             )
           else ...<Widget>[
             CrismedPillTabs(
-              labels: const <String>['Todos', 'Confirmada', 'Aguardando', 'Encaixe'],
+              labels: const <String>[
+                'Todos',
+                'Confirmada',
+                'Aguardando',
+                'Encaixe',
+              ],
               index: _filter,
               onChanged: (int i) => setState(() => _filter = i),
             ),
@@ -197,18 +228,37 @@ class _SlotTile extends StatelessWidget {
           children: <Widget>[
             Text(
               slot.time,
-              style: const TextStyle(fontWeight: FontWeight.w800, color: AppColors.brand),
+              style: const TextStyle(
+                fontWeight: FontWeight.w800,
+                color: AppColors.brand,
+              ),
             ),
             const SizedBox(width: 12),
-            Expanded(child: Text(slot.name, style: const TextStyle(fontWeight: FontWeight.w700))),
+            Expanded(
+              child: Text(
+                slot.name,
+                style: const TextStyle(fontWeight: FontWeight.w700),
+              ),
+            ),
             if (!pause && slot.video)
-              const Icon(Icons.videocam_rounded, color: AppColors.brand, size: 18),
+              const Icon(
+                Icons.videocam_rounded,
+                color: AppColors.brand,
+                size: 18,
+              ),
             if (!pause)
               const Padding(
                 padding: EdgeInsets.symmetric(horizontal: 6),
-                child: Icon(Icons.chat_rounded, color: AppColors.success, size: 18),
+                child: Icon(
+                  Icons.chat_rounded,
+                  color: AppColors.success,
+                  size: 18,
+                ),
               ),
-            Text(slot.status, style: const TextStyle(color: AppColors.inkMuted)),
+            Text(
+              slot.status,
+              style: const TextStyle(color: AppColors.inkMuted),
+            ),
           ],
         ),
       ),
@@ -232,7 +282,10 @@ class _MonthGrid extends StatelessWidget {
         children: <Widget>[
           Text(
             '${_monthName(selected.month)} ${selected.year}',
-            style: const TextStyle(fontWeight: FontWeight.w800, color: AppColors.navy),
+            style: const TextStyle(
+              fontWeight: FontWeight.w800,
+              color: AppColors.navy,
+            ),
           ),
           const SizedBox(height: 8),
           GridView.count(
@@ -243,7 +296,8 @@ class _MonthGrid extends StatelessWidget {
               for (int i = 0; i < lead; i++) const SizedBox.shrink(),
               for (int d = 1; d <= days; d++)
                 InkWell(
-                  onTap: () => onSelect(DateTime(selected.year, selected.month, d)),
+                  onTap: () =>
+                      onSelect(DateTime(selected.year, selected.month, d)),
                   child: Center(
                     child: CircleAvatar(
                       radius: 16,
@@ -253,7 +307,9 @@ class _MonthGrid extends StatelessWidget {
                       child: Text(
                         '$d',
                         style: TextStyle(
-                          color: d == selected.day ? Colors.white : AppColors.navy,
+                          color: d == selected.day
+                              ? Colors.white
+                              : AppColors.navy,
                           fontWeight: FontWeight.w700,
                         ),
                       ),
@@ -302,14 +358,15 @@ class _CrismedPatientsScreenState extends ConsumerState<CrismedPatientsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final AsyncValue<List<PatientSummary>> async =
-        ref.watch(professionalPatientsProvider);
+    final AsyncValue<List<PatientSummary>> async = ref.watch(
+      professionalPatientsProvider,
+    );
     final List<PatientSummary> all =
         async.valueOrNull ?? const <PatientSummary>[];
     final bool sample = !async.isLoading && all.isEmpty;
     final List<PatientSummary> filtered = all.where((PatientSummary p) {
-      final bool text = _query.isEmpty ||
-          p.name.toLowerCase().contains(_query.toLowerCase());
+      final bool text =
+          _query.isEmpty || p.name.toLowerCase().contains(_query.toLowerCase());
       final bool status = switch (_filter) {
         1 => p.encounterCount > 0,
         2 => p.hasOpenDraft || p.lastEncounterAt != null,
@@ -331,13 +388,13 @@ class _CrismedPatientsScreenState extends ConsumerState<CrismedPatientsScreen> {
           onPressed: current == null
               ? () => context.go(Routes.chartHubPath)
               : () => Navigator.of(context).push(
-                    MaterialPageRoute<void>(
-                      builder: (_) => PatientTimelineScreen(
-                        patientId: current.patientId,
-                        patientName: current.name,
-                      ),
+                  MaterialPageRoute<void>(
+                    builder: (_) => PatientTimelineScreen(
+                      patientId: current.patientId,
+                      patientName: current.name,
                     ),
                   ),
+                ),
         ),
       ],
       body: CrismedBody(
@@ -423,7 +480,9 @@ class _CrismedPatientsScreenState extends ConsumerState<CrismedPatientsScreen> {
                         padding: const EdgeInsets.only(bottom: 8),
                         child: CrismedCard(
                           onTap: () => setState(() => _selected = i),
-                          color: i == _selected ? AppColors.softLilac : Colors.white,
+                          color: i == _selected
+                              ? AppColors.softLilac
+                              : Colors.white,
                           child: Row(
                             children: <Widget>[
                               CircleAvatar(
@@ -437,13 +496,17 @@ class _CrismedPatientsScreenState extends ConsumerState<CrismedPatientsScreen> {
                                   children: <Widget>[
                                     Text(
                                       filtered[i].name,
-                                      style: const TextStyle(fontWeight: FontWeight.w800),
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.w800,
+                                      ),
                                     ),
                                     Text(
                                       filtered[i].ageLabel.isEmpty
                                           ? 'Idade não informada'
                                           : filtered[i].ageLabel,
-                                      style: const TextStyle(color: AppColors.inkMuted),
+                                      style: const TextStyle(
+                                        color: AppColors.inkMuted,
+                                      ),
                                     ),
                                   ],
                                 ),
@@ -503,8 +566,16 @@ class _FakePatient extends StatelessWidget {
               child: Text(name.characters.first),
             ),
             const SizedBox(width: 10),
-            Expanded(child: Text(name, style: const TextStyle(fontWeight: FontWeight.w800))),
-            const Text('Exemplo', style: TextStyle(color: AppColors.warning, fontSize: 12)),
+            Expanded(
+              child: Text(
+                name,
+                style: const TextStyle(fontWeight: FontWeight.w800),
+              ),
+            ),
+            const Text(
+              'Exemplo',
+              style: TextStyle(color: AppColors.warning, fontSize: 12),
+            ),
           ],
         ),
       ),
@@ -555,15 +626,16 @@ class _PatientDetail extends StatelessWidget {
         ),
         const SizedBox(height: 10),
         CrismedCard(
-          child: Text(
-            switch (tab) {
-              1 => 'Curva OMS ilustrativa. Abra Crescimento para a curva da criança cadastrada.',
-              2 => 'Carteira ilustrativa. O calendário PNI real fica em Vacinação da criança.',
-              3 => 'Responsável: Ana Martins · WhatsApp (exemplo).',
-              4 => 'Próximas ações: retorno em 7 dias, vacina e curva de peso.',
-              _ => 'Acompanhamento pediátrico, última consulta e percentis de exemplo quando não há medição ligada a este resumo.',
-            },
-          ),
+          child: Text(switch (tab) {
+            1 =>
+              'Curva OMS ilustrativa. Abra Crescimento para a curva da criança cadastrada.',
+            2 =>
+              'Carteira ilustrativa. O calendário PNI real fica em Vacinação da criança.',
+            3 => 'Responsável: Ana Martins · WhatsApp (exemplo).',
+            4 => 'Próximas ações: retorno em 7 dias, vacina e curva de peso.',
+            _ =>
+              'Acompanhamento pediátrico, última consulta e percentis de exemplo quando não há medição ligada a este resumo.',
+          }),
         ),
       ],
     );
@@ -578,7 +650,8 @@ class CrismedConsultasScreen extends ConsumerStatefulWidget {
       _CrismedConsultasScreenState();
 }
 
-class _CrismedConsultasScreenState extends ConsumerState<CrismedConsultasScreen> {
+class _CrismedConsultasScreenState
+    extends ConsumerState<CrismedConsultasScreen> {
   int _tab = 0;
   int _seconds = 0;
   bool _running = false;
@@ -644,7 +717,13 @@ class _CrismedConsultasScreenState extends ConsumerState<CrismedConsultasScreen>
                     style: TextStyle(fontWeight: FontWeight.w800),
                   ),
                 ),
-                Text(clock, style: const TextStyle(color: AppColors.brand, fontWeight: FontWeight.w800)),
+                Text(
+                  clock,
+                  style: const TextStyle(
+                    color: AppColors.brand,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
               ],
             ),
           ),
@@ -653,7 +732,10 @@ class _CrismedConsultasScreenState extends ConsumerState<CrismedConsultasScreen>
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
-                Text('Fila do dia', style: TextStyle(fontWeight: FontWeight.w800)),
+                Text(
+                  'Fila do dia',
+                  style: TextStyle(fontWeight: FontWeight.w800),
+                ),
                 SizedBox(height: 6),
                 Text('1. Helena Martins — em atendimento'),
                 Text('2. Miguel Alves — aguardando'),
@@ -677,16 +759,26 @@ class _CrismedConsultasScreenState extends ConsumerState<CrismedConsultasScreen>
           ),
           const SizedBox(height: 10),
           if (_tab == 0) ...<Widget>[
-            const TextField(decoration: InputDecoration(labelText: 'Queixa principal (QP)')),
+            const TextField(
+              decoration: InputDecoration(labelText: 'Queixa principal (QP)'),
+            ),
             const SizedBox(height: 8),
             const TextField(
-              decoration: InputDecoration(labelText: 'História da doença atual (HDA)'),
+              decoration: InputDecoration(
+                labelText: 'História da doença atual (HDA)',
+              ),
               maxLines: 3,
             ),
             const SizedBox(height: 8),
-            const TextField(decoration: InputDecoration(labelText: 'Antecedentes')),
+            const TextField(
+              decoration: InputDecoration(labelText: 'Antecedentes'),
+            ),
           ] else if (_tab == 1) ...<Widget>[
-            const TextField(decoration: InputDecoration(labelText: 'Peso / estatura / FC / FR / Temp')),
+            const TextField(
+              decoration: InputDecoration(
+                labelText: 'Peso / estatura / FC / FR / Temp',
+              ),
+            ),
             const SizedBox(height: 8),
             const TextField(
               decoration: InputDecoration(labelText: 'Exame físico'),
@@ -730,12 +822,18 @@ class _CrismedChartScreenState extends State<CrismedChartScreen> {
         CrismedActionSpec(
           label: 'Anexo',
           icon: Icons.attach_file_rounded,
-          onPressed: () => crismedToast(context, 'Anexo fica no prontuário real do paciente.'),
+          onPressed: () => crismedToast(
+            context,
+            'Anexo fica no prontuário real do paciente.',
+          ),
         ),
         CrismedActionSpec(
           label: 'PDF',
           icon: Icons.picture_as_pdf_outlined,
-          onPressed: () => crismedToast(context, 'A exportação oficial continua no visualizador de documentos.'),
+          onPressed: () => crismedToast(
+            context,
+            'A exportação oficial continua no visualizador de documentos.',
+          ),
         ),
         CrismedActionSpec(
           label: 'Salvar evolução',
@@ -757,7 +855,10 @@ class _CrismedChartScreenState extends State<CrismedChartScreen> {
             subtitle: 'SOAP, linha do tempo e documentos',
             icon: Icons.folder_shared_rounded,
             primaryLabel: 'Assinar',
-            onPrimary: () => crismedToast(context, 'Assinatura digital permanece no fluxo do prontuário.'),
+            onPrimary: () => crismedToast(
+              context,
+              'Assinatura digital permanece no fluxo do prontuário.',
+            ),
             onAi: () => context.go(Routes.clinicalAiPath),
           ),
           const SizedBox(height: 12),
@@ -787,12 +888,34 @@ class _CrismedChartScreenState extends State<CrismedChartScreen> {
           ),
           const SizedBox(height: 12),
           if (_tab == 0) ...<Widget>[
-            const _Soap('S', 'Subjetivo', 'Mãe refere febre há 2 dias e tosse noturna.', AppColors.brand),
-            const _Soap('O', 'Objetivo', 'BEG, hidratada, ausculta limpa, orofaringe sem placas.', AppColors.success),
-            const _Soap('A', 'Avaliação', 'Quadro compatível com infecção de vias aéreas. Revisar.', AppColors.honey),
-            const _Soap('P', 'Plano', 'Hidratação, sintomáticos, retorno se piora. Sem prescrição automática.', AppColors.raspberry),
+            const _Soap(
+              'S',
+              'Subjetivo',
+              'Mãe refere febre há 2 dias e tosse noturna.',
+              AppColors.brand,
+            ),
+            const _Soap(
+              'O',
+              'Objetivo',
+              'BEG, hidratada, ausculta limpa, orofaringe sem placas.',
+              AppColors.success,
+            ),
+            const _Soap(
+              'A',
+              'Avaliação',
+              'Quadro compatível com infecção de vias aéreas. Revisar.',
+              AppColors.honey,
+            ),
+            const _Soap(
+              'P',
+              'Plano',
+              'Hidratação, sintomáticos, retorno se piora. Sem prescrição automática.',
+              AppColors.raspberry,
+            ),
             const SizedBox(height: 8),
-            const Text('Modelos de evolução: puericultura, respiratório, retorno (exemplo).'),
+            const Text(
+              'Modelos de evolução: puericultura, respiratório, retorno (exemplo).',
+            ),
           ] else
             const CrismedCard(
               child: Text(
@@ -823,14 +946,23 @@ class _Soap extends StatelessWidget {
           children: <Widget>[
             CircleAvatar(
               backgroundColor: color,
-              child: Text(letter, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800)),
+              child: Text(
+                letter,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
             ),
             const SizedBox(width: 12),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
-                  Text(title, style: const TextStyle(fontWeight: FontWeight.w800)),
+                  Text(
+                    title,
+                    style: const TextStyle(fontWeight: FontWeight.w800),
+                  ),
                   Text(body),
                 ],
               ),
@@ -878,7 +1010,10 @@ class _CrismedVaccinationScreenState extends State<CrismedVaccinationScreen> {
             icon: Icons.vaccines_rounded,
             primaryLabel: 'Carteirinha',
             onPrimary: () => setState(() => _tab = 4),
-            onAi: () => crismedToast(context, 'IA: revisar atraso de reforço (exemplo, sem aplicar dose).'),
+            onAi: () => crismedToast(
+              context,
+              'IA: revisar atraso de reforço (exemplo, sem aplicar dose).',
+            ),
           ),
           const SizedBox(height: 12),
           CrismedPillTabs(
@@ -900,9 +1035,16 @@ class _CrismedVaccinationScreenState extends State<CrismedVaccinationScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
-                  Text('Carteirinha digital (exemplo)', style: TextStyle(fontWeight: FontWeight.w800)),
+                  Text(
+                    'Carteirinha digital (exemplo)',
+                    style: TextStyle(fontWeight: FontWeight.w800),
+                  ),
                   SizedBox(height: 8),
-                  Icon(Icons.qr_code_2_rounded, size: 96, color: AppColors.brand),
+                  Icon(
+                    Icons.qr_code_2_rounded,
+                    size: 96,
+                    color: AppColors.brand,
+                  ),
                   Text('QR ilustrativo — não valida dose em campanha.'),
                 ],
               ),
@@ -910,7 +1052,9 @@ class _CrismedVaccinationScreenState extends State<CrismedVaccinationScreen> {
           else if (_tab == 5)
             CrismedCard(
               onTap: () => context.go(Routes.inventoryPath),
-              child: const Text('Lotes e estoque usam o módulo de estoque já existente. Toque para abrir.'),
+              child: const Text(
+                'Lotes e estoque usam o módulo de estoque já existente. Toque para abrir.',
+              ),
             )
           else
             const Column(
@@ -941,18 +1085,30 @@ class _Dose extends StatelessWidget {
       child: CrismedCard(
         child: Row(
           children: <Widget>[
-            const CrismedIconBubble(icon: Icons.vaccines_rounded, color: AppColors.raspberry),
+            const CrismedIconBubble(
+              icon: Icons.vaccines_rounded,
+              color: AppColors.raspberry,
+            ),
             const SizedBox(width: 10),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
-                  Text(name, style: const TextStyle(fontWeight: FontWeight.w800)),
+                  Text(
+                    name,
+                    style: const TextStyle(fontWeight: FontWeight.w800),
+                  ),
                   Text(when, style: const TextStyle(color: AppColors.inkMuted)),
                 ],
               ),
             ),
-            Text(status, style: const TextStyle(color: AppColors.brand, fontWeight: FontWeight.w700)),
+            Text(
+              status,
+              style: const TextStyle(
+                color: AppColors.brand,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
           ],
         ),
       ),
@@ -1007,7 +1163,9 @@ class CrismedGrowthHubScreen extends StatelessWidget {
                 Text('36 m · 14,2 kg · 95 cm'),
                 Text('48 m · 16,2 kg · 102 cm'),
                 SizedBox(height: 8),
-                Text('Marcos: frases completas, sobe escada, desenha círculo — exemplo, não avaliação.'),
+                Text(
+                  'Marcos: frases completas, sobe escada, desenha círculo — exemplo, não avaliação.',
+                ),
               ],
             ),
           ),
@@ -1033,7 +1191,9 @@ class _WhoCurve extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
           const CrismedSectionTitle('Peso por idade · faixa ilustrativa'),
-          const Text('P3, P50 e P97 desenhados como referência visual, não como tabela OMS carregada.'),
+          const Text(
+            'P3, P50 e P97 desenhados como referência visual, não como tabela OMS carregada.',
+          ),
           const SizedBox(height: 8),
           SizedBox(
             height: 200,
@@ -1044,9 +1204,23 @@ class _WhoCurve extends StatelessWidget {
                 titlesData: const FlTitlesData(show: false),
                 lineBarsData: <LineChartBarData>[
                   _line(const <double>[3, 6, 8, 10, 12, 14], AppColors.line),
-                  _line(const <double>[4, 8, 11, 13, 15, 17], AppColors.brandSoft),
+                  _line(const <double>[
+                    4,
+                    8,
+                    11,
+                    13,
+                    15,
+                    17,
+                  ], AppColors.brandSoft),
                   _line(const <double>[6, 10, 13, 16, 18, 21], AppColors.line),
-                  _line(const <double>[4.2, 8.2, 11.4, 13.6, 15.4, 16.2], AppColors.raspberry),
+                  _line(const <double>[
+                    4.2,
+                    8.2,
+                    11.4,
+                    13.6,
+                    15.4,
+                    16.2,
+                  ], AppColors.raspberry),
                 ],
               ),
             ),
