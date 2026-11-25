@@ -40,10 +40,13 @@ class FinanceReportsScreen extends ConsumerWidget {
     );
   }
 
-  Future<void> _exportReceivablesCsv(BuildContext context, WidgetRef ref) async {
+  Future<void> _exportReceivablesCsv(
+    BuildContext context,
+    WidgetRef ref,
+  ) async {
     final List<FinanceReceivable> list =
         ref.read(financeReceivablesProvider).valueOrNull ??
-            const <FinanceReceivable>[];
+        const <FinanceReceivable>[];
     final StringBuffer sb = StringBuffer()
       ..writeln('id,descricao,total_centavos,pago_centavos,status,vencimento');
     for (final FinanceReceivable r in list) {
@@ -54,16 +57,16 @@ class FinanceReportsScreen extends ConsumerWidget {
     }
     await Clipboard.setData(ClipboardData(text: sb.toString()));
     if (context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('CSV copiado (text/csv).')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('CSV copiado (text/csv).')));
     }
   }
 
   void _showOrigin(BuildContext context, WidgetRef ref) {
     final List<FinanceReceivable> list =
         ref.read(financeReceivablesProvider).valueOrNull ??
-            const <FinanceReceivable>[];
+        const <FinanceReceivable>[];
     final List<OriginBreakdown> rows = OriginBreakdown.fromReceivables(list);
     showModalBottomSheet<void>(
       context: context,
@@ -84,7 +87,7 @@ class FinanceReportsScreen extends ConsumerWidget {
   Future<void> _samplePdf(BuildContext context, WidgetRef ref) async {
     final List<FinanceReceivable> list =
         ref.read(financeReceivablesProvider).valueOrNull ??
-            const <FinanceReceivable>[];
+        const <FinanceReceivable>[];
     if (list.isEmpty) return;
     final FinanceReceivable r = list.first;
     final FinanceReceipt receipt = FinanceReceipt(

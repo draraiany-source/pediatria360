@@ -39,14 +39,27 @@ class _ClinicTriageScreenState extends ConsumerState<ClinicTriageScreen> {
   @override
   void dispose() {
     for (final TextEditingController c in <TextEditingController>[
-      _weight, _height, _pc, _temp, _hr, _rr, _spo2, _sys, _dia, _glucose, _pain, _notes, _childId,
+      _weight,
+      _height,
+      _pc,
+      _temp,
+      _hr,
+      _rr,
+      _spo2,
+      _sys,
+      _dia,
+      _glucose,
+      _pain,
+      _notes,
+      _childId,
     ]) {
       c.dispose();
     }
     super.dispose();
   }
 
-  double? _d(TextEditingController c) => double.tryParse(c.text.replaceAll(',', '.'));
+  double? _d(TextEditingController c) =>
+      double.tryParse(c.text.replaceAll(',', '.'));
   int? _i(TextEditingController c) => int.tryParse(c.text.trim());
 
   Future<void> _save() async {
@@ -84,15 +97,21 @@ class _ClinicTriageScreenState extends ConsumerState<ClinicTriageScreen> {
     if (!mounted) return;
     await result.fold(
       (_) async {
-        await ref.read(clinicRepositoryProvider).updateWorkflowStatus(
+        await ref
+            .read(clinicRepositoryProvider)
+            .updateWorkflowStatus(
               widget.appointmentId,
               ClinicWorkflowStatus.waitingDoctor,
             );
         if (!mounted) return;
         setState(() => _saving = false);
-        await ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Triagem salva. Paciente aguardando medico.')),
-        ).closed;
+        await ScaffoldMessenger.of(context)
+            .showSnackBar(
+              const SnackBar(
+                content: Text('Triagem salva. Paciente aguardando medico.'),
+              ),
+            )
+            .closed;
         Navigator.of(context).maybePop();
       },
       (Failure f) async {
@@ -127,7 +146,9 @@ class _ClinicTriageScreenState extends ConsumerState<ClinicTriageScreen> {
         children: <Widget>[
           Text(
             'Sinais vitais e antropometria. A interpretacao clinica e do profissional.',
-            style: theme.textTheme.bodyMedium?.copyWith(color: AppColors.inkMuted),
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: AppColors.inkMuted,
+            ),
           ),
           const SizedBox(height: AppSpacing.md),
           TextField(
@@ -145,7 +166,9 @@ class _ClinicTriageScreenState extends ConsumerState<ClinicTriageScreen> {
               padding: const EdgeInsets.only(bottom: AppSpacing.sm),
               child: Text(
                 'IMC calculado: ${bmiPreview.toStringAsFixed(1)}',
-                style: theme.textTheme.titleSmall?.copyWith(color: AppColors.brand),
+                style: theme.textTheme.titleSmall?.copyWith(
+                  color: AppColors.brand,
+                ),
               ),
             ),
           _num('Perimetro cefalico (cm)', _pc),

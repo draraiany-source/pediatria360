@@ -66,7 +66,9 @@ class BiHubScreen extends ConsumerWidget {
               onPressed: () async {
                 final String csv = BiAggregators.exportCsv(cards);
                 await Clipboard.setData(ClipboardData(text: csv));
-                await ref.read(auditLogServiceProvider).logExport(
+                await ref
+                    .read(auditLogServiceProvider)
+                    .logExport(
                       user: ref.read(currentUserProvider),
                       membership: ref.read(activeClinicMembershipProvider),
                       module: PermissionModule.bi,
@@ -98,9 +100,8 @@ class BiHubScreen extends ConsumerWidget {
                     (BiPeriodFilter f) => ChoiceChip(
                       label: Text(f.label),
                       selected: filter == f,
-                      onSelected: (_) => ref
-                          .read(biPeriodFilterProvider.notifier)
-                          .state = f,
+                      onSelected: (_) =>
+                          ref.read(biPeriodFilterProvider.notifier).state = f,
                     ),
                   )
                   .toList(growable: false),
@@ -110,9 +111,9 @@ class BiHubScreen extends ConsumerWidget {
               Text(
                 'Receita no periodo: ${formatCents(snapshot.financeRevenueCents!)}',
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      color: AppColors.navy,
-                      fontWeight: FontWeight.w700,
-                    ),
+                  color: AppColors.navy,
+                  fontWeight: FontWeight.w700,
+                ),
               ),
             const SizedBox(height: AppSpacing.md),
             if (cards.isEmpty)
@@ -123,7 +124,9 @@ class BiHubScreen extends ConsumerWidget {
             else
               LayoutBuilder(
                 builder: (BuildContext context, BoxConstraints c) {
-                  final int cols = c.maxWidth > 720 ? 3 : (c.maxWidth > 480 ? 2 : 1);
+                  final int cols = c.maxWidth > 720
+                      ? 3
+                      : (c.maxWidth > 480 ? 2 : 1);
                   return GridView.builder(
                     shrinkWrap: true,
                     physics: const NeverScrollableScrollPhysics(),

@@ -12,7 +12,7 @@ import '../domain/billing_validation.dart';
 
 class BillingRepository {
   BillingRepository({required FirebaseFirestore firestore})
-      : _firestore = firestore;
+    : _firestore = firestore;
 
   final FirebaseFirestore _firestore;
 
@@ -20,12 +20,11 @@ class BillingRepository {
     Map<String, dynamic> data, {
     ClinicMembership? membership,
     String? unitId,
-  }) =>
-      TenantScope.stampLedgerMap(
-        Map<String, dynamic>.from(data),
-        membership: membership,
-        unitId: unitId,
-      );
+  }) => TenantScope.stampLedgerMap(
+    Map<String, dynamic>.from(data),
+    membership: membership,
+    unitId: unitId,
+  );
 
   Future<void> _setLedger(
     DocumentReference<Map<String, dynamic>> ref,
@@ -34,8 +33,11 @@ class BillingRepository {
     String? unitId,
     bool merge = true,
   }) async {
-    final Map<String, dynamic> payload =
-        _ledgerPayload(data, membership: membership, unitId: unitId);
+    final Map<String, dynamic> payload = _ledgerPayload(
+      data,
+      membership: membership,
+      unitId: unitId,
+    );
     if (merge) {
       await ref.set(payload, SetOptions(merge: true));
     } else {
@@ -63,9 +65,8 @@ class BillingRepository {
       .limit(200)
       .snapshots()
       .map(
-        (QuerySnapshot<Map<String, dynamic>> s) => s.docs
-            .map(InsurancePlan.fromFirestore)
-            .toList(growable: false),
+        (QuerySnapshot<Map<String, dynamic>> s) =>
+            s.docs.map(InsurancePlan.fromFirestore).toList(growable: false),
       );
 
   Stream<List<PatientInsurance>> watchPatientInsurances(String ownerId) =>
@@ -82,12 +83,11 @@ class BillingRepository {
   Stream<List<PatientInsurance>> watchInsurancesForChild({
     required String ownerId,
     required String childId,
-  }) =>
-      watchPatientInsurances(ownerId).map(
-        (List<PatientInsurance> list) => list
-            .where((PatientInsurance p) => p.childId == childId)
-            .toList(growable: false),
-      );
+  }) => watchPatientInsurances(ownerId).map(
+    (List<PatientInsurance> list) => list
+        .where((PatientInsurance p) => p.childId == childId)
+        .toList(growable: false),
+  );
 
   Stream<List<InsuranceAuthorization>> watchAuthorizations(String ownerId) =>
       _authorizations
@@ -131,71 +131,66 @@ class BillingRepository {
     InsurancePlan plan, {
     ClinicMembership? membership,
     String? unitId,
-  }) =>
-      guard(() async {
-        await _setLedger(
-          _plans.doc(plan.id),
-          plan.toMap(),
-          membership: membership,
-          unitId: unitId,
-        );
-      });
+  }) => guard(() async {
+    await _setLedger(
+      _plans.doc(plan.id),
+      plan.toMap(),
+      membership: membership,
+      unitId: unitId,
+    );
+  });
 
   Future<Result<void>> upsertPatientInsurance(
     PatientInsurance row, {
     ClinicMembership? membership,
     String? unitId,
-  }) =>
-      guard(() async {
-        await _setLedger(
-          _patientInsurances.doc(row.id),
-          row.toMap(),
-          membership: membership,
-          unitId: unitId,
-        );
-      });
+  }) => guard(() async {
+    await _setLedger(
+      _patientInsurances.doc(row.id),
+      row.toMap(),
+      membership: membership,
+      unitId: unitId,
+    );
+  });
 
   Future<Result<void>> upsertAuthorization(
     InsuranceAuthorization auth, {
     ClinicMembership? membership,
     String? unitId,
-  }) =>
-      guard(() async {
-        await _setLedger(
-          _authorizations.doc(auth.id),
-          auth.toMap(),
-          membership: membership,
-          unitId: unitId,
-        );
-      });
+  }) => guard(() async {
+    await _setLedger(
+      _authorizations.doc(auth.id),
+      auth.toMap(),
+      membership: membership,
+      unitId: unitId,
+    );
+  });
 
   Future<Result<void>> upsertGuide(
     BillingGuide guide, {
     ClinicMembership? membership,
     String? unitId,
-  }) =>
-      guard(() async {
-        await _setLedger(
-          _guides.doc(guide.id),
-          guide.toMap(),
-          membership: membership,
-          unitId: unitId,
-        );
-      });
+  }) => guard(() async {
+    await _setLedger(
+      _guides.doc(guide.id),
+      guide.toMap(),
+      membership: membership,
+      unitId: unitId,
+    );
+  });
 
   Future<Result<void>> upsertBatch(
     BillingBatch batch, {
     ClinicMembership? membership,
     String? unitId,
-  }) =>
-      guard(() async {
-        await _setLedger(
-          _batches.doc(batch.id),
-          batch.toMap(),
-          membership: membership,
-          unitId: unitId,
-        );
-      });
+  }) => guard(() async {
+    await _setLedger(
+      _batches.doc(batch.id),
+      batch.toMap(),
+      membership: membership,
+      unitId: unitId,
+    );
+  });
 
   Future<Result<BillingBatch>> closeBatch({
     required BillingBatch batch,
@@ -204,148 +199,144 @@ class BillingRepository {
     required List<InsuranceAuthorization> authorizations,
     required DateTime now,
     required String byUserId,
-  }) =>
-      guard(() async {
-        final List<String> guideIds = <String>[];
-        int total = 0;
-        for (final BillingGuide g in selectedGuides) {
-          PatientInsurance? ins;
-          for (final PatientInsurance p in insurances) {
-            if (p.childId == g.childId) {
-              ins = p;
-              break;
-            }
+  }) => guard(() async {
+    final List<String> guideIds = <String>[];
+    int total = 0;
+    for (final BillingGuide g in selectedGuides) {
+      PatientInsurance? ins;
+      for (final PatientInsurance p in insurances) {
+        if (p.childId == g.childId) {
+          ins = p;
+          break;
+        }
+      }
+      InsuranceAuthorization? auth;
+      if (g.authorizationId != null) {
+        for (final InsuranceAuthorization a in authorizations) {
+          if (a.id == g.authorizationId) {
+            auth = a;
+            break;
           }
-          InsuranceAuthorization? auth;
-          if (g.authorizationId != null) {
-            for (final InsuranceAuthorization a in authorizations) {
-              if (a.id == g.authorizationId) {
-                auth = a;
-                break;
-              }
-            }
-          }
-          final List<BillingValidationIssue> issues = validateGuideForBatch(
-            guide: g,
-            now: now,
-            patientInsurance: ins,
-            authorization: auth,
-          );
-          if (issues.isNotEmpty) {
-            throw StateError(
-              'Guia ${g.id}: ${issues.first.message}',
-            );
-          }
-          guideIds.add(g.id);
-          total += g.amountCents;
-          await _guides.doc(g.id).set(
+        }
+      }
+      final List<BillingValidationIssue> issues = validateGuideForBatch(
+        guide: g,
+        now: now,
+        patientInsurance: ins,
+        authorization: auth,
+      );
+      if (issues.isNotEmpty) {
+        throw StateError('Guia ${g.id}: ${issues.first.message}');
+      }
+      guideIds.add(g.id);
+      total += g.amountCents;
+      await _guides
+          .doc(g.id)
+          .set(
             g
-                .copyWith(
-                  status: BillingGuideStatus.inBatch,
-                  batchId: batch.id,
-                )
+                .copyWith(status: BillingGuideStatus.inBatch, batchId: batch.id)
                 .toMap(),
             SetOptions(merge: true),
           );
-        }
+    }
 
-        final BillingBatch closed = batch.copyWith(
-          guideIds: guideIds,
-          guideCount: guideIds.length,
-          totalCents: total,
-          status: BillingBatchStatus.closed,
-        );
-        await _batches.doc(closed.id).set(closed.toMap(), SetOptions(merge: true));
-        await _writeAudit(
-          ownerId: batch.ownerId,
-          action: BillingAuditAction.batchClosed,
-          entityType: 'batch',
-          entityId: batch.id,
-          byUserId: byUserId,
-        );
-        return closed;
-      });
+    final BillingBatch closed = batch.copyWith(
+      guideIds: guideIds,
+      guideCount: guideIds.length,
+      totalCents: total,
+      status: BillingBatchStatus.closed,
+    );
+    await _batches.doc(closed.id).set(closed.toMap(), SetOptions(merge: true));
+    await _writeAudit(
+      ownerId: batch.ownerId,
+      action: BillingAuditAction.batchClosed,
+      entityType: 'batch',
+      entityId: batch.id,
+      byUserId: byUserId,
+    );
+    return closed;
+  });
 
   Future<Result<BillingBatch>> markSent({
     required BillingBatch batch,
     required String protocol,
     required String byUserId,
-  }) =>
-      guard(() async {
-        final BillingBatch updated = batch.copyWith(
-          status: BillingBatchStatus.sent,
-          protocol: protocol,
-          sentAt: DateTime.now(),
-        );
-        await _batches.doc(updated.id).set(updated.toMap(), SetOptions(merge: true));
-        await _writeAudit(
-          ownerId: batch.ownerId,
-          action: BillingAuditAction.batchSent,
-          entityType: 'batch',
-          entityId: batch.id,
-          byUserId: byUserId,
-          metadata: <String, dynamic>{'protocol': protocol},
-        );
-        return updated;
-      });
+  }) => guard(() async {
+    final BillingBatch updated = batch.copyWith(
+      status: BillingBatchStatus.sent,
+      protocol: protocol,
+      sentAt: DateTime.now(),
+    );
+    await _batches
+        .doc(updated.id)
+        .set(updated.toMap(), SetOptions(merge: true));
+    await _writeAudit(
+      ownerId: batch.ownerId,
+      action: BillingAuditAction.batchSent,
+      entityType: 'batch',
+      entityId: batch.id,
+      byUserId: byUserId,
+      metadata: <String, dynamic>{'protocol': protocol},
+    );
+    return updated;
+  });
 
   Future<Result<BillingBatch>> registerReturn({
     required BillingBatch batch,
     required BillingBatchStatus returnStatus,
     required String returnNotes,
     required String byUserId,
-  }) =>
-      guard(() async {
-        final BillingBatch updated = batch.copyWith(
-          status: returnStatus,
-          returnAt: DateTime.now(),
-          returnNotes: returnNotes,
-        );
-        await _batches.doc(updated.id).set(updated.toMap(), SetOptions(merge: true));
-        await _writeAudit(
-          ownerId: batch.ownerId,
-          action: BillingAuditAction.batchReturn,
-          entityType: 'batch',
-          entityId: batch.id,
-          byUserId: byUserId,
-        );
-        return updated;
-      });
+  }) => guard(() async {
+    final BillingBatch updated = batch.copyWith(
+      status: returnStatus,
+      returnAt: DateTime.now(),
+      returnNotes: returnNotes,
+    );
+    await _batches
+        .doc(updated.id)
+        .set(updated.toMap(), SetOptions(merge: true));
+    await _writeAudit(
+      ownerId: batch.ownerId,
+      action: BillingAuditAction.batchReturn,
+      entityType: 'batch',
+      entityId: batch.id,
+      byUserId: byUserId,
+    );
+    return updated;
+  });
 
   Future<Result<BillingGlosa>> createGlosa({
     required BillingGlosa glosa,
     required String byUserId,
     FinanceRepository? finance,
     FinanceReceivable? existingReceivable,
-  }) =>
-      guard(() async {
-        await _glosas.doc(glosa.id).set(glosa.toMap());
-        await _writeAudit(
-          ownerId: glosa.ownerId,
-          action: BillingAuditAction.glosaCreated,
-          entityType: 'glosa',
-          entityId: glosa.id,
-          byUserId: byUserId,
-        );
-        if (finance != null &&
-            existingReceivable != null &&
-            glosa.guideId != null) {
-          final FinanceReceivable adjusted =
-              BillingFinanceIntegration.applyGlosaToReceivable(
+  }) => guard(() async {
+    await _glosas.doc(glosa.id).set(glosa.toMap());
+    await _writeAudit(
+      ownerId: glosa.ownerId,
+      action: BillingAuditAction.glosaCreated,
+      entityType: 'glosa',
+      entityId: glosa.id,
+      byUserId: byUserId,
+    );
+    if (finance != null &&
+        existingReceivable != null &&
+        glosa.guideId != null) {
+      final FinanceReceivable adjusted =
+          BillingFinanceIntegration.applyGlosaToReceivable(
             existing: existingReceivable,
             glosa: glosa,
             now: DateTime.now(),
           );
-          await finance.upsertReceivable(adjusted);
-        }
-        if (glosa.guideId != null) {
-          await _guides.doc(glosa.guideId!).set(
-            <String, dynamic>{'status': BillingGuideStatus.glosed.name},
-            SetOptions(merge: true),
-          );
-        }
-        return glosa;
-      });
+      await finance.upsertReceivable(adjusted);
+    }
+    if (glosa.guideId != null) {
+      await _guides.doc(glosa.guideId!).set(<String, dynamic>{
+        'status': BillingGuideStatus.glosed.name,
+      }, SetOptions(merge: true));
+    }
+    return glosa;
+  });
 
   Future<Result<BillingGlosa>> updateAppeal({
     required BillingGlosa glosa,
@@ -356,35 +347,34 @@ class BillingRepository {
     String? justification,
     List<String>? docsUrls,
     String? responseNotes,
-  }) =>
-      guard(() async {
-        if (membership == null || !membership.active) {
-          throw const ValidationFailure(
-            'Membership ativo obrigatorio para escrita de faturamento.',
-          );
-        }
-        TenantScope.requireClinicAccess(membership, membership.clinicId);
-        final BillingGlosa updated = glosa.copyWith(
-          status: status,
-          appealJustification: justification,
-          appealDocsUrls: docsUrls,
-          responseNotes: responseNotes,
-        );
-        await _setLedger(
-          _glosas.doc(updated.id),
-          updated.toMap(),
-          membership: membership,
-          unitId: unitId,
-        );
-        await _writeAudit(
-          ownerId: glosa.ownerId,
-          action: BillingAuditAction.appealUpdated,
-          entityType: 'glosa',
-          entityId: glosa.id,
-          byUserId: byUserId,
-        );
-        return updated;
-      });
+  }) => guard(() async {
+    if (membership == null || !membership.active) {
+      throw const ValidationFailure(
+        'Membership ativo obrigatorio para escrita de faturamento.',
+      );
+    }
+    TenantScope.requireClinicAccess(membership, membership.clinicId);
+    final BillingGlosa updated = glosa.copyWith(
+      status: status,
+      appealJustification: justification,
+      appealDocsUrls: docsUrls,
+      responseNotes: responseNotes,
+    );
+    await _setLedger(
+      _glosas.doc(updated.id),
+      updated.toMap(),
+      membership: membership,
+      unitId: unitId,
+    );
+    await _writeAudit(
+      ownerId: glosa.ownerId,
+      action: BillingAuditAction.appealUpdated,
+      entityType: 'glosa',
+      entityId: glosa.id,
+      byUserId: byUserId,
+    );
+    return updated;
+  });
 
   Future<Result<void>> syncPaidBatchToFinance({
     required BillingBatch batch,
@@ -392,38 +382,37 @@ class BillingRepository {
     required List<BillingGlosa> allGlosas,
     required FinanceRepository finance,
     required String byUserId,
-  }) =>
-      guard(() async {
-        if (batch.status != BillingBatchStatus.paid &&
-            batch.status != BillingBatchStatus.withGlosa) {
-          return;
-        }
-        final List<BillingGuide> inBatch = allGuides
-            .where((BillingGuide g) => batch.guideIds.contains(g.id))
-            .toList(growable: false);
-        final List<BillingGlosa> batchGlosas = allGlosas
-            .where((BillingGlosa g) => g.batchId == batch.id)
-            .toList(growable: false);
-        final DateTime now = DateTime.now();
-        final List<FinanceReceivable> rows =
-            BillingFinanceIntegration.receivablesForPaidBatch(
+  }) => guard(() async {
+    if (batch.status != BillingBatchStatus.paid &&
+        batch.status != BillingBatchStatus.withGlosa) {
+      return;
+    }
+    final List<BillingGuide> inBatch = allGuides
+        .where((BillingGuide g) => batch.guideIds.contains(g.id))
+        .toList(growable: false);
+    final List<BillingGlosa> batchGlosas = allGlosas
+        .where((BillingGlosa g) => g.batchId == batch.id)
+        .toList(growable: false);
+    final DateTime now = DateTime.now();
+    final List<FinanceReceivable> rows =
+        BillingFinanceIntegration.receivablesForPaidBatch(
           batch: batch,
           guidesInBatch: inBatch,
           glosasForBatch: batchGlosas,
           now: now,
         );
-        for (final FinanceReceivable r in rows) {
-          await finance.upsertReceivable(r);
-        }
-        await _writeAudit(
-          ownerId: batch.ownerId,
-          action: BillingAuditAction.financeSync,
-          entityType: 'batch',
-          entityId: batch.id,
-          byUserId: byUserId,
-          metadata: <String, dynamic>{'receivables': rows.length},
-        );
-      });
+    for (final FinanceReceivable r in rows) {
+      await finance.upsertReceivable(r);
+    }
+    await _writeAudit(
+      ownerId: batch.ownerId,
+      action: BillingAuditAction.financeSync,
+      entityType: 'batch',
+      entityId: batch.id,
+      byUserId: byUserId,
+      metadata: <String, dynamic>{'receivables': rows.length},
+    );
+  });
 
   Future<void> _writeAudit({
     required String ownerId,

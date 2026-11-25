@@ -10,11 +10,8 @@ class SignInWithEmail implements UseCase<AppUser, SignInParams> {
   final AuthRepository _repository;
 
   @override
-  Future<Result<AppUser>> call(SignInParams params) =>
-      _repository.signInWithEmail(
-        email: params.email.trim(),
-        password: params.password,
-      );
+  Future<Result<AppUser>> call(SignInParams params) => _repository
+      .signInWithEmail(email: params.email.trim(), password: params.password);
 }
 
 class SignInParams {

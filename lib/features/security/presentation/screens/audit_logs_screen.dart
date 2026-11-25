@@ -36,8 +36,9 @@ class AuditLogsScreen extends ConsumerWidget {
       );
     }
 
-    final AsyncValue<List<SecurityAuditEvent>> logsAsync =
-        ref.watch(securityAuditLogsProvider);
+    final AsyncValue<List<SecurityAuditEvent>> logsAsync = ref.watch(
+      securityAuditLogsProvider,
+    );
     final AuditLogFilterState filter = ref.watch(auditLogFilterProvider);
     final bool canExport = SecurityAccess.canExportAuditLogs(
       user: user,
@@ -69,7 +70,9 @@ class AuditLogsScreen extends ConsumerWidget {
                   );
                 }
                 await Clipboard.setData(ClipboardData(text: buf.toString()));
-                await ref.read(auditLogServiceProvider).logExport(
+                await ref
+                    .read(auditLogServiceProvider)
+                    .logExport(
                       user: user,
                       membership: membership,
                       module: PermissionModule.audit,
@@ -78,7 +81,11 @@ class AuditLogsScreen extends ConsumerWidget {
                     );
                 if (context.mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('CSV copiado para a area de transferencia.')),
+                    const SnackBar(
+                      content: Text(
+                        'CSV copiado para a area de transferencia.',
+                      ),
+                    ),
                   );
                 }
               },
@@ -105,7 +112,8 @@ class AuditLogsScreen extends ConsumerWidget {
                 return ListView.separated(
                   padding: const EdgeInsets.all(AppSpacing.md),
                   itemCount: logs.length,
-                  separatorBuilder: (_, __) => const SizedBox(height: AppSpacing.sm),
+                  separatorBuilder: (_, __) =>
+                      const SizedBox(height: AppSpacing.sm),
                   itemBuilder: (BuildContext context, int index) {
                     final SecurityAuditEvent e = logs[index];
                     return _AuditTile(event: e);
@@ -150,15 +158,19 @@ class _FilterBar extends ConsumerWidget {
                   labelText: 'entityId',
                   isDense: true,
                 ),
-                onChanged: (String v) => ref.read(auditLogFilterProvider.notifier).state =
-                    filter.copyWith(entityIdSearch: v),
+                onChanged: (String v) =>
+                    ref.read(auditLogFilterProvider.notifier).state = filter
+                        .copyWith(entityIdSearch: v),
               ),
             ),
             DropdownButton<String?>(
               value: filter.module,
               hint: const Text('Modulo'),
               items: <DropdownMenuItem<String?>>[
-                const DropdownMenuItem<String?>(value: null, child: Text('Todos')),
+                const DropdownMenuItem<String?>(
+                  value: null,
+                  child: Text('Todos'),
+                ),
                 ...PermissionModule.values.map(
                   (PermissionModule m) => DropdownMenuItem<String?>(
                     value: m.name,
@@ -166,8 +178,9 @@ class _FilterBar extends ConsumerWidget {
                   ),
                 ),
               ],
-              onChanged: (String? v) => ref.read(auditLogFilterProvider.notifier).state =
-                  filter.copyWith(module: v, clearModule: v == null),
+              onChanged: (String? v) =>
+                  ref.read(auditLogFilterProvider.notifier).state = filter
+                      .copyWith(module: v, clearModule: v == null),
             ),
             DropdownButton<SecurityAuditSeverity?>(
               value: filter.severity,
@@ -178,15 +191,16 @@ class _FilterBar extends ConsumerWidget {
                   child: Text('Todas'),
                 ),
                 ...SecurityAuditSeverity.values.map(
-                  (SecurityAuditSeverity s) => DropdownMenuItem<SecurityAuditSeverity?>(
-                    value: s,
-                    child: Text(s.name),
-                  ),
+                  (SecurityAuditSeverity s) =>
+                      DropdownMenuItem<SecurityAuditSeverity?>(
+                        value: s,
+                        child: Text(s.name),
+                      ),
                 ),
               ],
               onChanged: (SecurityAuditSeverity? v) =>
-                  ref.read(auditLogFilterProvider.notifier).state =
-                      filter.copyWith(severity: v, clearSeverity: v == null),
+                  ref.read(auditLogFilterProvider.notifier).state = filter
+                      .copyWith(severity: v, clearSeverity: v == null),
             ),
           ],
         ),

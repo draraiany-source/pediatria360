@@ -32,9 +32,7 @@ class FirebaseBootstrap {
     await _setupFirestore();
     await _setupHive();
 
-    FirebaseMessaging.onBackgroundMessage(
-      firebaseMessagingBackgroundHandler,
-    );
+    FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
 
     if (AppConfig.useFirebaseEmulator) {
       await _useEmulators();
@@ -44,8 +42,9 @@ class FirebaseBootstrap {
   static Future<void> _setupCrashlytics() async {
     if (kIsWeb) return; // Crashlytics nao suporta web.
 
-    await FirebaseCrashlytics.instance
-        .setCrashlyticsCollectionEnabled(AppConfig.isProduction);
+    await FirebaseCrashlytics.instance.setCrashlyticsCollectionEnabled(
+      AppConfig.isProduction,
+    );
     AppLogger.enableCrashReporting();
 
     // Erros do framework Flutter.
@@ -80,8 +79,9 @@ class FirebaseBootstrap {
       await FirebaseAuth.instance.useAuthEmulator(host, 9099);
       FirebaseFirestore.instance.useFirestoreEmulator(host, 8080);
       await FirebaseStorage.instance.useStorageEmulator(host, 9199);
-      FirebaseFunctions.instanceFor(region: 'southamerica-east1')
-          .useFunctionsEmulator(host, 5001);
+      FirebaseFunctions.instanceFor(
+        region: 'southamerica-east1',
+      ).useFunctionsEmulator(host, 5001);
       AppLogger.info('Emuladores do Firebase ativos em $host', tag: 'boot');
     } catch (error, stack) {
       await AppLogger.error(error, stack, reason: 'emulator setup');

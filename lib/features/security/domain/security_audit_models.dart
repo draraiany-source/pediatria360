@@ -97,7 +97,8 @@ class SecurityAuditEvent extends Equatable {
       module: (map['module'] as String?) ?? '',
       entityType: (map['entityType'] as String?) ?? '',
       entityId: (map['entityId'] as String?) ?? '',
-      at: DateTime.tryParse((map['at'] as String?) ?? '') ??
+      at:
+          DateTime.tryParse((map['at'] as String?) ?? '') ??
           (map['at'] is Timestamp
               ? (map['at'] as Timestamp).toDate()
               : DateTime.fromMillisecondsSinceEpoch(0)),
@@ -105,14 +106,10 @@ class SecurityAuditEvent extends Equatable {
           ? SecurityAuditSeverity.fromName(map['severity'] as String?)
           : classifyAuditSeverity(action),
       beforeJson: map['beforeJson'] != null
-          ? redactAuditJson(
-              Map<String, dynamic>.from(map['beforeJson'] as Map),
-            )
+          ? redactAuditJson(Map<String, dynamic>.from(map['beforeJson'] as Map))
           : null,
       afterJson: map['afterJson'] != null
-          ? redactAuditJson(
-              Map<String, dynamic>.from(map['afterJson'] as Map),
-            )
+          ? redactAuditJson(Map<String, dynamic>.from(map['afterJson'] as Map))
           : null,
       reason: map['reason'] as String?,
       status: (map['status'] as String?) ?? 'recorded',
@@ -141,27 +138,34 @@ class SecurityAuditEvent extends Equatable {
   final String? sessionId;
 
   Map<String, dynamic> toMap() => <String, dynamic>{
-        'id': id,
-        'actorUid': actorUid,
-        'actorName': actorName,
-        'actorRole': actorRole,
-        if (clinicId != null) 'clinicId': clinicId,
-        if (unitId != null) 'unitId': unitId,
-        'action': action,
-        'module': module,
-        'entityType': entityType,
-        'entityId': entityId,
-        'at': at.toIso8601String(),
-        'severity': severity.name,
-        if (beforeJson != null) 'beforeJson': redactAuditJson(beforeJson),
-        if (afterJson != null) 'afterJson': redactAuditJson(afterJson),
-        if (reason != null) 'reason': reason,
-        'status': status,
-        if (ip != null) 'ip': ip,
-        if (sessionId != null) 'sessionId': sessionId,
-      };
+    'id': id,
+    'actorUid': actorUid,
+    'actorName': actorName,
+    'actorRole': actorRole,
+    if (clinicId != null) 'clinicId': clinicId,
+    if (unitId != null) 'unitId': unitId,
+    'action': action,
+    'module': module,
+    'entityType': entityType,
+    'entityId': entityId,
+    'at': at.toIso8601String(),
+    'severity': severity.name,
+    if (beforeJson != null) 'beforeJson': redactAuditJson(beforeJson),
+    if (afterJson != null) 'afterJson': redactAuditJson(afterJson),
+    if (reason != null) 'reason': reason,
+    'status': status,
+    if (ip != null) 'ip': ip,
+    if (sessionId != null) 'sessionId': sessionId,
+  };
 
   @override
-  List<Object?> get props =>
-      <Object?>[id, actorUid, action, module, entityId, at, severity];
+  List<Object?> get props => <Object?>[
+    id,
+    actorUid,
+    action,
+    module,
+    entityId,
+    at,
+    severity,
+  ];
 }

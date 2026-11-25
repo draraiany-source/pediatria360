@@ -68,8 +68,7 @@ class ErrorMapper {
       'user-disabled' => 'Esta conta foi desativada.',
       'user-not-found' ||
       'wrong-password' ||
-      'invalid-credential' =>
-        'E-mail ou senha incorretos.',
+      'invalid-credential' => 'E-mail ou senha incorretos.',
       'email-already-in-use' => 'Este e-mail ja esta cadastrado.',
       'weak-password' => 'A senha precisa de pelo menos 8 caracteres.',
       'operation-not-allowed' => 'Este metodo de login esta desativado.',
@@ -91,72 +90,72 @@ class ErrorMapper {
     return switch (e.code) {
       'unauthenticated' => AuthFailure('Entre para continuar.', e.code, e),
       'permission-denied' => PermissionFailure(
-          'Você não tem acesso a este recurso.',
-          e.code,
-          e,
-        ),
+        'Você não tem acesso a este recurso.',
+        e.code,
+        e,
+      ),
       'not-found' => NotFoundFailure('Recurso nao encontrado.', e.code, e),
       'resource-exhausted' => QuotaFailure(
-          e.message ?? 'Voce atingiu o limite do plano gratuito.',
-          e.code,
-          e,
-        ),
+        e.message ?? 'Voce atingiu o limite do plano gratuito.',
+        e.code,
+        e,
+      ),
       'invalid-argument' || 'failed-precondition' => ValidationFailure(
-          e.message ?? 'Dados invalidos.',
-          code: e.code,
-          cause: e,
-        ),
+        e.message ?? 'Dados invalidos.',
+        code: e.code,
+        cause: e,
+      ),
       'unavailable' || 'deadline-exceeded' => NetworkFailure(
-          'Servico indisponivel no momento. Tente novamente.',
-          e.code,
-          e,
-        ),
+        'Servico indisponivel no momento. Tente novamente.',
+        e.code,
+        e,
+      ),
       _ => ServerFailure(
-          e.message ?? 'Nao foi possivel concluir a operacao.',
-          e.code,
-          e,
-        ),
+        e.message ?? 'Nao foi possivel concluir a operacao.',
+        e.code,
+        e,
+      ),
     };
   }
 
   static Failure _firebase(FirebaseException e) {
     return switch (e.code) {
       'permission-denied' => PermissionFailure(
-          'Você não tem acesso a este conteúdo.',
-          e.code,
-          e,
-        ),
+        'Você não tem acesso a este conteúdo.',
+        e.code,
+        e,
+      ),
       'not-found' || 'object-not-found' => NotFoundFailure(
-          'Conteudo nao encontrado.',
-          e.code,
-          e,
-        ),
+        'Conteudo nao encontrado.',
+        e.code,
+        e,
+      ),
       'unavailable' => NetworkFailure(
-          'Sem conexao com o servidor. Mostrando dados salvos.',
-          e.code,
-          e,
-        ),
+        'Sem conexao com o servidor. Mostrando dados salvos.',
+        e.code,
+        e,
+      ),
       'canceled' => const ServerFailure('Operacao cancelada.', 'canceled'),
       'quota-exceeded' => QuotaFailure(
-          'Limite de armazenamento atingido.',
-          e.code,
-          e,
-        ),
+        'Limite de armazenamento atingido.',
+        e.code,
+        e,
+      ),
       'unauthorized' => PermissionFailure(
-          'Sem permissao para acessar este arquivo.',
-          e.code,
-          e,
-        ),
+        'Sem permissao para acessar este arquivo.',
+        e.code,
+        e,
+      ),
       _ when e.plugin == 'firebase_storage' => StorageFailure(
-          'Falha ao transferir o arquivo.',
-          e.code,
-          e,
-        ),
+        'Falha ao transferir o arquivo.',
+        e.code,
+        e,
+      ),
       _ => ServerFailure(
-          e.message ?? 'Nao foi possivel concluir a operacao.',
-          e.code,
-          e,
-        ),
+        e.message ?? 'Nao foi possivel concluir a operacao.',
+        e.code,
+        e,
+      ),
     };
   }
 
@@ -164,23 +163,22 @@ class ErrorMapper {
     return switch (e.type) {
       DioExceptionType.connectionTimeout ||
       DioExceptionType.sendTimeout ||
-      DioExceptionType.receiveTimeout =>
-        const NetworkFailure(
-          'A conexao demorou demais. Tente novamente.',
-          'timeout',
-        ),
+      DioExceptionType.receiveTimeout => const NetworkFailure(
+        'A conexao demorou demais. Tente novamente.',
+        'timeout',
+      ),
       DioExceptionType.connectionError => const NetworkFailure(
-          'Sem conexao. Verifique sua internet.',
-          'connection-error',
-        ),
+        'Sem conexao. Verifique sua internet.',
+        'connection-error',
+      ),
       DioExceptionType.badResponse => _fromStatus(
-          e.response?.statusCode ?? 0,
-          e,
-        ),
+        e.response?.statusCode ?? 0,
+        e,
+      ),
       DioExceptionType.cancel => const ServerFailure(
-          'Operacao cancelada.',
-          'cancel',
-        ),
+        'Operacao cancelada.',
+        'cancel',
+      ),
       _ => UnexpectedFailure('Falha na comunicacao.', 'dio', e),
     };
   }

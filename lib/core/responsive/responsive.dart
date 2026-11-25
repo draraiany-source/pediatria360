@@ -34,12 +34,7 @@ extension ResponsiveContext on BuildContext {
   bool get usesRail => screenSize != ScreenSize.compact;
 
   /// Escolhe um valor por classe de tamanho, com fallback em cascata.
-  T responsive<T>({
-    required T compact,
-    T? medium,
-    T? expanded,
-    T? large,
-  }) =>
+  T responsive<T>({required T compact, T? medium, T? expanded, T? large}) =>
       switch (screenSize) {
         ScreenSize.compact => compact,
         ScreenSize.medium => medium ?? compact,
@@ -48,20 +43,16 @@ extension ResponsiveContext on BuildContext {
       };
 
   /// Numero de colunas sugerido para grades de conteudo.
-  int get gridColumns => responsive<int>(
-        compact: 1,
-        medium: 2,
-        expanded: 3,
-        large: 4,
-      );
+  int get gridColumns =>
+      responsive<int>(compact: 1, medium: 2, expanded: 3, large: 4);
 
   /// Largura maxima de leitura confortavel (evita linhas longas na web).
   double get contentMaxWidth => responsive<double>(
-        compact: double.infinity,
-        medium: 720,
-        expanded: 900,
-        large: 1120,
-      );
+    compact: double.infinity,
+    medium: 720,
+    expanded: 900,
+    large: 1120,
+  );
 }
 
 /// Centraliza o conteudo e limita a largura em telas grandes.

@@ -2,12 +2,7 @@ import '../../../shared/domain/entities/clinical_record.dart';
 import '../../../shared/domain/entities/encounter.dart';
 import '../../telemedicine/data/telemedicine_repository.dart';
 
-enum Patient360EventKind {
-  encounter,
-  appointment,
-  document,
-  lab,
-}
+enum Patient360EventKind { encounter, appointment, document, lab }
 
 class Patient360Event {
   const Patient360Event({
@@ -46,8 +41,8 @@ List<Patient360Event> buildPatient360Timeline({
             : 'Atendimento',
         subtitle: e.professionalName + ' - ' + dx,
         encounterId: e.id,
-        flagged: e.status == EncounterStatus.draft ||
-            e.amendsEncounterId != null,
+        flagged:
+            e.status == EncounterStatus.draft || e.amendsEncounterId != null,
       ),
     );
   }
@@ -84,8 +79,11 @@ List<Patient360Event> buildPatient360Timeline({
   final Map<String, List<LabResult>> byDay = <String, List<LabResult>>{};
   for (final LabResult lab in labs) {
     final DateTime at = lab.collectedAt;
-    final String key = at.year.toString() + '-' +
-        at.month.toString().padLeft(2, '0') + '-' +
+    final String key =
+        at.year.toString() +
+        '-' +
+        at.month.toString().padLeft(2, '0') +
+        '-' +
         at.day.toString().padLeft(2, '0');
     byDay.putIfAbsent(key, () => <LabResult>[]).add(lab);
   }

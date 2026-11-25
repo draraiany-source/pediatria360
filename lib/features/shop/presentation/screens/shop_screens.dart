@@ -32,9 +32,8 @@ class ShopScreen extends ConsumerWidget {
       appBar: AppBar(
         title: const Text('Loja'),
         leading: IconButton(
-          onPressed: () => context.canPop()
-              ? context.pop()
-              : context.go(Routes.homePath),
+          onPressed: () =>
+              context.canPop() ? context.pop() : context.go(Routes.homePath),
           icon: const Icon(Icons.arrow_back_rounded),
           tooltip: 'Voltar',
         ),
@@ -98,7 +97,8 @@ class ShopScreen extends ConsumerWidget {
                   return const EmptyState(
                     icon: Icons.storefront_outlined,
                     title: 'Nenhum produto',
-                    message: 'Os produtos são cadastrados pelo painel '
+                    message:
+                        'Os produtos são cadastrados pelo painel '
                         'administrativo.',
                   );
                 }
@@ -165,10 +165,7 @@ class _ProductCard extends StatelessWidget {
                     ColoredBox(
                       color: Colors.black.withValues(alpha: 0.45),
                       child: const Center(
-                        child: AppTag(
-                          label: 'Esgotado',
-                          color: Colors.white,
-                        ),
+                        child: AppTag(label: 'Esgotado', color: Colors.white),
                       ),
                     ),
                 ],
@@ -240,8 +237,9 @@ class _ProductImage extends StatelessWidget {
       return Image.asset(AppAssets.productPlaceholder, fit: BoxFit.cover);
     }
 
-    final int? cacheWidth =
-        displayWidth == null ? null : (displayWidth! * 2).round();
+    final int? cacheWidth = displayWidth == null
+        ? null
+        : (displayWidth! * 2).round();
 
     return CachedNetworkImage(
       imageUrl: url!,
@@ -378,8 +376,7 @@ class ProductDetailScreen extends ConsumerWidget {
                               content: const Text('Adicionado ao carrinho.'),
                               action: SnackBarAction(
                                 label: 'Ver',
-                                onPressed: () =>
-                                    context.push(Routes.cartPath),
+                                onPressed: () => context.push(Routes.cartPath),
                               ),
                             ),
                           );
@@ -594,8 +591,9 @@ class _CouponField extends ConsumerStatefulWidget {
 }
 
 class _CouponFieldState extends ConsumerState<_CouponField> {
-  late final TextEditingController _controller =
-      TextEditingController(text: widget.current ?? '');
+  late final TextEditingController _controller = TextEditingController(
+    text: widget.current ?? '',
+  );
 
   @override
   void dispose() {
@@ -616,9 +614,7 @@ class _CouponFieldState extends ConsumerState<_CouponField> {
       helper: q?.couponMessage,
       suffix: TextButton(
         onPressed: () async {
-          await ref
-              .read(cartProvider.notifier)
-              .applyCoupon(_controller.text);
+          await ref.read(cartProvider.notifier).applyCoupon(_controller.text);
           ref.invalidate(orderQuoteProvider);
         },
         child: const Text('Aplicar'),
@@ -637,26 +633,26 @@ class _Summary extends StatelessWidget {
     final ThemeData theme = Theme.of(context);
 
     Widget row(String label, String value, {bool bold = false}) => Padding(
-          padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
-          child: Row(
-            children: <Widget>[
-              Expanded(
-                child: Text(
-                  label,
-                  style: bold
-                      ? theme.textTheme.titleSmall
-                      : theme.textTheme.bodyMedium,
-                ),
-              ),
-              Text(
-                value,
-                style: bold
-                    ? theme.textTheme.titleMedium
-                    : theme.textTheme.bodyMedium,
-              ),
-            ],
+      padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
+      child: Row(
+        children: <Widget>[
+          Expanded(
+            child: Text(
+              label,
+              style: bold
+                  ? theme.textTheme.titleSmall
+                  : theme.textTheme.bodyMedium,
+            ),
           ),
-        );
+          Text(
+            value,
+            style: bold
+                ? theme.textTheme.titleMedium
+                : theme.textTheme.bodyMedium,
+          ),
+        ],
+      ),
+    );
 
     return Card(
       child: Padding(
@@ -749,7 +745,13 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
   @override
   void dispose() {
     for (final TextEditingController c in <TextEditingController>[
-      _zip, _street, _number, _complement, _district, _city, _state,
+      _zip,
+      _street,
+      _number,
+      _complement,
+      _district,
+      _city,
+      _state,
     ]) {
       c.dispose();
     }
@@ -784,18 +786,16 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
 
     await saveAddress(ref, address);
 
-    final String? orderId =
-        await ref.read(checkoutControllerProvider.notifier).submit(
-              address: address,
-              paymentMethod: _payment,
-            );
+    final String? orderId = await ref
+        .read(checkoutControllerProvider.notifier)
+        .submit(address: address, paymentMethod: _payment);
 
     if (!mounted) return;
 
     if (orderId != null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Pedido registrado.')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Pedido registrado.')));
       context.go(Routes.ordersPath);
     }
   }
@@ -809,8 +809,10 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
     final ShippingAddress? saved = ref.watch(savedAddressProvider);
     if (saved != null) _hydrate(saved);
 
-    ref.listen<CheckoutState>(checkoutControllerProvider,
-        (CheckoutState? previous, CheckoutState next) {
+    ref.listen<CheckoutState>(checkoutControllerProvider, (
+      CheckoutState? previous,
+      CheckoutState next,
+    ) {
       if (next.failure != null && context.mounted) {
         ScaffoldMessenger.of(context)
           ..hideCurrentSnackBar()
@@ -847,9 +849,10 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                         keyboardType: TextInputType.number,
                         inputFormatters: Masks.digitsOnly,
                         validator: (String? v) =>
-                            (v == null || v.replaceAll(RegExp(r'\D'), '').length != 8)
-                                ? 'CEP tem 8 dígitos.'
-                                : null,
+                            (v == null ||
+                                v.replaceAll(RegExp(r'\D'), '').length != 8)
+                            ? 'CEP tem 8 dígitos.'
+                            : null,
                       ),
                     ),
                     const SizedBox(width: AppSpacing.md),
@@ -994,8 +997,7 @@ class _CheckoutScreenState extends ConsumerState<CheckoutScreen> {
                 AppButton(
                   label: 'Confirmar pedido',
                   isLoading: state.isSubmitting,
-                  onPressed:
-                      AppConfig.paymentGatewayEnabled ? _submit : null,
+                  onPressed: AppConfig.paymentGatewayEnabled ? _submit : null,
                 ),
               ],
             ),
@@ -1020,9 +1022,8 @@ class OrdersScreen extends ConsumerWidget {
       appBar: AppBar(
         title: const Text('Meus pedidos'),
         leading: IconButton(
-          onPressed: () => context.canPop()
-              ? context.pop()
-              : context.go(Routes.homePath),
+          onPressed: () =>
+              context.canPop() ? context.pop() : context.go(Routes.homePath),
           icon: const Icon(Icons.arrow_back_rounded),
           tooltip: 'Voltar',
         ),
@@ -1073,8 +1074,7 @@ class OrdersScreen extends ConsumerWidget {
                               color: switch (order.status) {
                                 OrderStatus.delivered => AppColors.success,
                                 OrderStatus.cancelled ||
-                                OrderStatus.refunded =>
-                                  AppColors.danger,
+                                OrderStatus.refunded => AppColors.danger,
                                 OrderStatus.pending => AppColors.warning,
                                 _ => AppColors.vital,
                               },

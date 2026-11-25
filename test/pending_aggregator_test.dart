@@ -125,16 +125,14 @@ void main() {
         ),
       ];
 
-      final List<PendingItem> clinical =
-          PendingAggregator.filterByCenterFilter(
+      final List<PendingItem> clinical = PendingAggregator.filterByCenterFilter(
         items,
         PendingCenterFilter.clinical,
         now,
       );
       expect(clinical.length, 1);
 
-      final List<PendingItem> resolved =
-          PendingAggregator.filterByCenterFilter(
+      final List<PendingItem> resolved = PendingAggregator.filterByCenterFilter(
         items,
         PendingCenterFilter.resolved,
         now,
@@ -154,8 +152,10 @@ void main() {
           childId: 'child-1',
         ),
       ];
-      final List<PendingItem> forPatient =
-          PendingAggregator.forPatient(items, 'child-1');
+      final List<PendingItem> forPatient = PendingAggregator.forPatient(
+        items,
+        'child-1',
+      );
       expect(forPatient.length, 1);
     });
 
@@ -178,8 +178,9 @@ void main() {
           createdAt: now,
         ),
       ];
-      final PendingAttentionCounts counts =
-          PendingAggregator.attentionCounts(items);
+      final PendingAttentionCounts counts = PendingAggregator.attentionCounts(
+        items,
+      );
       expect(counts.vaccineOverdue, 1);
       expect(counts.returnsAndDrafts, 1);
     });

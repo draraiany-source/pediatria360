@@ -120,7 +120,10 @@ class PremiumTopBar extends ConsumerWidget {
                   ),
                 );
               },
-              icon: const Icon(Icons.help_outline_rounded, color: AppColors.navy),
+              icon: const Icon(
+                Icons.help_outline_rounded,
+                color: AppColors.navy,
+              ),
             ),
             IconButton(
               tooltip: 'Notificacoes',
@@ -239,7 +242,12 @@ class PremiumKpiCard extends StatelessWidget {
                   borderRadius: AppRadius.mdAll,
                 ),
                 child: asset != null
-                    ? AppIcon(asset: asset!, size: 28, fallback: icon, color: color)
+                    ? AppIcon(
+                        asset: asset!,
+                        size: 28,
+                        fallback: icon,
+                        color: color,
+                      )
                     : Icon(icon, color: color, size: 22),
               ),
               const Spacer(),
@@ -250,8 +258,9 @@ class PremiumKpiCard extends StatelessWidget {
                     vertical: 4,
                   ),
                   decoration: BoxDecoration(
-                    color: (trendPositive ? AppColors.success : AppColors.danger)
-                        .withValues(alpha: 0.12),
+                    color:
+                        (trendPositive ? AppColors.success : AppColors.danger)
+                            .withValues(alpha: 0.12),
                     borderRadius: AppRadius.pillAll,
                   ),
                   child: Text(
@@ -339,7 +348,12 @@ class PremiumQuickTile extends StatelessWidget {
               borderRadius: AppRadius.mdAll,
             ),
             child: asset != null
-                ? AppIcon(asset: asset!, size: AppIcon.card, fallback: icon, color: color)
+                ? AppIcon(
+                    asset: asset!,
+                    size: AppIcon.card,
+                    fallback: icon,
+                    color: color,
+                  )
                 : Icon(icon, color: color, size: 22),
           ),
           const Spacer(),

@@ -8,7 +8,7 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 /// de sincronizacao da fila offline.
 class ConnectivityService {
   ConnectivityService({Connectivity? connectivity})
-      : _connectivity = connectivity ?? Connectivity() {
+    : _connectivity = connectivity ?? Connectivity() {
     _subscription = _connectivity.onConnectivityChanged.listen(_onChanged);
     unawaited(_bootstrap());
   }
@@ -27,8 +27,8 @@ class ConnectivityService {
   Stream<bool> get onStatusChange => _controller.stream;
 
   Future<void> _bootstrap() async {
-    final List<ConnectivityResult> results =
-        await _connectivity.checkConnectivity();
+    final List<ConnectivityResult> results = await _connectivity
+        .checkConnectivity();
     _onChanged(results);
   }
 
@@ -43,8 +43,8 @@ class ConnectivityService {
 
   /// Consulta pontual, util antes de uma escrita critica.
   Future<bool> check() async {
-    final List<ConnectivityResult> results =
-        await _connectivity.checkConnectivity();
+    final List<ConnectivityResult> results = await _connectivity
+        .checkConnectivity();
     _onChanged(results);
     return _isOnline;
   }

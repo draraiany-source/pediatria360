@@ -23,14 +23,12 @@ class SecurityAccess {
   static bool canExportAuditLogs({
     required AppUser? user,
     required ClinicMembership? clinicMembership,
-  }) =>
-      canAdministerAudit(user: user, clinicMembership: clinicMembership);
+  }) => canAdministerAudit(user: user, clinicMembership: clinicMembership);
 
   static bool canViewPermissionMatrix({
     required AppUser? user,
     required ClinicMembership? clinicMembership,
-  }) =>
-      canAdministerAudit(user: user, clinicMembership: clinicMembership);
+  }) => canAdministerAudit(user: user, clinicMembership: clinicMembership);
 
   /// Profissional verificado pode registrar eventos proprios (create rules).
   static bool canAppendOwnAuditEvent({required AppUser? user}) {

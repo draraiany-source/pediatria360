@@ -226,7 +226,8 @@ export const exportUserData = onCall(
     const user = userDoc.data() ?? {};
 
     // Campos internos não vão para a exportação — não são dado do titular.
-    const { fcmTokens, ...profile } = user;
+    const profile = { ...user };
+    delete profile.fcmTokens;
 
     const dump: Record<string, unknown> = {
       _formato: "Pediatria360 — exportação de dados pessoais (LGPD Art. 18)",

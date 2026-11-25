@@ -58,17 +58,16 @@ class PendingTrackingRecord {
   final String? notes;
 
   Map<String, dynamic> toMap() => <String, dynamic>{
-        'professionalId': professionalId,
-        'sourceKey': sourceKey,
-        'kind': kind,
-        'status': status.name,
-        'updatedAt': FieldValue.serverTimestamp(),
-        if (patientId != null) 'patientId': patientId,
-        if (resolvedAt != null)
-          'resolvedAt': Timestamp.fromDate(resolvedAt!),
-        if (resolvedBy != null) 'resolvedBy': resolvedBy,
-        if (notes != null) 'notes': notes,
-      };
+    'professionalId': professionalId,
+    'sourceKey': sourceKey,
+    'kind': kind,
+    'status': status.name,
+    'updatedAt': FieldValue.serverTimestamp(),
+    if (patientId != null) 'patientId': patientId,
+    if (resolvedAt != null) 'resolvedAt': Timestamp.fromDate(resolvedAt!),
+    if (resolvedBy != null) 'resolvedBy': resolvedBy,
+    if (notes != null) 'notes': notes,
+  };
 
   static String docIdForSourceKey(String sourceKey) =>
       sourceKey.replaceAll('/', '_').replaceAll(':', '__');

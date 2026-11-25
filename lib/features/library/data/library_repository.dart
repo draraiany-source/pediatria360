@@ -27,8 +27,8 @@ class LibraryRepository {
   const LibraryRepository({
     required FirebaseFirestore firestore,
     required CacheService cache,
-  })  : _firestore = firestore,
-        _cache = cache;
+  }) : _firestore = firestore,
+       _cache = cache;
 
   final FirebaseFirestore _firestore;
   final CacheService _cache;
@@ -64,50 +64,50 @@ class LibraryRepository {
     ContentType? type,
     String? cursor,
     int limit = AppConfig.defaultPageSize,
-  }) =>
-      guard(() async {
-        final String cacheKey =
-            '$_cachePrefix${category ?? 'all'}:${type?.name ?? 'all'}';
+  }) => guard(() async {
+    final String cacheKey =
+        '$_cachePrefix${category ?? 'all'}:${type?.name ?? 'all'}';
 
-        Query<Map<String, dynamic>> query = _collection
-            .where('published', isEqualTo: true)
-            .where('audience', whereIn: audiencesFor(user));
+    Query<Map<String, dynamic>> query = _collection
+        .where('published', isEqualTo: true)
+        .where('audience', whereIn: audiencesFor(user));
 
-        if (category != null) {
-          query = query.where('category', isEqualTo: category);
-        }
-        if (type != null) {
-          query = query.where('type', isEqualTo: type.name);
-        }
+    if (category != null) {
+      query = query.where('category', isEqualTo: category);
+    }
+    if (type != null) {
+      query = query.where('type', isEqualTo: type.name);
+    }
 
-        query = query.orderBy('updatedAt', descending: true).limit(limit);
+    query = query.orderBy('updatedAt', descending: true).limit(limit);
 
-        if (cursor != null) {
-          final DocumentSnapshot<Map<String, dynamic>> anchor =
-              await _collection.doc(cursor).get();
-          if (anchor.exists) query = query.startAfterDocument(anchor);
-        }
+    if (cursor != null) {
+      final DocumentSnapshot<Map<String, dynamic>> anchor = await _collection
+          .doc(cursor)
+          .get();
+      if (anchor.exists) query = query.startAfterDocument(anchor);
+    }
 
-        final QuerySnapshot<Map<String, dynamic>> snapshot = await query.get();
-        final List<Content> items = snapshot.docs
-            .map(ContentMapper.fromFirestore)
-            .toList(growable: false);
+    final QuerySnapshot<Map<String, dynamic>> snapshot = await query.get();
+    final List<Content> items = snapshot.docs
+        .map(ContentMapper.fromFirestore)
+        .toList(growable: false);
 
-        // Só a primeira página entra no cache: é a que abre a tela.
-        if (cursor == null) {
-          await _cache.write(
-            cacheKey,
-            items.map(ContentMapper.toCacheMap).toList(growable: false),
-            ttl: AppConfig.cacheTtlMedium,
-          );
-        }
+    // Só a primeira página entra no cache: é a que abre a tela.
+    if (cursor == null) {
+      await _cache.write(
+        cacheKey,
+        items.map(ContentMapper.toCacheMap).toList(growable: false),
+        ttl: AppConfig.cacheTtlMedium,
+      );
+    }
 
-        return Paginated<Content>(
-          items: items,
-          hasMore: items.length == limit,
-          nextCursor: items.isEmpty ? null : items.last.id,
-        );
-      });
+    return Paginated<Content>(
+      items: items,
+      hasMore: items.length == limit,
+      nextCursor: items.isEmpty ? null : items.last.id,
+    );
+  });
 
   /// Primeira página vinda do cache, para pintar a tela antes da rede.
   List<Content> cachedList({String? category, ContentType? type}) {
@@ -130,35 +130,34 @@ class LibraryRepository {
     required AppUser? user,
     required String query,
     int limit = 30,
-  }) =>
-      guard(() async {
-        final List<String> tokens = searchTokens(query);
-        if (tokens.isEmpty) return const <Content>[];
+  }) => guard(() async {
+    final List<String> tokens = searchTokens(query);
+    if (tokens.isEmpty) return const <Content>[];
 
-        final QuerySnapshot<Map<String, dynamic>> snapshot = await _collection
-            .where('published', isEqualTo: true)
-            .where('searchTerms', arrayContainsAny: tokens)
-            .limit(limit)
-            .get();
+    final QuerySnapshot<Map<String, dynamic>> snapshot = await _collection
+        .where('published', isEqualTo: true)
+        .where('searchTerms', arrayContainsAny: tokens)
+        .limit(limit)
+        .get();
 
-        final List<String> allowed = audiencesFor(user);
+    final List<String> allowed = audiencesFor(user);
 
-        final List<Content> results = snapshot.docs
-            .map(ContentMapper.fromFirestore)
-            .where((Content c) => allowed.contains(c.audience.name))
-            .toList();
+    final List<Content> results = snapshot.docs
+        .map(ContentMapper.fromFirestore)
+        .where((Content c) => allowed.contains(c.audience.name))
+        .toList();
 
-        // Ordena por quantos termos da busca o documento cobre — um resultado
-        // que casa "febre" e "bebe" vem antes do que casa só "febre".
-        results.sort((Content a, Content b) {
-          final int scoreA = _score(a, tokens);
-          final int scoreB = _score(b, tokens);
-          if (scoreA != scoreB) return scoreB.compareTo(scoreA);
-          return b.updatedAt.compareTo(a.updatedAt);
-        });
+    // Ordena por quantos termos da busca o documento cobre — um resultado
+    // que casa "febre" e "bebe" vem antes do que casa só "febre".
+    results.sort((Content a, Content b) {
+      final int scoreA = _score(a, tokens);
+      final int scoreB = _score(b, tokens);
+      if (scoreA != scoreB) return scoreB.compareTo(scoreA);
+      return b.updatedAt.compareTo(a.updatedAt);
+    });
 
-        return results;
-      });
+    return results;
+  });
 
   static int _score(Content content, List<String> tokens) {
     int score = 0;
@@ -172,30 +171,33 @@ class LibraryRepository {
   }
 
   Future<Result<Content>> byId(String id) => guard(() async {
-        final String cacheKey = '$_cachePrefix doc:$id';
+    final String cacheKey = '$_cachePrefix doc:$id';
 
-        final Map<String, dynamic>? cached = _cache.readMap(cacheKey);
+    final Map<String, dynamic>? cached = _cache.readMap(cacheKey);
 
-        final DocumentSnapshot<Map<String, dynamic>> doc =
-            await _collection.doc(id).get();
+    final DocumentSnapshot<Map<String, dynamic>> doc = await _collection
+        .doc(id)
+        .get();
 
-        if (!doc.exists) {
-          if (cached != null) return ContentMapper.fromCacheMap(cached);
-          throw StateError('Conteúdo não encontrado.');
-        }
+    if (!doc.exists) {
+      if (cached != null) return ContentMapper.fromCacheMap(cached);
+      throw StateError('Conteúdo não encontrado.');
+    }
 
-        final Content content = ContentMapper.fromFirestore(doc);
-        await _cache.write(
-          cacheKey,
-          ContentMapper.toCacheMap(content),
-          ttl: AppConfig.cacheTtlLong,
-        );
-        return content;
-      });
+    final Content content = ContentMapper.fromFirestore(doc);
+    await _cache.write(
+      cacheKey,
+      ContentMapper.toCacheMap(content),
+      ttl: AppConfig.cacheTtlLong,
+    );
+    return content;
+  });
 
   /// Documento cacheado, disponível offline.
   Content? cachedById(String id) {
-    final Map<String, dynamic>? cached = _cache.readMap('$_cachePrefix doc:$id');
+    final Map<String, dynamic>? cached = _cache.readMap(
+      '$_cachePrefix doc:$id',
+    );
     return cached == null ? null : ContentMapper.fromCacheMap(cached);
   }
 }

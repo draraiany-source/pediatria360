@@ -37,15 +37,11 @@ class AppTheme {
       onPrimaryContainer: isDark ? AppColors.darkInk : AppColors.navy,
       secondary: AppColors.teal,
       onSecondary: Colors.white,
-      secondaryContainer: isDark
-          ? const Color(0xFF0D3D38)
-          : AppColors.softTeal,
+      secondaryContainer: isDark ? const Color(0xFF0D3D38) : AppColors.softTeal,
       onSecondaryContainer: isDark ? AppColors.darkInk : AppColors.tealDeep,
       tertiary: AppColors.moduleLibrary,
       onTertiary: Colors.white,
-      tertiaryContainer: isDark
-          ? const Color(0xFF2A2150)
-          : AppColors.softLilac,
+      tertiaryContainer: isDark ? const Color(0xFF2A2150) : AppColors.softLilac,
       onTertiaryContainer: isDark ? AppColors.darkInk : AppColors.navy,
       error: AppColors.danger,
       onError: Colors.white,

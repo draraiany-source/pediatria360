@@ -30,8 +30,9 @@ final StateProvider<BiPeriodFilter> biPeriodFilterProvider =
 
 final Provider<FinancePeriod> biPeriodProvider = financePeriodProvider;
 
-final Provider<BiAccessLevel> biAccessLevelProvider =
-    Provider<BiAccessLevel>((Ref ref) {
+final Provider<BiAccessLevel> biAccessLevelProvider = Provider<BiAccessLevel>((
+  Ref ref,
+) {
   return BiAccess.level(
     user: ref.watch(currentUserProvider),
     clinicMembership: ref.watch(activeClinicMembershipProvider),
@@ -40,85 +41,87 @@ final Provider<BiAccessLevel> biAccessLevelProvider =
 
 final Provider<BiExecutiveSnapshot> executiveSnapshotProvider =
     Provider<BiExecutiveSnapshot>((Ref ref) {
-  final AppUser? user = ref.watch(currentUserProvider);
-  final ClinicMembership? membership = ref.watch(activeClinicMembershipProvider);
-  final bool finance = BiAccess.canSeeFinance(
-    user: user,
-    clinicMembership: membership,
-  );
-  final bool billing = finance;
-  final bool inventory = BiAccess.canSeeInventory(
-    user: user,
-    clinicMembership: membership,
-  );
+      final AppUser? user = ref.watch(currentUserProvider);
+      final ClinicMembership? membership = ref.watch(
+        activeClinicMembershipProvider,
+      );
+      final bool finance = BiAccess.canSeeFinance(
+        user: user,
+        clinicMembership: membership,
+      );
+      final bool billing = finance;
+      final bool inventory = BiAccess.canSeeInventory(
+        user: user,
+        clinicMembership: membership,
+      );
 
-  final FinancePeriod period = ref.watch(biPeriodProvider);
-  final List<Appointment> agenda =
-      ref.watch(unitScopedMyAgendaProvider).valueOrNull ??
+      final FinancePeriod period = ref.watch(biPeriodProvider);
+      final List<Appointment> agenda =
+          ref.watch(unitScopedMyAgendaProvider).valueOrNull ??
           const <Appointment>[];
-  final PendingAttentionCounts pending =
-      ref.watch(pendingAttentionCountsProvider);
-  final int openPendings = ref
-          .watch(professionalPendingItemsProvider)
-          .valueOrNull
-          ?.length ??
-      0;
+      final PendingAttentionCounts pending = ref.watch(
+        pendingAttentionCountsProvider,
+      );
+      final int openPendings =
+          ref.watch(professionalPendingItemsProvider).valueOrNull?.length ?? 0;
 
-  final ClinicDashboardStats? clinic = ref
-      .watch(clinicDashboardStatsProvider)
-      .valueOrNull;
+      final ClinicDashboardStats? clinic = ref
+          .watch(clinicDashboardStatsProvider)
+          .valueOrNull;
 
-  FinanceDashboardKpis? financeKpis;
-  if (finance) {
-    financeKpis = ref.watch(financeDashboardKpisProvider);
-  }
-  BillingDashboardKpis? billingKpis;
-  if (billing) {
-    billingKpis = ref.watch(billingDashboardKpisProvider);
-  }
-  InventoryDashboardKpis? inventoryKpis;
-  if (inventory) {
-    inventoryKpis = ref.watch(inventoryDashboardKpisProvider);
-  }
+      FinanceDashboardKpis? financeKpis;
+      if (finance) {
+        financeKpis = ref.watch(financeDashboardKpisProvider);
+      }
+      BillingDashboardKpis? billingKpis;
+      if (billing) {
+        billingKpis = ref.watch(billingDashboardKpisProvider);
+      }
+      InventoryDashboardKpis? inventoryKpis;
+      if (inventory) {
+        inventoryKpis = ref.watch(inventoryDashboardKpisProvider);
+      }
 
-  return BiAggregators.compose(
-    clinic: clinic,
-    finance: financeKpis,
-    billing: billingKpis,
-    inventory: inventoryKpis,
-    pendingAttention: pending,
-    appointments: agenda,
-    period: period,
-    openPendings: openPendings,
-  );
-});
+      return BiAggregators.compose(
+        clinic: clinic,
+        finance: financeKpis,
+        billing: billingKpis,
+        inventory: inventoryKpis,
+        pendingAttention: pending,
+        appointments: agenda,
+        period: period,
+        openPendings: openPendings,
+      );
+    });
 
 final Provider<List<BiKpiCardData>> biVisibleKpiCardsProvider =
     Provider<List<BiKpiCardData>>((Ref ref) {
-  final BiExecutiveSnapshot snapshot = ref.watch(executiveSnapshotProvider);
-  final AppUser? user = ref.watch(currentUserProvider);
-  final ClinicMembership? membership = ref.watch(activeClinicMembershipProvider);
-  return BiAggregators.kpiCardsForSnapshot(
-    snapshot: snapshot,
-    includeFinance: BiAccess.canSeeFinance(
-      user: user,
-      clinicMembership: membership,
-    ),
-    includeBilling: BiAccess.canSeeFinance(
-      user: user,
-      clinicMembership: membership,
-    ),
-    includeInventory: BiAccess.canSeeInventory(
-      user: user,
-      clinicMembership: membership,
-    ),
-    includeClinical: BiAccess.canSeeClinical(
-      user: user,
-      clinicMembership: membership,
-    ),
-    includeOps: BiAccess.canSeeOps(
-      user: user,
-      clinicMembership: membership,
-    ),
-  );
-});
+      final BiExecutiveSnapshot snapshot = ref.watch(executiveSnapshotProvider);
+      final AppUser? user = ref.watch(currentUserProvider);
+      final ClinicMembership? membership = ref.watch(
+        activeClinicMembershipProvider,
+      );
+      return BiAggregators.kpiCardsForSnapshot(
+        snapshot: snapshot,
+        includeFinance: BiAccess.canSeeFinance(
+          user: user,
+          clinicMembership: membership,
+        ),
+        includeBilling: BiAccess.canSeeFinance(
+          user: user,
+          clinicMembership: membership,
+        ),
+        includeInventory: BiAccess.canSeeInventory(
+          user: user,
+          clinicMembership: membership,
+        ),
+        includeClinical: BiAccess.canSeeClinical(
+          user: user,
+          clinicMembership: membership,
+        ),
+        includeOps: BiAccess.canSeeOps(
+          user: user,
+          clinicMembership: membership,
+        ),
+      );
+    });

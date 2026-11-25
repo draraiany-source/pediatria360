@@ -20,11 +20,13 @@ class ClinicOrgHubScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final ThemeData theme = Theme.of(context);
-    final AsyncValue<List<ClinicMembership>> membershipsAsync =
-        ref.watch(myClinicMembershipsProvider);
+    final AsyncValue<List<ClinicMembership>> membershipsAsync = ref.watch(
+      myClinicMembershipsProvider,
+    );
     final AsyncValue<String?> activeIdAsync = ref.watch(activeClinicIdProvider);
-    final AsyncValue<ClinicOrganization?> activeClinicAsync =
-        ref.watch(activeClinicProvider);
+    final AsyncValue<ClinicOrganization?> activeClinicAsync = ref.watch(
+      activeClinicProvider,
+    );
 
     return Scaffold(
       backgroundColor: AppColors.lightBackground,
@@ -292,20 +294,21 @@ class _CreateClinicScreenState extends ConsumerState<CreateClinicScreen> {
       return;
     }
     setState(() => _saving = true);
-    final Result<ClinicOrganization> res =
-        await ref.read(clinicOrganizationRepositoryProvider).createClinic(
-              clinic: ClinicOrganization(
-                id: '',
-                name: name,
-                tradeName: _trade.text.trim(),
-                cnpj: _cnpj.text.trim(),
-                phone: _phone.text.trim(),
-                email: _email.text.trim(),
-                address: _address.text.trim(),
-                createdAt: DateTime.now(),
-              ),
-              ownerUserId: uid,
-            );
+    final Result<ClinicOrganization> res = await ref
+        .read(clinicOrganizationRepositoryProvider)
+        .createClinic(
+          clinic: ClinicOrganization(
+            id: '',
+            name: name,
+            tradeName: _trade.text.trim(),
+            cnpj: _cnpj.text.trim(),
+            phone: _phone.text.trim(),
+            email: _email.text.trim(),
+            address: _address.text.trim(),
+            createdAt: DateTime.now(),
+          ),
+          ownerUserId: uid,
+        );
     if (!mounted) return;
     setState(() => _saving = false);
     if (!res.isSuccess || res.valueOrNull == null) {
@@ -314,9 +317,7 @@ class _CreateClinicScreenState extends ConsumerState<CreateClinicScreen> {
       );
       return;
     }
-    await ref
-        .read(activeClinicIdProvider.notifier)
-        .select(res.valueOrNull!.id);
+    await ref.read(activeClinicIdProvider.notifier).select(res.valueOrNull!.id);
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('Clinica criada e definida como ativa.')),

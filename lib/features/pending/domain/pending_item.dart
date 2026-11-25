@@ -30,11 +30,7 @@ enum PendingKind {
 }
 
 /// Area para filtros e RBAC.
-enum PendingCategory {
-  clinical,
-  administrative,
-  financial,
-}
+enum PendingCategory { clinical, administrative, financial }
 
 /// Status persistido ou padrao aberta.
 enum PendingWorkflowStatus {
@@ -50,11 +46,11 @@ enum PendingWorkflowStatus {
       );
 
   String get label => switch (this) {
-        PendingWorkflowStatus.open => 'Aberta',
-        PendingWorkflowStatus.inProgress => 'Em andamento',
-        PendingWorkflowStatus.resolved => 'Resolvida',
-        PendingWorkflowStatus.ignored => 'Ignorada',
-      };
+    PendingWorkflowStatus.open => 'Aberta',
+    PendingWorkflowStatus.inProgress => 'Em andamento',
+    PendingWorkflowStatus.resolved => 'Resolvida',
+    PendingWorkflowStatus.ignored => 'Ignorada',
+  };
 }
 
 /// Segmentos do CRM clinico.
@@ -74,36 +70,33 @@ enum CrmSegment {
 
 extension CrmSegmentLabels on CrmSegment {
   String get label => switch (this) {
-        CrmSegment.noReturnScheduled => 'Sem retorno agendado',
-        CrmSegment.returnOverdue => 'Retorno atrasado',
-        CrmSegment.vaccineOverdue => 'Vacina atrasada',
-        CrmSegment.examPending => 'Exame pendente',
-        CrmSegment.patientInactive => 'Paciente inativo',
-        CrmSegment.patientNew => 'Paciente novo',
-        CrmSegment.activeFollowUp => 'Acompanhamento ativo',
-        CrmSegment.teleconsultPending => 'Teleconsulta pendente',
-        CrmSegment.paymentPending => 'Pagamento pendente',
-        CrmSegment.documentPending => 'Documento pendente',
-        CrmSegment.messageUnanswered => 'Mensagem nao respondida',
-      };
+    CrmSegment.noReturnScheduled => 'Sem retorno agendado',
+    CrmSegment.returnOverdue => 'Retorno atrasado',
+    CrmSegment.vaccineOverdue => 'Vacina atrasada',
+    CrmSegment.examPending => 'Exame pendente',
+    CrmSegment.patientInactive => 'Paciente inativo',
+    CrmSegment.patientNew => 'Paciente novo',
+    CrmSegment.activeFollowUp => 'Acompanhamento ativo',
+    CrmSegment.teleconsultPending => 'Teleconsulta pendente',
+    CrmSegment.paymentPending => 'Pagamento pendente',
+    CrmSegment.documentPending => 'Documento pendente',
+    CrmSegment.messageUnanswered => 'Mensagem nao respondida',
+  };
 
   bool matches(PendingItem item) => switch (this) {
-        CrmSegment.noReturnScheduled =>
-          item.kind == PendingKind.returnNotScheduled,
-        CrmSegment.returnOverdue => item.kind == PendingKind.returnOverdue,
-        CrmSegment.vaccineOverdue => item.kind == PendingKind.vaccineOverdue,
-        CrmSegment.examPending => item.kind == PendingKind.examPending,
-        CrmSegment.patientInactive => item.kind == PendingKind.patientInactive,
-        CrmSegment.patientNew => item.kind == PendingKind.patientNew,
-        CrmSegment.activeFollowUp => item.kind == PendingKind.activeFollowUp,
-        CrmSegment.teleconsultPending =>
-          item.kind == PendingKind.teleconsultPending,
-        CrmSegment.paymentPending => item.kind == PendingKind.paymentPending,
-        CrmSegment.documentPending =>
-          item.kind == PendingKind.documentUnsigned,
-        CrmSegment.messageUnanswered =>
-          item.kind == PendingKind.messageUnread,
-      };
+    CrmSegment.noReturnScheduled => item.kind == PendingKind.returnNotScheduled,
+    CrmSegment.returnOverdue => item.kind == PendingKind.returnOverdue,
+    CrmSegment.vaccineOverdue => item.kind == PendingKind.vaccineOverdue,
+    CrmSegment.examPending => item.kind == PendingKind.examPending,
+    CrmSegment.patientInactive => item.kind == PendingKind.patientInactive,
+    CrmSegment.patientNew => item.kind == PendingKind.patientNew,
+    CrmSegment.activeFollowUp => item.kind == PendingKind.activeFollowUp,
+    CrmSegment.teleconsultPending =>
+      item.kind == PendingKind.teleconsultPending,
+    CrmSegment.paymentPending => item.kind == PendingKind.paymentPending,
+    CrmSegment.documentPending => item.kind == PendingKind.documentUnsigned,
+    CrmSegment.messageUnanswered => item.kind == PendingKind.messageUnread,
+  };
 }
 
 /// Filtros da Central de Pendencias.
@@ -119,14 +112,14 @@ enum PendingCenterFilter {
 
 extension PendingCenterFilterLabels on PendingCenterFilter {
   String get label => switch (this) {
-        PendingCenterFilter.today => 'Hoje',
-        PendingCenterFilter.thisWeek => 'Esta semana',
-        PendingCenterFilter.clinical => 'Clinico',
-        PendingCenterFilter.administrative => 'Administrativo',
-        PendingCenterFilter.financial => 'Financeiro',
-        PendingCenterFilter.urgent => 'Urgente',
-        PendingCenterFilter.resolved => 'Resolvido',
-      };
+    PendingCenterFilter.today => 'Hoje',
+    PendingCenterFilter.thisWeek => 'Esta semana',
+    PendingCenterFilter.clinical => 'Clinico',
+    PendingCenterFilter.administrative => 'Administrativo',
+    PendingCenterFilter.financial => 'Financeiro',
+    PendingCenterFilter.urgent => 'Urgente',
+    PendingCenterFilter.resolved => 'Resolvido',
+  };
 }
 
 /// Acao sugerida na UI (navegacao tratada na camada de apresentacao).
@@ -154,13 +147,7 @@ enum PendingActionKind {
 }
 
 /// Estado de exibicao (inclui vencida calculada).
-enum PendingDisplayStatus {
-  open,
-  inProgress,
-  resolved,
-  ignored,
-  overdue,
-}
+enum PendingDisplayStatus { open, inProgress, resolved, ignored, overdue }
 
 class PendingItem extends Equatable {
   const PendingItem({
@@ -227,31 +214,35 @@ class PendingItem extends Equatable {
     PendingWorkflowStatus? workflowStatus,
     DateTime? resolvedAt,
     String? resolvedBy,
-  }) =>
-      PendingItem(
-        sourceKey: sourceKey,
-        kind: kind,
-        category: category,
-        title: title,
-        subtitle: subtitle,
-        createdAt: createdAt,
-        dueAt: dueAt,
-        patientId: patientId,
-        childId: childId,
-        patientName: patientName,
-        referenceId: referenceId,
-        urgent: urgent,
-        workflowStatus: workflowStatus ?? this.workflowStatus,
-        resolvedAt: resolvedAt ?? this.resolvedAt,
-        resolvedBy: resolvedBy ?? this.resolvedBy,
-        primaryAction: primaryAction,
-        secondaryAction: secondaryAction,
-        crmSegments: crmSegments,
-      );
+  }) => PendingItem(
+    sourceKey: sourceKey,
+    kind: kind,
+    category: category,
+    title: title,
+    subtitle: subtitle,
+    createdAt: createdAt,
+    dueAt: dueAt,
+    patientId: patientId,
+    childId: childId,
+    patientName: patientName,
+    referenceId: referenceId,
+    urgent: urgent,
+    workflowStatus: workflowStatus ?? this.workflowStatus,
+    resolvedAt: resolvedAt ?? this.resolvedAt,
+    resolvedBy: resolvedBy ?? this.resolvedBy,
+    primaryAction: primaryAction,
+    secondaryAction: secondaryAction,
+    crmSegments: crmSegments,
+  );
 
   @override
-  List<Object?> get props =>
-      <Object?>[sourceKey, kind, workflowStatus, dueAt, urgent];
+  List<Object?> get props => <Object?>[
+    sourceKey,
+    kind,
+    workflowStatus,
+    dueAt,
+    urgent,
+  ];
 }
 
 /// Contagens para o bloco "Atencao necessaria" do dashboard.

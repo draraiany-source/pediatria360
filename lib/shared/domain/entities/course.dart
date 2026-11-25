@@ -8,16 +8,16 @@ enum LessonKind {
   quiz;
 
   static LessonKind fromName(String? value) => LessonKind.values.firstWhere(
-        (LessonKind k) => k.name == value,
-        orElse: () => LessonKind.video,
-      );
+    (LessonKind k) => k.name == value,
+    orElse: () => LessonKind.video,
+  );
 
   String get label => switch (this) {
-        LessonKind.video => 'Vídeo',
-        LessonKind.audio => 'Áudio',
-        LessonKind.text => 'Leitura',
-        LessonKind.quiz => 'Exercício',
-      };
+    LessonKind.video => 'Vídeo',
+    LessonKind.audio => 'Áudio',
+    LessonKind.text => 'Leitura',
+    LessonKind.quiz => 'Exercício',
+  };
 }
 
 /// Nível do curso.
@@ -27,15 +27,15 @@ enum CourseLevel {
   advanced;
 
   static CourseLevel fromName(String? value) => CourseLevel.values.firstWhere(
-        (CourseLevel l) => l.name == value,
-        orElse: () => CourseLevel.intro,
-      );
+    (CourseLevel l) => l.name == value,
+    orElse: () => CourseLevel.intro,
+  );
 
   String get label => switch (this) {
-        CourseLevel.intro => 'Introdutório',
-        CourseLevel.intermediate => 'Intermediário',
-        CourseLevel.advanced => 'Avançado',
-      };
+    CourseLevel.intro => 'Introdutório',
+    CourseLevel.intermediate => 'Intermediário',
+    CourseLevel.advanced => 'Avançado',
+  };
 }
 
 /// Um curso.
@@ -177,9 +177,8 @@ class LessonAttachment extends Equatable {
 
   final int sizeKb;
 
-  String get sizeLabel => sizeKb < 1024
-      ? '$sizeKb KB'
-      : '${(sizeKb / 1024).toStringAsFixed(1)} MB';
+  String get sizeLabel =>
+      sizeKb < 1024 ? '$sizeKb KB' : '${(sizeKb / 1024).toStringAsFixed(1)} MB';
 
   @override
   List<Object?> get props => <Object?>[title, path];
@@ -207,8 +206,12 @@ class LessonProgress extends Equatable {
   Duration get position => Duration(seconds: positionSeconds);
 
   @override
-  List<Object?> get props =>
-      <Object?>[lessonId, positionSeconds, completed, updatedAt];
+  List<Object?> get props => <Object?>[
+    lessonId,
+    positionSeconds,
+    completed,
+    updatedAt,
+  ];
 }
 
 /// Progresso agregado de um curso.
@@ -223,11 +226,11 @@ class CourseProgress extends Equatable {
   });
 
   const CourseProgress.empty(this.courseId)
-      : completedLessons = 0,
-        totalLessons = 0,
-        lastLessonId = null,
-        startedAt = null,
-        completedAt = null;
+    : completedLessons = 0,
+      totalLessons = 0,
+      lastLessonId = null,
+      startedAt = null,
+      completedAt = null;
 
   final String courseId;
   final int completedLessons;
@@ -239,8 +242,7 @@ class CourseProgress extends Equatable {
   final DateTime? startedAt;
   final DateTime? completedAt;
 
-  double get ratio =>
-      totalLessons == 0 ? 0 : completedLessons / totalLessons;
+  double get ratio => totalLessons == 0 ? 0 : completedLessons / totalLessons;
 
   int get percent => (ratio * 100).round();
 
@@ -248,6 +250,10 @@ class CourseProgress extends Equatable {
   bool get isComplete => totalLessons > 0 && completedLessons >= totalLessons;
 
   @override
-  List<Object?> get props =>
-      <Object?>[courseId, completedLessons, totalLessons, lastLessonId];
+  List<Object?> get props => <Object?>[
+    courseId,
+    completedLessons,
+    totalLessons,
+    lastLessonId,
+  ];
 }

@@ -26,8 +26,9 @@ class ReceivablesScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final AsyncValue<List<FinanceReceivable>> async =
-        ref.watch(financeReceivablesProvider);
+    final AsyncValue<List<FinanceReceivable>> async = ref.watch(
+      financeReceivablesProvider,
+    );
     final DateTime now = DateTime.now();
     final DateFormat fmt = DateFormat('dd/MM/yyyy');
 
@@ -52,7 +53,9 @@ class ReceivablesScreen extends ConsumerWidget {
               final ReceivableStatus st = r.effectiveStatus(now);
               final bool hi = highlightId != null && r.id == highlightId;
               return Material(
-                color: hi ? AppColors.brand.withValues(alpha: 0.08) : Colors.white,
+                color: hi
+                    ? AppColors.brand.withValues(alpha: 0.08)
+                    : Colors.white,
                 borderRadius: BorderRadius.circular(12),
                 child: ListTile(
                   title: Text(r.description.isNotEmpty ? r.description : r.id),
@@ -66,7 +69,9 @@ class ReceivablesScreen extends ConsumerWidget {
                     itemBuilder: (_) => <PopupMenuEntry<String>>[
                       if (FinanceAccess.canRegisterPayment(
                         user: ref.read(currentUserProvider),
-                        clinicMembership: ref.read(activeClinicMembershipProvider),
+                        clinicMembership: ref.read(
+                          activeClinicMembershipProvider,
+                        ),
                       ))
                         const PopupMenuItem<String>(
                           value: 'pay',
@@ -78,7 +83,9 @@ class ReceivablesScreen extends ConsumerWidget {
                       ),
                       if (FinanceAccess.canManageLedger(
                         user: ref.read(currentUserProvider),
-                        clinicMembership: ref.read(activeClinicMembershipProvider),
+                        clinicMembership: ref.read(
+                          activeClinicMembershipProvider,
+                        ),
                       )) ...<PopupMenuItem<String>>[
                         const PopupMenuItem<String>(
                           value: 'cancel',
@@ -118,8 +125,9 @@ class ReceivablesScreen extends ConsumerWidget {
   ) async {
     final FinanceRepository repo = ref.read(financeRepositoryProvider);
     final String? uid = ref.read(currentUserProvider)?.uid;
-    final ClinicMembership? membership =
-        ref.read(activeClinicMembershipProvider);
+    final ClinicMembership? membership = ref.read(
+      activeClinicMembershipProvider,
+    );
     if (uid == null) return;
 
     switch (action) {
@@ -134,7 +142,11 @@ class ReceivablesScreen extends ConsumerWidget {
           membership: membership,
         );
       case 'edit':
-        final int? total = await _amountDialog(context, r.totalCents, title: 'Novo total');
+        final int? total = await _amountDialog(
+          context,
+          r.totalCents,
+          title: 'Novo total',
+        );
         if (total == null) return;
         await repo.upsertReceivable(
           r.copyWith(totalCents: total, updatedAt: DateTime.now()),
@@ -182,8 +194,9 @@ class ReceivablesScreen extends ConsumerWidget {
     int defaultCents, {
     String title = 'Valor (centavos)',
   }) async {
-    final TextEditingController c =
-        TextEditingController(text: '$defaultCents');
+    final TextEditingController c = TextEditingController(
+      text: '$defaultCents',
+    );
     final int? v = await showDialog<int>(
       context: context,
       builder: (BuildContext ctx) => AlertDialog(
@@ -191,11 +204,16 @@ class ReceivablesScreen extends ConsumerWidget {
         content: TextField(
           controller: c,
           keyboardType: TextInputType.number,
-          inputFormatters: <TextInputFormatter>[FilteringTextInputFormatter.digitsOnly],
+          inputFormatters: <TextInputFormatter>[
+            FilteringTextInputFormatter.digitsOnly,
+          ],
           decoration: const InputDecoration(labelText: 'Centavos'),
         ),
         actions: <Widget>[
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancelar')),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancelar'),
+          ),
           FilledButton(
             onPressed: () => Navigator.pop(ctx, int.tryParse(c.text)),
             child: const Text('OK'),

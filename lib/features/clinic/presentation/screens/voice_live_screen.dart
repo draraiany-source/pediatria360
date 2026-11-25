@@ -75,16 +75,17 @@ class _VoiceLiveScreenState extends ConsumerState<VoiceLiveScreen> {
     setState(() => _busy = false);
     result.fold(
       (_) => context.push(Routes.clinicVoiceReview(widget.sessionId)),
-      (failure) => ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(failure.message)),
-      ),
+      (failure) => ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(failure.message))),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    final AsyncValue<VoiceConsultationSession?> async =
-        ref.watch(voiceSessionProvider(widget.sessionId));
+    final AsyncValue<VoiceConsultationSession?> async = ref.watch(
+      voiceSessionProvider(widget.sessionId),
+    );
 
     return Scaffold(
       backgroundColor: AppColors.lightBackground,
@@ -100,9 +101,8 @@ class _VoiceLiveScreenState extends ConsumerState<VoiceLiveScreen> {
           Expanded(
             child: async.when(
               loading: () => const LoadingState(label: 'Abrindo sessao…'),
-              error: (Object e, StackTrace _) => ErrorState(
-                failure: ServerFailure(e.toString()),
-              ),
+              error: (Object e, StackTrace _) =>
+                  ErrorState(failure: ServerFailure(e.toString())),
               data: (VoiceConsultationSession? session) {
                 if (session == null) {
                   return const EmptyState(
@@ -110,8 +110,7 @@ class _VoiceLiveScreenState extends ConsumerState<VoiceLiveScreen> {
                     message: 'Verifique o identificador ou inicie outra.',
                   );
                 }
-                final bool paused =
-                    session.status == VoiceSessionStatus.paused;
+                final bool paused = session.status == VoiceSessionStatus.paused;
                 final List<String> missing =
                     session.draft?.missingFields ?? const <String>[];
 
@@ -142,9 +141,7 @@ class _VoiceLiveScreenState extends ConsumerState<VoiceLiveScreen> {
                           const Spacer(),
                           Text(
                             _timerLabel,
-                            style: Theme.of(context)
-                                .textTheme
-                                .headlineSmall
+                            style: Theme.of(context).textTheme.headlineSmall
                                 ?.copyWith(
                                   color: AppColors.navy,
                                   fontWeight: FontWeight.w800,
@@ -193,8 +190,7 @@ class _VoiceLiveScreenState extends ConsumerState<VoiceLiveScreen> {
                               padding: const EdgeInsets.all(AppSpacing.lg),
                               itemCount: session.segments.length,
                               itemBuilder: (BuildContext context, int i) {
-                                final TranscriptSegment s =
-                                    session.segments[i];
+                                final TranscriptSegment s = session.segments[i];
                                 return Padding(
                                   padding: const EdgeInsets.only(
                                     bottom: AppSpacing.sm,
@@ -232,7 +228,7 @@ class _VoiceLiveScreenState extends ConsumerState<VoiceLiveScreen> {
                                   content: Text(
                                     missing.isEmpty
                                         ? 'Pergunte sobre a evolucao desde '
-                                            'a ultima consulta.'
+                                              'a ultima consulta.'
                                         : 'Sugestao: explorar "${missing.first}".',
                                   ),
                                 ),

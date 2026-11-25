@@ -29,10 +29,8 @@ class ContentDetailScreen extends ConsumerWidget {
           tooltip: 'Voltar',
         ),
         title: content.maybeWhen(
-          data: (Content c) => Text(
-            c.type.label,
-            style: Theme.of(context).textTheme.bodyMedium,
-          ),
+          data: (Content c) =>
+              Text(c.type.label, style: Theme.of(context).textTheme.bodyMedium),
           orElse: () => const SizedBox.shrink(),
         ),
       ),
@@ -41,7 +39,8 @@ class ContentDetailScreen extends ConsumerWidget {
         error: (Object e, StackTrace s) => EmptyState(
           icon: Icons.article_outlined,
           title: 'Conteúdo indisponível',
-          message: 'Não foi possível abrir agora. Se você já leu este '
+          message:
+              'Não foi possível abrir agora. Se você já leu este '
               'conteúdo antes, ele fica disponível offline.',
           actionLabel: 'Tentar de novo',
           onAction: () => ref.invalidate(contentProvider(contentId)),
@@ -116,10 +115,7 @@ class _Body extends ConsumerWidget {
 
               for (final ContentSection section in content.sections)
                 if (section.kind != SectionKind.redFlag)
-                  _Section(
-                    section: section,
-                    canSeeDosage: canSeeDosage,
-                  ),
+                  _Section(section: section, canSeeDosage: canSeeDosage),
 
               const SizedBox(height: AppSpacing.xxl),
               const Divider(),
@@ -159,9 +155,7 @@ class _Attribution extends StatelessWidget {
       child: Row(
         children: <Widget>[
           Icon(
-            reviewed
-                ? Icons.verified_outlined
-                : Icons.info_outline_rounded,
+            reviewed ? Icons.verified_outlined : Icons.info_outline_rounded,
             size: 18,
             color: reviewed
                 ? AppColors.success
@@ -211,9 +205,7 @@ class _RedFlagBox extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.emergency.withValues(alpha: 0.08),
         borderRadius: AppRadius.lgAll,
-        border: Border.all(
-          color: AppColors.emergency.withValues(alpha: 0.35),
-        ),
+        border: Border.all(color: AppColors.emergency.withValues(alpha: 0.35)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

@@ -23,10 +23,10 @@ class AuthRemoteDataSource {
     required FirebaseFirestore firestore,
     required FirebaseFunctions functions,
     GoogleSignIn? googleSignIn,
-  })  : _auth = auth,
-        _firestore = firestore,
-        _functions = functions,
-        _googleSignIn = googleSignIn ?? GoogleSignIn();
+  }) : _auth = auth,
+       _firestore = firestore,
+       _functions = functions,
+       _googleSignIn = googleSignIn ?? GoogleSignIn();
 
   final FirebaseAuth _auth;
   final FirebaseFirestore _firestore;
@@ -47,19 +47,19 @@ class AuthRemoteDataSource {
     return _auth.userChanges().asyncExpand<AppUser?>((User? user) {
       if (user == null) return Stream<AppUser?>.value(null);
 
-      return _users.doc(user.uid).snapshots().asyncMap(
-        (DocumentSnapshot<Map<String, dynamic>> doc) async {
-          if (!doc.exists) {
-            // Documento ainda nao criado (primeiro login com provedor social,
-            // ou conta antiga). Cria e deixa o proximo snapshot chegar.
-            await _ensureUserDocument(user);
-            return null;
-          }
-          return AppUserMapper.fromFirestore(doc).copyWith(
-            emailVerified: user.emailVerified,
-          );
-        },
-      );
+      return _users.doc(user.uid).snapshots().asyncMap((
+        DocumentSnapshot<Map<String, dynamic>> doc,
+      ) async {
+        if (!doc.exists) {
+          // Documento ainda nao criado (primeiro login com provedor social,
+          // ou conta antiga). Cria e deixa o proximo snapshot chegar.
+          await _ensureUserDocument(user);
+          return null;
+        }
+        return AppUserMapper.fromFirestore(
+          doc,
+        ).copyWith(emailVerified: user.emailVerified);
+      });
     });
   }
 
@@ -81,11 +81,8 @@ class AuthRemoteDataSource {
     required String password,
     required String name,
   }) async {
-    final UserCredential credential =
-        await _auth.createUserWithEmailAndPassword(
-      email: email,
-      password: password,
-    );
+    final UserCredential credential = await _auth
+        .createUserWithEmailAndPassword(email: email, password: password);
     final User user = credential.user!;
 
     await user.updateDisplayName(name);
@@ -108,10 +105,7 @@ class AuthRemoteDataSource {
 
     final GoogleSignInAccount? account = await _googleSignIn.signIn();
     if (account == null) {
-      throw const AuthException(
-        'Login cancelado.',
-        code: 'cancelled',
-      );
+      throw const AuthException('Login cancelado.', code: 'cancelled');
     }
 
     final GoogleSignInAuthentication auth = await account.authentication;
@@ -267,19 +261,23 @@ class AuthRemoteDataSource {
   }
 
   Future<AppUser> _fetchUser(User user) async {
-    final DocumentSnapshot<Map<String, dynamic>> doc =
-        await _users.doc(user.uid).get();
+    final DocumentSnapshot<Map<String, dynamic>> doc = await _users
+        .doc(user.uid)
+        .get();
 
     if (!doc.exists) {
       await _ensureUserDocument(user);
-      final DocumentSnapshot<Map<String, dynamic>> retry =
-          await _users.doc(user.uid).get();
-      return AppUserMapper.fromFirestore(retry)
-          .copyWith(emailVerified: user.emailVerified);
+      final DocumentSnapshot<Map<String, dynamic>> retry = await _users
+          .doc(user.uid)
+          .get();
+      return AppUserMapper.fromFirestore(
+        retry,
+      ).copyWith(emailVerified: user.emailVerified);
     }
 
-    return AppUserMapper.fromFirestore(doc)
-        .copyWith(emailVerified: user.emailVerified);
+    return AppUserMapper.fromFirestore(
+      doc,
+    ).copyWith(emailVerified: user.emailVerified);
   }
 
   Future<void> _ensureUserDocument(User user) async {
@@ -296,9 +294,8 @@ class AuthRemoteDataSource {
       name: name.isEmpty ? (user.email?.split('@').first ?? 'Usuario') : name,
       photoUrl: user.photoURL,
     );
-    await _users.doc(user.uid).set(
-          AppUserMapper.toCreateMap(initial),
-          SetOptions(merge: true),
-        );
+    await _users
+        .doc(user.uid)
+        .set(AppUserMapper.toCreateMap(initial), SetOptions(merge: true));
   }
 }

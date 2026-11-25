@@ -41,17 +41,16 @@ class DocumentViewerScreen extends ConsumerStatefulWidget {
       _DocumentViewerScreenState();
 }
 
-class _DocumentViewerScreenState
-    extends ConsumerState<DocumentViewerScreen> {
+class _DocumentViewerScreenState extends ConsumerState<DocumentViewerScreen> {
   bool _busy = false;
 
   ClinicalDocument get _doc => widget.document;
 
   Future<Uint8List> _render(_) => ClinicalPdfService.build(
-        document: _doc,
-        clinicName: 'Crisdepaula Pediatria',
-        patientBirthDateLabel: null,
-      );
+    document: _doc,
+    clinicName: 'Crisdepaula Pediatria',
+    patientBirthDateLabel: null,
+  );
 
   Future<void> _share() async {
     setState(() => _busy = true);
@@ -116,20 +115,18 @@ class _DocumentViewerScreenState
 
     setState(() => _busy = true);
 
-    final Result<void> result =
-        await ref.read(encounterRepositoryProvider).cancelDocument(
-              documentId: _doc.id,
-              reason: reasonText,
-            );
+    final Result<void> result = await ref
+        .read(encounterRepositoryProvider)
+        .cancelDocument(documentId: _doc.id, reason: reasonText);
 
     if (!mounted) return;
     setState(() => _busy = false);
 
     result.fold(
       (_) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Documento cancelado.')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Documento cancelado.')));
         Navigator.of(context).pop();
       },
       (Failure failure) => ScaffoldMessenger.of(context).showSnackBar(
@@ -214,27 +211,27 @@ class _StatusBar extends StatelessWidget {
 
     final (Color color, IconData icon, String title, String detail) state =
         document.cancelled
-            ? (
-                AppColors.danger,
-                Icons.block_rounded,
-                'Documento cancelado',
-                document.cancellationReason ?? 'Sem motivo registrado.',
-              )
-            : document.isExpired
-                ? (
-                    AppColors.inkMuted,
-                    Icons.schedule_rounded,
-                    'Prazo de validade encerrado',
-                    'Venceu em ${Formatters.date(document.validUntil!)}.',
-                  )
-                : (
-                    AppColors.success,
-                    Icons.verified_outlined,
-                    'Documento válido',
-                    document.validUntil == null
-                        ? 'Emitido em ${Formatters.date(document.issuedAt)}.'
-                        : 'Válido até ${Formatters.date(document.validUntil!)}.',
-                  );
+        ? (
+            AppColors.danger,
+            Icons.block_rounded,
+            'Documento cancelado',
+            document.cancellationReason ?? 'Sem motivo registrado.',
+          )
+        : document.isExpired
+        ? (
+            AppColors.inkMuted,
+            Icons.schedule_rounded,
+            'Prazo de validade encerrado',
+            'Venceu em ${Formatters.date(document.validUntil!)}.',
+          )
+        : (
+            AppColors.success,
+            Icons.verified_outlined,
+            'Documento válido',
+            document.validUntil == null
+                ? 'Emitido em ${Formatters.date(document.issuedAt)}.'
+                : 'Válido até ${Formatters.date(document.validUntil!)}.',
+          );
 
     return Container(
       width: double.infinity,

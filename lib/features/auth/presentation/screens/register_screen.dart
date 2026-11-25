@@ -47,27 +47,25 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   }
 
   Color get _strengthColor => switch (_strength) {
-        < 0.4 => AppColors.danger,
-        < 0.7 => AppColors.warning,
-        _ => AppColors.success,
-      };
+    < 0.4 => AppColors.danger,
+    < 0.7 => AppColors.warning,
+    _ => AppColors.success,
+  };
 
   String get _strengthLabel => switch (_strength) {
-        0 => '',
-        < 0.4 => 'Senha fraca',
-        < 0.7 => 'Senha razoavel',
-        _ => 'Senha forte',
-      };
+    0 => '',
+    < 0.4 => 'Senha fraca',
+    < 0.7 => 'Senha razoavel',
+    _ => 'Senha forte',
+  };
 
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
     FocusScope.of(context).unfocus();
 
-    await ref.read(authControllerProvider.notifier).signUp(
-          name: _name.text,
-          email: _email.text,
-          password: _password.text,
-        );
+    await ref
+        .read(authControllerProvider.notifier)
+        .signUp(name: _name.text, email: _email.text, password: _password.text);
   }
 
   @override
@@ -75,8 +73,10 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     final ThemeData theme = Theme.of(context);
     final AuthActionState state = ref.watch(authControllerProvider);
 
-    ref.listen<AuthActionState>(authControllerProvider,
-        (AuthActionState? previous, AuthActionState next) {
+    ref.listen<AuthActionState>(authControllerProvider, (
+      AuthActionState? previous,
+      AuthActionState next,
+    ) {
       if (next.failure != null && context.mounted) {
         ScaffoldMessenger.of(context)
           ..hideCurrentSnackBar()

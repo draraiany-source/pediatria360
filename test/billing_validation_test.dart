@@ -4,52 +4,40 @@ import 'package:pediatria360/features/billing/domain/billing_models.dart';
 
 import 'package:pediatria360/features/billing/domain/billing_validation.dart';
 
-
-
 void main() {
-
   final DateTime now = DateTime(2026, 3, 1);
 
-
-
   BillingGuide baseGuide() => BillingGuide(
+    id: 'g1',
 
-        id: 'g1',
+    ownerId: 'o1',
 
-        ownerId: 'o1',
+    type: BillingGuideType.procedure,
 
-        type: BillingGuideType.procedure,
+    childId: 'c1',
 
-        childId: 'c1',
+    serviceDate: now,
 
-        serviceDate: now,
+    amountCents: 10000,
 
-        amountCents: 10000,
+    planId: 'plan1',
 
-        planId: 'plan1',
+    professionalId: 'prof1',
 
-        professionalId: 'prof1',
+    procedureCode: '10101012',
 
-        procedureCode: '10101012',
+    procedureName: 'Consulta',
 
-        procedureName: 'Consulta',
-
-        authorizationId: 'a1',
-
-      );
-
-
+    authorizationId: 'a1',
+  );
 
   test('valid guide has no issues', () {
-
     final List<BillingValidationIssue> issues = validateGuideForBatch(
-
       guide: baseGuide(),
 
       now: now,
 
       patientInsurance: PatientInsurance(
-
         id: 'pi1',
 
         ownerId: 'o1',
@@ -59,11 +47,9 @@ void main() {
         coverageType: CoverageType.insurance,
 
         validUntil: now.add(const Duration(days: 30)),
-
       ),
 
       authorization: InsuranceAuthorization(
-
         id: 'a1',
 
         ownerId: 'o1',
@@ -75,23 +61,16 @@ void main() {
         status: AuthorizationStatus.authorized,
 
         validUntil: now.add(const Duration(days: 10)),
-
       ),
 
       requiresAuth: true,
-
     );
 
     expect(issues, isEmpty);
-
   });
 
-
-
   test('missing plan flagged', () {
-
     final BillingGuide g = BillingGuide(
-
       id: 'g2',
 
       ownerId: 'o1',
@@ -107,18 +86,12 @@ void main() {
       professionalId: 'p1',
 
       procedureName: 'Consulta',
-
     );
 
     expect(
-
       validateGuideForBatch(guide: g, now: now).first.code,
 
       BillingValidationCode.missingPlan,
-
     );
-
   });
-
 }
-

@@ -14,8 +14,9 @@ class VoiceHomeScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final String? childId =
-        GoRouterState.of(context).uri.queryParameters['childId'];
+    final String? childId = GoRouterState.of(
+      context,
+    ).uri.queryParameters['childId'];
     final ThemeData theme = Theme.of(context);
 
     return Scaffold(
@@ -61,7 +62,7 @@ class VoiceHomeScreen extends ConsumerWidget {
                           final String path = childId == null
                               ? Routes.clinicVoiceConsentPath
                               : '${Routes.clinicVoiceConsentPath}'
-                                  '?childId=$childId';
+                                    '?childId=$childId';
                           context.push(path);
                         },
                       ),

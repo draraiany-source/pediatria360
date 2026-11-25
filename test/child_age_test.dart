@@ -2,14 +2,14 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:pediatria360/shared/domain/entities/child.dart';
 
 Child build({required DateTime birth, int? gestationalWeeks}) => Child(
-      id: 'c1',
-      ownerId: 'u1',
-      name: 'Ana',
-      birthDate: birth,
-      sex: ChildSex.female,
-      gestationalWeeks: gestationalWeeks,
-      updatedAt: DateTime.now(),
-    );
+  id: 'c1',
+  ownerId: 'u1',
+  name: 'Ana',
+  birthDate: birth,
+  sex: ChildSex.female,
+  gestationalWeeks: gestationalWeeks,
+  updatedAt: DateTime.now(),
+);
 
 void main() {
   group('idade corrigida do prematuro', () {

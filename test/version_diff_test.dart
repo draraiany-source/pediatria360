@@ -9,15 +9,14 @@ Map<String, dynamic> snapshot({
     <String, String>{'title': 'O que é', 'body': 'Texto A'},
     <String, String>{'title': 'O que fazer', 'body': 'Texto B'},
   ],
-}) =>
-    <String, dynamic>{
-      'title': title,
-      'summary': summary,
-      'audience': audience,
-      'category': 'febre',
-      'type': 'article',
-      'sections': sections,
-    };
+}) => <String, dynamic>{
+  'title': title,
+  'summary': summary,
+  'audience': audience,
+  'category': 'febre',
+  'type': 'article',
+  'sections': sections,
+};
 
 void main() {
   group('comparação entre versões', () {
@@ -106,8 +105,10 @@ void main() {
     });
 
     test('instantâneo vazio não quebra', () {
-      final VersionDiff diff =
-          VersionDiff.between(const <String, dynamic>{}, snapshot());
+      final VersionDiff diff = VersionDiff.between(
+        const <String, dynamic>{},
+        snapshot(),
+      );
       expect(diff.isEmpty, isFalse);
       expect(diff.sectionsAdded.length, 2);
     });

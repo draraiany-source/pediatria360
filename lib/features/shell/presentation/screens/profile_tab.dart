@@ -108,14 +108,14 @@ class ProfileTab extends ConsumerWidget {
                                   customBorder: const CircleBorder(),
                                   onTap: () => Navigator.of(context).push(
                                     MaterialPageRoute<void>(
-                                      builder: (_) =>
-                                          const ProfileEditScreen(),
+                                      builder: (_) => const ProfileEditScreen(),
                                     ),
                                   ),
                                   child: const Padding(
                                     padding: EdgeInsets.all(6),
                                     child: Icon(
-                                      Icons.edit_rounded, // material fallback kept for small overlay
+                                      Icons
+                                          .edit_rounded, // material fallback kept for small overlay
 
                                       size: 14,
                                       color: Colors.white,
@@ -134,8 +134,8 @@ class ProfileTab extends ConsumerWidget {
                               Text(
                                 user.role.isProfessional
                                     ? (user.name.startsWith('Dr')
-                                        ? user.name
-                                        : 'Dra. ${user.firstName}')
+                                          ? user.name
+                                          : 'Dra. ${user.firstName}')
                                     : user.name,
                                 style: theme.textTheme.titleLarge?.copyWith(
                                   color: AppColors.navy,
@@ -186,9 +186,7 @@ class ProfileTab extends ConsumerWidget {
                             asset: AppIcons.idCard,
                             iconColor: AppColors.teal,
                             label: 'CRM',
-                            value: (user.crm ?? '').isEmpty
-                                ? '—'
-                                : user.crm!,
+                            value: (user.crm ?? '').isEmpty ? '—' : user.crm!,
                           ),
                         ),
                         Container(width: 1, height: 48, color: AppColors.line),
@@ -264,8 +262,7 @@ class ProfileTab extends ConsumerWidget {
                           subtitle: 'Gerencie seus avisos e lembretes',
                           onTap: () => Navigator.of(context).push(
                             MaterialPageRoute<void>(
-                              builder: (_) =>
-                                  const NotificationCenterScreen(),
+                              builder: (_) => const NotificationCenterScreen(),
                             ),
                           ),
                         ),
@@ -295,7 +292,8 @@ class ProfileTab extends ConsumerWidget {
                             final Uri mail = Uri(
                               scheme: 'mailto',
                               path: AppConfig.supportEmail,
-                              query: 'subject=Suporte%20Crisdepaula%20Pediatria',
+                              query:
+                                  'subject=Suporte%20Crisdepaula%20Pediatria',
                             );
                             final bool ok = await launchUrl(mail);
                             if (!context.mounted) return;
@@ -346,8 +344,8 @@ class ProfileTab extends ConsumerWidget {
                           fillColor: WidgetStateProperty.resolveWith(
                             (Set<WidgetState> states) =>
                                 states.contains(WidgetState.selected)
-                                    ? AppColors.brand
-                                    : AppColors.inkMuted,
+                                ? AppColors.brand
+                                : AppColors.inkMuted,
                           ),
                         ),
                       ),
@@ -416,9 +414,7 @@ class ProfileTab extends ConsumerWidget {
                           ),
                         ),
                         title: const Text('Crianças'),
-                        subtitle: const Text(
-                          'Gerencie os perfis acompanhados',
-                        ),
+                        subtitle: const Text('Gerencie os perfis acompanhados'),
                         trailing: const Icon(Icons.chevron_right_rounded),
                       ),
                     ),
@@ -453,19 +449,14 @@ class _SummaryCell extends StatelessWidget {
     return Column(
       children: <Widget>[
         asset != null
-            ? AppIcon(
-                asset: asset!,
-                size: 20,
-                fallback: icon,
-                color: iconColor,
-              )
+            ? AppIcon(asset: asset!, size: 20, fallback: icon, color: iconColor)
             : Icon(icon, color: iconColor, size: 20),
         const SizedBox(height: 4),
         Text(
           label,
-          style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                color: AppColors.inkMuted,
-              ),
+          style: Theme.of(
+            context,
+          ).textTheme.labelSmall?.copyWith(color: AppColors.inkMuted),
         ),
         Text(
           value,
@@ -473,9 +464,9 @@ class _SummaryCell extends StatelessWidget {
           maxLines: 2,
           overflow: TextOverflow.ellipsis,
           style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                color: AppColors.navy,
-                fontWeight: FontWeight.w800,
-              ),
+            color: AppColors.navy,
+            fontWeight: FontWeight.w800,
+          ),
         ),
       ],
     );
@@ -521,10 +512,7 @@ class _SettingsTile extends StatelessWidget {
         ),
       ),
       subtitle: Text(subtitle),
-      trailing: const Icon(
-        Icons.chevron_right_rounded,
-        color: AppColors.brand,
-      ),
+      trailing: const Icon(Icons.chevron_right_rounded, color: AppColors.brand),
     );
   }
 }

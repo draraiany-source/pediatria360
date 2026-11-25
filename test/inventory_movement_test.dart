@@ -8,17 +8,11 @@ void main() {
 
   test('lot expiry status thresholds', () {
     expect(
-      lotExpiryStatus(
-        expiresAt: now.add(const Duration(days: 120)),
-        now: now,
-      ),
+      lotExpiryStatus(expiresAt: now.add(const Duration(days: 120)), now: now),
       LotExpiryStatus.valid,
     );
     expect(
-      lotExpiryStatus(
-        expiresAt: now.add(const Duration(days: 20)),
-        now: now,
-      ),
+      lotExpiryStatus(expiresAt: now.add(const Duration(days: 20)), now: now),
       LotExpiryStatus.nearExpiry,
     );
     expect(

@@ -14,15 +14,17 @@ final Provider<AiRepository> aiRepositoryProvider = Provider<AiRepository>(
   ),
 );
 
-final FutureProvider<AiQuota> aiQuotaProvider =
-    FutureProvider<AiQuota>((Ref ref) async {
+final FutureProvider<AiQuota> aiQuotaProvider = FutureProvider<AiQuota>((
+  Ref ref,
+) async {
   final String? uid = ref.watch(currentUserProvider)?.uid;
   if (uid == null) {
     return const AiQuota(used: 0, limit: 0, unlimited: false);
   }
 
-  final Result<AiQuota> result =
-      await ref.watch(aiRepositoryProvider).quota(uid);
+  final Result<AiQuota> result = await ref
+      .watch(aiRepositoryProvider)
+      .quota(uid);
   return result.valueOrNull ??
       const AiQuota(used: 0, limit: 10, unlimited: false);
 });
@@ -54,14 +56,13 @@ class ChatState {
     String? childId,
     bool clearFailure = false,
     bool clearChild = false,
-  }) =>
-      ChatState(
-        conversationId: conversationId ?? this.conversationId,
-        messages: messages ?? this.messages,
-        isSending: isSending ?? this.isSending,
-        failure: clearFailure ? null : (failure ?? this.failure),
-        childId: clearChild ? null : (childId ?? this.childId),
-      );
+  }) => ChatState(
+    conversationId: conversationId ?? this.conversationId,
+    messages: messages ?? this.messages,
+    isSending: isSending ?? this.isSending,
+    failure: clearFailure ? null : (failure ?? this.failure),
+    childId: clearChild ? null : (childId ?? this.childId),
+  );
 }
 
 /// Controla uma conversa.
@@ -80,16 +81,15 @@ class ChatController extends AutoDisposeNotifier<ChatState> {
   void loadConversation(String conversationId) {
     state = ChatState(conversationId: conversationId);
 
-    ref.listen<AsyncValue<List<AiMessage>>>(
-      _messagesProvider(conversationId),
-      (AsyncValue<List<AiMessage>>? _, AsyncValue<List<AiMessage>> next) {
-        final List<AiMessage>? messages = next.valueOrNull;
-        if (messages != null && !state.isSending) {
-          state = state.copyWith(messages: messages);
-        }
-      },
-      fireImmediately: true,
-    );
+    ref.listen<AsyncValue<List<AiMessage>>>(_messagesProvider(conversationId), (
+      AsyncValue<List<AiMessage>>? _,
+      AsyncValue<List<AiMessage>> next,
+    ) {
+      final List<AiMessage>? messages = next.valueOrNull;
+      if (messages != null && !state.isSending) {
+        state = state.copyWith(messages: messages);
+      }
+    }, fireImmediately: true);
   }
 
   Future<void> send(String question) async {
@@ -114,7 +114,9 @@ class ChatController extends AutoDisposeNotifier<ChatState> {
       <String, Object>{'has_child_context': state.childId != null},
     );
 
-    final Result<AiAnswer> result = await ref.read(aiRepositoryProvider).ask(
+    final Result<AiAnswer> result = await ref
+        .read(aiRepositoryProvider)
+        .ask(
           question: trimmed,
           conversationId: state.conversationId,
           childId: state.childId,
@@ -153,8 +155,7 @@ class ChatController extends AutoDisposeNotifier<ChatState> {
 
   /// Reenvia a última pergunta que falhou.
   Future<void> retryLast() async {
-    final AiMessage? last =
-        state.messages.isEmpty ? null : state.messages.last;
+    final AiMessage? last = state.messages.isEmpty ? null : state.messages.last;
     if (last == null || !last.failed) return;
 
     state = state.copyWith(
@@ -167,12 +168,10 @@ class ChatController extends AutoDisposeNotifier<ChatState> {
 }
 
 final AutoDisposeStreamProviderFamily<List<AiMessage>, String>
-    _messagesProvider = StreamProvider.autoDispose.family<List<AiMessage>, String>(
+_messagesProvider = StreamProvider.autoDispose.family<List<AiMessage>, String>(
   (Ref ref, String conversationId) =>
       ref.watch(aiRepositoryProvider).watchMessages(conversationId),
 );
 
 final AutoDisposeNotifierProvider<ChatController, ChatState> chatProvider =
-    NotifierProvider.autoDispose<ChatController, ChatState>(
-  ChatController.new,
-);
+    NotifierProvider.autoDispose<ChatController, ChatState>(ChatController.new);

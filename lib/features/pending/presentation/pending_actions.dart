@@ -38,10 +38,7 @@ Future<void> runPendingAction(
     case PendingActionKind.openSupplementLabs:
       if (item.referenceId != null) {
         context.push(
-          Routes.supplementLabDetail(
-            item.referenceId!,
-            childId: childId,
-          ),
+          Routes.supplementLabDetail(item.referenceId!, childId: childId),
         );
       } else {
         context.push(Routes.supplementLabsPath);
@@ -83,7 +80,8 @@ Future<void> runPendingAction(
       }
     case PendingActionKind.registerPayment:
       if (item.sourceKey.startsWith('finance_recv:')) {
-        final String recvId = item.referenceId ?? item.sourceKey.split(':').last;
+        final String recvId =
+            item.referenceId ?? item.sourceKey.split(':').last;
         context.push(
           '${Routes.financeReceivablesPath}?receivableId=${Uri.encodeComponent(recvId)}',
         );
@@ -113,7 +111,8 @@ Future<void> runPendingAction(
       if (item.referenceId != null) {
         await Navigator.of(context).push(
           MaterialPageRoute<void>(
-            builder: (_) => EncounterEditorScreen(encounterId: item.referenceId!),
+            builder: (_) =>
+                EncounterEditorScreen(encounterId: item.referenceId!),
           ),
         );
       }
@@ -135,7 +134,9 @@ Future<void> updatePendingStatus(
 }) async {
   final String? uid = ref.read(currentUserProvider)?.uid;
   if (uid == null) return;
-  await ref.read(pendingRepositoryProvider).upsertStatus(
+  await ref
+      .read(pendingRepositoryProvider)
+      .upsertStatus(
         professionalId: uid,
         item: item,
         status: status,
@@ -146,14 +147,5 @@ Future<void> updatePendingStatus(
   ref.invalidate(pendingTrackingMapProvider);
 }
 
-Future<void> _resolvePending(
-  WidgetRef ref,
-  PendingItem item, {
-  String? note,
-}) =>
-    updatePendingStatus(
-      ref,
-      item,
-      PendingWorkflowStatus.resolved,
-      notes: note,
-    );
+Future<void> _resolvePending(WidgetRef ref, PendingItem item, {String? note}) =>
+    updatePendingStatus(ref, item, PendingWorkflowStatus.resolved, notes: note);

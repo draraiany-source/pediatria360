@@ -31,14 +31,14 @@ class SupplementAiDraft {
   final String disclaimer;
 
   Map<String, dynamic> toMap() => <String, dynamic>{
-        'patientBlock': patientBlock,
-        'examsBlock': examsBlock,
-        'attentionPoints': attentionPoints,
-        'nextSteps': nextSteps,
-        'shortcuts': shortcuts,
-        'clinicalSummary': clinicalSummary,
-        'disclaimer': disclaimer,
-      };
+    'patientBlock': patientBlock,
+    'examsBlock': examsBlock,
+    'attentionPoints': attentionPoints,
+    'nextSteps': nextSteps,
+    'shortcuts': shortcuts,
+    'clinicalSummary': clinicalSummary,
+    'disclaimer': disclaimer,
+  };
 }
 
 /// Parser heuristico local (sem chamar modelo) ? organiza texto livre.
@@ -48,17 +48,26 @@ class SupplementAiLocalOrganizer {
   SupplementAiDraft organizeFromFreeText(String raw) {
     final String text = raw.trim();
     final Map<String, String> patient = <String, String>{
-      'Idade': _extract(text, <String>['ano', 'anos', 'idade']) ?? 'Nao informado',
+      'Idade':
+          _extract(text, <String>['ano', 'anos', 'idade']) ?? 'Nao informado',
       'Peso': _extract(text, <String>['kg', 'peso']) ?? 'Nao informado',
       'Queixa': text.isEmpty ? 'Nao informado' : _firstSentence(text),
-      'Alimentacao': _extract(text, <String>['seletividade', 'vegetariano', 'vegano', 'aliment']) ??
+      'Alimentacao':
+          _extract(text, <String>[
+            'seletividade',
+            'vegetariano',
+            'vegano',
+            'aliment',
+          ]) ??
           'Nao informado',
     };
     final Map<String, String> exams = <String, String>{
       'Hb': _extract(text, <String>['hb', 'hemoglobina']) ?? 'Nao informado',
       'Ferritina': _extract(text, <String>['ferritina']) ?? 'Nao informado',
       'B12': _extract(text, <String>['b12']) ?? 'Nao informado',
-      'Vitamina D': _extract(text, <String>['vitamina d', '25-oh', '25oh']) ?? 'Nao informado',
+      'Vitamina D':
+          _extract(text, <String>['vitamina d', '25-oh', '25oh']) ??
+          'Nao informado',
     };
 
     return SupplementAiDraft(

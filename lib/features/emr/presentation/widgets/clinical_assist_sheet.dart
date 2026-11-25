@@ -26,35 +26,35 @@ enum ClinicalTask {
   matchProtocol;
 
   String get label => switch (this) {
-        ClinicalTask.draftProgressNote => 'Redigir evolução',
-        ClinicalTask.summarizeEncounter => 'Resumir consulta',
-        ClinicalTask.summarizeHistory => 'Resumir histórico',
-        ClinicalTask.differentialConsiderations => 'Diferenciais a considerar',
-        ClinicalTask.matchProtocol => 'Protocolo aplicável',
-      };
+    ClinicalTask.draftProgressNote => 'Redigir evolução',
+    ClinicalTask.summarizeEncounter => 'Resumir consulta',
+    ClinicalTask.summarizeHistory => 'Resumir histórico',
+    ClinicalTask.differentialConsiderations => 'Diferenciais a considerar',
+    ClinicalTask.matchProtocol => 'Protocolo aplicável',
+  };
 
   String get description => switch (this) {
-        ClinicalTask.draftProgressNote =>
-          'Organiza o que você registrou em subjetivo, objetivo, avaliação '
-              'e conduta.',
-        ClinicalTask.summarizeEncounter =>
-          'Um parágrafo denso, do tipo que se lê antes do retorno.',
-        ClinicalTask.summarizeHistory =>
-          'Padrões que só aparecem no conjunto dos atendimentos.',
-        ClinicalTask.differentialConsiderations =>
-          'Hipóteses a considerar, com o que sustenta e o que enfraquece '
-              'cada uma.',
-        ClinicalTask.matchProtocol =>
-          'Quais protocolos cadastrados se aplicam a este caso.',
-      };
+    ClinicalTask.draftProgressNote =>
+      'Organiza o que você registrou em subjetivo, objetivo, avaliação '
+          'e conduta.',
+    ClinicalTask.summarizeEncounter =>
+      'Um parágrafo denso, do tipo que se lê antes do retorno.',
+    ClinicalTask.summarizeHistory =>
+      'Padrões que só aparecem no conjunto dos atendimentos.',
+    ClinicalTask.differentialConsiderations =>
+      'Hipóteses a considerar, com o que sustenta e o que enfraquece '
+          'cada uma.',
+    ClinicalTask.matchProtocol =>
+      'Quais protocolos cadastrados se aplicam a este caso.',
+  };
 
   IconData get icon => switch (this) {
-        ClinicalTask.draftProgressNote => Icons.edit_note_rounded,
-        ClinicalTask.summarizeEncounter => Icons.subject_rounded,
-        ClinicalTask.summarizeHistory => Icons.history_rounded,
-        ClinicalTask.differentialConsiderations => Icons.account_tree_outlined,
-        ClinicalTask.matchProtocol => Icons.rule_folder_outlined,
-      };
+    ClinicalTask.draftProgressNote => Icons.edit_note_rounded,
+    ClinicalTask.summarizeEncounter => Icons.subject_rounded,
+    ClinicalTask.summarizeHistory => Icons.history_rounded,
+    ClinicalTask.differentialConsiderations => Icons.account_tree_outlined,
+    ClinicalTask.matchProtocol => Icons.rule_folder_outlined,
+  };
 
   /// Tarefas que só fazem sentido com histórico prévio.
   bool get needsHistory => this == ClinicalTask.summarizeHistory;
@@ -76,8 +76,8 @@ class ClinicalAssistResult {
   final String? disclaimer;
 }
 
-class ClinicalAssistController extends AutoDisposeNotifier<AsyncValue<
-    ClinicalAssistResult?>> {
+class ClinicalAssistController
+    extends AutoDisposeNotifier<AsyncValue<ClinicalAssistResult?>> {
   @override
   AsyncValue<ClinicalAssistResult?> build() =>
       const AsyncValue<ClinicalAssistResult?>.data(null);
@@ -100,14 +100,15 @@ class ClinicalAssistController extends AutoDisposeNotifier<AsyncValue<
             ),
           )
           .call(<String, dynamic>{
-        'task': task.name,
-        'encounterId': encounterId,
-        'patientId': patientId,
-        if (note != null && note.trim().isNotEmpty) 'freeText': note.trim(),
-      });
+            'task': task.name,
+            'encounterId': encounterId,
+            'patientId': patientId,
+            if (note != null && note.trim().isNotEmpty) 'freeText': note.trim(),
+          });
 
-      final Map<String, dynamic> data =
-          Map<String, dynamic>.from(response.data as Map<dynamic, dynamic>);
+      final Map<String, dynamic> data = Map<String, dynamic>.from(
+        response.data as Map<dynamic, dynamic>,
+      );
 
       return ClinicalAssistResult(
         text: (data['text'] as String?) ?? '',
@@ -117,23 +118,24 @@ class ClinicalAssistController extends AutoDisposeNotifier<AsyncValue<
     });
 
     state = result.fold(
-      (ClinicalAssistResult r) =>
-          AsyncValue<ClinicalAssistResult?>.data(r),
-      (Failure f) => AsyncValue<ClinicalAssistResult?>.error(
-        f,
-        StackTrace.current,
-      ),
+      (ClinicalAssistResult r) => AsyncValue<ClinicalAssistResult?>.data(r),
+      (Failure f) =>
+          AsyncValue<ClinicalAssistResult?>.error(f, StackTrace.current),
     );
   }
 
-  void clear() =>
-      state = const AsyncValue<ClinicalAssistResult?>.data(null);
+  void clear() => state = const AsyncValue<ClinicalAssistResult?>.data(null);
 }
 
-final AutoDisposeNotifierProvider<ClinicalAssistController,
-        AsyncValue<ClinicalAssistResult?>> clinicalAssistProvider =
-    NotifierProvider.autoDispose<ClinicalAssistController,
-        AsyncValue<ClinicalAssistResult?>>(ClinicalAssistController.new);
+final AutoDisposeNotifierProvider<
+  ClinicalAssistController,
+  AsyncValue<ClinicalAssistResult?>
+>
+clinicalAssistProvider =
+    NotifierProvider.autoDispose<
+      ClinicalAssistController,
+      AsyncValue<ClinicalAssistResult?>
+    >(ClinicalAssistController.new);
 
 /// Painel do assistente clínico, aberto a partir do editor de atendimento.
 ///
@@ -180,7 +182,9 @@ class _ClinicalAssistSheetState extends ConsumerState<ClinicalAssistSheet> {
   Future<void> _run(ClinicalTask task) async {
     setState(() => _running = task);
 
-    await ref.read(clinicalAssistProvider.notifier).run(
+    await ref
+        .read(clinicalAssistProvider.notifier)
+        .run(
           task: task,
           encounterId: widget.encounter.id,
           patientId: widget.encounter.patientId,
@@ -191,8 +195,9 @@ class _ClinicalAssistSheetState extends ConsumerState<ClinicalAssistSheet> {
   @override
   Widget build(BuildContext context) {
     final ThemeData theme = Theme.of(context);
-    final AsyncValue<ClinicalAssistResult?> state =
-        ref.watch(clinicalAssistProvider);
+    final AsyncValue<ClinicalAssistResult?> state = ref.watch(
+      clinicalAssistProvider,
+    );
 
     return DraggableScrollableSheet(
       initialChildSize: 0.85,
@@ -243,7 +248,8 @@ class _ClinicalAssistSheetState extends ConsumerState<ClinicalAssistSheet> {
                 for (final ClinicalTask task in ClinicalTask.values)
                   _TaskTile(
                     task: task,
-                    enabled: !state.isLoading &&
+                    enabled:
+                        !state.isLoading &&
                         (!task.needsHistory || widget.hasHistory),
                     running: state.isLoading && _running == task,
                     onTap: () => _run(task),
@@ -252,7 +258,8 @@ class _ClinicalAssistSheetState extends ConsumerState<ClinicalAssistSheet> {
                 AppTextField(
                   label: 'Observação para o assistente',
                   controller: _note,
-                  hint: 'Ex.: o radiologista laudou consolidação em base '
+                  hint:
+                      'Ex.: o radiologista laudou consolidação em base '
                       'direita',
                   maxLines: 3,
                   helper: 'Opcional. Some ao que já está no prontuário.',
@@ -337,30 +344,30 @@ class _Thinking extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Padding(
-        padding: const EdgeInsets.all(AppSpacing.xl),
-        child: Column(
-          children: <Widget>[
-            SizedBox(
-              height: 72,
-              child: Lottie.asset(
-                AppAssets.lottieAiThinking,
-                repeat: true,
-                errorBuilder: (BuildContext context, Object error, _) =>
-                    const SizedBox(
+    padding: const EdgeInsets.all(AppSpacing.xl),
+    child: Column(
+      children: <Widget>[
+        SizedBox(
+          height: 72,
+          child: Lottie.asset(
+            AppAssets.lottieAiThinking,
+            repeat: true,
+            errorBuilder: (BuildContext context, Object error, _) =>
+                const SizedBox(
                   width: 16,
                   height: 16,
                   child: CircularProgressIndicator(strokeWidth: 2),
                 ),
-              ),
-            ),
-            const SizedBox(height: AppSpacing.sm),
-            Text(
-              'Lendo o prontuário...',
-              style: Theme.of(context).textTheme.bodySmall,
-            ),
-          ],
+          ),
         ),
-      );
+        const SizedBox(height: AppSpacing.sm),
+        Text(
+          'Lendo o prontuário...',
+          style: Theme.of(context).textTheme.bodySmall,
+        ),
+      ],
+    ),
+  );
 }
 
 class _ErrorBox extends StatelessWidget {
@@ -475,9 +482,7 @@ class _ResultPanel extends StatelessWidget {
                 if (context.mounted) {
                   ScaffoldMessenger.of(context)
                     ..hideCurrentSnackBar()
-                    ..showSnackBar(
-                      const SnackBar(content: Text('Copiado.')),
-                    );
+                    ..showSnackBar(const SnackBar(content: Text('Copiado.')));
                 }
               },
               icon: const Icon(Icons.copy_rounded, size: 16),

@@ -14,9 +14,10 @@ class DreScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final List<FinanceReceivable> recv =
         ref.watch(financeReceivablesProvider).valueOrNull ??
-            const <FinanceReceivable>[];
+        const <FinanceReceivable>[];
     final List<FinancePayable> pay =
-        ref.watch(financePayablesProvider).valueOrNull ?? const <FinancePayable>[];
+        ref.watch(financePayablesProvider).valueOrNull ??
+        const <FinancePayable>[];
     final FinancePeriod period = ref.watch(financePeriodProvider);
     final DreReport dre = DreReport.build(
       receivables: recv,
@@ -47,8 +48,14 @@ class DreScreen extends ConsumerWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: <Widget>[
-          Text(label, style: TextStyle(fontWeight: bold ? FontWeight.w800 : null)),
-          Text(formatCents(cents), style: TextStyle(fontWeight: bold ? FontWeight.w800 : null)),
+          Text(
+            label,
+            style: TextStyle(fontWeight: bold ? FontWeight.w800 : null),
+          ),
+          Text(
+            formatCents(cents),
+            style: TextStyle(fontWeight: bold ? FontWeight.w800 : null),
+          ),
         ],
       ),
     );

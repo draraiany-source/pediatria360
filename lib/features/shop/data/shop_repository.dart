@@ -20,9 +20,9 @@ class ShopRepository {
     required FirebaseFirestore firestore,
     required FirebaseFunctions functions,
     required CacheService cache,
-  })  : _firestore = firestore,
-        _functions = functions,
-        _cache = cache;
+  }) : _firestore = firestore,
+       _functions = functions,
+       _cache = cache;
 
   final FirebaseFirestore _firestore;
   final FirebaseFunctions _functions;
@@ -37,19 +37,24 @@ class ShopRepository {
 
   Future<Result<List<Product>>> catalog({ProductCategory? category}) =>
       guard(() async {
-        Query<Map<String, dynamic>> query =
-            _products.where('published', isEqualTo: true);
+        Query<Map<String, dynamic>> query = _products.where(
+          'published',
+          isEqualTo: true,
+        );
 
         if (category != null) {
           query = query.where('category', isEqualTo: category.name);
         }
 
-        final QuerySnapshot<Map<String, dynamic>> snapshot =
-            await query.limit(60).get();
+        final QuerySnapshot<Map<String, dynamic>> snapshot = await query
+            .limit(60)
+            .get();
 
         final List<Product> products = snapshot.docs
-            .map((QueryDocumentSnapshot<Map<String, dynamic>> d) =>
-                _productFrom(d.id, d.data()))
+            .map(
+              (QueryDocumentSnapshot<Map<String, dynamic>> d) =>
+                  _productFrom(d.id, d.data()),
+            )
             .toList(growable: false);
 
         if (category == null) {
@@ -67,16 +72,18 @@ class ShopRepository {
   /// vitrine desatualizada gera frustração no checkout.
   List<Product> cachedCatalog() => _cache
       .readList(_cacheKey)
-      .map((Map<String, dynamic> m) =>
-          _productFrom(m['id'] as String? ?? '', m))
+      .map(
+        (Map<String, dynamic> m) => _productFrom(m['id'] as String? ?? '', m),
+      )
       .toList(growable: false);
 
   Future<Result<Product>> product(String productId) => guard(() async {
-        final DocumentSnapshot<Map<String, dynamic>> doc =
-            await _products.doc(productId).get();
-        if (!doc.exists) throw StateError('Produto não encontrado.');
-        return _productFrom(doc.id, doc.data()!);
-      });
+    final DocumentSnapshot<Map<String, dynamic>> doc = await _products
+        .doc(productId)
+        .get();
+    if (!doc.exists) throw StateError('Produto não encontrado.');
+    return _productFrom(doc.id, doc.data()!);
+  });
 
   // -------------------------------------------------------------- Checkout
 
@@ -85,26 +92,22 @@ class ShopRepository {
   /// Chamado ao abrir o checkout, antes de qualquer pagamento. Se um preço
   /// mudou desde que o item entrou no carrinho, é aqui que o usuário descobre —
   /// e não depois de pagar.
-  Future<Result<OrderQuote>> quote({
-    required Cart cart,
-    String? zipCode,
-  }) =>
+  Future<Result<OrderQuote>> quote({required Cart cart, String? zipCode}) =>
       guard(() async {
-        final HttpsCallableResult<dynamic> response =
-            await _functions.httpsCallable('quoteOrder').call(
-          <String, dynamic>{
-            'items': cart.items
-                .map(
-                  (CartItem i) => <String, dynamic>{
-                    'productId': i.productId,
-                    'quantity': i.quantity,
-                  },
-                )
-                .toList(),
-            if (cart.couponCode != null) 'couponCode': cart.couponCode,
-            if (zipCode != null) 'zipCode': zipCode,
-          },
-        );
+        final HttpsCallableResult<dynamic> response = await _functions
+            .httpsCallable('quoteOrder')
+            .call(<String, dynamic>{
+              'items': cart.items
+                  .map(
+                    (CartItem i) => <String, dynamic>{
+                      'productId': i.productId,
+                      'quantity': i.quantity,
+                    },
+                  )
+                  .toList(),
+              if (cart.couponCode != null) 'couponCode': cart.couponCode,
+              if (zipCode != null) 'zipCode': zipCode,
+            });
 
         return OrderQuote.fromMap(
           Map<String, dynamic>.from(response.data as Map<dynamic, dynamic>),
@@ -116,34 +119,33 @@ class ShopRepository {
     required Cart cart,
     required ShippingAddress address,
     required String paymentMethod,
-  }) =>
-      guard(() async {
-        final HttpsCallableResult<dynamic> response =
-            await _functions.httpsCallable('createOrder').call(
-          <String, dynamic>{
-            'items': cart.items
-                .map(
-                  (CartItem i) => <String, dynamic>{
-                    'productId': i.productId,
-                    'quantity': i.quantity,
-                  },
-                )
-                .toList(),
-            'address': address.toMap(),
-            'paymentMethod': paymentMethod,
-            if (cart.couponCode != null) 'couponCode': cart.couponCode,
-          },
-        );
+  }) => guard(() async {
+    final HttpsCallableResult<dynamic> response = await _functions
+        .httpsCallable('createOrder')
+        .call(<String, dynamic>{
+          'items': cart.items
+              .map(
+                (CartItem i) => <String, dynamic>{
+                  'productId': i.productId,
+                  'quantity': i.quantity,
+                },
+              )
+              .toList(),
+          'address': address.toMap(),
+          'paymentMethod': paymentMethod,
+          if (cart.couponCode != null) 'couponCode': cart.couponCode,
+        });
 
-        final Map<String, dynamic> data =
-            Map<String, dynamic>.from(response.data as Map<dynamic, dynamic>);
+    final Map<String, dynamic> data = Map<String, dynamic>.from(
+      response.data as Map<dynamic, dynamic>,
+    );
 
-        return OrderCreated(
-          orderId: (data['orderId'] as String?) ?? '',
-          paymentUrl: data['paymentUrl'] as String?,
-          totalCents: (data['totalCents'] as num?)?.toInt() ?? 0,
-        );
-      });
+    return OrderCreated(
+      orderId: (data['orderId'] as String?) ?? '',
+      paymentUrl: data['paymentUrl'] as String?,
+      totalCents: (data['totalCents'] as num?)?.toInt() ?? 0,
+    );
+  });
 
   /// Pedidos do usuário.
   Stream<List<Order>> watchOrders(String uid) => _firestore
@@ -154,8 +156,10 @@ class ShopRepository {
       .snapshots()
       .map(
         (QuerySnapshot<Map<String, dynamic>> s) => s.docs
-            .map((QueryDocumentSnapshot<Map<String, dynamic>> d) =>
-                _orderFrom(d.id, d.data()))
+            .map(
+              (QueryDocumentSnapshot<Map<String, dynamic>> d) =>
+                  _orderFrom(d.id, d.data()),
+            )
             .toList(growable: false),
       );
 
@@ -180,9 +184,10 @@ class ShopRepository {
       ageRangeMonths: range.length == 2
           ? ((range[0] as num).toInt(), (range[1] as num).toInt())
           : null,
-      tags: (data['tags'] as List<dynamic>?)
-              ?.whereType<String>()
-              .toList(growable: false) ??
+      tags:
+          (data['tags'] as List<dynamic>?)?.whereType<String>().toList(
+            growable: false,
+          ) ??
           const <String>[],
       rating: (data['rating'] as num?)?.toDouble() ?? 0,
       reviewCount: (data['reviewCount'] as num?)?.toInt() ?? 0,
@@ -190,51 +195,50 @@ class ShopRepository {
   }
 
   static Map<String, dynamic> _productToMap(Product p) => <String, dynamic>{
-        'id': p.id,
-        'name': p.name,
-        'description': p.description,
-        'priceCents': p.priceCents,
-        'category': p.category.name,
-        'imageUrl': p.imageUrl,
-        'brand': p.brand,
-        'compareAtPriceCents': p.compareAtPriceCents,
-        'stock': p.stock,
-        'published': p.published,
-        'requiresPrescription': p.requiresPrescription,
-        'ageRangeMonths': p.ageRangeMonths == null
-            ? null
-            : <int>[p.ageRangeMonths!.$1, p.ageRangeMonths!.$2],
-        'tags': p.tags,
-        'rating': p.rating,
-        'reviewCount': p.reviewCount,
-      };
+    'id': p.id,
+    'name': p.name,
+    'description': p.description,
+    'priceCents': p.priceCents,
+    'category': p.category.name,
+    'imageUrl': p.imageUrl,
+    'brand': p.brand,
+    'compareAtPriceCents': p.compareAtPriceCents,
+    'stock': p.stock,
+    'published': p.published,
+    'requiresPrescription': p.requiresPrescription,
+    'ageRangeMonths': p.ageRangeMonths == null
+        ? null
+        : <int>[p.ageRangeMonths!.$1, p.ageRangeMonths!.$2],
+    'tags': p.tags,
+    'rating': p.rating,
+    'reviewCount': p.reviewCount,
+  };
 
   static Order _orderFrom(String id, Map<String, dynamic> data) => Order(
-        id: id,
-        ownerId: (data['ownerId'] as String?) ?? '',
-        items: ((data['items'] as List<dynamic>?) ?? const <dynamic>[])
-            .whereType<Map<dynamic, dynamic>>()
-            .map((Map<dynamic, dynamic> m) =>
-                CartItem.fromMap(Map<String, dynamic>.from(m)))
-            .toList(growable: false),
-        subtotalCents: (data['subtotalCents'] as num?)?.toInt() ?? 0,
-        shippingCents: (data['shippingCents'] as num?)?.toInt() ?? 0,
-        discountCents: (data['discountCents'] as num?)?.toInt() ?? 0,
-        totalCents: (data['totalCents'] as num?)?.toInt() ?? 0,
-        status: OrderStatus.fromName(data['status'] as String?),
-        createdAt:
-            (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
-        couponCode: data['couponCode'] as String?,
-        trackingCode: data['trackingCode'] as String?,
-        paymentMethod: data['paymentMethod'] as String?,
-        address: data['address'] == null
-            ? null
-            : ShippingAddress.fromMap(
-                Map<String, dynamic>.from(
-                  data['address'] as Map<dynamic, dynamic>,
-                ),
-              ),
-      );
+    id: id,
+    ownerId: (data['ownerId'] as String?) ?? '',
+    items: ((data['items'] as List<dynamic>?) ?? const <dynamic>[])
+        .whereType<Map<dynamic, dynamic>>()
+        .map(
+          (Map<dynamic, dynamic> m) =>
+              CartItem.fromMap(Map<String, dynamic>.from(m)),
+        )
+        .toList(growable: false),
+    subtotalCents: (data['subtotalCents'] as num?)?.toInt() ?? 0,
+    shippingCents: (data['shippingCents'] as num?)?.toInt() ?? 0,
+    discountCents: (data['discountCents'] as num?)?.toInt() ?? 0,
+    totalCents: (data['totalCents'] as num?)?.toInt() ?? 0,
+    status: OrderStatus.fromName(data['status'] as String?),
+    createdAt: (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
+    couponCode: data['couponCode'] as String?,
+    trackingCode: data['trackingCode'] as String?,
+    paymentMethod: data['paymentMethod'] as String?,
+    address: data['address'] == null
+        ? null
+        : ShippingAddress.fromMap(
+            Map<String, dynamic>.from(data['address'] as Map<dynamic, dynamic>),
+          ),
+  );
 }
 
 /// Prévia calculada pelo servidor.
@@ -251,23 +255,25 @@ class OrderQuote {
   });
 
   factory OrderQuote.fromMap(Map<String, dynamic> map) => OrderQuote(
-        subtotalCents: (map['subtotalCents'] as num?)?.toInt() ?? 0,
-        shippingCents: (map['shippingCents'] as num?)?.toInt() ?? 0,
-        discountCents: (map['discountCents'] as num?)?.toInt() ?? 0,
-        totalCents: (map['totalCents'] as num?)?.toInt() ?? 0,
-        couponValid: (map['couponValid'] as bool?) ?? false,
-        couponMessage: map['couponMessage'] as String?,
-        priceChanges:
-            ((map['priceChanges'] as List<dynamic>?) ?? const <dynamic>[])
-                .whereType<Map<dynamic, dynamic>>()
-                .map((Map<dynamic, dynamic> m) =>
-                    PriceChange.fromMap(Map<String, dynamic>.from(m)))
-                .toList(growable: false),
-        unavailable: (map['unavailable'] as List<dynamic>?)
-                ?.whereType<String>()
-                .toList(growable: false) ??
-            const <String>[],
-      );
+    subtotalCents: (map['subtotalCents'] as num?)?.toInt() ?? 0,
+    shippingCents: (map['shippingCents'] as num?)?.toInt() ?? 0,
+    discountCents: (map['discountCents'] as num?)?.toInt() ?? 0,
+    totalCents: (map['totalCents'] as num?)?.toInt() ?? 0,
+    couponValid: (map['couponValid'] as bool?) ?? false,
+    couponMessage: map['couponMessage'] as String?,
+    priceChanges: ((map['priceChanges'] as List<dynamic>?) ?? const <dynamic>[])
+        .whereType<Map<dynamic, dynamic>>()
+        .map(
+          (Map<dynamic, dynamic> m) =>
+              PriceChange.fromMap(Map<String, dynamic>.from(m)),
+        )
+        .toList(growable: false),
+    unavailable:
+        (map['unavailable'] as List<dynamic>?)?.whereType<String>().toList(
+          growable: false,
+        ) ??
+        const <String>[],
+  );
 
   final int subtotalCents;
   final int shippingCents;
@@ -294,11 +300,11 @@ class PriceChange {
   });
 
   factory PriceChange.fromMap(Map<String, dynamic> map) => PriceChange(
-        productId: (map['productId'] as String?) ?? '',
-        name: (map['name'] as String?) ?? '',
-        oldPriceCents: (map['oldPriceCents'] as num?)?.toInt() ?? 0,
-        newPriceCents: (map['newPriceCents'] as num?)?.toInt() ?? 0,
-      );
+    productId: (map['productId'] as String?) ?? '',
+    name: (map['name'] as String?) ?? '',
+    oldPriceCents: (map['oldPriceCents'] as num?)?.toInt() ?? 0,
+    newPriceCents: (map['newPriceCents'] as num?)?.toInt() ?? 0,
+  );
 
   final String productId;
   final String name;

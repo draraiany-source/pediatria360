@@ -34,27 +34,26 @@ void main() {
     required String id,
     required String name,
     List<String> allergies = const <String>[],
-  }) =>
-      Child(
-        id: id,
-        ownerId: 'responsavel-de-$id',
-        name: name,
-        birthDate: DateTime(2023, 6, 1),
-        sex: ChildSex.female,
-        updatedAt: DateTime(2026, 1, 1),
-        allergies: allergies,
-        guardianName: 'Responsável de $name',
-      );
+  }) => Child(
+    id: id,
+    ownerId: 'responsavel-de-$id',
+    name: name,
+    birthDate: DateTime(2023, 6, 1),
+    sex: ChildSex.female,
+    updatedAt: DateTime(2026, 1, 1),
+    allergies: allergies,
+    guardianName: 'Responsável de $name',
+  );
 
   Encounter encounter(String childId) => Encounter(
-        id: 'e-$childId',
-        patientId: childId,
-        professionalId: 'dra-uid',
-        professionalName: 'Dra. Teste',
-        type: EncounterType.routine,
-        status: EncounterStatus.signed,
-        startedAt: DateTime(2026, 5, 1),
-      );
+    id: 'e-$childId',
+    patientId: childId,
+    professionalId: 'dra-uid',
+    professionalName: 'Dra. Teste',
+    type: EncounterType.routine,
+    status: EncounterStatus.signed,
+    startedAt: DateTime(2026, 5, 1),
+  );
 
   /// Constrói o widget sob teste, com todos os providers de dado
   /// sobrescritos para o `childId` dado. `overrides` extra permite cada
@@ -71,57 +70,73 @@ void main() {
       key: ValueKey<String>(childId),
       overrides: <Override>[
         currentUserProvider.overrideWithValue(professional),
-        childProvider(childId).overrideWith((Ref ref) => Stream.value(childData)),
+        childProvider(
+          childId,
+        ).overrideWith((Ref ref) => Stream.value(childData)),
         growthProvider(childId).overrideWith((Ref ref) => Stream.value(growth)),
-        vaccineDosesProvider(childId)
-            .overrideWith((Ref ref) => Stream.value(const <VaccineDose>[])),
+        vaccineDosesProvider(
+          childId,
+        ).overrideWith((Ref ref) => Stream.value(const <VaccineDose>[])),
         vaccineSummaryProvider(childId).overrideWithValue(
           const VaccineSummary(total: 0, applied: 0, overdue: 0, upcoming: 0),
         ),
-        patientEncountersProvider(childId)
-            .overrideWith((Ref ref) => Stream.value(encounters)),
-        patientDocumentsProvider(childId)
-            .overrideWith((Ref ref) => Stream.value(const <ClinicalDocument>[])),
-        patientLabsProvider(childId)
-            .overrideWith((Ref ref) => Stream.value(const <LabResult>[])),
+        patientEncountersProvider(
+          childId,
+        ).overrideWith((Ref ref) => Stream.value(encounters)),
+        patientDocumentsProvider(
+          childId,
+        ).overrideWith((Ref ref) => Stream.value(const <ClinicalDocument>[])),
+        patientLabsProvider(
+          childId,
+        ).overrideWith((Ref ref) => Stream.value(const <LabResult>[])),
         ...extraOverrides,
       ],
-      child: MaterialApp(
-        home: PatientTimelineScreen(patientId: childId),
-      ),
+      child: MaterialApp(home: PatientTimelineScreen(patientId: childId)),
     );
   }
 
   group('paciente COM dados', () {
-    testWidgets('mostra nome, responsável e consulta reais — nenhum número inventado',
-        (WidgetTester tester) async {
-      await tester.pumpWidget(harness(
-        childId: 'crianca-a',
-        childData: child(id: 'crianca-a', name: 'Manuela'),
-        growth: <GrowthRecord>[
-          GrowthRecord(
-            id: 'g1',
+    testWidgets(
+      'mostra nome, responsável e consulta reais — nenhum número inventado',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(
+          harness(
             childId: 'crianca-a',
-            measuredAt: DateTime(2026, 4, 1),
-            updatedAt: DateTime(2026, 4, 1),
-            weightKg: 12.5,
+            childData: child(id: 'crianca-a', name: 'Manuela'),
+            growth: <GrowthRecord>[
+              GrowthRecord(
+                id: 'g1',
+                childId: 'crianca-a',
+                measuredAt: DateTime(2026, 4, 1),
+                updatedAt: DateTime(2026, 4, 1),
+                weightKg: 12.5,
+              ),
+            ],
+            encounters: <Encounter>[encounter('crianca-a')],
           ),
-        ],
-        encounters: <Encounter>[encounter('crianca-a')],
-      ));
-      await tester.pumpAndSettle();
+        );
+        await tester.pumpAndSettle();
 
-      expect(find.text('Manuela'), findsWidgets);
-      expect(find.textContaining('Responsável de Manuela'), findsWidgets);
-      expect(find.textContaining('12,5 kg'), findsAtLeastNWidgets(1));
-      expect(find.textContaining('1 atendimento'), findsOneWidget);
-    });
+        expect(find.text('Manuela'), findsWidgets);
+        expect(find.textContaining('Responsável de Manuela'), findsWidgets);
+        expect(find.textContaining('12,5 kg'), findsAtLeastNWidgets(1));
+        expect(find.textContaining('1 atendimento'), findsOneWidget);
+      },
+    );
 
-    testWidgets('alergia aparece como alerta visível', (WidgetTester tester) async {
-      await tester.pumpWidget(harness(
-        childId: 'crianca-a',
-        childData: child(id: 'crianca-a', name: 'Manuela', allergies: <String>['Dipirona']),
-      ));
+    testWidgets('alergia aparece como alerta visível', (
+      WidgetTester tester,
+    ) async {
+      await tester.pumpWidget(
+        harness(
+          childId: 'crianca-a',
+          childData: child(
+            id: 'crianca-a',
+            name: 'Manuela',
+            allergies: <String>['Dipirona'],
+          ),
+        ),
+      );
       await tester.pumpAndSettle();
 
       expect(find.textContaining('Dipirona'), findsWidgets);
@@ -129,31 +144,39 @@ void main() {
   });
 
   group('paciente SEM dados', () {
-    testWidgets('prontuário genuinamente vazio mostra estado vazio, não card fictício',
-        (WidgetTester tester) async {
-      await tester.pumpWidget(harness(
-        childId: 'crianca-b',
-        childData: child(id: 'crianca-b', name: 'Pedro'),
-      ));
-      await tester.pumpAndSettle();
+    testWidgets(
+      'prontuário genuinamente vazio mostra estado vazio, não card fictício',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(
+          harness(
+            childId: 'crianca-b',
+            childData: child(id: 'crianca-b', name: 'Pedro'),
+          ),
+        );
+        await tester.pumpAndSettle();
 
-      // Aba Resumo: indicadores sem inventar números.
-      expect(find.text('Sem registro'), findsWidgets);
+        // Aba Resumo: indicadores sem inventar números.
+        expect(find.text('Sem registro'), findsWidgets);
 
-      // Aba Prontuário: estado vazio da timeline.
-      await tester.tap(find.text('Prontuário'));
-      await tester.pumpAndSettle();
-      expect(find.text('Prontuário vazio'), findsOneWidget);
-    });
+        // Aba Prontuário: estado vazio da timeline.
+        await tester.tap(find.text('Prontuário'));
+        await tester.pumpAndSettle();
+        expect(find.text('Prontuário vazio'), findsOneWidget);
+      },
+    );
   });
 
   group('isolamento entre pacientes', () {
-    testWidgets('criança A não mistura dado com criança B', (WidgetTester tester) async {
-      await tester.pumpWidget(harness(
-        childId: 'crianca-a',
-        childData: child(id: 'crianca-a', name: 'Manuela'),
-        encounters: <Encounter>[encounter('crianca-a')],
-      ));
+    testWidgets('criança A não mistura dado com criança B', (
+      WidgetTester tester,
+    ) async {
+      await tester.pumpWidget(
+        harness(
+          childId: 'crianca-a',
+          childData: child(id: 'crianca-a', name: 'Manuela'),
+          encounters: <Encounter>[encounter('crianca-a')],
+        ),
+      );
       await tester.pumpAndSettle();
       expect(find.text('Manuela'), findsWidgets);
       expect(find.text('Pedro'), findsNothing);
@@ -162,10 +185,12 @@ void main() {
       // Riverpod não aceita trocar o conjunto de overrides no mesmo
       // container (childId diferente = providers diferentes).
       await tester.pumpWidget(const SizedBox.shrink());
-      await tester.pumpWidget(harness(
-        childId: 'crianca-b',
-        childData: child(id: 'crianca-b', name: 'Pedro'),
-      ));
+      await tester.pumpWidget(
+        harness(
+          childId: 'crianca-b',
+          childData: child(id: 'crianca-b', name: 'Pedro'),
+        ),
+      );
       await tester.pumpAndSettle();
       expect(find.text('Pedro'), findsWidgets);
       expect(find.text('Manuela'), findsNothing);
@@ -173,79 +198,104 @@ void main() {
   });
 
   group('carregamento', () {
-    testWidgets('stream de encounters nunca resolve → skeleton, não tela vazia',
-        (WidgetTester tester) async {
-      await tester.pumpWidget(ProviderScope(
-        overrides: <Override>[
-          currentUserProvider.overrideWithValue(professional),
-          childProvider('crianca-a')
-              .overrideWith((Ref ref) => Stream.value(child(id: 'crianca-a', name: 'Manuela'))),
-          growthProvider('crianca-a')
-              .overrideWith((Ref ref) => const Stream<List<GrowthRecord>>.empty()),
-          vaccineDosesProvider('crianca-a')
-              .overrideWith((Ref ref) => const Stream<List<VaccineDose>>.empty()),
-          vaccineSummaryProvider('crianca-a').overrideWithValue(
-            const VaccineSummary(total: 0, applied: 0, overdue: 0, upcoming: 0),
+    testWidgets(
+      'stream de encounters nunca resolve → skeleton, não tela vazia',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(
+          ProviderScope(
+            overrides: <Override>[
+              currentUserProvider.overrideWithValue(professional),
+              childProvider('crianca-a').overrideWith(
+                (Ref ref) =>
+                    Stream.value(child(id: 'crianca-a', name: 'Manuela')),
+              ),
+              growthProvider('crianca-a').overrideWith(
+                (Ref ref) => const Stream<List<GrowthRecord>>.empty(),
+              ),
+              vaccineDosesProvider('crianca-a').overrideWith(
+                (Ref ref) => const Stream<List<VaccineDose>>.empty(),
+              ),
+              vaccineSummaryProvider('crianca-a').overrideWithValue(
+                const VaccineSummary(
+                  total: 0,
+                  applied: 0,
+                  overdue: 0,
+                  upcoming: 0,
+                ),
+              ),
+              // Nunca emite — simula carregamento que ainda não resolveu.
+              patientEncountersProvider('crianca-a').overrideWith(
+                (Ref ref) => const Stream<List<Encounter>>.empty(),
+              ),
+              patientDocumentsProvider('crianca-a').overrideWith(
+                (Ref ref) => const Stream<List<ClinicalDocument>>.empty(),
+              ),
+              patientLabsProvider('crianca-a').overrideWith(
+                (Ref ref) => const Stream<List<LabResult>>.empty(),
+              ),
+            ],
+            child: const MaterialApp(
+              home: PatientTimelineScreen(patientId: 'crianca-a'),
+            ),
           ),
-          // Nunca emite — simula carregamento que ainda não resolveu.
-          patientEncountersProvider('crianca-a')
-              .overrideWith((Ref ref) => const Stream<List<Encounter>>.empty()),
-          patientDocumentsProvider('crianca-a')
-              .overrideWith((Ref ref) => const Stream<List<ClinicalDocument>>.empty()),
-          patientLabsProvider('crianca-a')
-              .overrideWith((Ref ref) => const Stream<List<LabResult>>.empty()),
-        ],
-        child: const MaterialApp(
-          home: PatientTimelineScreen(patientId: 'crianca-a'),
-        ),
-      ));
-      // Um só pump — não pumpAndSettle, que esperaria o stream "resolver"
-      // (nunca resolve de propósito) e travaria o teste.
-      await tester.pump();
+        );
+        // Um só pump — não pumpAndSettle, que esperaria o stream "resolver"
+        // (nunca resolve de propósito) e travaria o teste.
+        await tester.pump();
 
-      expect(find.byType(SkeletonList), findsOneWidget);
-      expect(find.text('Prontuário vazio'), findsNothing);
-    });
+        expect(find.byType(SkeletonList), findsOneWidget);
+        expect(find.text('Prontuário vazio'), findsNothing);
+      },
+    );
   });
 
   group('erro', () {
-    testWidgets('stream de encounters falha → ErrorState com retry, não "vazio"',
-        (WidgetTester tester) async {
-      await tester.pumpWidget(harness(
-        childId: 'crianca-a',
-        childData: child(id: 'crianca-a', name: 'Manuela'),
-        extraOverrides: <Override>[
-          patientEncountersProvider('crianca-a').overrideWith(
-            (Ref ref) => Stream<List<Encounter>>.error(Exception('falha de rede')),
+    testWidgets(
+      'stream de encounters falha → ErrorState com retry, não "vazio"',
+      (WidgetTester tester) async {
+        await tester.pumpWidget(
+          harness(
+            childId: 'crianca-a',
+            childData: child(id: 'crianca-a', name: 'Manuela'),
+            extraOverrides: <Override>[
+              patientEncountersProvider('crianca-a').overrideWith(
+                (Ref ref) =>
+                    Stream<List<Encounter>>.error(Exception('falha de rede')),
+              ),
+            ],
           ),
-        ],
-      ));
-      await tester.pumpAndSettle();
+        );
+        await tester.pumpAndSettle();
 
-      expect(find.text('Prontuário vazio'), findsNothing);
-      expect(
-        find.text('Não conseguimos carregar essas informações'),
-        findsOneWidget,
-      );
-    });
+        expect(find.text('Prontuário vazio'), findsNothing);
+        expect(
+          find.text('Não conseguimos carregar essas informações'),
+          findsOneWidget,
+        );
+      },
+    );
   });
 
   group('filtro', () {
-    testWidgets('tocar "Crescimento" esconde evento de outro tipo', (WidgetTester tester) async {
-      await tester.pumpWidget(harness(
-        childId: 'crianca-a',
-        childData: child(id: 'crianca-a', name: 'Manuela'),
-        growth: <GrowthRecord>[
-          GrowthRecord(
-            id: 'g1',
-            childId: 'crianca-a',
-            measuredAt: DateTime(2026, 4, 1),
-            updatedAt: DateTime(2026, 4, 1),
-            weightKg: 12.5,
-          ),
-        ],
-        encounters: <Encounter>[encounter('crianca-a')],
-      ));
+    testWidgets('tocar "Crescimento" esconde evento de outro tipo', (
+      WidgetTester tester,
+    ) async {
+      await tester.pumpWidget(
+        harness(
+          childId: 'crianca-a',
+          childData: child(id: 'crianca-a', name: 'Manuela'),
+          growth: <GrowthRecord>[
+            GrowthRecord(
+              id: 'g1',
+              childId: 'crianca-a',
+              measuredAt: DateTime(2026, 4, 1),
+              updatedAt: DateTime(2026, 4, 1),
+              weightKg: 12.5,
+            ),
+          ],
+          encounters: <Encounter>[encounter('crianca-a')],
+        ),
+      );
       await tester.pumpAndSettle();
 
       await tester.tap(find.text('Prontuário'));

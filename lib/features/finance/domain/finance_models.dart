@@ -16,13 +16,13 @@ enum ReceivableStatus {
       );
 
   String get label => switch (this) {
-        ReceivableStatus.pending => 'Pendente',
-        ReceivableStatus.paid => 'Pago',
-        ReceivableStatus.partial => 'Parcial',
-        ReceivableStatus.overdue => 'Em atraso',
-        ReceivableStatus.cancelled => 'Cancelado',
-        ReceivableStatus.refunded => 'Estornado',
-      };
+    ReceivableStatus.pending => 'Pendente',
+    ReceivableStatus.paid => 'Pago',
+    ReceivableStatus.partial => 'Parcial',
+    ReceivableStatus.overdue => 'Em atraso',
+    ReceivableStatus.cancelled => 'Cancelado',
+    ReceivableStatus.refunded => 'Estornado',
+  };
 
   bool get isOpen =>
       this == ReceivableStatus.pending ||
@@ -38,19 +38,20 @@ enum PayableStatus {
   cancelled,
   negotiation;
 
-  static PayableStatus fromName(String? value) => PayableStatus.values.firstWhere(
+  static PayableStatus fromName(String? value) =>
+      PayableStatus.values.firstWhere(
         (PayableStatus s) => s.name == value,
         orElse: () => PayableStatus.pending,
       );
 
   String get label => switch (this) {
-        PayableStatus.pending => 'Pendente',
-        PayableStatus.paid => 'Pago',
-        PayableStatus.partial => 'Parcial',
-        PayableStatus.overdue => 'Em atraso',
-        PayableStatus.cancelled => 'Cancelado',
-        PayableStatus.negotiation => 'Em negociacao',
-      };
+    PayableStatus.pending => 'Pendente',
+    PayableStatus.paid => 'Pago',
+    PayableStatus.partial => 'Parcial',
+    PayableStatus.overdue => 'Em atraso',
+    PayableStatus.cancelled => 'Cancelado',
+    PayableStatus.negotiation => 'Em negociacao',
+  };
 }
 
 enum PaymentMethodKind {
@@ -68,13 +69,13 @@ enum PaymentMethodKind {
       );
 
   String get label => switch (this) {
-        PaymentMethodKind.pix => 'PIX',
-        PaymentMethodKind.card => 'Cartao',
-        PaymentMethodKind.cash => 'Dinheiro',
-        PaymentMethodKind.transfer => 'Transferencia',
-        PaymentMethodKind.insurance => 'Convenio',
-        PaymentMethodKind.other => 'Outro',
-      };
+    PaymentMethodKind.pix => 'PIX',
+    PaymentMethodKind.card => 'Cartao',
+    PaymentMethodKind.cash => 'Dinheiro',
+    PaymentMethodKind.transfer => 'Transferencia',
+    PaymentMethodKind.insurance => 'Convenio',
+    PaymentMethodKind.other => 'Outro',
+  };
 }
 
 enum RevenueOrigin {
@@ -100,20 +101,20 @@ enum RevenueOrigin {
   }
 
   String get firestoreName => switch (this) {
-        RevenueOrigin.private_ => 'private',
-        RevenueOrigin.insurance => 'insurance',
-        RevenueOrigin.package_ => 'package',
-        RevenueOrigin.teleconsult => 'teleconsult',
-        RevenueOrigin.other => 'other',
-      };
+    RevenueOrigin.private_ => 'private',
+    RevenueOrigin.insurance => 'insurance',
+    RevenueOrigin.package_ => 'package',
+    RevenueOrigin.teleconsult => 'teleconsult',
+    RevenueOrigin.other => 'other',
+  };
 
   String get label => switch (this) {
-        RevenueOrigin.private_ => 'Particular',
-        RevenueOrigin.insurance => 'Convenio',
-        RevenueOrigin.package_ => 'Pacote',
-        RevenueOrigin.teleconsult => 'Teleconsulta',
-        RevenueOrigin.other => 'Outro',
-      };
+    RevenueOrigin.private_ => 'Particular',
+    RevenueOrigin.insurance => 'Convenio',
+    RevenueOrigin.package_ => 'Pacote',
+    RevenueOrigin.teleconsult => 'Teleconsulta',
+    RevenueOrigin.other => 'Outro',
+  };
 }
 
 enum ExpenseCategory {
@@ -134,16 +135,16 @@ enum ExpenseCategory {
       );
 
   String get label => switch (this) {
-        ExpenseCategory.rent => 'Aluguel',
-        ExpenseCategory.staff => 'Pessoal',
-        ExpenseCategory.materials => 'Materiais',
-        ExpenseCategory.medicines => 'Medicamentos',
-        ExpenseCategory.technology => 'Tecnologia',
-        ExpenseCategory.marketing => 'Marketing',
-        ExpenseCategory.taxes => 'Impostos',
-        ExpenseCategory.services => 'Servicos',
-        ExpenseCategory.other => 'Outros',
-      };
+    ExpenseCategory.rent => 'Aluguel',
+    ExpenseCategory.staff => 'Pessoal',
+    ExpenseCategory.materials => 'Materiais',
+    ExpenseCategory.medicines => 'Medicamentos',
+    ExpenseCategory.technology => 'Tecnologia',
+    ExpenseCategory.marketing => 'Marketing',
+    ExpenseCategory.taxes => 'Impostos',
+    ExpenseCategory.services => 'Servicos',
+    ExpenseCategory.other => 'Outros',
+  };
 }
 
 enum FinancePeriodFilter {
@@ -155,13 +156,13 @@ enum FinancePeriodFilter {
   custom;
 
   String get label => switch (this) {
-        FinancePeriodFilter.today => 'Hoje',
-        FinancePeriodFilter.week => 'Semana',
-        FinancePeriodFilter.month => 'Mes',
-        FinancePeriodFilter.quarter => 'Trimestre',
-        FinancePeriodFilter.year => 'Ano',
-        FinancePeriodFilter.custom => 'Personalizado',
-      };
+    FinancePeriodFilter.today => 'Hoje',
+    FinancePeriodFilter.week => 'Semana',
+    FinancePeriodFilter.month => 'Mes',
+    FinancePeriodFilter.quarter => 'Trimestre',
+    FinancePeriodFilter.year => 'Ano',
+    FinancePeriodFilter.custom => 'Personalizado',
+  };
 }
 
 enum FinanceAuditAction {
@@ -176,16 +177,16 @@ enum FinanceAuditAction {
   syncFromAppointments;
 
   String get label => switch (this) {
-        FinanceAuditAction.receivableCreated => 'Conta a receber criada',
-        FinanceAuditAction.paymentRegistered => 'Pagamento registrado',
-        FinanceAuditAction.receivableCancelled => 'Conta cancelada',
-        FinanceAuditAction.receivableRefunded => 'Estorno',
-        FinanceAuditAction.payableCreated => 'Conta a pagar criada',
-        FinanceAuditAction.payablePaid => 'Conta paga',
-        FinanceAuditAction.payableNegotiation => 'Negociacao',
-        FinanceAuditAction.receiptIssued => 'Recibo emitido',
-        FinanceAuditAction.syncFromAppointments => 'Sync agenda',
-      };
+    FinanceAuditAction.receivableCreated => 'Conta a receber criada',
+    FinanceAuditAction.paymentRegistered => 'Pagamento registrado',
+    FinanceAuditAction.receivableCancelled => 'Conta cancelada',
+    FinanceAuditAction.receivableRefunded => 'Estorno',
+    FinanceAuditAction.payableCreated => 'Conta a pagar criada',
+    FinanceAuditAction.payablePaid => 'Conta paga',
+    FinanceAuditAction.payableNegotiation => 'Negociacao',
+    FinanceAuditAction.receiptIssued => 'Recibo emitido',
+    FinanceAuditAction.syncFromAppointments => 'Sync agenda',
+  };
 }
 
 /// Intervalo de datas para filtros e agregadores.
@@ -216,8 +217,9 @@ class FinancePeriod extends Equatable {
         );
       case FinancePeriodFilter.week:
         final int weekday = now.weekday;
-        final DateTime weekStart =
-            dayStart.subtract(Duration(days: weekday - 1));
+        final DateTime weekStart = dayStart.subtract(
+          Duration(days: weekday - 1),
+        );
         return FinancePeriod(
           start: weekStart,
           end: weekStart.add(const Duration(days: 7)),
@@ -357,29 +359,28 @@ class FinanceReceivable extends Equatable {
   }
 
   Map<String, dynamic> toMap() => <String, dynamic>{
-        'ownerId': ownerId,
-        'totalCents': totalCents,
-        'paidCents': paidCents,
-        'status': status.name,
-        'dueAt': Timestamp.fromDate(dueAt),
-        'createdAt': Timestamp.fromDate(createdAt),
-        if (patientId != null) 'patientId': patientId,
-        if (childId != null) 'childId': childId,
-        if (appointmentId != null) 'appointmentId': appointmentId,
-        'description': description,
-        'origin': origin.firestoreName,
-        if (professionalId != null) 'professionalId': professionalId,
-        if (professionalName != null) 'professionalName': professionalName,
-        'refundedCents': refundedCents,
-        if (cancelledAt != null)
-          'cancelledAt': Timestamp.fromDate(cancelledAt!),
-        if (updatedAt != null) 'updatedAt': Timestamp.fromDate(updatedAt!),
-        if (batchId != null) 'batchId': batchId,
-        if (guideId != null) 'guideId': guideId,
-        if (planId != null) 'planId': planId,
-        if (clinicId != null) 'clinicId': clinicId,
-        if (unitId != null) 'unitId': unitId,
-      };
+    'ownerId': ownerId,
+    'totalCents': totalCents,
+    'paidCents': paidCents,
+    'status': status.name,
+    'dueAt': Timestamp.fromDate(dueAt),
+    'createdAt': Timestamp.fromDate(createdAt),
+    if (patientId != null) 'patientId': patientId,
+    if (childId != null) 'childId': childId,
+    if (appointmentId != null) 'appointmentId': appointmentId,
+    'description': description,
+    'origin': origin.firestoreName,
+    if (professionalId != null) 'professionalId': professionalId,
+    if (professionalName != null) 'professionalName': professionalName,
+    'refundedCents': refundedCents,
+    if (cancelledAt != null) 'cancelledAt': Timestamp.fromDate(cancelledAt!),
+    if (updatedAt != null) 'updatedAt': Timestamp.fromDate(updatedAt!),
+    if (batchId != null) 'batchId': batchId,
+    if (guideId != null) 'guideId': guideId,
+    if (planId != null) 'planId': planId,
+    if (clinicId != null) 'clinicId': clinicId,
+    if (unitId != null) 'unitId': unitId,
+  };
 
   FinanceReceivable copyWith({
     int? totalCents,
@@ -393,35 +394,40 @@ class FinanceReceivable extends Equatable {
     String? planId,
     String? clinicId,
     String? unitId,
-  }) =>
-      FinanceReceivable(
-        id: id,
-        ownerId: ownerId,
-        totalCents: totalCents ?? this.totalCents,
-        paidCents: paidCents ?? this.paidCents,
-        status: status ?? this.status,
-        dueAt: dueAt,
-        createdAt: createdAt,
-        patientId: patientId,
-        childId: childId,
-        appointmentId: appointmentId,
-        description: description,
-        origin: origin,
-        professionalId: professionalId,
-        professionalName: professionalName,
-        refundedCents: refundedCents ?? this.refundedCents,
-        cancelledAt: cancelledAt ?? this.cancelledAt,
-        updatedAt: updatedAt ?? this.updatedAt,
-        batchId: batchId ?? this.batchId,
-        guideId: guideId ?? this.guideId,
-        planId: planId ?? this.planId,
-        clinicId: clinicId ?? this.clinicId,
-        unitId: unitId ?? this.unitId,
-      );
+  }) => FinanceReceivable(
+    id: id,
+    ownerId: ownerId,
+    totalCents: totalCents ?? this.totalCents,
+    paidCents: paidCents ?? this.paidCents,
+    status: status ?? this.status,
+    dueAt: dueAt,
+    createdAt: createdAt,
+    patientId: patientId,
+    childId: childId,
+    appointmentId: appointmentId,
+    description: description,
+    origin: origin,
+    professionalId: professionalId,
+    professionalName: professionalName,
+    refundedCents: refundedCents ?? this.refundedCents,
+    cancelledAt: cancelledAt ?? this.cancelledAt,
+    updatedAt: updatedAt ?? this.updatedAt,
+    batchId: batchId ?? this.batchId,
+    guideId: guideId ?? this.guideId,
+    planId: planId ?? this.planId,
+    clinicId: clinicId ?? this.clinicId,
+    unitId: unitId ?? this.unitId,
+  );
 
   @override
-  List<Object?> get props =>
-      <Object?>[id, ownerId, totalCents, paidCents, status, appointmentId];
+  List<Object?> get props => <Object?>[
+    id,
+    ownerId,
+    totalCents,
+    paidCents,
+    status,
+    appointmentId,
+  ];
 }
 
 class FinancePayable extends Equatable {
@@ -483,19 +489,19 @@ class FinancePayable extends Equatable {
   }
 
   Map<String, dynamic> toMap() => <String, dynamic>{
-        'ownerId': ownerId,
-        'description': description,
-        'category': category.name,
-        'amountCents': amountCents,
-        'paidCents': paidCents,
-        'status': status.name,
-        'dueAt': Timestamp.fromDate(dueAt),
-        'createdAt': Timestamp.fromDate(createdAt),
-        if (negotiationNotes != null) 'negotiationNotes': negotiationNotes,
-        if (updatedAt != null) 'updatedAt': Timestamp.fromDate(updatedAt!),
-        if (clinicId != null) 'clinicId': clinicId,
-        if (unitId != null) 'unitId': unitId,
-      };
+    'ownerId': ownerId,
+    'description': description,
+    'category': category.name,
+    'amountCents': amountCents,
+    'paidCents': paidCents,
+    'status': status.name,
+    'dueAt': Timestamp.fromDate(dueAt),
+    'createdAt': Timestamp.fromDate(createdAt),
+    if (negotiationNotes != null) 'negotiationNotes': negotiationNotes,
+    if (updatedAt != null) 'updatedAt': Timestamp.fromDate(updatedAt!),
+    if (clinicId != null) 'clinicId': clinicId,
+    if (unitId != null) 'unitId': unitId,
+  };
 
   @override
   List<Object?> get props => <Object?>[id, ownerId, amountCents, status];
@@ -548,17 +554,17 @@ class FinanceReceipt extends Equatable {
   final String? unitId;
 
   Map<String, dynamic> toMap() => <String, dynamic>{
-        'ownerId': ownerId,
-        'receivableId': receivableId,
-        'amountCents': amountCents,
-        'method': method.name,
-        'issuedAt': Timestamp.fromDate(issuedAt),
-        if (patientId != null) 'patientId': patientId,
-        if (receiptNumber != null) 'receiptNumber': receiptNumber,
-        if (notes != null) 'notes': notes,
-        if (clinicId != null) 'clinicId': clinicId,
-        if (unitId != null) 'unitId': unitId,
-      };
+    'ownerId': ownerId,
+    'receivableId': receivableId,
+    'amountCents': amountCents,
+    'method': method.name,
+    'issuedAt': Timestamp.fromDate(issuedAt),
+    if (patientId != null) 'patientId': patientId,
+    if (receiptNumber != null) 'receiptNumber': receiptNumber,
+    if (notes != null) 'notes': notes,
+    if (clinicId != null) 'clinicId': clinicId,
+    if (unitId != null) 'unitId': unitId,
+  };
 
   @override
   List<Object?> get props => <Object?>[id, receivableId, amountCents];
@@ -594,7 +600,8 @@ class FinanceAuditEntry extends Equatable {
       at: _readDate(data['at']),
       byUserId: (data['byUserId'] as String?) ?? '',
       metadata: Map<String, dynamic>.from(
-        (data['metadata'] as Map<String, dynamic>?) ?? const <String, dynamic>{},
+        (data['metadata'] as Map<String, dynamic>?) ??
+            const <String, dynamic>{},
       ),
       clinicId: data['clinicId'] as String?,
       unitId: data['unitId'] as String?,
@@ -613,16 +620,16 @@ class FinanceAuditEntry extends Equatable {
   final String? unitId;
 
   Map<String, dynamic> toMap() => <String, dynamic>{
-        'ownerId': ownerId,
-        'action': action.name,
-        'entityType': entityType,
-        'entityId': entityId,
-        'at': Timestamp.fromDate(at),
-        'byUserId': byUserId,
-        'metadata': metadata,
-        if (clinicId != null) 'clinicId': clinicId,
-        if (unitId != null) 'unitId': unitId,
-      };
+    'ownerId': ownerId,
+    'action': action.name,
+    'entityType': entityType,
+    'entityId': entityId,
+    'at': Timestamp.fromDate(at),
+    'byUserId': byUserId,
+    'metadata': metadata,
+    if (clinicId != null) 'clinicId': clinicId,
+    if (unitId != null) 'unitId': unitId,
+  };
 
   @override
   List<Object?> get props => <Object?>[id, action, entityId, at];

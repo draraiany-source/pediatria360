@@ -8,22 +8,22 @@ import '../../data/child_guardians_repository.dart';
 import '../../domain/child_guardian.dart';
 
 final childGuardiansRepositoryProvider = Provider<ChildGuardiansRepository>(
-  (Ref ref) => ChildGuardiansRepository(firestore: ref.watch(firestoreProvider)),
+  (Ref ref) =>
+      ChildGuardiansRepository(firestore: ref.watch(firestoreProvider)),
 );
 
 typedef ChildGuardiansKey = ({String ownerId, String childId});
 
 final childGuardiansProvider =
     StreamProvider.family<List<ChildGuardianLink>, ChildGuardiansKey>(
-  (Ref ref, ChildGuardiansKey key) =>
-      ref.watch(childGuardiansRepositoryProvider).watchGuardians(
-            ownerId: key.ownerId,
-            childId: key.childId,
-          ),
-);
+      (Ref ref, ChildGuardiansKey key) => ref
+          .watch(childGuardiansRepositoryProvider)
+          .watchGuardians(ownerId: key.ownerId, childId: key.childId),
+    );
 
-final myLinkedChildrenProvider =
-    StreamProvider<List<ChildGuardianLink>>((Ref ref) {
+final myLinkedChildrenProvider = StreamProvider<List<ChildGuardianLink>>((
+  Ref ref,
+) {
   final String? uid = ref.watch(currentUserProvider)?.uid;
   if (uid == null) {
     return Stream<List<ChildGuardianLink>>.value(const <ChildGuardianLink>[]);
@@ -47,8 +47,10 @@ class ChildGuardiansController extends StateNotifier<AsyncValue<void>> {
       );
     }
     state = const AsyncLoading<void>();
-    final Result<void> result =
-        await _repo.upsertGuardian(link: link, actorUid: actor);
+    final Result<void> result = await _repo.upsertGuardian(
+      link: link,
+      actorUid: actor,
+    );
     state = result.fold(
       (_) => const AsyncData<void>(null),
       (Failure f) => AsyncError<void>(f, StackTrace.current),
@@ -78,5 +80,5 @@ class ChildGuardiansController extends StateNotifier<AsyncValue<void>> {
 
 final childGuardiansControllerProvider =
     StateNotifierProvider<ChildGuardiansController, AsyncValue<void>>(
-  ChildGuardiansController.new,
-);
+      ChildGuardiansController.new,
+    );

@@ -16,13 +16,13 @@ enum ProductCategory {
       );
 
   String get label => switch (this) {
-        ProductCategory.supplement => 'Suplementos',
-        ProductCategory.hygiene => 'Higiene',
-        ProductCategory.feeding => 'Alimentação',
-        ProductCategory.safety => 'Segurança',
-        ProductCategory.book => 'Livros',
-        ProductCategory.other => 'Outros',
-      };
+    ProductCategory.supplement => 'Suplementos',
+    ProductCategory.hygiene => 'Higiene',
+    ProductCategory.feeding => 'Alimentação',
+    ProductCategory.safety => 'Segurança',
+    ProductCategory.book => 'Livros',
+    ProductCategory.other => 'Outros',
+  };
 }
 
 /// Produto à venda.
@@ -82,7 +82,7 @@ class Product extends Equatable {
 
   int get discountPercent => hasDiscount
       ? (((compareAtPriceCents! - priceCents) / compareAtPriceCents!) * 100)
-          .round()
+            .round()
       : 0;
 
   bool suitableFor(int ageMonths) {
@@ -111,12 +111,12 @@ class CartItem extends Equatable {
   });
 
   factory CartItem.fromMap(Map<String, dynamic> map) => CartItem(
-        productId: (map['productId'] as String?) ?? '',
-        name: (map['name'] as String?) ?? '',
-        unitPriceCents: (map['unitPriceCents'] as num?)?.toInt() ?? 0,
-        quantity: (map['quantity'] as num?)?.toInt() ?? 1,
-        imageUrl: map['imageUrl'] as String?,
-      );
+    productId: (map['productId'] as String?) ?? '',
+    name: (map['name'] as String?) ?? '',
+    unitPriceCents: (map['unitPriceCents'] as num?)?.toInt() ?? 0,
+    quantity: (map['quantity'] as num?)?.toInt() ?? 1,
+    imageUrl: map['imageUrl'] as String?,
+  );
 
   final String productId;
   final String name;
@@ -127,20 +127,20 @@ class CartItem extends Equatable {
   int get totalCents => unitPriceCents * quantity;
 
   CartItem copyWith({int? quantity}) => CartItem(
-        productId: productId,
-        name: name,
-        unitPriceCents: unitPriceCents,
-        quantity: quantity ?? this.quantity,
-        imageUrl: imageUrl,
-      );
+    productId: productId,
+    name: name,
+    unitPriceCents: unitPriceCents,
+    quantity: quantity ?? this.quantity,
+    imageUrl: imageUrl,
+  );
 
   Map<String, dynamic> toMap() => <String, dynamic>{
-        'productId': productId,
-        'name': name,
-        'unitPriceCents': unitPriceCents,
-        'quantity': quantity,
-        'imageUrl': imageUrl,
-      };
+    'productId': productId,
+    'name': name,
+    'unitPriceCents': unitPriceCents,
+    'quantity': quantity,
+    'imageUrl': imageUrl,
+  };
 
   @override
   List<Object?> get props => <Object?>[productId, quantity, unitPriceCents];
@@ -165,15 +165,17 @@ class Cart extends Equatable {
       items.fold(0, (int sum, CartItem item) => sum + item.totalCents);
 
   Cart add(Product product, {int quantity = 1}) {
-    final int index =
-        items.indexWhere((CartItem i) => i.productId == product.id);
+    final int index = items.indexWhere(
+      (CartItem i) => i.productId == product.id,
+    );
 
     if (index >= 0) {
       final List<CartItem> updated = List<CartItem>.of(items);
       final int newQuantity = updated[index].quantity + quantity;
       // Teto por item: pedidos maiores passam pelo atendimento.
-      updated[index] =
-          updated[index].copyWith(quantity: newQuantity.clamp(1, 20));
+      updated[index] = updated[index].copyWith(
+        quantity: newQuantity.clamp(1, 20),
+      );
       return Cart(items: updated, couponCode: couponCode);
     }
 
@@ -208,11 +210,11 @@ class Cart extends Equatable {
   }
 
   Cart remove(String productId) => Cart(
-        items: items
-            .where((CartItem i) => i.productId != productId)
-            .toList(growable: false),
-        couponCode: couponCode,
-      );
+    items: items
+        .where((CartItem i) => i.productId != productId)
+        .toList(growable: false),
+    couponCode: couponCode,
+  );
 
   Cart withCoupon(String? code) => Cart(items: items, couponCode: code);
 
@@ -233,19 +235,19 @@ enum OrderStatus {
   refunded;
 
   static OrderStatus fromName(String? value) => OrderStatus.values.firstWhere(
-        (OrderStatus s) => s.name == value,
-        orElse: () => OrderStatus.pending,
-      );
+    (OrderStatus s) => s.name == value,
+    orElse: () => OrderStatus.pending,
+  );
 
   String get label => switch (this) {
-        OrderStatus.pending => 'Aguardando pagamento',
-        OrderStatus.paid => 'Pagamento confirmado',
-        OrderStatus.preparing => 'Em separação',
-        OrderStatus.shipped => 'A caminho',
-        OrderStatus.delivered => 'Entregue',
-        OrderStatus.cancelled => 'Cancelado',
-        OrderStatus.refunded => 'Reembolsado',
-      };
+    OrderStatus.pending => 'Aguardando pagamento',
+    OrderStatus.paid => 'Pagamento confirmado',
+    OrderStatus.preparing => 'Em separação',
+    OrderStatus.shipped => 'A caminho',
+    OrderStatus.delivered => 'Entregue',
+    OrderStatus.cancelled => 'Cancelado',
+    OrderStatus.refunded => 'Reembolsado',
+  };
 
   bool get isFinal =>
       this == OrderStatus.delivered ||
@@ -306,15 +308,15 @@ class ShippingAddress extends Equatable {
   });
 
   factory ShippingAddress.fromMap(Map<String, dynamic> map) => ShippingAddress(
-        zipCode: (map['zipCode'] as String?) ?? '',
-        street: (map['street'] as String?) ?? '',
-        number: (map['number'] as String?) ?? '',
-        district: (map['district'] as String?) ?? '',
-        city: (map['city'] as String?) ?? '',
-        state: (map['state'] as String?) ?? '',
-        complement: map['complement'] as String?,
-        recipient: map['recipient'] as String?,
-      );
+    zipCode: (map['zipCode'] as String?) ?? '',
+    street: (map['street'] as String?) ?? '',
+    number: (map['number'] as String?) ?? '',
+    district: (map['district'] as String?) ?? '',
+    city: (map['city'] as String?) ?? '',
+    state: (map['state'] as String?) ?? '',
+    complement: map['complement'] as String?,
+    recipient: map['recipient'] as String?,
+  );
 
   final String zipCode;
   final String street;
@@ -325,24 +327,31 @@ class ShippingAddress extends Equatable {
   final String? complement;
   final String? recipient;
 
-  String get oneLine => '$street, $number'
+  String get oneLine =>
+      '$street, $number'
       '${complement != null && complement!.isNotEmpty ? ' · $complement' : ''}'
       ' — $district, $city/$state';
 
   Map<String, dynamic> toMap() => <String, dynamic>{
-        'zipCode': zipCode,
-        'street': street,
-        'number': number,
-        'district': district,
-        'city': city,
-        'state': state,
-        'complement': complement,
-        'recipient': recipient,
-      };
+    'zipCode': zipCode,
+    'street': street,
+    'number': number,
+    'district': district,
+    'city': city,
+    'state': state,
+    'complement': complement,
+    'recipient': recipient,
+  };
 
   @override
-  List<Object?> get props =>
-      <Object?>[zipCode, street, number, district, city, state];
+  List<Object?> get props => <Object?>[
+    zipCode,
+    street,
+    number,
+    district,
+    city,
+    state,
+  ];
 }
 
 /// Formata centavos como moeda brasileira.

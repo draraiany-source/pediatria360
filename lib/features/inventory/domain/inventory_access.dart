@@ -1,13 +1,7 @@
 import '../../../shared/domain/entities/app_user.dart';
 import '../../../shared/domain/entities/clinic_organization.dart';
 
-enum InventoryAccessLevel {
-  none,
-  view,
-  clinicalUse,
-  stockOps,
-  full,
-}
+enum InventoryAccessLevel { none, view, clinicalUse, stockOps, full }
 
 /// RBAC estoque (clinica + plataforma).
 class InventoryAccess {
@@ -52,8 +46,10 @@ class InventoryAccess {
     required AppUser? user,
     required ClinicMembership? clinicMembership,
   }) {
-    final InventoryAccessLevel l =
-        level(user: user, clinicMembership: clinicMembership);
+    final InventoryAccessLevel l = level(
+      user: user,
+      clinicMembership: clinicMembership,
+    );
     return l != InventoryAccessLevel.none;
   }
 
@@ -61,8 +57,10 @@ class InventoryAccess {
     required AppUser? user,
     required ClinicMembership? clinicMembership,
   }) {
-    final InventoryAccessLevel l =
-        level(user: user, clinicMembership: clinicMembership);
+    final InventoryAccessLevel l = level(
+      user: user,
+      clinicMembership: clinicMembership,
+    );
     return l == InventoryAccessLevel.full || l == InventoryAccessLevel.stockOps;
   }
 
@@ -70,8 +68,10 @@ class InventoryAccess {
     required AppUser? user,
     required ClinicMembership? clinicMembership,
   }) {
-    final InventoryAccessLevel l =
-        level(user: user, clinicMembership: clinicMembership);
+    final InventoryAccessLevel l = level(
+      user: user,
+      clinicMembership: clinicMembership,
+    );
     return l == InventoryAccessLevel.full ||
         l == InventoryAccessLevel.stockOps ||
         l == InventoryAccessLevel.clinicalUse;

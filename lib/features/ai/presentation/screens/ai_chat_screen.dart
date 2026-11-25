@@ -135,15 +135,11 @@ class _AiChatScreenState extends ConsumerState<AiChatScreen> {
             _ChildSelector(children: children, selected: chat.childId),
           Expanded(
             child: chat.messages.isEmpty
-                ? _Welcome(
-                    disclaimer: config.aiDisclaimer,
-                    onPick: _send,
-                  )
+                ? _Welcome(disclaimer: config.aiDisclaimer, onPick: _send)
                 : ListView.builder(
                     controller: _scroll,
                     padding: const EdgeInsets.all(AppSpacing.lg),
-                    itemCount:
-                        chat.messages.length + (chat.isSending ? 1 : 0),
+                    itemCount: chat.messages.length + (chat.isSending ? 1 : 0),
                     itemBuilder: (BuildContext context, int index) {
                       if (index >= chat.messages.length) {
                         return const _Thinking();
@@ -398,15 +394,10 @@ class _Bubble extends StatelessWidget {
                 for (final MessageSource source in message.sources)
                   ActionChip(
                     avatar: const Icon(Icons.menu_book_outlined, size: 15),
-                    label: Text(
-                      source.title,
-                      style: theme.textTheme.bodySmall,
-                    ),
+                    label: Text(source.title, style: theme.textTheme.bodySmall),
                     onPressed: source.contentId == null
                         ? null
-                        : () => context.push(
-                              Routes.article(source.contentId!),
-                            ),
+                        : () => context.push(Routes.article(source.contentId!)),
                   ),
               ],
             ),

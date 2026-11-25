@@ -28,17 +28,18 @@ enum UserRole {
   admin;
 
   static UserRole fromName(String? value) => UserRole.values.firstWhere(
-        (UserRole r) => r.name == value,
-        orElse: () => UserRole.parent,
-      );
+    (UserRole r) => r.name == value,
+    orElse: () => UserRole.parent,
+  );
 
   String get label => switch (this) {
-        UserRole.parent => 'Pai, mae ou responsavel',
-        UserRole.professional => 'Profissional de saude',
-        UserRole.admin => 'Administrador',
-      };
+    UserRole.parent => 'Pai, mae ou responsavel',
+    UserRole.professional => 'Profissional de saude',
+    UserRole.admin => 'Administrador',
+  };
 
-  bool get isProfessional => this == UserRole.professional || this == UserRole.admin;
+  bool get isProfessional =>
+      this == UserRole.professional || this == UserRole.admin;
   bool get isAdmin => this == UserRole.admin;
 }
 
@@ -49,15 +50,15 @@ enum UserPlan {
   pro;
 
   static UserPlan fromName(String? value) => UserPlan.values.firstWhere(
-        (UserPlan p) => p.name == value,
-        orElse: () => UserPlan.free,
-      );
+    (UserPlan p) => p.name == value,
+    orElse: () => UserPlan.free,
+  );
 
   String get label => switch (this) {
-        UserPlan.free => 'Gratuito',
-        UserPlan.premium => 'Premium',
-        UserPlan.pro => 'Profissional',
-      };
+    UserPlan.free => 'Gratuito',
+    UserPlan.premium => 'Premium',
+    UserPlan.pro => 'Profissional',
+  };
 
   bool get isPaid => this != UserPlan.free;
 }
@@ -93,16 +94,15 @@ class AppUser extends Equatable {
     required String email,
     required String name,
     String? photoUrl,
-  }) =>
-      AppUser(
-        uid: uid,
-        email: email,
-        name: name,
-        photoUrl: photoUrl,
-        role: UserRole.parent,
-        plan: UserPlan.free,
-        createdAt: DateTime.now(),
-      );
+  }) => AppUser(
+    uid: uid,
+    email: email,
+    name: name,
+    photoUrl: photoUrl,
+    role: UserRole.parent,
+    plan: UserPlan.free,
+    createdAt: DateTime.now(),
+  );
 
   final String uid;
   final String email;
@@ -171,8 +171,11 @@ class AppUser extends Equatable {
   String get firstName => name.trim().split(' ').first;
 
   String get initials {
-    final List<String> parts =
-        name.trim().split(RegExp(r'\s+')).where((String p) => p.isNotEmpty).toList();
+    final List<String> parts = name
+        .trim()
+        .split(RegExp(r'\s+'))
+        .where((String p) => p.isNotEmpty)
+        .toList();
     if (parts.isEmpty) return '?';
     if (parts.length == 1) return parts.first.substring(0, 1).toUpperCase();
     return (parts.first.substring(0, 1) + parts.last.substring(0, 1))
@@ -202,45 +205,43 @@ class AppUser extends Equatable {
     DateTime? lastActiveAt,
     List<String>? fcmTokens,
     DateTime? planExpiresAt,
-  }) =>
-      AppUser(
-        uid: uid,
-        email: email,
-        createdAt: createdAt,
-        name: name ?? this.name,
-        photoUrl: photoUrl ?? this.photoUrl,
-        phone: phone ?? this.phone,
-        role: role ?? this.role,
-        plan: plan ?? this.plan,
-        emailVerified: emailVerified ?? this.emailVerified,
-        onboardingDone: onboardingDone ?? this.onboardingDone,
-        crm: crm ?? this.crm,
-        specialty: specialty ?? this.specialty,
-        professionalVerified:
-            professionalVerified ?? this.professionalVerified,
-        xp: xp ?? this.xp,
-        streakDays: streakDays ?? this.streakDays,
-        lastActiveAt: lastActiveAt ?? this.lastActiveAt,
-        fcmTokens: fcmTokens ?? this.fcmTokens,
-        planExpiresAt: planExpiresAt ?? this.planExpiresAt,
-      );
+  }) => AppUser(
+    uid: uid,
+    email: email,
+    createdAt: createdAt,
+    name: name ?? this.name,
+    photoUrl: photoUrl ?? this.photoUrl,
+    phone: phone ?? this.phone,
+    role: role ?? this.role,
+    plan: plan ?? this.plan,
+    emailVerified: emailVerified ?? this.emailVerified,
+    onboardingDone: onboardingDone ?? this.onboardingDone,
+    crm: crm ?? this.crm,
+    specialty: specialty ?? this.specialty,
+    professionalVerified: professionalVerified ?? this.professionalVerified,
+    xp: xp ?? this.xp,
+    streakDays: streakDays ?? this.streakDays,
+    lastActiveAt: lastActiveAt ?? this.lastActiveAt,
+    fcmTokens: fcmTokens ?? this.fcmTokens,
+    planExpiresAt: planExpiresAt ?? this.planExpiresAt,
+  );
 
   @override
   List<Object?> get props => <Object?>[
-        uid,
-        email,
-        name,
-        photoUrl,
-        phone,
-        role,
-        plan,
-        emailVerified,
-        onboardingDone,
-        crm,
-        specialty,
-        professionalVerified,
-        xp,
-        streakDays,
-        planExpiresAt,
-      ];
+    uid,
+    email,
+    name,
+    photoUrl,
+    phone,
+    role,
+    plan,
+    emailVerified,
+    onboardingDone,
+    crm,
+    specialty,
+    professionalVerified,
+    xp,
+    streakDays,
+    planExpiresAt,
+  ];
 }

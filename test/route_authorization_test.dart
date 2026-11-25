@@ -13,19 +13,15 @@ import 'package:pediatria360/shared/domain/entities/clinic_organization.dart';
 /// integração/widget, fora do escopo desta rodada), testa se a decisão,
 /// dado um estado de sessão, é a correta.
 void main() {
-  AppUser user({
-    required UserRole role,
-    bool onboardingDone = true,
-  }) =>
-      AppUser(
-        uid: 'uid-teste',
-        email: 'teste@exemplo.com',
-        name: 'Usuário Teste',
-        role: role,
-        plan: UserPlan.free,
-        createdAt: DateTime(2026, 1, 1),
-        onboardingDone: onboardingDone,
-      );
+  AppUser user({required UserRole role, bool onboardingDone = true}) => AppUser(
+    uid: 'uid-teste',
+    email: 'teste@exemplo.com',
+    name: 'Usuário Teste',
+    role: role,
+    plan: UserPlan.free,
+    createdAt: DateTime(2026, 1, 1),
+    onboardingDone: onboardingDone,
+  );
 
   String? redirectFor({
     required String location,
@@ -35,16 +31,15 @@ void main() {
     bool onboardingLoading = false,
     bool seenOnboarding = true,
     ClinicMembership? clinicMembership,
-  }) =>
-      resolveRouteRedirect(
-        maintenanceMode: maintenanceMode,
-        location: location,
-        authLoading: authLoading,
-        onboardingLoading: onboardingLoading,
-        user: asUser,
-        seenOnboarding: seenOnboarding,
-        clinicMembership: clinicMembership,
-      );
+  }) => resolveRouteRedirect(
+    maintenanceMode: maintenanceMode,
+    location: location,
+    authLoading: authLoading,
+    onboardingLoading: onboardingLoading,
+    user: asUser,
+    seenOnboarding: seenOnboarding,
+    clinicMembership: clinicMembership,
+  );
 
   group('RESPONSÁVEL (parent)', () {
     final AppUser parent = user(role: UserRole.parent);
@@ -108,10 +103,7 @@ void main() {
 
     test('acessa sub-rota de voz do consultorio', () {
       expect(
-        redirectFor(
-          location: Routes.clinicVoicePath,
-          asUser: professional,
-        ),
+        redirectFor(location: Routes.clinicVoicePath, asUser: professional),
         isNull,
       );
     });
@@ -218,8 +210,10 @@ void main() {
 
   group('logado sem perfil definido', () {
     test('é obrigado a passar por /perfil-inicial', () {
-      final AppUser semPerfil =
-          user(role: UserRole.parent, onboardingDone: false);
+      final AppUser semPerfil = user(
+        role: UserRole.parent,
+        onboardingDone: false,
+      );
       expect(
         redirectFor(location: Routes.homePath, asUser: semPerfil),
         Routes.roleSetupPath,
@@ -227,8 +221,10 @@ void main() {
     });
 
     test('já em /perfil-inicial, fica', () {
-      final AppUser semPerfil =
-          user(role: UserRole.parent, onboardingDone: false);
+      final AppUser semPerfil = user(
+        role: UserRole.parent,
+        onboardingDone: false,
+      );
       expect(
         redirectFor(location: Routes.roleSetupPath, asUser: semPerfil),
         isNull,

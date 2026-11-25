@@ -287,8 +287,11 @@ class _VisitSummaryEditorScreenState
                       ),
                       child: Row(
                         children: <Widget>[
-                          const Icon(Icons.check_circle_outline_rounded,
-                              size: 18, color: AppColors.success),
+                          const Icon(
+                            Icons.check_circle_outline_rounded,
+                            size: 18,
+                            color: AppColors.success,
+                          ),
                           const SizedBox(width: AppSpacing.sm),
                           Expanded(
                             child: Text(
@@ -303,8 +306,9 @@ class _VisitSummaryEditorScreenState
                   Text(
                     'Linguagem simples — a família vai ler isto em casa, sem '
                     'você por perto para explicar.',
-                    style: theme.textTheme.bodySmall
-                        ?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
                   ),
                   const SizedBox(height: AppSpacing.lg),
                   AppTextField(
@@ -401,8 +405,11 @@ class _VisitSummaryEditorScreenState
                       ),
                       child: Row(
                         children: <Widget>[
-                          Icon(Icons.lock_outline_rounded,
-                              size: 18, color: theme.colorScheme.onSurfaceVariant),
+                          Icon(
+                            Icons.lock_outline_rounded,
+                            size: 18,
+                            color: theme.colorScheme.onSurfaceVariant,
+                          ),
                           const SizedBox(width: AppSpacing.sm),
                           Expanded(
                             child: Text(
@@ -421,18 +428,18 @@ class _VisitSummaryEditorScreenState
   }
 
   String _documentLabel(ClinicalDocumentType type) => switch (type) {
-        ClinicalDocumentType.prescription => 'Receita',
-        ClinicalDocumentType.certificate => 'Atestado',
-        ClinicalDocumentType.referral => 'Encaminhamento',
-        ClinicalDocumentType.report => 'Relatório',
-        ClinicalDocumentType.dischargeSummary => 'Resumo de alta',
-        ClinicalDocumentType.examRequest => 'Pedido de exame',
-      };
+    ClinicalDocumentType.prescription => 'Receita',
+    ClinicalDocumentType.certificate => 'Atestado',
+    ClinicalDocumentType.referral => 'Encaminhamento',
+    ClinicalDocumentType.report => 'Relatório',
+    ClinicalDocumentType.dischargeSummary => 'Resumo de alta',
+    ClinicalDocumentType.examRequest => 'Pedido de exame',
+  };
 }
 
 final StreamProviderFamily<List<ClinicalDocument>, String>
-    _encounterDocumentsProvider =
+_encounterDocumentsProvider =
     StreamProvider.family<List<ClinicalDocument>, String>(
-  (Ref ref, String encounterId) =>
-      ref.watch(encounterRepositoryProvider).watchDocuments(encounterId),
-);
+      (Ref ref, String encounterId) =>
+          ref.watch(encounterRepositoryProvider).watchDocuments(encounterId),
+    );

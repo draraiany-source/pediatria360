@@ -7,17 +7,17 @@ void main() {
   final DateTime t = DateTime.utc(2026, 3, 1, 10);
 
   Appointment appt({String? unitId, String? roomLabel}) => Appointment(
-        id: 'a1',
-        patientId: 'p1',
-        professionalId: 'pro1',
-        professionalName: 'Dr',
-        startsAt: t,
-        durationMinutes: 30,
-        status: AppointmentStatus.confirmed,
-        createdAt: t,
-        unitId: unitId,
-        roomLabel: roomLabel,
-      );
+    id: 'a1',
+    patientId: 'p1',
+    professionalId: 'pro1',
+    professionalName: 'Dr',
+    startsAt: t,
+    durationMinutes: 30,
+    status: AppointmentStatus.confirmed,
+    createdAt: t,
+    unitId: unitId,
+    roomLabel: roomLabel,
+  );
 
   test('no filter when membership has empty unitIds', () {
     final List<Appointment> items = <Appointment>[appt(unitId: 'u1')];

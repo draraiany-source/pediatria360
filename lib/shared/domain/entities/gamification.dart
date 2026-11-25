@@ -16,27 +16,27 @@ enum XpAction {
   challengeCompleted;
 
   String get label => switch (this) {
-        XpAction.growthRecorded => 'Registrar uma medição',
-        XpAction.vaccineMarked => 'Marcar uma vacina aplicada',
-        XpAction.lessonCompleted => 'Concluir uma aula',
-        XpAction.courseCompleted => 'Concluir um curso',
-        XpAction.articleRead => 'Ler um artigo',
-        XpAction.aiQuestion => 'Tirar uma dúvida com a IA',
-        XpAction.dailyOpen => 'Abrir o app no dia',
-        XpAction.challengeCompleted => 'Concluir um desafio',
-      };
+    XpAction.growthRecorded => 'Registrar uma medição',
+    XpAction.vaccineMarked => 'Marcar uma vacina aplicada',
+    XpAction.lessonCompleted => 'Concluir uma aula',
+    XpAction.courseCompleted => 'Concluir um curso',
+    XpAction.articleRead => 'Ler um artigo',
+    XpAction.aiQuestion => 'Tirar uma dúvida com a IA',
+    XpAction.dailyOpen => 'Abrir o app no dia',
+    XpAction.challengeCompleted => 'Concluir um desafio',
+  };
 
   /// Valor exibido na tela. O servidor tem a palavra final.
   int get displayXp => switch (this) {
-        XpAction.growthRecorded => 20,
-        XpAction.vaccineMarked => 30,
-        XpAction.lessonCompleted => 15,
-        XpAction.courseCompleted => 100,
-        XpAction.articleRead => 5,
-        XpAction.aiQuestion => 3,
-        XpAction.dailyOpen => 5,
-        XpAction.challengeCompleted => 50,
-      };
+    XpAction.growthRecorded => 20,
+    XpAction.vaccineMarked => 30,
+    XpAction.lessonCompleted => 15,
+    XpAction.courseCompleted => 100,
+    XpAction.articleRead => 5,
+    XpAction.aiQuestion => 3,
+    XpAction.dailyOpen => 5,
+    XpAction.challengeCompleted => 50,
+  };
 }
 
 /// Uma medalha conquistável.
@@ -51,13 +51,13 @@ class Badge extends Equatable {
   });
 
   factory Badge.fromMap(String id, Map<String, dynamic> map) => Badge(
-        id: id,
-        name: (map['name'] as String?) ?? '',
-        description: (map['description'] as String?) ?? '',
-        icon: (map['icon'] as String?) ?? 'star',
-        tier: BadgeTier.fromName(map['tier'] as String?),
-        requirement: map['requirement'] as String?,
-      );
+    id: id,
+    name: (map['name'] as String?) ?? '',
+    description: (map['description'] as String?) ?? '',
+    icon: (map['icon'] as String?) ?? 'star',
+    tier: BadgeTier.fromName(map['tier'] as String?),
+    requirement: map['requirement'] as String?,
+  );
 
   final String id;
   final String name;
@@ -79,16 +79,16 @@ enum BadgeTier {
   platinum;
 
   static BadgeTier fromName(String? value) => BadgeTier.values.firstWhere(
-        (BadgeTier t) => t.name == value,
-        orElse: () => BadgeTier.bronze,
-      );
+    (BadgeTier t) => t.name == value,
+    orElse: () => BadgeTier.bronze,
+  );
 
   String get label => switch (this) {
-        BadgeTier.bronze => 'Bronze',
-        BadgeTier.silver => 'Prata',
-        BadgeTier.gold => 'Ouro',
-        BadgeTier.platinum => 'Platina',
-      };
+    BadgeTier.bronze => 'Bronze',
+    BadgeTier.silver => 'Prata',
+    BadgeTier.gold => 'Ouro',
+    BadgeTier.platinum => 'Platina',
+  };
 }
 
 /// Medalha já conquistada por alguém.
@@ -181,8 +181,12 @@ class Streak extends Equatable {
   }
 
   @override
-  List<Object?> get props =>
-      <Object?>[currentDays, longestDays, lastActiveDate, graceUsedThisWeek];
+  List<Object?> get props => <Object?>[
+    currentDays,
+    longestDays,
+    lastActiveDate,
+    graceUsedThisWeek,
+  ];
 }
 
 /// Uma posição no ranking.
@@ -238,9 +242,8 @@ class Challenge extends Equatable {
 
   double get ratio => target == 0 ? 0 : (progress / target).clamp(0, 1);
 
-  int? get daysLeft => endsAt == null
-      ? null
-      : endsAt!.difference(DateTime.now()).inDays;
+  int? get daysLeft =>
+      endsAt == null ? null : endsAt!.difference(DateTime.now()).inDays;
 
   @override
   List<Object?> get props => <Object?>[id, progress, completed];

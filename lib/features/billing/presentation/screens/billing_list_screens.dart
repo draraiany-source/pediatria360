@@ -29,7 +29,9 @@ class InsurancePlansScreen extends ConsumerWidget {
       itemBuilder: (InsurancePlan p) => ListTile(
         title: Text('${p.operatorName} — ${p.planName}'),
         subtitle: Text(
-          p.code.isEmpty ? (p.active ? 'Ativo' : 'Inativo') : 'Codigo ${p.code}',
+          p.code.isEmpty
+              ? (p.active ? 'Ativo' : 'Inativo')
+              : 'Codigo ${p.code}',
         ),
         trailing: p.active ? null : const Icon(Icons.pause_circle_outline),
       ),
@@ -44,8 +46,9 @@ class AuthorizationsScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final user = ref.watch(currentUserProvider);
     final membership = ref.watch(activeClinicMembershipProvider);
-    final AsyncValue<List<InsuranceAuthorization>> async =
-        ref.watch(billingAuthorizationsProvider);
+    final AsyncValue<List<InsuranceAuthorization>> async = ref.watch(
+      billingAuthorizationsProvider,
+    );
     return _BillingListScaffold(
       title: 'Autorizacoes',
       allowed: BillingAccess.canAccessModule(
@@ -64,7 +67,9 @@ class AuthorizationsScreen extends ConsumerWidget {
           return const SizedBox.shrink();
         }
         return ListTile(
-          title: Text(a.procedureName.isEmpty ? a.procedureCode : a.procedureName),
+          title: Text(
+            a.procedureName.isEmpty ? a.procedureCode : a.procedureName,
+          ),
           subtitle: Text('${a.status.name} · ${a.authNumber}'),
           trailing: Text(a.childId),
         );
@@ -186,7 +191,9 @@ class GlosasScreen extends ConsumerWidget {
                   );
                   return;
                 }
-                await ref.read(billingRepositoryProvider).updateAppeal(
+                await ref
+                    .read(billingRepositoryProvider)
+                    .updateAppeal(
                       glosa: g,
                       status: BillingGlosaStatus.appealSent,
                       byUserId: uid,
@@ -219,7 +226,8 @@ class BillingReportsScreen extends ConsumerWidget {
             leading: const Icon(Icons.table_chart_outlined),
             title: const Text('Guias (CSV)'),
             onTap: () async {
-              final list = ref.read(billingGuidesProvider).valueOrNull ??
+              final list =
+                  ref.read(billingGuidesProvider).valueOrNull ??
                   const <BillingGuide>[];
               await Clipboard.setData(
                 ClipboardData(text: BillingCsvExport.guidesCsv(list)),
@@ -235,7 +243,8 @@ class BillingReportsScreen extends ConsumerWidget {
             leading: const Icon(Icons.table_chart_outlined),
             title: const Text('Lotes (CSV)'),
             onTap: () async {
-              final list = ref.read(billingBatchesProvider).valueOrNull ??
+              final list =
+                  ref.read(billingBatchesProvider).valueOrNull ??
                   const <BillingBatch>[];
               await Clipboard.setData(
                 ClipboardData(text: BillingCsvExport.batchesCsv(list)),
@@ -251,7 +260,8 @@ class BillingReportsScreen extends ConsumerWidget {
             leading: const Icon(Icons.table_chart_outlined),
             title: const Text('Glosas (CSV)'),
             onTap: () async {
-              final list = ref.read(billingGlosasProvider).valueOrNull ??
+              final list =
+                  ref.read(billingGlosasProvider).valueOrNull ??
                   const <BillingGlosa>[];
               await Clipboard.setData(
                 ClipboardData(text: BillingCsvExport.glosasCsv(list)),
@@ -324,19 +334,15 @@ class _BillingListScaffold<T> extends StatelessWidget {
     if (!allowed) {
       return Scaffold(
         appBar: AppBar(title: Text(title)),
-        body: const ErrorState(
-          failure: AuthFailure('Sem permissao.'),
-        ),
+        body: const ErrorState(failure: AuthFailure('Sem permissao.')),
       );
     }
     return Scaffold(
       appBar: AppBar(title: Text(title)),
       body: async.when(
         loading: () => LoadingState(label: 'Carregando $title…'),
-        error: (Object e, StackTrace _) => ErrorState(
-          failure: ServerFailure(e.toString()),
-          onRetry: onRetry,
-        ),
+        error: (Object e, StackTrace _) =>
+            ErrorState(failure: ServerFailure(e.toString()), onRetry: onRetry),
         data: (List<T> list) {
           if (list.isEmpty) {
             return EmptyState(

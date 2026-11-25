@@ -37,32 +37,32 @@ import '../../../../core/widgets/brand_ui.dart';
 
 final Provider<EncounterRepository> encounterRepositoryProvider =
     Provider<EncounterRepository>(
-  (Ref ref) => EncounterRepository(
-    firestore: ref.watch(firestoreProvider),
-    functions: ref.watch(firebaseFunctionsProvider),
-  ),
-);
+      (Ref ref) => EncounterRepository(
+        firestore: ref.watch(firestoreProvider),
+        functions: ref.watch(firebaseFunctionsProvider),
+      ),
+    );
 
 final StreamProviderFamily<List<Encounter>, String> patientEncountersProvider =
     StreamProvider.family<List<Encounter>, String>(
-  (Ref ref, String patientId) => ref
-      .watch(encounterRepositoryProvider)
-      .watchPatientEncounters(patientId),
-);
+      (Ref ref, String patientId) => ref
+          .watch(encounterRepositoryProvider)
+          .watchPatientEncounters(patientId),
+    );
 
 final StreamProviderFamily<List<ClinicalDocument>, String>
-    patientDocumentsProvider =
+patientDocumentsProvider =
     StreamProvider.family<List<ClinicalDocument>, String>(
-  (Ref ref, String patientId) => ref
-      .watch(encounterRepositoryProvider)
-      .watchPatientDocuments(patientId),
-);
+      (Ref ref, String patientId) => ref
+          .watch(encounterRepositoryProvider)
+          .watchPatientDocuments(patientId),
+    );
 
 final StreamProviderFamily<List<LabResult>, String> patientLabsProvider =
     StreamProvider.family<List<LabResult>, String>(
-  (Ref ref, String patientId) =>
-      ref.watch(encounterRepositoryProvider).watchLabResults(patientId),
-);
+      (Ref ref, String patientId) =>
+          ref.watch(encounterRepositoryProvider).watchLabResults(patientId),
+    );
 
 /// Filtro da linha do tempo — `null` significa "todos os tipos". Um
 /// provider simples em vez de converter a tela inteira para stateful só
@@ -157,19 +157,25 @@ class PatientTimelineScreen extends ConsumerWidget {
       );
     }
 
-    final AsyncValue<List<Encounter>> encounters =
-        ref.watch(patientEncountersProvider(patientId));
-    final AsyncValue<List<ClinicalDocument>> documents =
-        ref.watch(patientDocumentsProvider(patientId));
-    final AsyncValue<List<LabResult>> labs =
-        ref.watch(patientLabsProvider(patientId));
-    final AsyncValue<List<GrowthRecord>> growth =
-        ref.watch(growthProvider(patientId));
-    final AsyncValue<List<VaccineDose>> vaccines =
-        ref.watch(vaccineDosesProvider(patientId));
+    final AsyncValue<List<Encounter>> encounters = ref.watch(
+      patientEncountersProvider(patientId),
+    );
+    final AsyncValue<List<ClinicalDocument>> documents = ref.watch(
+      patientDocumentsProvider(patientId),
+    );
+    final AsyncValue<List<LabResult>> labs = ref.watch(
+      patientLabsProvider(patientId),
+    );
+    final AsyncValue<List<GrowthRecord>> growth = ref.watch(
+      growthProvider(patientId),
+    );
+    final AsyncValue<List<VaccineDose>> vaccines = ref.watch(
+      vaccineDosesProvider(patientId),
+    );
     final Child? child = ref.watch(childProvider(patientId)).valueOrNull;
-    final VaccineSummary vaccineSummary =
-        ref.watch(vaccineSummaryProvider(patientId));
+    final VaccineSummary vaccineSummary = ref.watch(
+      vaccineSummaryProvider(patientId),
+    );
 
     final bool isProfessional =
         ref.watch(currentUserProvider)?.canPrescribe ?? false;
@@ -213,10 +219,12 @@ class PatientTimelineScreen extends ConsumerWidget {
                 ),
               ),
               Text(
-                patientName ?? child?.name ?? 'Acompanhe o histórico do paciente',
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: AppColors.inkMuted,
-                    ),
+                patientName ??
+                    child?.name ??
+                    'Acompanhe o histórico do paciente',
+                style: Theme.of(
+                  context,
+                ).textTheme.bodySmall?.copyWith(color: AppColors.inkMuted),
               ),
             ],
           ),
@@ -272,124 +280,117 @@ class PatientTimelineScreen extends ConsumerWidget {
                     ref.invalidate(patientEncountersProvider(patientId)),
               )
             : loading
-                ? const SkeletonList(itemCount: 5, itemHeight: 88)
-                : TabBarView(
-                    children: <Widget>[
-                      _ChartSummaryTab(
-                        patientId: patientId,
-                        patientName: patientName,
-                        child: child,
-                        isProfessional: isProfessional,
-                        growth: growth.valueOrNull ?? const <GrowthRecord>[],
-                        vaccineSummary: vaccineSummary,
-                        encounters:
-                            encounters.valueOrNull ?? const <Encounter>[],
-                        labs: labs.valueOrNull ?? const <LabResult>[],
-                        documents: documents.valueOrNull ??
-                            const <ClinicalDocument>[],
-                        onStartEncounter: () => _startEncounter(context, ref),
-                      ),
-                      _ChartTimelinePane(
-                        patientId: patientId,
-                        allEvents: allEvents,
-                        events: events,
-                        filter: filter,
-                        isProfessional: isProfessional,
-                        onStartEncounter: () => _startEncounter(context, ref),
-                      ),
-                      _EvolutionsTab(
-                        patientId: patientId,
-                        encounters:
-                            encounters.valueOrNull ?? const <Encounter>[],
-                        isProfessional: isProfessional,
-                        onStartEncounter: () => _startEncounter(context, ref),
-                      ),
-                      _ChartFilteredList(
-                        patientId: patientId,
-                        events: allEvents
-                            .where(
-                              (_TimelineEvent e) =>
-                                  e.kind == _EventKind.document &&
-                                  e.document?.type ==
-                                      ClinicalDocumentType.prescription,
-                            )
-                            .toList(growable: false),
-                        emptyTitle: 'Sem prescrições',
-                        emptyMessage:
-                            'Receitas emitidas ficam nesta aba.',
-                      ),
-                      _ChartFilteredList(
-                        patientId: patientId,
-                        events: allEvents
-                            .where(
-                              (_TimelineEvent e) => e.kind == _EventKind.labs,
-                            )
-                            .toList(growable: false),
-                        emptyTitle: 'Sem exames',
-                        emptyMessage:
-                            'Resultados laboratoriais aparecerão aqui.',
-                      ),
-                      ChartModuleLinkCard(
-                        title: 'Caderneta de vacinas',
-                        message: vaccineSummary.total == 0
-                            ? 'Abra o módulo de vacinas para gerar ou '
-                                'consultar o calendário deste paciente.'
-                            : '${vaccineSummary.applied} aplicadas · '
-                                '${vaccineSummary.overdue} em atraso · '
-                                '${vaccineSummary.upcoming} próximas.',
-                        icon: Icons.vaccines_outlined,
-                        asset: AppIcons.vaccines,
-                        color: AppColors.moduleVaccines,
-                        actionLabel: 'Abrir vacinas',
-                        onAction: () => context.push(Routes.vaccines(patientId)),
-                      ),
-                      ChartModuleLinkCard(
-                        title: 'Crescimento e curvas',
-                        message:
-                            'Acompanhe peso, altura, IMC e perímetro cefálico '
-                            'com referências da OMS.',
-                        icon: Icons.show_chart_rounded,
-                        asset: AppIcons.growth,
-                        color: AppColors.moduleGrowth,
-                        actionLabel: 'Abrir crescimento',
-                        onAction: () => context.push(Routes.growth(patientId)),
-                      ),
-                      const ChartModuleLinkCard(
-                        title: 'Desenvolvimento',
-                        message:
-                            'Marcos motores e rastreios comportamentais '
-                            'estarão disponíveis na próxima etapa do produto. '
-                            'Por enquanto, registre na anamnese da consulta.',
-                        icon: Icons.child_care_outlined,
-                        asset: AppIcons.development,
-                        color: AppColors.teal,
-                      ),
-                      _ChartFilteredList(
-                        patientId: patientId,
-                        events: allEvents
-                            .where(
-                              (_TimelineEvent e) =>
-                                  e.kind == _EventKind.document,
-                            )
-                            .toList(growable: false),
-                        emptyTitle: 'Sem documentos',
-                        emptyMessage:
-                            'Atestados, encaminhamentos e relatórios '
-                            'aparecem aqui.',
-                      ),
-                      ChartModuleLinkCard(
-                        title: 'Telemedicina',
-                        message:
-                            'Agende ou acompanhe teleconsultas vinculadas '
-                            'a este paciente.',
-                        icon: Icons.videocam_outlined,
-                        asset: AppIcons.telemedicine,
-                        color: AppColors.moduleTelemedicine,
-                        actionLabel: 'Abrir telemedicina',
-                        onAction: () => context.push(Routes.telemedicinePath),
-                      ),
-                    ],
+            ? const SkeletonList(itemCount: 5, itemHeight: 88)
+            : TabBarView(
+                children: <Widget>[
+                  _ChartSummaryTab(
+                    patientId: patientId,
+                    patientName: patientName,
+                    child: child,
+                    isProfessional: isProfessional,
+                    growth: growth.valueOrNull ?? const <GrowthRecord>[],
+                    vaccineSummary: vaccineSummary,
+                    encounters: encounters.valueOrNull ?? const <Encounter>[],
+                    labs: labs.valueOrNull ?? const <LabResult>[],
+                    documents:
+                        documents.valueOrNull ?? const <ClinicalDocument>[],
+                    onStartEncounter: () => _startEncounter(context, ref),
                   ),
+                  _ChartTimelinePane(
+                    patientId: patientId,
+                    allEvents: allEvents,
+                    events: events,
+                    filter: filter,
+                    isProfessional: isProfessional,
+                    onStartEncounter: () => _startEncounter(context, ref),
+                  ),
+                  _EvolutionsTab(
+                    patientId: patientId,
+                    encounters: encounters.valueOrNull ?? const <Encounter>[],
+                    isProfessional: isProfessional,
+                    onStartEncounter: () => _startEncounter(context, ref),
+                  ),
+                  _ChartFilteredList(
+                    patientId: patientId,
+                    events: allEvents
+                        .where(
+                          (_TimelineEvent e) =>
+                              e.kind == _EventKind.document &&
+                              e.document?.type ==
+                                  ClinicalDocumentType.prescription,
+                        )
+                        .toList(growable: false),
+                    emptyTitle: 'Sem prescrições',
+                    emptyMessage: 'Receitas emitidas ficam nesta aba.',
+                  ),
+                  _ChartFilteredList(
+                    patientId: patientId,
+                    events: allEvents
+                        .where((_TimelineEvent e) => e.kind == _EventKind.labs)
+                        .toList(growable: false),
+                    emptyTitle: 'Sem exames',
+                    emptyMessage: 'Resultados laboratoriais aparecerão aqui.',
+                  ),
+                  ChartModuleLinkCard(
+                    title: 'Caderneta de vacinas',
+                    message: vaccineSummary.total == 0
+                        ? 'Abra o módulo de vacinas para gerar ou '
+                              'consultar o calendário deste paciente.'
+                        : '${vaccineSummary.applied} aplicadas · '
+                              '${vaccineSummary.overdue} em atraso · '
+                              '${vaccineSummary.upcoming} próximas.',
+                    icon: Icons.vaccines_outlined,
+                    asset: AppIcons.vaccines,
+                    color: AppColors.moduleVaccines,
+                    actionLabel: 'Abrir vacinas',
+                    onAction: () => context.push(Routes.vaccines(patientId)),
+                  ),
+                  ChartModuleLinkCard(
+                    title: 'Crescimento e curvas',
+                    message:
+                        'Acompanhe peso, altura, IMC e perímetro cefálico '
+                        'com referências da OMS.',
+                    icon: Icons.show_chart_rounded,
+                    asset: AppIcons.growth,
+                    color: AppColors.moduleGrowth,
+                    actionLabel: 'Abrir crescimento',
+                    onAction: () => context.push(Routes.growth(patientId)),
+                  ),
+                  const ChartModuleLinkCard(
+                    title: 'Desenvolvimento',
+                    message:
+                        'Marcos motores e rastreios comportamentais '
+                        'estarão disponíveis na próxima etapa do produto. '
+                        'Por enquanto, registre na anamnese da consulta.',
+                    icon: Icons.child_care_outlined,
+                    asset: AppIcons.development,
+                    color: AppColors.teal,
+                  ),
+                  _ChartFilteredList(
+                    patientId: patientId,
+                    events: allEvents
+                        .where(
+                          (_TimelineEvent e) => e.kind == _EventKind.document,
+                        )
+                        .toList(growable: false),
+                    emptyTitle: 'Sem documentos',
+                    emptyMessage:
+                        'Atestados, encaminhamentos e relatórios '
+                        'aparecem aqui.',
+                  ),
+                  ChartModuleLinkCard(
+                    title: 'Telemedicina',
+                    message:
+                        'Agende ou acompanhe teleconsultas vinculadas '
+                        'a este paciente.',
+                    icon: Icons.videocam_outlined,
+                    asset: AppIcons.telemedicine,
+                    color: AppColors.moduleTelemedicine,
+                    actionLabel: 'Abrir telemedicina',
+                    onAction: () => context.push(Routes.telemedicinePath),
+                  ),
+                ],
+              ),
       ),
     );
   }
@@ -400,10 +401,11 @@ class PatientTimelineScreen extends ConsumerWidget {
 
     // Retoma rascunho aberto em vez de criar um segundo registro para a mesma
     // consulta — o médico pode ter saído da tela e voltado.
-    final Encounter? existing = (await ref
-            .read(encounterRepositoryProvider)
-            .openDraft(patientId: patientId, professionalId: uid))
-        .valueOrNull;
+    final Encounter? existing =
+        (await ref
+                .read(encounterRepositoryProvider)
+                .openDraft(patientId: patientId, professionalId: uid))
+            .valueOrNull;
 
     if (!context.mounted) return;
 
@@ -416,16 +418,17 @@ class PatientTimelineScreen extends ConsumerWidget {
       return;
     }
 
-    final Result<Encounter> created =
-        await ref.read(encounterRepositoryProvider).create(
-              patientId: patientId,
-              professionalId: uid,
-              professionalName: ref.read(currentUserProvider)?.name ?? '',
-              professionalCrm: ref.read(currentUserProvider)?.crm,
-              patientName: patientName,
-              type: EncounterType.routine,
-              clinicId: ref.read(activeClinicIdProvider).valueOrNull,
-            );
+    final Result<Encounter> created = await ref
+        .read(encounterRepositoryProvider)
+        .create(
+          patientId: patientId,
+          professionalId: uid,
+          professionalName: ref.read(currentUserProvider)?.name ?? '',
+          professionalCrm: ref.read(currentUserProvider)?.crm,
+          patientName: patientName,
+          type: EncounterType.routine,
+          clinicId: ref.read(activeClinicIdProvider).valueOrNull,
+        );
 
     if (!context.mounted) return;
 
@@ -435,9 +438,9 @@ class PatientTimelineScreen extends ConsumerWidget {
           builder: (_) => EncounterEditorScreen(encounterId: e.id),
         ),
       ),
-      (Failure failure) => ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(failure.message)),
-      ),
+      (Failure failure) => ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(failure.message))),
     );
   }
 
@@ -460,8 +463,8 @@ class PatientTimelineScreen extends ConsumerWidget {
           title: e.type.label,
           subtitle: dx == null
               ? (e.anamnesis.chiefComplaint.isEmpty
-                  ? 'Sem diagnóstico registrado'
-                  : e.anamnesis.chiefComplaint)
+                    ? 'Sem diagnóstico registrado'
+                    : e.anamnesis.chiefComplaint)
               : '${dx.code} — ${dx.description}',
           encounter: e,
           flagged: e.amendsEncounterId != null,
@@ -476,13 +479,10 @@ class PatientTimelineScreen extends ConsumerWidget {
           kind: _EventKind.document,
           title: d.type.label,
           subtitle: d.type == ClinicalDocumentType.prescription
-              ? d.items
-                  .map((PrescriptionItem i) => i.drug)
-                  .take(3)
-                  .join(', ')
+              ? d.items.map((PrescriptionItem i) => i.drug).take(3).join(', ')
               : d.content.length > 80
-                  ? '${d.content.substring(0, 80)}...'
-                  : d.content,
+              ? '${d.content.substring(0, 80)}...'
+              : d.content,
           document: d,
           flagged: d.cancelled,
         ),
@@ -493,14 +493,16 @@ class PatientTimelineScreen extends ConsumerWidget {
     // soterrariam o restante da linha do tempo.
     final Map<String, List<LabResult>> labsByDay = <String, List<LabResult>>{};
     for (final LabResult l in labs) {
-      final String key = '${l.collectedAt.year}-${l.collectedAt.month}-'
+      final String key =
+          '${l.collectedAt.year}-${l.collectedAt.month}-'
           '${l.collectedAt.day}';
       labsByDay.putIfAbsent(key, () => <LabResult>[]).add(l);
     }
 
     for (final List<LabResult> group in labsByDay.values) {
-      final int outOfRange =
-          group.where((LabResult l) => l.isOutOfRange).length;
+      final int outOfRange = group
+          .where((LabResult l) => l.isOutOfRange)
+          .length;
 
       events.add(
         _TimelineEvent(
@@ -512,7 +514,7 @@ class PatientTimelineScreen extends ConsumerWidget {
           subtitle: outOfRange == 0
               ? 'Todos dentro da faixa de referência'
               : '$outOfRange ${outOfRange == 1 ? 'valor fora' : 'valores fora'} '
-                  'da faixa',
+                    'da faixa',
           labs: group,
           flagged: outOfRange > 0,
         ),
@@ -541,8 +543,10 @@ class PatientTimelineScreen extends ConsumerWidget {
     for (final VaccineDose v in vaccineDoses) {
       if (v.appliedAt == null) continue;
 
-      final VaccineDoseSchedule? schedule =
-          PniCalendar.find(v.vaccineId, v.doseIndex);
+      final VaccineDoseSchedule? schedule = PniCalendar.find(
+        v.vaccineId,
+        v.doseIndex,
+      );
 
       events.add(
         _TimelineEvent(
@@ -574,20 +578,20 @@ class _TimelineTile extends StatelessWidget {
   final String patientId;
 
   IconData get _icon => switch (event.kind) {
-        _EventKind.encounter => Icons.medical_information_outlined,
-        _EventKind.document => Icons.description_outlined,
-        _EventKind.labs => Icons.science_outlined,
-        _EventKind.growth => Icons.show_chart_rounded,
-        _EventKind.vaccine => Icons.vaccines_outlined,
-      };
+    _EventKind.encounter => Icons.medical_information_outlined,
+    _EventKind.document => Icons.description_outlined,
+    _EventKind.labs => Icons.science_outlined,
+    _EventKind.growth => Icons.show_chart_rounded,
+    _EventKind.vaccine => Icons.vaccines_outlined,
+  };
 
   String get _asset => switch (event.kind) {
-        _EventKind.encounter => AppIcons.consultation,
-        _EventKind.document => AppIcons.documents,
-        _EventKind.labs => AppIcons.exams,
-        _EventKind.growth => AppIcons.growth,
-        _EventKind.vaccine => AppIcons.vaccines,
-      };
+    _EventKind.encounter => AppIcons.consultation,
+    _EventKind.document => AppIcons.documents,
+    _EventKind.labs => AppIcons.exams,
+    _EventKind.growth => AppIcons.growth,
+    _EventKind.vaccine => AppIcons.vaccines,
+  };
 
   Color _color(ThemeData theme) {
     if (event.flagged) return AppColors.warning;
@@ -793,10 +797,7 @@ class _LabSheet extends StatelessWidget {
               style: theme.textTheme.headlineSmall,
             ),
             if (results.first.laboratory != null)
-              Text(
-                results.first.laboratory!,
-                style: theme.textTheme.bodySmall,
-              ),
+              Text(results.first.laboratory!, style: theme.textTheme.bodySmall),
             const SizedBox(height: AppSpacing.lg),
             Flexible(
               child: ListView.separated(
@@ -932,18 +933,18 @@ class _ChartSummaryTab extends StatelessWidget {
                 onEditProfile: child == null
                     ? null
                     : () => Navigator.of(context).push(
-                          MaterialPageRoute<void>(
-                            builder: (_) => ChildFormScreen(childId: child!.id),
-                          ),
+                        MaterialPageRoute<void>(
+                          builder: (_) => ChildFormScreen(childId: child!.id),
                         ),
+                      ),
               ),
               const SizedBox(height: AppSpacing.xl),
               Text(
                 'Resumo clínico',
                 style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      color: AppColors.navy,
-                      fontWeight: FontWeight.w800,
-                    ),
+                  color: AppColors.navy,
+                  fontWeight: FontWeight.w800,
+                ),
               ),
               const SizedBox(height: AppSpacing.md),
               ClinicalSummaryGrid(
@@ -957,9 +958,9 @@ class _ChartSummaryTab extends StatelessWidget {
               Text(
                 'Indicadores do prontuário',
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      color: AppColors.navy,
-                      fontWeight: FontWeight.w800,
-                    ),
+                  color: AppColors.navy,
+                  fontWeight: FontWeight.w800,
+                ),
               ),
               const SizedBox(height: AppSpacing.md),
               LayoutBuilder(
@@ -1049,38 +1050,40 @@ class _EvolutionsTab extends ConsumerWidget {
     final String? uid = ref.read(currentUserProvider)?.uid;
     if (uid == null) return;
 
-    final List<Encounter> signed = encounters
-        .where((Encounter e) => e.isSigned)
-        .toList(growable: false)
-      ..sort((Encounter a, Encounter b) => b.startedAt.compareTo(a.startedAt));
+    final List<Encounter> signed =
+        encounters.where((Encounter e) => e.isSigned).toList(growable: false)
+          ..sort(
+            (Encounter a, Encounter b) => b.startedAt.compareTo(a.startedAt),
+          );
 
     if (signed.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Não há evolução assinada para copiar.'),
-        ),
+        const SnackBar(content: Text('Não há evolução assinada para copiar.')),
       );
       return;
     }
 
     final Encounter source = signed.first;
-    final Result<Encounter> created =
-        await ref.read(encounterRepositoryProvider).create(
-              patientId: patientId,
-              professionalId: uid,
-              professionalName: ref.read(currentUserProvider)?.name ?? '',
-              professionalCrm: ref.read(currentUserProvider)?.crm,
-              patientName: source.patientName,
-              patientBirthDate: source.patientBirthDate,
-              type: EncounterType.followUp,
-              clinicId: ref.read(activeClinicIdProvider).valueOrNull,
-            );
+    final Result<Encounter> created = await ref
+        .read(encounterRepositoryProvider)
+        .create(
+          patientId: patientId,
+          professionalId: uid,
+          professionalName: ref.read(currentUserProvider)?.name ?? '',
+          professionalCrm: ref.read(currentUserProvider)?.crm,
+          patientName: source.patientName,
+          patientBirthDate: source.patientBirthDate,
+          type: EncounterType.followUp,
+          clinicId: ref.read(activeClinicIdProvider).valueOrNull,
+        );
 
     if (!context.mounted) return;
 
     await created.fold(
       (Encounter draft) async {
-        await ref.read(encounterRepositoryProvider).updateDraft(
+        await ref
+            .read(encounterRepositoryProvider)
+            .updateDraft(
               encounterId: draft.id,
               anamnesis: source.anamnesis,
               vitals: source.vitals,
@@ -1098,9 +1101,9 @@ class _EvolutionsTab extends ConsumerWidget {
       },
       (Failure failure) async {
         if (!context.mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(failure.message)),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(failure.message)));
       },
     );
   }
@@ -1169,8 +1172,7 @@ class _EvolutionsTab extends ConsumerWidget {
                 child: AppCard(
                   onTap: () => Navigator.of(context).push(
                     MaterialPageRoute<void>(
-                      builder: (_) =>
-                          EncounterEditorScreen(encounterId: e.id),
+                      builder: (_) => EncounterEditorScreen(encounterId: e.id),
                     ),
                   ),
                   child: Row(
@@ -1196,9 +1198,7 @@ class _EvolutionsTab extends ConsumerWidget {
                           children: <Widget>[
                             Text(
                               e.type.label,
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .titleSmall
+                              style: Theme.of(context).textTheme.titleSmall
                                   ?.copyWith(
                                     color: AppColors.navy,
                                     fontWeight: FontWeight.w800,
@@ -1210,9 +1210,7 @@ class _EvolutionsTab extends ConsumerWidget {
                                   : e.anamnesis.chiefComplaint,
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .bodySmall
+                              style: Theme.of(context).textTheme.bodySmall
                                   ?.copyWith(color: AppColors.inkMuted),
                             ),
                           ],
@@ -1221,8 +1219,8 @@ class _EvolutionsTab extends ConsumerWidget {
                       Text(
                         Formatters.date(e.startedAt),
                         style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                              color: AppColors.inkMuted,
-                            ),
+                          color: AppColors.inkMuted,
+                        ),
                       ),
                     ],
                   ),
@@ -1292,7 +1290,8 @@ class _ChartTimelinePane extends ConsumerWidget {
                   itemCount: events.length,
                   itemBuilder: (BuildContext context, int index) {
                     final _TimelineEvent event = events[index];
-                    final bool isFirstOfDay = index == 0 ||
+                    final bool isFirstOfDay =
+                        index == 0 ||
                         !PatientTimelineScreen._sameDay(
                           events[index - 1].at,
                           event.at,
@@ -1400,28 +1399,33 @@ class _TimelineFilterBar extends ConsumerWidget {
 
   static const List<(String, _EventKind?, IconData, String?)> _options =
       <(String, _EventKind?, IconData, String?)>[
-    ('Todos', null, Icons.all_inclusive_rounded, null),
-    (
-      'Consultas',
-      _EventKind.encounter,
-      Icons.medical_information_outlined,
-      AppIcons.consultation,
-    ),
-    (
-      'Crescimento',
-      _EventKind.growth,
-      Icons.show_chart_rounded,
-      AppIcons.growth,
-    ),
-    ('Vacinas', _EventKind.vaccine, Icons.vaccines_outlined, AppIcons.vaccines),
-    ('Exames', _EventKind.labs, Icons.science_outlined, AppIcons.exams),
-    (
-      'Documentos',
-      _EventKind.document,
-      Icons.description_outlined,
-      AppIcons.documents,
-    ),
-  ];
+        ('Todos', null, Icons.all_inclusive_rounded, null),
+        (
+          'Consultas',
+          _EventKind.encounter,
+          Icons.medical_information_outlined,
+          AppIcons.consultation,
+        ),
+        (
+          'Crescimento',
+          _EventKind.growth,
+          Icons.show_chart_rounded,
+          AppIcons.growth,
+        ),
+        (
+          'Vacinas',
+          _EventKind.vaccine,
+          Icons.vaccines_outlined,
+          AppIcons.vaccines,
+        ),
+        ('Exames', _EventKind.labs, Icons.science_outlined, AppIcons.exams),
+        (
+          'Documentos',
+          _EventKind.document,
+          Icons.description_outlined,
+          AppIcons.documents,
+        ),
+      ];
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -1501,7 +1505,8 @@ class _PatientSummaryCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final ThemeData theme = Theme.of(context);
-    final bool hasAlert = child.allergies.isNotEmpty || child.conditions.isNotEmpty;
+    final bool hasAlert =
+        child.allergies.isNotEmpty || child.conditions.isNotEmpty;
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(
@@ -1529,8 +1534,9 @@ class _PatientSummaryCard extends StatelessWidget {
                       child: child.photoUrl == null
                           ? Text(
                               child.initials,
-                              style: theme.textTheme.titleMedium
-                                  ?.copyWith(color: Colors.white),
+                              style: theme.textTheme.titleMedium?.copyWith(
+                                color: Colors.white,
+                              ),
                             )
                           : null,
                     ),
@@ -1599,8 +1605,8 @@ class _PatientSummaryCard extends StatelessWidget {
                         value: vaccineSummary.total == 0
                             ? 'Sem calendário'
                             : vaccineSummary.overdue > 0
-                                ? '${vaccineSummary.overdue} em atraso'
-                                : '${vaccineSummary.applied}/${vaccineSummary.total} em dia',
+                            ? '${vaccineSummary.overdue} em atraso'
+                            : '${vaccineSummary.applied}/${vaccineSummary.total} em dia',
                         onTap: () => context.push(Routes.vaccines(child.id)),
                       ),
                     ),
@@ -1670,12 +1676,7 @@ class _SummaryStat extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
         asset != null
-            ? AppIcon(
-                asset: asset!,
-                size: 18,
-                fallback: icon,
-                color: color,
-              )
+            ? AppIcon(asset: asset!, size: 18, fallback: icon, color: color)
             : Icon(icon, size: 18, color: color),
         const SizedBox(width: AppSpacing.xs),
         Expanded(

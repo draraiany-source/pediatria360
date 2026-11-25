@@ -49,17 +49,20 @@ void main() {
     });
   });
 
-  group('ponto único permanece decimal — ambiguidade resolvida a favor do caso comum', () {
-    test('o que um teclado numérico digita para "5 vírgula 5"', () {
-      // Um único ponto sem vírgula não tem como ser diferenciado entre
-      // "5.5" (decimal, o que o teclado numérico produz) e "1.234" querendo
-      // dizer mil e duzentos. A escolha é manter a leitura decimal, que é o
-      // caso mais comum na prática — mudar isso quebraria o caso frequente
-      // para consertar um caso ambíguo.
-      expect(Parsers.decimal('5.5'), 5.5);
-      expect(Parsers.decimal('12.5'), 12.5);
-    });
-  });
+  group(
+    'ponto único permanece decimal — ambiguidade resolvida a favor do caso comum',
+    () {
+      test('o que um teclado numérico digita para "5 vírgula 5"', () {
+        // Um único ponto sem vírgula não tem como ser diferenciado entre
+        // "5.5" (decimal, o que o teclado numérico produz) e "1.234" querendo
+        // dizer mil e duzentos. A escolha é manter a leitura decimal, que é o
+        // caso mais comum na prática — mudar isso quebraria o caso frequente
+        // para consertar um caso ambíguo.
+        expect(Parsers.decimal('5.5'), 5.5);
+        expect(Parsers.decimal('12.5'), 12.5);
+      });
+    },
+  );
 
   group('casos de borda', () {
     test('nulo', () {

@@ -26,63 +26,67 @@ import 'screens/pre_visit_questionnaire_form_screen.dart';
 
 final Provider<TelemedicineRepository> telemedicineRepositoryProvider =
     Provider<TelemedicineRepository>(
-  (Ref ref) => TelemedicineRepository(
-    firestore: ref.watch(firestoreProvider),
-    functions: ref.watch(firebaseFunctionsProvider),
-  ),
-);
+      (Ref ref) => TelemedicineRepository(
+        firestore: ref.watch(firestoreProvider),
+        functions: ref.watch(firebaseFunctionsProvider),
+      ),
+    );
 
 final StreamProvider<List<Appointment>> myAppointmentsProvider =
     StreamProvider<List<Appointment>>((Ref ref) {
-  final String? uid = ref.watch(currentUserProvider)?.uid;
-  if (uid == null) {
-    return Stream<List<Appointment>>.value(const <Appointment>[]);
-  }
-  return ref.watch(telemedicineRepositoryProvider).watchMyAppointments(uid);
-});
+      final String? uid = ref.watch(currentUserProvider)?.uid;
+      if (uid == null) {
+        return Stream<List<Appointment>>.value(const <Appointment>[]);
+      }
+      return ref.watch(telemedicineRepositoryProvider).watchMyAppointments(uid);
+    });
 
 /// A agenda do profissional — mesma coleção que `myAppointmentsProvider`,
 /// filtrada pelo lado de quem atende, não de quem é atendido.
 /// `watchProfessionalAgenda` já existia no repositório; nada consumia.
 final StreamProvider<List<Appointment>> myAgendaProvider =
     StreamProvider<List<Appointment>>((Ref ref) {
-  if (DevMode.isEnabled &&
-      ref.watch(firebaseAuthProvider).currentUser == null) {
-    return Stream<List<Appointment>>.error(
-      const PermissionFailure(
-        'Modo demonstração: entre com conta profissional verificada '
-        'para carregar a agenda real.',
-      ),
-    );
-  }
-  final String? uid = ref.watch(currentUserProvider)?.uid;
-  if (uid == null) {
-    return Stream<List<Appointment>>.value(const <Appointment>[]);
-  }
-  return ref
-      .watch(telemedicineRepositoryProvider)
-      .watchProfessionalAgenda(uid);
-});
+      if (DevMode.isEnabled &&
+          ref.watch(firebaseAuthProvider).currentUser == null) {
+        return Stream<List<Appointment>>.error(
+          const PermissionFailure(
+            'Modo demonstração: entre com conta profissional verificada '
+            'para carregar a agenda real.',
+          ),
+        );
+      }
+      final String? uid = ref.watch(currentUserProvider)?.uid;
+      if (uid == null) {
+        return Stream<List<Appointment>>.value(const <Appointment>[]);
+      }
+      return ref
+          .watch(telemedicineRepositoryProvider)
+          .watchProfessionalAgenda(uid);
+    });
 
 /// A disponibilidade semanal do próprio profissional — carregada uma vez
 /// por acesso à tela; quem editar chama `setWeeklyAvailability` e invalida
 /// este provider para recarregar.
 final FutureProvider<Map<String, List<String>>> myAvailabilityProvider =
     FutureProvider<Map<String, List<String>>>((Ref ref) async {
-  final String? uid = ref.watch(currentUserProvider)?.uid;
-  if (uid == null) return const <String, List<String>>{};
-  final Result<Map<String, List<String>>> result = await ref
-      .watch(telemedicineRepositoryProvider)
-      .myWeeklyAvailability(uid);
-  return result.fold((Map<String, List<String>> v) => v, (_) => const <String, List<String>>{});
-});
+      final String? uid = ref.watch(currentUserProvider)?.uid;
+      if (uid == null) return const <String, List<String>>{};
+      final Result<Map<String, List<String>>> result = await ref
+          .watch(telemedicineRepositoryProvider)
+          .myWeeklyAvailability(uid);
+      return result.fold(
+        (Map<String, List<String>> v) => v,
+        (_) => const <String, List<String>>{},
+      );
+    });
 
 final FutureProvider<List<ProfessionalProfile>> professionalsProvider =
     FutureProvider<List<ProfessionalProfile>>((Ref ref) async {
-  final Result<List<ProfessionalProfile>> result =
-      await ref.watch(telemedicineRepositoryProvider).professionals();
-  return result.valueOrNull ?? const <ProfessionalProfile>[];
-});
+      final Result<List<ProfessionalProfile>> result = await ref
+          .watch(telemedicineRepositoryProvider)
+          .professionals();
+      return result.valueOrNull ?? const <ProfessionalProfile>[];
+    });
 
 /// Telemedicina: consultas do usuário e profissionais disponíveis.
 class TelemedicineScreen extends ConsumerWidget {
@@ -91,10 +95,12 @@ class TelemedicineScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final ThemeData theme = Theme.of(context);
-    final AsyncValue<List<Appointment>> appointments =
-        ref.watch(myAppointmentsProvider);
-    final AsyncValue<List<ProfessionalProfile>> professionals =
-        ref.watch(professionalsProvider);
+    final AsyncValue<List<Appointment>> appointments = ref.watch(
+      myAppointmentsProvider,
+    );
+    final AsyncValue<List<ProfessionalProfile>> professionals = ref.watch(
+      professionalsProvider,
+    );
 
     return Scaffold(
       backgroundColor: theme.brightness == Brightness.dark
@@ -106,9 +112,8 @@ class TelemedicineScreen extends ConsumerWidget {
             ? AppColors.darkBackground
             : null,
         leading: IconButton(
-          onPressed: () => context.canPop()
-              ? context.pop()
-              : context.go(Routes.homePath),
+          onPressed: () =>
+              context.canPop() ? context.pop() : context.go(Routes.homePath),
           icon: const AppIcon(
             asset: AppIcons.back,
             size: 22,
@@ -350,7 +355,8 @@ class TelemedicineScreen extends ConsumerWidget {
                       return const EmptyState(
                         icon: Icons.medical_services_outlined,
                         title: 'Nenhum profissional disponível',
-                        message: 'Os atendentes aparecem aqui depois que a '
+                        message:
+                            'Os atendentes aparecem aqui depois que a '
                             'equipe verificar o registro profissional.',
                       );
                     }
@@ -538,10 +544,7 @@ class _ProfessionalCard extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
-                  Text(
-                    professional.name,
-                    style: theme.textTheme.titleSmall,
-                  ),
+                  Text(professional.name, style: theme.textTheme.titleSmall),
                   Text(
                     professional.specialty,
                     style: theme.textTheme.bodySmall,
@@ -573,9 +576,7 @@ class _ProfessionalCard extends StatelessWidget {
                       ScaffoldMessenger.of(context)
                         ..hideCurrentSnackBar()
                         ..showSnackBar(
-                          const SnackBar(
-                            content: Text('Abrindo agenda...'),
-                          ),
+                          const SnackBar(content: Text('Abrindo agenda...')),
                         );
                     }
                   // `null` desativa o botão visualmente: quem olha a

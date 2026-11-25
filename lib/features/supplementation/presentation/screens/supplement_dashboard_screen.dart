@@ -41,30 +41,105 @@ class _SupplementDashboardScreenState
   @override
   Widget build(BuildContext context) {
     final ThemeData theme = Theme.of(context);
-    final AsyncValue<List<Map<String, dynamic>>> recent =
-        ref.watch(supplementRecentProvider);
-    final AsyncValue<List<String>> favorites =
-        ref.watch(supplementFavoritesProvider);
+    final AsyncValue<List<Map<String, dynamic>>> recent = ref.watch(
+      supplementRecentProvider,
+    );
+    final AsyncValue<List<String>> favorites = ref.watch(
+      supplementFavoritesProvider,
+    );
 
-    final List<_DashItem> items = <_DashItem>[
-      _DashItem('Micronutrientes', 'Perfis clinicos estruturados', Icons.science_outlined, AppColors.brand, Routes.supplementMicronutrientsPath),
-      _DashItem('Exames laboratoriais', 'Registro e acompanhamento', Icons.biotech_outlined, AppColors.teal, Routes.supplementLabsPath),
-      _DashItem('Calculadoras', 'Sugestao para conferencia', Icons.calculate_outlined, AppColors.navy, Routes.supplementCalculatorPath),
-      _DashItem('Protocolos rapidos', 'Cenarios clinicos', Icons.playlist_add_check_rounded, AppColors.moduleLibrary, Routes.supplementProtocolsPath),
-      _DashItem('Assistente IA', 'Organiza dados e atalhos', Icons.auto_awesome_outlined, AppColors.raspberry, Routes.supplementAiPath),
-      _DashItem('Prescricoes', 'Rascunho com confirmacao', Icons.medication_outlined, AppColors.tealDeep, Routes.supplementPrescriptionPath),
-      _DashItem('Orientacoes aos pais', 'Versao simplificada', Icons.family_restroom_outlined, AppColors.honey, Routes.supplementParentPath),
-      _DashItem('Historico', 'Timeline do paciente', Icons.timeline_outlined, AppColors.vital, Routes.supplementHistoryPath),
-      _DashItem('Alimentos', 'Fontes de micronutrientes', Icons.restaurant_outlined, AppColors.success, Routes.supplementFoodsPath),
-      _DashItem('Favoritos', 'Acesso rapido', Icons.star_outline_rounded, AppColors.warning, Routes.supplementFavoritesPath),
-      _DashItem('IA — Interpretar exames', 'Apoio a decisao', Icons.analytics_outlined, AppColors.brandSoft, Routes.supplementLabAiPath),
-      _DashItem('Graficos', 'Evolucao laboratorial', Icons.show_chart_outlined, AppColors.navy, Routes.supplementChartsPath),
-    ].where(( _DashItem i) {
-      if (_query.isEmpty) return true;
-      final String q = _query.toLowerCase();
-      return i.label.toLowerCase().contains(q) ||
-          i.subtitle.toLowerCase().contains(q);
-    }).toList();
+    final List<_DashItem> items =
+        <_DashItem>[
+          _DashItem(
+            'Micronutrientes',
+            'Perfis clinicos estruturados',
+            Icons.science_outlined,
+            AppColors.brand,
+            Routes.supplementMicronutrientsPath,
+          ),
+          _DashItem(
+            'Exames laboratoriais',
+            'Registro e acompanhamento',
+            Icons.biotech_outlined,
+            AppColors.teal,
+            Routes.supplementLabsPath,
+          ),
+          _DashItem(
+            'Calculadoras',
+            'Sugestao para conferencia',
+            Icons.calculate_outlined,
+            AppColors.navy,
+            Routes.supplementCalculatorPath,
+          ),
+          _DashItem(
+            'Protocolos rapidos',
+            'Cenarios clinicos',
+            Icons.playlist_add_check_rounded,
+            AppColors.moduleLibrary,
+            Routes.supplementProtocolsPath,
+          ),
+          _DashItem(
+            'Assistente IA',
+            'Organiza dados e atalhos',
+            Icons.auto_awesome_outlined,
+            AppColors.raspberry,
+            Routes.supplementAiPath,
+          ),
+          _DashItem(
+            'Prescricoes',
+            'Rascunho com confirmacao',
+            Icons.medication_outlined,
+            AppColors.tealDeep,
+            Routes.supplementPrescriptionPath,
+          ),
+          _DashItem(
+            'Orientacoes aos pais',
+            'Versao simplificada',
+            Icons.family_restroom_outlined,
+            AppColors.honey,
+            Routes.supplementParentPath,
+          ),
+          _DashItem(
+            'Historico',
+            'Timeline do paciente',
+            Icons.timeline_outlined,
+            AppColors.vital,
+            Routes.supplementHistoryPath,
+          ),
+          _DashItem(
+            'Alimentos',
+            'Fontes de micronutrientes',
+            Icons.restaurant_outlined,
+            AppColors.success,
+            Routes.supplementFoodsPath,
+          ),
+          _DashItem(
+            'Favoritos',
+            'Acesso rapido',
+            Icons.star_outline_rounded,
+            AppColors.warning,
+            Routes.supplementFavoritesPath,
+          ),
+          _DashItem(
+            'IA — Interpretar exames',
+            'Apoio a decisao',
+            Icons.analytics_outlined,
+            AppColors.brandSoft,
+            Routes.supplementLabAiPath,
+          ),
+          _DashItem(
+            'Graficos',
+            'Evolucao laboratorial',
+            Icons.show_chart_outlined,
+            AppColors.navy,
+            Routes.supplementChartsPath,
+          ),
+        ].where((_DashItem i) {
+          if (_query.isEmpty) return true;
+          final String q = _query.toLowerCase();
+          return i.label.toLowerCase().contains(q) ||
+              i.subtitle.toLowerCase().contains(q);
+        }).toList();
 
     return Scaffold(
       backgroundColor: AppColors.lightBackground,
@@ -87,7 +162,9 @@ class _SupplementDashboardScreenState
           const SizedBox(height: AppSpacing.xs),
           Text(
             'Micronutrientes, exames, calculadoras e prescritor — com revisao medica obrigatoria.',
-            style: theme.textTheme.bodyMedium?.copyWith(color: AppColors.inkMuted),
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: AppColors.inkMuted,
+            ),
           ),
           if (widget.childId != null && widget.childId!.isNotEmpty) ...<Widget>[
             const SizedBox(height: AppSpacing.sm),
@@ -177,7 +254,8 @@ class _SupplementDashboardScreenState
             data: (List<String> ids) {
               if (ids.isEmpty) {
                 return const SupplementEmptyState(
-                  message: 'Salve micronutrientes nos favoritos para acesso rapido.',
+                  message:
+                      'Salve micronutrientes nos favoritos para acesso rapido.',
                   icon: Icons.star_border_rounded,
                 );
               }

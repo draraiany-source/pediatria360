@@ -48,10 +48,12 @@ class PatientChartHeader extends StatelessWidget {
     final String sex = child?.sex.label ?? sexLabel ?? '';
     final String? guardian = child?.guardianName;
     final String? phone = child?.guardianPhone ?? child?.phone;
-    final List<String> allergyList =
-        child?.allergies.isNotEmpty == true ? child!.allergies : allergies;
-    final List<String> conditionList =
-        child?.conditions.isNotEmpty == true ? child!.conditions : conditions;
+    final List<String> allergyList = child?.allergies.isNotEmpty == true
+        ? child!.allergies
+        : allergies;
+    final List<String> conditionList = child?.conditions.isNotEmpty == true
+        ? child!.conditions
+        : conditions;
 
     return AppCard(
       padding: const EdgeInsets.all(AppSpacing.lg),
@@ -208,8 +210,7 @@ class ClinicalSummaryGrid extends StatelessWidget {
                 a.startedAt.isAfter(b.startedAt) ? a : b,
           );
 
-    final int pendingLabs =
-        labs.where((LabResult l) => l.isOutOfRange).length;
+    final int pendingLabs = labs.where((LabResult l) => l.isOutOfRange).length;
 
     final List<_Kpi> items = <_Kpi>[
       _Kpi(
@@ -280,8 +281,8 @@ class ClinicalSummaryGrid extends StatelessWidget {
         final int cols = c.maxWidth > 720
             ? 4
             : c.maxWidth > 420
-                ? 2
-                : 1;
+            ? 2
+            : 1;
         return GridView.count(
           crossAxisCount: cols,
           shrinkWrap: true,
@@ -322,9 +323,7 @@ class ClinicalSummaryGrid extends StatelessWidget {
                               k.value,
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .titleMedium
+                              style: Theme.of(context).textTheme.titleMedium
                                   ?.copyWith(
                                     color: AppColors.navy,
                                     fontWeight: FontWeight.w800,
@@ -334,9 +333,7 @@ class ClinicalSummaryGrid extends StatelessWidget {
                               k.label,
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .bodySmall
+                              style: Theme.of(context).textTheme.bodySmall
                                   ?.copyWith(color: AppColors.inkMuted),
                             ),
                           ],
@@ -425,17 +422,17 @@ class ChartModuleLinkCard extends StatelessWidget {
                   title,
                   textAlign: TextAlign.center,
                   style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                        color: AppColors.navy,
-                        fontWeight: FontWeight.w800,
-                      ),
+                    color: AppColors.navy,
+                    fontWeight: FontWeight.w800,
+                  ),
                 ),
                 const SizedBox(height: AppSpacing.sm),
                 Text(
                   message,
                   textAlign: TextAlign.center,
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: AppColors.inkMuted,
-                      ),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodyMedium?.copyWith(color: AppColors.inkMuted),
                 ),
                 if (actionLabel != null && onAction != null) ...<Widget>[
                   const SizedBox(height: AppSpacing.xl),

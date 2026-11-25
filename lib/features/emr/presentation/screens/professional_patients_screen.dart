@@ -94,8 +94,8 @@ class PatientSummary {
 /// Manter uma collection `professional_patients` exigiria sincronizar dois
 /// lugares e conviver com divergência. Os atendimentos já são a fonte de
 /// verdade do vínculo: quem eu atendi é quem tem atendimento meu.
-final StreamProvider<List<PatientSummary>> professionalPatientsProvider =
-    StreamProvider<List<PatientSummary>>((Ref ref) {
+final StreamProvider<List<PatientSummary>>
+professionalPatientsProvider = StreamProvider<List<PatientSummary>>((Ref ref) {
   if (DevMode.isEnabled &&
       ref.watch(firebaseAuthProvider).currentUser == null) {
     return Stream<List<PatientSummary>>.error(
@@ -114,53 +114,59 @@ final StreamProvider<List<PatientSummary>> professionalPatientsProvider =
       .watch(encounterRepositoryProvider)
       .watchProfessionalEncounters(uid)
       .map((List<Encounter> encounters) {
-    final Map<String, List<Encounter>> byPatient =
-        <String, List<Encounter>>{};
+        final Map<String, List<Encounter>> byPatient =
+            <String, List<Encounter>>{};
 
-    for (final Encounter e in encounters) {
-      byPatient.putIfAbsent(e.patientId, () => <Encounter>[]).add(e);
-    }
+        for (final Encounter e in encounters) {
+          byPatient.putIfAbsent(e.patientId, () => <Encounter>[]).add(e);
+        }
 
-    final List<PatientSummary> patients = <PatientSummary>[];
+        final List<PatientSummary> patients = <PatientSummary>[];
 
-    for (final MapEntry<String, List<Encounter>> entry in byPatient.entries) {
-      final List<Encounter> list = entry.value
-        ..sort((Encounter a, Encounter b) =>
-            b.startedAt.compareTo(a.startedAt));
+        for (final MapEntry<String, List<Encounter>> entry
+            in byPatient.entries) {
+          final List<Encounter> list = entry.value
+            ..sort(
+              (Encounter a, Encounter b) => b.startedAt.compareTo(a.startedAt),
+            );
 
-      final Encounter latest = list.first;
+          final Encounter latest = list.first;
 
-      // O nome mais recente prevalece: o cadastro pode ter sido corrigido.
-      String? name;
-      DateTime? birth;
-      for (final Encounter e in list) {
-        name ??= e.patientName;
-        birth ??= e.patientBirthDate;
-        if (name != null && birth != null) break;
-      }
+          // O nome mais recente prevalece: o cadastro pode ter sido corrigido.
+          String? name;
+          DateTime? birth;
+          for (final Encounter e in list) {
+            name ??= e.patientName;
+            birth ??= e.patientBirthDate;
+            if (name != null && birth != null) break;
+          }
 
-      patients.add(
-        PatientSummary(
-          patientId: entry.key,
-          childId: entry.key,
-          name: name ?? 'Paciente sem nome',
-          birthDate: birth,
-          lastEncounterAt: latest.startedAt,
-          lastDiagnosis: latest.primaryDiagnosis?.description,
-          hasOpenDraft:
-              list.any((Encounter e) => e.status == EncounterStatus.draft),
-          encounterCount: list.length,
-          allergies: latest.anamnesis.allergies,
-        ),
-      );
-    }
+          patients.add(
+            PatientSummary(
+              patientId: entry.key,
+              childId: entry.key,
+              name: name ?? 'Paciente sem nome',
+              birthDate: birth,
+              lastEncounterAt: latest.startedAt,
+              lastDiagnosis: latest.primaryDiagnosis?.description,
+              hasOpenDraft: list.any(
+                (Encounter e) => e.status == EncounterStatus.draft,
+              ),
+              encounterCount: list.length,
+              allergies: latest.anamnesis.allergies,
+            ),
+          );
+        }
 
-    patients.sort((PatientSummary a, PatientSummary b) =>
-        (b.lastEncounterAt ?? DateTime(0))
-            .compareTo(a.lastEncounterAt ?? DateTime(0)));
+        patients.sort(
+          (PatientSummary a, PatientSummary b) =>
+              (b.lastEncounterAt ?? DateTime(0)).compareTo(
+                a.lastEncounterAt ?? DateTime(0),
+              ),
+        );
 
-    return patients;
-  });
+        return patients;
+      });
 });
 
 /// Filtro ativo da lista.
@@ -170,10 +176,10 @@ enum PatientFilter {
   recent;
 
   String get label => switch (this) {
-        PatientFilter.all => 'Todos',
-        PatientFilter.openDrafts => 'Pendentes',
-        PatientFilter.recent => 'Em acompanhamento',
-      };
+    PatientFilter.all => 'Todos',
+    PatientFilter.openDrafts => 'Pendentes',
+    PatientFilter.recent => 'Em acompanhamento',
+  };
 }
 
 /// Lista de pacientes do profissional.
@@ -212,17 +218,19 @@ class _ProfessionalPatientsScreenState
 
   /// Busca sem acento e sem caixa — quem digita "jose" precisa achar "José".
   List<PatientSummary> _apply(List<PatientSummary> all) {
-    final DateTime cutoff =
-        DateTime.now().subtract(const Duration(days: 30));
+    final DateTime cutoff = DateTime.now().subtract(const Duration(days: 30));
 
     Iterable<PatientSummary> result = all;
 
     result = switch (_filter) {
       PatientFilter.all => result,
-      PatientFilter.openDrafts =>
-        result.where((PatientSummary p) => p.hasOpenDraft),
-      PatientFilter.recent => result.where((PatientSummary p) =>
-          p.lastEncounterAt != null && p.lastEncounterAt!.isAfter(cutoff)),
+      PatientFilter.openDrafts => result.where(
+        (PatientSummary p) => p.hasOpenDraft,
+      ),
+      PatientFilter.recent => result.where(
+        (PatientSummary p) =>
+            p.lastEncounterAt != null && p.lastEncounterAt!.isAfter(cutoff),
+      ),
     };
 
     if (_query.length >= 2) {
@@ -237,12 +245,30 @@ class _ProfessionalPatientsScreenState
 
   static String _normalize(String input) {
     const Map<String, String> accents = <String, String>{
-      'á': 'a', 'à': 'a', 'ã': 'a', 'â': 'a', 'ä': 'a',
-      'é': 'e', 'è': 'e', 'ê': 'e', 'ë': 'e',
-      'í': 'i', 'ì': 'i', 'î': 'i', 'ï': 'i',
-      'ó': 'o', 'ò': 'o', 'õ': 'o', 'ô': 'o', 'ö': 'o',
-      'ú': 'u', 'ù': 'u', 'û': 'u', 'ü': 'u',
-      'ç': 'c', 'ñ': 'n',
+      'á': 'a',
+      'à': 'a',
+      'ã': 'a',
+      'â': 'a',
+      'ä': 'a',
+      'é': 'e',
+      'è': 'e',
+      'ê': 'e',
+      'ë': 'e',
+      'í': 'i',
+      'ì': 'i',
+      'î': 'i',
+      'ï': 'i',
+      'ó': 'o',
+      'ò': 'o',
+      'õ': 'o',
+      'ô': 'o',
+      'ö': 'o',
+      'ú': 'u',
+      'ù': 'u',
+      'û': 'u',
+      'ü': 'u',
+      'ç': 'c',
+      'ñ': 'n',
     };
     final StringBuffer buffer = StringBuffer();
     for (final String c in input.toLowerCase().split('')) {
@@ -253,20 +279,19 @@ class _ProfessionalPatientsScreenState
 
   @override
   Widget build(BuildContext context) {
-    final AsyncValue<List<PatientSummary>> async =
-        ref.watch(professionalPatientsProvider);
+    final AsyncValue<List<PatientSummary>> async = ref.watch(
+      professionalPatientsProvider,
+    );
 
-    final bool verified =
-        ref.watch(currentUserProvider)?.canPrescribe ?? false;
+    final bool verified = ref.watch(currentUserProvider)?.canPrescribe ?? false;
 
     if (!verified) {
       return Scaffold(
         appBar: AppBar(
           title: const Text('Pacientes'),
           leading: IconButton(
-            onPressed: () => context.canPop()
-                ? context.pop()
-                : context.go(Routes.homePath),
+            onPressed: () =>
+                context.canPop() ? context.pop() : context.go(Routes.homePath),
             icon: const AppIcon(
               asset: AppIcons.back,
               size: 22,
@@ -278,7 +303,8 @@ class _ProfessionalPatientsScreenState
         body: const EmptyState(
           icon: Icons.gpp_maybe_outlined,
           title: 'Registro não verificado',
-          message: 'O prontuário é liberado após a equipe conferir seu '
+          message:
+              'O prontuário é liberado após a equipe conferir seu '
               'registro profissional. Você recebe um aviso quando isso '
               'acontecer.',
         ),
@@ -316,9 +342,7 @@ class _ProfessionalPatientsScreenState
               ),
               child: Column(
                 children: <Widget>[
-                  AppHeader(
-                    notificationCount: ref.watch(unreadCountProvider),
-                  ),
+                  AppHeader(notificationCount: ref.watch(unreadCountProvider)),
                   ScreenTitleBlock(
                     title: 'Pacientes',
                     subtitle: 'Gerencie e acompanhe seus pacientes.',
@@ -422,13 +446,13 @@ class _ProfessionalPatientsScreenState
             ),
             Expanded(
               child: async.when(
-                loading: () =>
-                    const SkeletonList(itemCount: 6, itemHeight: 88),
+                loading: () => const SkeletonList(itemCount: 6, itemHeight: 88),
                 error: (Object e, StackTrace s) => EmptyState(
                   icon: Icons.error_outline_rounded,
                   title: 'Não conseguimos carregar essas informações',
                   message: clinicalLoadErrorMessage(e),
-                  actionLabel: DevMode.isEnabled &&
+                  actionLabel:
+                      DevMode.isEnabled &&
                           ref.read(firebaseAuthProvider).currentUser == null
                       ? 'Entrar'
                       : 'Recarregar',
@@ -499,9 +523,9 @@ class _ProfessionalPatientsScreenState
                         const SizedBox(height: AppSpacing.md),
                     itemBuilder: (BuildContext context, int index) =>
                         ContentBounds(
-                      maxWidth: 760,
-                      child: _PatientCard(patient: patients[index]),
-                    ),
+                          maxWidth: 760,
+                          child: _PatientCard(patient: patients[index]),
+                        ),
                   );
                 },
               ),
@@ -542,8 +566,8 @@ class _PatientCard extends ConsumerWidget {
     final String statusLabel = patient.hasOpenDraft
         ? 'Consulta pendente'
         : (patient.lastEncounterAt != null
-            ? 'Acompanhamento'
-            : 'Próxima consulta');
+              ? 'Acompanhamento'
+              : 'Próxima consulta');
 
     return AppCard(
       onTap: () => Navigator.of(context).push(
@@ -556,11 +580,7 @@ class _PatientCard extends ConsumerWidget {
       ),
       child: Row(
         children: <Widget>[
-          PersonAvatar(
-            name: patient.name,
-            seed: patient.patientId,
-            radius: 28,
-          ),
+          PersonAvatar(name: patient.name, seed: patient.patientId, radius: 28),
           const SizedBox(width: AppSpacing.md),
           Expanded(
             child: Column(
@@ -598,8 +618,8 @@ class _PatientCard extends ConsumerWidget {
                   patient.hasOpenDraft
                       ? 'Retorno: atendimento em rascunho'
                       : (patient.lastEncounterAt != null
-                          ? 'Última consulta: ${Formatters.date(patient.lastEncounterAt!)}'
-                          : 'Próximo retorno: a agendar'),
+                            ? 'Última consulta: ${Formatters.date(patient.lastEncounterAt!)}'
+                            : 'Próximo retorno: a agendar'),
                   style: theme.textTheme.labelSmall?.copyWith(
                     color: AppColors.inkMuted,
                   ),
@@ -685,17 +705,18 @@ class _NewPatientSheetState extends ConsumerState<_NewPatientSheet> {
     final String provisionalId =
         'pending_${_guardianEmail.text.trim().toLowerCase().hashCode.abs()}';
 
-    final Result<Encounter> created =
-        await ref.read(encounterRepositoryProvider).create(
-              patientId: provisionalId,
-              professionalId: uid,
-              professionalName: ref.read(currentUserProvider)?.name ?? '',
-              professionalCrm: ref.read(currentUserProvider)?.crm,
-              patientName: _name.text.trim(),
-              patientBirthDate: _birthDate,
-              type: EncounterType.routine,
-              clinicId: ref.read(activeClinicIdProvider).valueOrNull,
-            );
+    final Result<Encounter> created = await ref
+        .read(encounterRepositoryProvider)
+        .create(
+          patientId: provisionalId,
+          professionalId: uid,
+          professionalName: ref.read(currentUserProvider)?.name ?? '',
+          professionalCrm: ref.read(currentUserProvider)?.crm,
+          patientName: _name.text.trim(),
+          patientBirthDate: _birthDate,
+          type: EncounterType.routine,
+          clinicId: ref.read(activeClinicIdProvider).valueOrNull,
+        );
 
     if (!mounted) return;
     setState(() => _saving = false);
@@ -712,9 +733,9 @@ class _NewPatientSheetState extends ConsumerState<_NewPatientSheet> {
           ),
         );
       },
-      (Failure failure) => ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(failure.message)),
-      ),
+      (Failure failure) => ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(failure.message))),
     );
   }
 
@@ -763,7 +784,8 @@ class _NewPatientSheetState extends ConsumerState<_NewPatientSheet> {
               label: 'E-mail do responsável',
               controller: _guardianEmail,
               keyboardType: TextInputType.emailAddress,
-              helper: 'Usado para vincular o prontuário quando a família '
+              helper:
+                  'Usado para vincular o prontuário quando a família '
                   'criar conta no aplicativo.',
               validator: Validators.email,
             ),

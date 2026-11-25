@@ -55,31 +55,30 @@ class GrowthRecord extends Equatable {
     double? headCircumferenceCm,
     String? note,
     bool? pendingSync,
-  }) =>
-      GrowthRecord(
-        id: id,
-        childId: childId,
-        measuredAt: measuredAt ?? this.measuredAt,
-        updatedAt: updatedAt ?? this.updatedAt,
-        weightKg: weightKg ?? this.weightKg,
-        heightCm: heightCm ?? this.heightCm,
-        headCircumferenceCm: headCircumferenceCm ?? this.headCircumferenceCm,
-        note: note ?? this.note,
-        pendingSync: pendingSync ?? this.pendingSync,
-      );
+  }) => GrowthRecord(
+    id: id,
+    childId: childId,
+    measuredAt: measuredAt ?? this.measuredAt,
+    updatedAt: updatedAt ?? this.updatedAt,
+    weightKg: weightKg ?? this.weightKg,
+    heightCm: heightCm ?? this.heightCm,
+    headCircumferenceCm: headCircumferenceCm ?? this.headCircumferenceCm,
+    note: note ?? this.note,
+    pendingSync: pendingSync ?? this.pendingSync,
+  );
 
   @override
   List<Object?> get props => <Object?>[
-        id,
-        childId,
-        measuredAt,
-        weightKg,
-        heightCm,
-        headCircumferenceCm,
-        note,
-        updatedAt,
-        pendingSync,
-      ];
+    id,
+    childId,
+    measuredAt,
+    weightKg,
+    heightCm,
+    headCircumferenceCm,
+    note,
+    updatedAt,
+    pendingSync,
+  ];
 }
 
 /// Indicador antropométrico avaliado contra a referência da OMS.
@@ -90,31 +89,31 @@ enum GrowthIndicator {
   headForAge;
 
   String get label => switch (this) {
-        GrowthIndicator.weightForAge => 'Peso para idade',
-        GrowthIndicator.heightForAge => 'Estatura para idade',
-        GrowthIndicator.bmiForAge => 'IMC para idade',
-        GrowthIndicator.headForAge => 'Perímetro cefálico',
-      };
+    GrowthIndicator.weightForAge => 'Peso para idade',
+    GrowthIndicator.heightForAge => 'Estatura para idade',
+    GrowthIndicator.bmiForAge => 'IMC para idade',
+    GrowthIndicator.headForAge => 'Perímetro cefálico',
+  };
 
   String get shortLabel => switch (this) {
-        GrowthIndicator.weightForAge => 'Peso',
-        GrowthIndicator.heightForAge => 'Estatura',
-        GrowthIndicator.bmiForAge => 'IMC',
-        GrowthIndicator.headForAge => 'P. cefálico',
-      };
+    GrowthIndicator.weightForAge => 'Peso',
+    GrowthIndicator.heightForAge => 'Estatura',
+    GrowthIndicator.bmiForAge => 'IMC',
+    GrowthIndicator.headForAge => 'P. cefálico',
+  };
 
   String get unit => switch (this) {
-        GrowthIndicator.weightForAge => 'kg',
-        GrowthIndicator.heightForAge => 'cm',
-        GrowthIndicator.bmiForAge => 'kg/m²',
-        GrowthIndicator.headForAge => 'cm',
-      };
+    GrowthIndicator.weightForAge => 'kg',
+    GrowthIndicator.heightForAge => 'cm',
+    GrowthIndicator.bmiForAge => 'kg/m²',
+    GrowthIndicator.headForAge => 'cm',
+  };
 
   /// Idade máxima, em meses, em que o indicador é acompanhado.
   int get maxAgeMonths => switch (this) {
-        GrowthIndicator.weightForAge => 120,
-        GrowthIndicator.heightForAge => 228,
-        GrowthIndicator.bmiForAge => 228,
-        GrowthIndicator.headForAge => 36,
-      };
+    GrowthIndicator.weightForAge => 120,
+    GrowthIndicator.heightForAge => 228,
+    GrowthIndicator.bmiForAge => 228,
+    GrowthIndicator.headForAge => 36,
+  };
 }

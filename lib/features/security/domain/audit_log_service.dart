@@ -13,7 +13,7 @@ import 'security_audit_models.dart';
 /// runtime. Nao inventar identificadores; omitir o campo se ausente.
 class AuditLogService {
   AuditLogService({required SecurityAuditRepository repository})
-      : _repository = repository;
+    : _repository = repository;
 
   final SecurityAuditRepository _repository;
 
@@ -76,8 +76,7 @@ class AuditLogService {
     }
     _blockedAccessThrottle[key] = now;
 
-    final bool repeated =
-        _repeatedBlockedTracker.record(user.uid, now);
+    final bool repeated = _repeatedBlockedTracker.record(user.uid, now);
 
     await log(
       user: user,

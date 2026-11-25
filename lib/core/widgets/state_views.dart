@@ -121,31 +121,27 @@ class EmptyState extends StatelessWidget {
 /// Tela de erro. Diz o que aconteceu e o que fazer — nunca pede desculpas
 /// nem mostra codigo tecnico ao usuario.
 class ErrorState extends StatelessWidget {
-  const ErrorState({
-    required this.failure,
-    this.onRetry,
-    super.key,
-  });
+  const ErrorState({required this.failure, this.onRetry, super.key});
 
   final Failure failure;
   final VoidCallback? onRetry;
 
   IconData get _icon => switch (failure) {
-        NetworkFailure() => Icons.wifi_off_rounded,
-        PermissionFailure() => Icons.lock_outline_rounded,
-        NotFoundFailure() => Icons.search_off_rounded,
-        QuotaFailure() => Icons.hourglass_empty_rounded,
-        _ => Icons.error_outline_rounded,
-      };
+    NetworkFailure() => Icons.wifi_off_rounded,
+    PermissionFailure() => Icons.lock_outline_rounded,
+    NotFoundFailure() => Icons.search_off_rounded,
+    QuotaFailure() => Icons.hourglass_empty_rounded,
+    _ => Icons.error_outline_rounded,
+  };
 
   String get _title => switch (failure) {
-        NetworkFailure() => 'Sem conexão',
-        PermissionFailure() => 'Acesso restrito',
-        NotFoundFailure() => 'Nada por aqui',
-        QuotaFailure() => 'Limite atingido',
-        ValidationFailure() => 'Revise os dados',
-        _ => 'Não conseguimos carregar essas informações',
-      };
+    NetworkFailure() => 'Sem conexão',
+    PermissionFailure() => 'Acesso restrito',
+    NotFoundFailure() => 'Nada por aqui',
+    QuotaFailure() => 'Limite atingido',
+    ValidationFailure() => 'Revise os dados',
+    _ => 'Não conseguimos carregar essas informações',
+  };
 
   @override
   Widget build(BuildContext context) {
@@ -236,7 +232,11 @@ class DataWarningBanner extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          const Icon(Icons.science_outlined, size: 18, color: AppColors.warning),
+          const Icon(
+            Icons.science_outlined,
+            size: 18,
+            color: AppColors.warning,
+          ),
           const SizedBox(width: AppSpacing.md),
           Expanded(child: Text(text, style: theme.textTheme.bodySmall)),
         ],
@@ -316,9 +316,9 @@ class LoadingState extends StatelessWidget {
             Text(
               label!,
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: AppColors.inkMuted,
-                    fontWeight: FontWeight.w600,
-                  ),
+                color: AppColors.inkMuted,
+                fontWeight: FontWeight.w600,
+              ),
             ),
           ],
         ],

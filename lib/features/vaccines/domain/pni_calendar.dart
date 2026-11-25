@@ -52,7 +52,8 @@ class PniCalendar {
       doseLabel: '1ª dose',
       doseIndex: 1,
       ageMonths: 2,
-      protects: 'Difteria, tétano, coqueluche, hepatite B e Haemophilus '
+      protects:
+          'Difteria, tétano, coqueluche, hepatite B e Haemophilus '
           'influenzae B',
     ),
     VaccineDoseSchedule(
@@ -70,7 +71,8 @@ class PniCalendar {
       doseIndex: 1,
       ageMonths: 2,
       protects: 'Diarreia por rotavírus',
-      notes: 'Há limite de idade para a 1ª dose. Se atrasar, procure a '
+      notes:
+          'Há limite de idade para a 1ª dose. Se atrasar, procure a '
           'unidade de saúde antes de aplicar.',
     ),
     VaccineDoseSchedule(
@@ -291,20 +293,23 @@ class PniCalendar {
   ];
 
   /// Doses previstas até uma idade, ordenadas cronologicamente.
-  static List<VaccineDoseSchedule> upTo(int ageMonths) => schedule
-      .where((VaccineDoseSchedule d) => d.ageMonths <= ageMonths)
-      .toList(growable: false)
-    ..sort(
-      (VaccineDoseSchedule a, VaccineDoseSchedule b) =>
-          a.ageMonths.compareTo(b.ageMonths),
-    );
+  static List<VaccineDoseSchedule> upTo(int ageMonths) =>
+      schedule
+          .where((VaccineDoseSchedule d) => d.ageMonths <= ageMonths)
+          .toList(growable: false)
+        ..sort(
+          (VaccineDoseSchedule a, VaccineDoseSchedule b) =>
+              a.ageMonths.compareTo(b.ageMonths),
+        );
 
   /// Agrupa o calendário por idade — é assim que a caderneta é lida.
   static Map<int, List<VaccineDoseSchedule>> groupedByAge() {
     final Map<int, List<VaccineDoseSchedule>> grouped =
         <int, List<VaccineDoseSchedule>>{};
     for (final VaccineDoseSchedule dose in schedule) {
-      grouped.putIfAbsent(dose.ageMonths, () => <VaccineDoseSchedule>[]).add(dose);
+      grouped
+          .putIfAbsent(dose.ageMonths, () => <VaccineDoseSchedule>[])
+          .add(dose);
     }
     return grouped;
   }
@@ -325,9 +330,5 @@ class PniCalendar {
   /// pela idade corrigida atrasaria a proteção justamente em quem tem mais
   /// risco de infecção grave.
   static DateTime dueDateFor(DateTime birthDate, VaccineDoseSchedule dose) =>
-      DateTime(
-        birthDate.year,
-        birthDate.month + dose.ageMonths,
-        birthDate.day,
-      );
+      DateTime(birthDate.year, birthDate.month + dose.ageMonths, birthDate.day);
 }

@@ -36,16 +36,17 @@ class _VoiceReviewScreenState extends ConsumerState<VoiceReviewScreen> {
     setState(() => _structuring = false);
     result.fold(
       (_) => ref.invalidate(voiceSessionProvider(widget.sessionId)),
-      (failure) => ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(failure.message)),
-      ),
+      (failure) => ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(failure.message))),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    final AsyncValue<VoiceConsultationSession?> async =
-        ref.watch(voiceSessionProvider(widget.sessionId));
+    final AsyncValue<VoiceConsultationSession?> async = ref.watch(
+      voiceSessionProvider(widget.sessionId),
+    );
 
     return Scaffold(
       backgroundColor: AppColors.lightBackground,
@@ -61,9 +62,8 @@ class _VoiceReviewScreenState extends ConsumerState<VoiceReviewScreen> {
           Expanded(
             child: async.when(
               loading: () => const LoadingState(label: 'Carregando…'),
-              error: (Object e, StackTrace _) => ErrorState(
-                failure: ServerFailure(e.toString()),
-              ),
+              error: (Object e, StackTrace _) =>
+                  ErrorState(failure: ServerFailure(e.toString())),
               data: (VoiceConsultationSession? session) {
                 final VoiceStructuredDraft? draft = session?.draft;
                 return ListView(
@@ -72,9 +72,9 @@ class _VoiceReviewScreenState extends ConsumerState<VoiceReviewScreen> {
                     Text(
                       'Modelo de evolucao',
                       style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                            color: AppColors.navy,
-                            fontWeight: FontWeight.w800,
-                          ),
+                        color: AppColors.navy,
+                        fontWeight: FontWeight.w800,
+                      ),
                     ),
                     const SizedBox(height: AppSpacing.sm),
                     Wrap(
@@ -184,8 +184,9 @@ class _VoiceReviewScreenState extends ConsumerState<VoiceReviewScreen> {
     if (_ignored.contains(keyName)) {
       return const SizedBox.shrink();
     }
-    final String display =
-        value.trim().isEmpty ? 'Nao informado' : value.trim();
+    final String display = value.trim().isEmpty
+        ? 'Nao informado'
+        : value.trim();
 
     return Padding(
       padding: const EdgeInsets.only(bottom: AppSpacing.md),
@@ -197,9 +198,9 @@ class _VoiceReviewScreenState extends ConsumerState<VoiceReviewScreen> {
             Text(
               title,
               style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                    color: AppColors.navy,
-                    fontWeight: FontWeight.w800,
-                  ),
+                color: AppColors.navy,
+                fontWeight: FontWeight.w800,
+              ),
             ),
             const SizedBox(height: AppSpacing.xs),
             Text(display),

@@ -24,7 +24,12 @@ void main() {
 
   group('tokens da busca', () {
     test('descarta palavras com menos de 3 letras', () {
-      expect(searchTokens('o meu bebe tem febre'), <String>['meu', 'bebe', 'tem', 'febre']);
+      expect(searchTokens('o meu bebe tem febre'), <String>[
+        'meu',
+        'bebe',
+        'tem',
+        'febre',
+      ]);
     });
 
     test('consulta curta não gera token', () {
@@ -32,8 +37,10 @@ void main() {
     });
 
     test('limita a 10 termos para caber no array-contains-any', () {
-      final String longQuery =
-          List<String>.generate(20, (int i) => 'termo$i').join(' ');
+      final String longQuery = List<String>.generate(
+        20,
+        (int i) => 'termo$i',
+      ).join(' ');
       expect(searchTokens(longQuery).length, 10);
     });
   });
@@ -46,15 +53,15 @@ void main() {
 
   group('faixa etária', () {
     Content build({(int, int)? range}) => Content(
-          id: 'c1',
-          title: 'Teste',
-          summary: '',
-          type: ContentType.article,
-          audience: ContentAudience.everyone,
-          category: 'febre',
-          updatedAt: DateTime.now(),
-          ageRangeMonths: range,
-        );
+      id: 'c1',
+      title: 'Teste',
+      summary: '',
+      type: ContentType.article,
+      audience: ContentAudience.everyone,
+      category: 'febre',
+      updatedAt: DateTime.now(),
+      ageRangeMonths: range,
+    );
 
     test('sem faixa vale para qualquer idade', () {
       expect(build().appliesToAge(0), isTrue);

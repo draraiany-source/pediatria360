@@ -27,16 +27,15 @@ class InventoryItemsScreen extends ConsumerWidget {
       emptyLabel: 'Nenhum item cadastrado.',
       itemBuilder: (InventoryItem item) {
         final List<InventoryLot> lots =
-            ref.watch(inventoryLotsProvider).valueOrNull ?? const <InventoryLot>[];
+            ref.watch(inventoryLotsProvider).valueOrNull ??
+            const <InventoryLot>[];
         final int stock = stockQtyForItem(itemId: item.id, lots: lots);
         return ListTile(
           title: Text(item.name),
           subtitle: Text(
             '${item.category.label} · ${item.unit.label} · Saldo $stock',
           ),
-          trailing: item.active
-              ? null
-              : const Icon(Icons.pause_circle_outline),
+          trailing: item.active ? null : const Icon(Icons.pause_circle_outline),
         );
       },
     );
@@ -50,7 +49,9 @@ class InventoryLotsScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final AsyncValue<List<InventoryLot>> async = ref.watch(inventoryLotsProvider);
+    final AsyncValue<List<InventoryLot>> async = ref.watch(
+      inventoryLotsProvider,
+    );
     final DateTime now = DateTime.now();
     final bool canTransfer = InventoryAccess.canStockOps(
       user: ref.watch(currentUserProvider),
@@ -132,10 +133,8 @@ class InventoryLotsScreen extends ConsumerWidget {
                   value: toUnit,
                   items: destinations
                       .map(
-                        (String u) => DropdownMenuItem<String>(
-                          value: u,
-                          child: Text(u),
-                        ),
+                        (String u) =>
+                            DropdownMenuItem<String>(value: u, child: Text(u)),
                       )
                       .toList(),
                   onChanged: (String? v) {
@@ -162,14 +161,15 @@ class InventoryLotsScreen extends ConsumerWidget {
               final String? uid = ref.read(currentUserProvider)?.uid;
               if (uid == null) return;
               final int qty = int.tryParse(qtyCtrl.text.trim()) ?? 0;
-              final result =
-                  await ref.read(inventoryRepositoryProvider).transferLots(
-                        lot: lot,
-                        toUnitId: toUnit,
-                        qty: qty,
-                        byUserId: uid,
-                        membership: membership,
-                      );
+              final result = await ref
+                  .read(inventoryRepositoryProvider)
+                  .transferLots(
+                    lot: lot,
+                    toUnitId: toUnit,
+                    qty: qty,
+                    byUserId: uid,
+                    membership: membership,
+                  );
               if (!ctx.mounted) return;
               result.fold(
                 (_) {
@@ -177,9 +177,9 @@ class InventoryLotsScreen extends ConsumerWidget {
                   ref.invalidate(inventoryMovementsProvider);
                   Navigator.pop(ctx);
                 },
-                (Failure f) => ScaffoldMessenger.of(ctx).showSnackBar(
-                  SnackBar(content: Text(f.message)),
-                ),
+                (Failure f) => ScaffoldMessenger.of(
+                  ctx,
+                ).showSnackBar(SnackBar(content: Text(f.message))),
               );
             },
             child: const Text('Transferir'),
@@ -241,8 +241,9 @@ class InventoryMovementsScreen extends ConsumerWidget {
     InventoryLot selected = lots.first;
     MovementType type = MovementType.entry;
     final TextEditingController qtyCtrl = TextEditingController(text: '1');
-    final TextEditingController reasonCtrl =
-        TextEditingController(text: 'Entrada manual');
+    final TextEditingController reasonCtrl = TextEditingController(
+      text: 'Entrada manual',
+    );
 
     await showDialog<void>(
       context: context,
@@ -324,7 +325,9 @@ class InventoryMovementsScreen extends ConsumerWidget {
               final int qty = int.tryParse(qtyCtrl.text.trim()) ?? 0;
               final String id =
                   '${DateTime.now().millisecondsSinceEpoch}_${selected.id}';
-              await ref.read(inventoryRepositoryProvider).recordMovement(
+              await ref
+                  .read(inventoryRepositoryProvider)
+                  .recordMovement(
                     membership: membership,
                     ledgerUnitId: selected.unitId,
                     movement: InventoryMovement(
@@ -430,9 +433,12 @@ class InventoryCountScreen extends ConsumerWidget {
             );
             return;
           }
-          final List<InventoryLot> lots =
-              await ref.read(inventoryLotsProvider.future);
-          await ref.read(inventoryRepositoryProvider).startInventoryCount(
+          final List<InventoryLot> lots = await ref.read(
+            inventoryLotsProvider.future,
+          );
+          await ref
+              .read(inventoryRepositoryProvider)
+              .startInventoryCount(
                 ownerId: uid,
                 byUserId: uid,
                 lots: lots,
@@ -498,9 +504,9 @@ class InventoryReportsScreen extends ConsumerWidget {
     }
     await Clipboard.setData(ClipboardData(text: sb.toString()));
     if (context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('CSV copiado (text/csv).')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('CSV copiado (text/csv).')));
     }
   }
 
@@ -517,9 +523,9 @@ class InventoryReportsScreen extends ConsumerWidget {
     }
     await Clipboard.setData(ClipboardData(text: sb.toString()));
     if (context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('CSV copiado (text/csv).')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('CSV copiado (text/csv).')));
     }
   }
 }
@@ -550,18 +556,14 @@ class _InventoryScaffold<T> extends StatelessWidget {
     if (!allowed) {
       return Scaffold(
         appBar: hideAppBar ? null : AppBar(title: Text(title)),
-        body: const ErrorState(
-          failure: AuthFailure('Sem permissao.'),
-        ),
+        body: const ErrorState(failure: AuthFailure('Sem permissao.')),
       );
     }
 
     final Widget body = async.when(
       loading: () => LoadingState(label: title.isEmpty ? 'Carregando…' : title),
-      error: (Object e, StackTrace _) => ErrorState(
-        failure: ServerFailure(e.toString()),
-        onRetry: onRetry,
-      ),
+      error: (Object e, StackTrace _) =>
+          ErrorState(failure: ServerFailure(e.toString()), onRetry: onRetry),
       data: (List<T> data) {
         final List<T> items = itemsFilter?.call(data) ?? data;
         if (items.isEmpty) {

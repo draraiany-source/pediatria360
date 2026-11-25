@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pediatria360/core/config/dev_mode.dart';
@@ -11,20 +11,20 @@ import 'package:pediatria360/shared/domain/entities/app_user.dart';
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  testWidgets('LoginScreen mostra Bem-vinda e Entrar', (WidgetTester tester) async {
+  testWidgets('LoginScreen mostra Bem-vinda e Entrar', (
+    WidgetTester tester,
+  ) async {
     await tester.pumpWidget(
-      const ProviderScope(
-        child: MaterialApp(
-          home: LoginScreen(),
-        ),
-      ),
+      const ProviderScope(child: MaterialApp(home: LoginScreen())),
     );
     await tester.pump();
     expect(find.textContaining('Bem-vinda'), findsOneWidget);
     expect(find.text('Entrar'), findsOneWidget);
   });
 
-  testWidgets('HomeScreen com DevMode monta Scaffold', (WidgetTester tester) async {
+  testWidgets('HomeScreen com DevMode monta Scaffold', (
+    WidgetTester tester,
+  ) async {
     await tester.pumpWidget(
       ProviderScope(
         overrides: <Override>[
@@ -33,10 +33,7 @@ void main() {
           ),
           currentUserProvider.overrideWith((Ref ref) => DevMode.user),
         ],
-        child: MaterialApp(
-          theme: AppTheme.light,
-          home: const HomeScreen(),
-        ),
+        child: MaterialApp(theme: AppTheme.light, home: const HomeScreen()),
       ),
     );
     await tester.pump();

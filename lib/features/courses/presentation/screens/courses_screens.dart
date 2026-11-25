@@ -25,16 +25,14 @@ class CoursesScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final AsyncValue<List<Course>> catalog =
-        ref.watch(courseCatalogProvider);
+    final AsyncValue<List<Course>> catalog = ref.watch(courseCatalogProvider);
 
     return Scaffold(
       appBar: AppBar(
         title: const Text('Cursos'),
         leading: IconButton(
-          onPressed: () => context.canPop()
-              ? context.pop()
-              : context.go(Routes.homePath),
+          onPressed: () =>
+              context.canPop() ? context.pop() : context.go(Routes.homePath),
           icon: const Icon(Icons.arrow_back_rounded),
           tooltip: 'Voltar',
         ),
@@ -53,7 +51,8 @@ class CoursesScreen extends ConsumerWidget {
             return const EmptyState(
               icon: Icons.play_circle_outline_rounded,
               title: 'Nenhum curso publicado',
-              message: 'Os cursos são cadastrados pelo painel administrativo '
+              message:
+                  'Os cursos são cadastrados pelo painel administrativo '
                   'e aparecem aqui assim que forem publicados.',
             );
           }
@@ -65,9 +64,8 @@ class CoursesScreen extends ConsumerWidget {
               itemCount: courses.length,
               separatorBuilder: (_, __) =>
                   const SizedBox(height: AppSpacing.md),
-              itemBuilder: (BuildContext context, int index) => ContentBounds(
-                child: _CourseCard(course: courses[index]),
-              ),
+              itemBuilder: (BuildContext context, int index) =>
+                  ContentBounds(child: _CourseCard(course: courses[index])),
             ),
           );
         },
@@ -84,8 +82,9 @@ class _CourseCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final ThemeData theme = Theme.of(context);
-    final CourseProgress progress =
-        ref.watch(courseProgressSummaryProvider(course.id));
+    final CourseProgress progress = ref.watch(
+      courseProgressSummaryProvider(course.id),
+    );
 
     return Card(
       clipBehavior: Clip.antiAlias,
@@ -145,8 +144,7 @@ class _CourseCard extends ConsumerWidget {
                             child: LinearProgressIndicator(
                               value: progress.ratio,
                               minHeight: 5,
-                              backgroundColor:
-                                  theme.colorScheme.outlineVariant,
+                              backgroundColor: theme.colorScheme.outlineVariant,
                             ),
                           ),
                         ),
@@ -178,7 +176,8 @@ class _CourseCover extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final BunnyService bunny = ref.watch(bunnyServiceProvider);
 
-    final String? url = course.coverUrl ??
+    final String? url =
+        course.coverUrl ??
         (course.trailerVideoGuid != null && bunny.isConfigured
             ? bunny.thumbnailUrl(course.trailerVideoGuid!)
             : null);
@@ -201,7 +200,8 @@ class _CourseCover extends ConsumerWidget {
       // para exibir num card de altura fixa desperdiça memória à toa,
       // principalmente numa lista com vários cursos na tela ao mesmo tempo.
       memCacheHeight: (height * 2).round(),
-      placeholder: (_, __) => Skeleton(height: height, radius: BorderRadius.zero),
+      placeholder: (_, __) =>
+          Skeleton(height: height, radius: BorderRadius.zero),
       errorWidget: (_, __, ___) => Image.asset(
         AppAssets.mediaPlaceholder,
         height: height,
@@ -223,10 +223,12 @@ class CourseDetailScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final ThemeData theme = Theme.of(context);
     final AsyncValue<Course> course = ref.watch(courseProvider(courseId));
-    final AsyncValue<List<Lesson>> lessons =
-        ref.watch(lessonsProvider(courseId));
-    final CourseProgress progress =
-        ref.watch(courseProgressSummaryProvider(courseId));
+    final AsyncValue<List<Lesson>> lessons = ref.watch(
+      lessonsProvider(courseId),
+    );
+    final CourseProgress progress = ref.watch(
+      courseProgressSummaryProvider(courseId),
+    );
     final AppUser? user = ref.watch(currentUserProvider);
 
     return Scaffold(
@@ -376,10 +378,10 @@ class CourseDetailScreen extends ConsumerWidget {
                   ],
                   const SectionHeader(title: 'Aulas', eyebrow: 'Conteúdo'),
                   lessons.when(
-                    loading: () => const SkeletonList(itemCount: 4, itemHeight: 56),
-                    error: (Object e, StackTrace s) => const Text(
-                      'Não foi possível carregar as aulas.',
-                    ),
+                    loading: () =>
+                        const SkeletonList(itemCount: 4, itemHeight: 56),
+                    error: (Object e, StackTrace s) =>
+                        const Text('Não foi possível carregar as aulas.'),
                     data: (List<Lesson> list) => list.isEmpty
                         ? Padding(
                             padding: const EdgeInsets.symmetric(
@@ -391,28 +393,31 @@ class CourseDetailScreen extends ConsumerWidget {
                             ),
                           )
                         : Column(
-                      children: <Widget>[
-                        for (int i = 0; i < list.length; i++)
-                          _LessonTile(
-                            lesson: list[i],
-                            index: i + 1,
-                            lock: lockFor(
-                              course: c,
-                              lesson: list[i],
-                              user: user,
-                            ),
-                            completed: ref
-                                    .watch(courseProgressProvider(courseId))
-                                    .valueOrNull
-                                    ?.any(
-                                      (LessonProgress p) =>
-                                          p.lessonId == list[i].id &&
-                                          p.completed,
-                                    ) ??
-                                false,
+                            children: <Widget>[
+                              for (int i = 0; i < list.length; i++)
+                                _LessonTile(
+                                  lesson: list[i],
+                                  index: i + 1,
+                                  lock: lockFor(
+                                    course: c,
+                                    lesson: list[i],
+                                    user: user,
+                                  ),
+                                  completed:
+                                      ref
+                                          .watch(
+                                            courseProgressProvider(courseId),
+                                          )
+                                          .valueOrNull
+                                          ?.any(
+                                            (LessonProgress p) =>
+                                                p.lessonId == list[i].id &&
+                                                p.completed,
+                                          ) ??
+                                      false,
+                                ),
+                            ],
                           ),
-                      ],
-                    ),
                   ),
                 ],
               ),
@@ -438,11 +443,11 @@ class _LessonTile extends StatelessWidget {
   final bool completed;
 
   IconData get _icon => switch (lesson.kind) {
-        LessonKind.video => Icons.play_circle_outline_rounded,
-        LessonKind.audio => Icons.headphones_outlined,
-        LessonKind.text => Icons.article_outlined,
-        LessonKind.quiz => Icons.quiz_outlined,
-      };
+    LessonKind.video => Icons.play_circle_outline_rounded,
+    LessonKind.audio => Icons.headphones_outlined,
+    LessonKind.text => Icons.article_outlined,
+    LessonKind.quiz => Icons.quiz_outlined,
+  };
 
   @override
   Widget build(BuildContext context) {
@@ -455,11 +460,9 @@ class _LessonTile extends StatelessWidget {
         child: ListTile(
           onTap: locked
               ? () => ScaffoldMessenger.of(context)
-                ..hideCurrentSnackBar()
-                ..showSnackBar(SnackBar(content: Text(lock.message)))
-              : () => context.push(
-                    Routes.lesson(lesson.courseId, lesson.id),
-                  ),
+                  ..hideCurrentSnackBar()
+                  ..showSnackBar(SnackBar(content: Text(lock.message)))
+              : () => context.push(Routes.lesson(lesson.courseId, lesson.id)),
           leading: CircleAvatar(
             backgroundColor: completed
                 ? AppColors.success.withValues(alpha: 0.15)
@@ -519,8 +522,9 @@ class LessonScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final ThemeData theme = Theme.of(context);
     final AsyncValue<Course> course = ref.watch(courseProvider(courseId));
-    final AsyncValue<List<Lesson>> lessons =
-        ref.watch(lessonsProvider(courseId));
+    final AsyncValue<List<Lesson>> lessons = ref.watch(
+      lessonsProvider(courseId),
+    );
     final AppUser? user = ref.watch(currentUserProvider);
 
     final Course? c = course.valueOrNull;
@@ -550,8 +554,7 @@ class LessonScreen extends ConsumerWidget {
       );
     }
 
-    final LessonLock lock =
-        lockFor(course: c, lesson: lesson, user: user);
+    final LessonLock lock = lockFor(course: c, lesson: lesson, user: user);
 
     if (lock != LessonLock.none) {
       return Scaffold(
@@ -571,10 +574,10 @@ class LessonScreen extends ConsumerWidget {
           actionLabel: lock == LessonLock.requiresPlan ? 'Ver planos' : null,
           onAction: lock == LessonLock.requiresPlan
               ? () => ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Assinaturas chegam no próximo módulo.'),
-                    ),
-                  )
+                  const SnackBar(
+                    content: Text('Assinaturas chegam no próximo módulo.'),
+                  ),
+                )
               : null,
         ),
       );
@@ -583,7 +586,7 @@ class LessonScreen extends ConsumerWidget {
     // Retoma de onde parou.
     final List<LessonProgress> progress =
         ref.watch(courseProgressProvider(courseId)).valueOrNull ??
-            const <LessonProgress>[];
+        const <LessonProgress>[];
 
     Duration startAt = Duration.zero;
     for (final LessonProgress p in progress) {
@@ -593,10 +596,9 @@ class LessonScreen extends ConsumerWidget {
     }
 
     final int currentIndex = list.indexOf(lesson);
-    final Lesson? next =
-        currentIndex >= 0 && currentIndex + 1 < list.length
-            ? list[currentIndex + 1]
-            : null;
+    final Lesson? next = currentIndex >= 0 && currentIndex + 1 < list.length
+        ? list[currentIndex + 1]
+        : null;
 
     return Scaffold(
       appBar: AppBar(

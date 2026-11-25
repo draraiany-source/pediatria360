@@ -6,16 +6,16 @@ enum LabResultFlag {
   altered;
 
   String get label => switch (this) {
-        LabResultFlag.unset => 'Nao classificado',
-        LabResultFlag.normal => 'Normal',
-        LabResultFlag.attention => 'Atencao',
-        LabResultFlag.altered => 'Alterado',
-      };
+    LabResultFlag.unset => 'Nao classificado',
+    LabResultFlag.normal => 'Normal',
+    LabResultFlag.attention => 'Atencao',
+    LabResultFlag.altered => 'Alterado',
+  };
 
   static LabResultFlag fromName(String? v) => LabResultFlag.values.firstWhere(
-        (LabResultFlag f) => f.name == v,
-        orElse: () => LabResultFlag.unset,
-      );
+    (LabResultFlag f) => f.name == v,
+    orElse: () => LabResultFlag.unset,
+  );
 }
 
 class PatientLabResult {
@@ -42,7 +42,8 @@ class PatientLabResult {
       examId: (map['examId'] as String?) ?? '',
       examName: (map['examName'] as String?) ?? '',
       recordedBy: (map['recordedBy'] as String?) ?? '',
-      recordedAt: DateTime.tryParse((map['recordedAt'] as String?) ?? '') ??
+      recordedAt:
+          DateTime.tryParse((map['recordedAt'] as String?) ?? '') ??
           DateTime.fromMillisecondsSinceEpoch(0),
       valueText: (map['valueText'] as String?) ?? '',
       unit: (map['unit'] as String?) ?? '',
@@ -69,18 +70,18 @@ class PatientLabResult {
   final String professionalFlagNote;
 
   Map<String, dynamic> toMap() => <String, dynamic>{
-        'id': id,
-        'childId': childId,
-        'examId': examId,
-        'examName': examName,
-        'recordedBy': recordedBy,
-        'recordedAt': recordedAt.toIso8601String(),
-        'valueText': valueText,
-        'unit': unit,
-        'labName': labName,
-        'referenceText': referenceText,
-        'notes': notes,
-        'flag': flag.name,
-        'professionalFlagNote': professionalFlagNote,
-      };
+    'id': id,
+    'childId': childId,
+    'examId': examId,
+    'examName': examName,
+    'recordedBy': recordedBy,
+    'recordedAt': recordedAt.toIso8601String(),
+    'valueText': valueText,
+    'unit': unit,
+    'labName': labName,
+    'referenceText': referenceText,
+    'notes': notes,
+    'flag': flag.name,
+    'professionalFlagNote': professionalFlagNote,
+  };
 }

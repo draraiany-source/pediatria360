@@ -137,22 +137,28 @@ void main() {
 
     test('servidor tem data anterior: descarta o local', () {
       // Quem registrou mais perto da aplicação tende a acertar.
-      final ConflictResolution r =
-          resolve('2026-03-05T10:00:00Z', '2026-03-01T10:00:00Z');
+      final ConflictResolution r = resolve(
+        '2026-03-05T10:00:00Z',
+        '2026-03-01T10:00:00Z',
+      );
       expect(r.shouldWrite, isFalse);
       expect(r.conflictedFields, <String>['appliedAt']);
     });
 
     test('local tem data anterior: prevalece', () {
-      final ConflictResolution r =
-          resolve('2026-03-01T10:00:00Z', '2026-03-05T10:00:00Z');
+      final ConflictResolution r = resolve(
+        '2026-03-01T10:00:00Z',
+        '2026-03-05T10:00:00Z',
+      );
       expect(r.shouldWrite, isTrue);
       expect(r.conflictedFields, <String>['appliedAt']);
     });
 
     test('mesma data não é conflito', () {
-      final ConflictResolution r =
-          resolve('2026-03-01T10:00:00Z', '2026-03-01T10:00:00Z');
+      final ConflictResolution r = resolve(
+        '2026-03-01T10:00:00Z',
+        '2026-03-01T10:00:00Z',
+      );
       expect(r.hasConflict, isFalse);
     });
 
@@ -186,26 +192,14 @@ void main() {
     });
 
     test('cresce exponencialmente', () {
-      expect(
-        SyncBackoff.delayFor(1, random: noJitter).inMilliseconds,
-        4000,
-      );
-      expect(
-        SyncBackoff.delayFor(2, random: noJitter).inMilliseconds,
-        8000,
-      );
-      expect(
-        SyncBackoff.delayFor(3, random: noJitter).inMilliseconds,
-        16000,
-      );
+      expect(SyncBackoff.delayFor(1, random: noJitter).inMilliseconds, 4000);
+      expect(SyncBackoff.delayFor(2, random: noJitter).inMilliseconds, 8000);
+      expect(SyncBackoff.delayFor(3, random: noJitter).inMilliseconds, 16000);
     });
 
     test('respeita o teto de 30 minutos', () {
       // Sem teto, a 20ª tentativa esperaria mais de 20 dias.
-      expect(
-        SyncBackoff.delayFor(20, random: noJitter),
-        SyncBackoff.ceiling,
-      );
+      expect(SyncBackoff.delayFor(20, random: noJitter), SyncBackoff.ceiling);
     });
 
     test('o ruído só diminui a espera, nunca aumenta', () {
@@ -233,10 +227,7 @@ void main() {
     });
 
     test('sem tentativa anterior está sempre pronto', () {
-      expect(
-        SyncBackoff.isReady(attempts: 0, lastAttemptAt: null),
-        isTrue,
-      );
+      expect(SyncBackoff.isReady(attempts: 0, lastAttemptAt: null), isTrue);
     });
 
     test('espera cumprida libera nova tentativa', () {

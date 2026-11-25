@@ -765,7 +765,9 @@ class CrismedUnitsScreen extends ConsumerWidget {
                   Text(
                     'Crisdepaula Filial 01 · Parauapebas · PA · Ativa (exemplo)',
                   ),
-                  Text('Crisdepaula Filial 02 · Diamantino · MT · Ativa (exemplo)'),
+                  Text(
+                    'Crisdepaula Filial 02 · Diamantino · MT · Ativa (exemplo)',
+                  ),
                 ],
               ],
             ),
@@ -838,7 +840,8 @@ class _CrismedSettingsScreenState extends State<CrismedSettingsScreen> {
         children: <Widget>[
           CrismedPageHeader(
             title: 'Configurações e Identidade Visual',
-            subtitle: 'Ajuste a clínica, permissões e a cara do Crisdepaula Pediatria',
+            subtitle:
+                'Ajuste a clínica, permissões e a cara do Crisdepaula Pediatria',
             icon: Icons.tune_rounded,
             primaryLabel: 'Editar perfil',
             onPrimary: () => Navigator.of(context).push(

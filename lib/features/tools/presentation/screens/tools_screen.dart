@@ -49,12 +49,16 @@ class _ToolsScreenState extends ConsumerState<ToolsScreen> {
       _child = child;
       for (final dynamic record in records.reversed) {
         if (_weight.text.isEmpty && record.weightKg != null) {
-          _weight.text =
-              (record.weightKg as double).toString().replaceAll('.', ',');
+          _weight.text = (record.weightKg as double).toString().replaceAll(
+            '.',
+            ',',
+          );
         }
         if (_height.text.isEmpty && record.heightCm != null) {
-          _height.text =
-              (record.heightCm as double).toString().replaceAll('.', ',');
+          _height.text = (record.heightCm as double).toString().replaceAll(
+            '.',
+            ',',
+          );
         }
       }
     });
@@ -87,7 +91,10 @@ class _ToolsScreenState extends ConsumerState<ToolsScreen> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: <Widget>[
                 if (children.isNotEmpty) ...<Widget>[
-                  Text('Preencher a partir de', style: theme.textTheme.labelLarge),
+                  Text(
+                    'Preencher a partir de',
+                    style: theme.textTheme.labelLarge,
+                  ),
                   const SizedBox(height: AppSpacing.sm),
                   SingleChildScrollView(
                     scrollDirection: Axis.horizontal,
@@ -95,7 +102,9 @@ class _ToolsScreenState extends ConsumerState<ToolsScreen> {
                       children: <Widget>[
                         for (final Child child in children)
                           Padding(
-                            padding: const EdgeInsets.only(right: AppSpacing.sm),
+                            padding: const EdgeInsets.only(
+                              right: AppSpacing.sm,
+                            ),
                             child: ChoiceChip(
                               label: Text(child.firstName),
                               selected: _child?.id == child.id,
@@ -175,8 +184,7 @@ class _ToolsScreenState extends ConsumerState<ToolsScreen> {
                   _DehydrationCard(
                     weightKg: _weightKg,
                     percentage: _dehydration,
-                    onChanged: (double v) =>
-                        setState(() => _dehydration = v),
+                    onChanged: (double v) => setState(() => _dehydration = v),
                   ),
                   if (hasBoth) ...<Widget>[
                     const SectionHeader(
@@ -268,8 +276,9 @@ class _FluidsCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final ThemeData theme = Theme.of(context);
-    final FluidRequirement fluids =
-        PediatricCalculators.maintenanceFluids(weightKg);
+    final FluidRequirement fluids = PediatricCalculators.maintenanceFluids(
+      weightKg,
+    );
 
     return Card(
       child: Padding(
@@ -277,10 +286,7 @@ class _FluidsCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
-            Text(
-              'Manutenção hídrica',
-              style: theme.textTheme.titleSmall,
-            ),
+            Text('Manutenção hídrica', style: theme.textTheme.titleSmall),
             const SizedBox(height: AppSpacing.lg),
             Row(
               children: <Widget>[
@@ -294,10 +300,7 @@ class _FluidsCard extends StatelessWidget {
                         unit: 'mL',
                         color: AppColors.vital,
                       ),
-                      Text(
-                        'regra 100-50-20',
-                        style: theme.textTheme.bodySmall,
-                      ),
+                      Text('regra 100-50-20', style: theme.textTheme.bodySmall),
                     ],
                   ),
                 ),
@@ -470,10 +473,7 @@ class _VitalsCard extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: <Widget>[
-                      Text(
-                        'Freq. cardíaca',
-                        style: theme.textTheme.bodySmall,
-                      ),
+                      Text('Freq. cardíaca', style: theme.textTheme.bodySmall),
                       DataValue(
                         value: '${ranges.heartRate.$1}–${ranges.heartRate.$2}',
                         unit: 'bpm',
@@ -492,7 +492,8 @@ class _VitalsCard extends StatelessWidget {
                         style: theme.textTheme.bodySmall,
                       ),
                       DataValue(
-                        value: '${ranges.respiratoryRate.$1}–'
+                        value:
+                            '${ranges.respiratoryRate.$1}–'
                             '${ranges.respiratoryRate.$2}',
                         unit: 'irpm',
                         size: 18,
@@ -603,18 +604,14 @@ class _ApgarCardState extends State<_ApgarCard> {
   int _color = 2;
 
   ApgarScore get _score => ApgarScore(
-        heartRate: _heartRate,
-        respiratoryEffort: _respiratoryEffort,
-        muscleTone: _muscleTone,
-        reflexIrritability: _reflexIrritability,
-        color: _color,
-      );
+    heartRate: _heartRate,
+    respiratoryEffort: _respiratoryEffort,
+    muscleTone: _muscleTone,
+    reflexIrritability: _reflexIrritability,
+    color: _color,
+  );
 
-  Widget _criterion(
-    String label,
-    int value,
-    ValueChanged<int> onChanged,
-  ) {
+  Widget _criterion(String label, int value, ValueChanged<int> onChanged) {
     final ThemeData theme = Theme.of(context);
     return Padding(
       padding: const EdgeInsets.only(bottom: AppSpacing.sm),
@@ -653,7 +650,10 @@ class _ApgarCardState extends State<_ApgarCard> {
             Row(
               children: <Widget>[
                 Expanded(
-                  child: Text('Boletim de Apgar', style: theme.textTheme.titleSmall),
+                  child: Text(
+                    'Boletim de Apgar',
+                    style: theme.textTheme.titleSmall,
+                  ),
                 ),
                 DataValue(
                   value: '${score.total}',
@@ -661,20 +661,32 @@ class _ApgarCardState extends State<_ApgarCard> {
                   color: score.total >= 7
                       ? AppColors.success
                       : score.total >= 4
-                          ? AppColors.warning
-                          : AppColors.danger,
+                      ? AppColors.warning
+                      : AppColors.danger,
                 ),
               ],
             ),
             const SizedBox(height: AppSpacing.md),
-            _criterion('Freq. cardíaca', _heartRate,
-                (int v) => setState(() => _heartRate = v)),
-            _criterion('Esforço respiratório', _respiratoryEffort,
-                (int v) => setState(() => _respiratoryEffort = v)),
-            _criterion('Tônus muscular', _muscleTone,
-                (int v) => setState(() => _muscleTone = v)),
-            _criterion('Irritabilidade reflexa', _reflexIrritability,
-                (int v) => setState(() => _reflexIrritability = v)),
+            _criterion(
+              'Freq. cardíaca',
+              _heartRate,
+              (int v) => setState(() => _heartRate = v),
+            ),
+            _criterion(
+              'Esforço respiratório',
+              _respiratoryEffort,
+              (int v) => setState(() => _respiratoryEffort = v),
+            ),
+            _criterion(
+              'Tônus muscular',
+              _muscleTone,
+              (int v) => setState(() => _muscleTone = v),
+            ),
+            _criterion(
+              'Irritabilidade reflexa',
+              _reflexIrritability,
+              (int v) => setState(() => _reflexIrritability = v),
+            ),
             _criterion('Cor', _color, (int v) => setState(() => _color = v)),
             const SizedBox(height: AppSpacing.sm),
             AppTag(
@@ -682,8 +694,8 @@ class _ApgarCardState extends State<_ApgarCard> {
               color: score.total >= 7
                   ? AppColors.success
                   : score.total >= 4
-                      ? AppColors.warning
-                      : AppColors.danger,
+                  ? AppColors.warning
+                  : AppColors.danger,
             ),
             const SizedBox(height: AppSpacing.sm),
             Text(
@@ -725,8 +737,8 @@ class _GlucoseInfusionCardState extends State<_GlucoseInfusionCard> {
     final double? conc = Parsers.decimal(_concentration.text);
     final double? weight = Parsers.decimal(_weight.text);
 
-    final double? tig = (rate != null && conc != null &&
-            weight != null && weight > 0)
+    final double? tig =
+        (rate != null && conc != null && weight != null && weight > 0)
         ? glucoseInfusionRateMgKgMin(
             infusionRateMlPerHour: rate,
             dextroseConcentrationPercent: conc,
@@ -740,7 +752,10 @@ class _GlucoseInfusionCardState extends State<_GlucoseInfusionCard> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: <Widget>[
-            Text('Taxa de infusão de glicose', style: theme.textTheme.titleSmall),
+            Text(
+              'Taxa de infusão de glicose',
+              style: theme.textTheme.titleSmall,
+            ),
             const SizedBox(height: AppSpacing.md),
             Row(
               children: <Widget>[
@@ -753,8 +768,9 @@ class _GlucoseInfusionCardState extends State<_GlucoseInfusionCard> {
                       padding: EdgeInsets.all(AppSpacing.fieldSuffix),
                       child: Text('mL/h'),
                     ),
-                    keyboardType:
-                        const TextInputType.numberWithOptions(decimal: true),
+                    keyboardType: const TextInputType.numberWithOptions(
+                      decimal: true,
+                    ),
                     inputFormatters: Masks.decimal,
                     onChanged: (_) => setState(() {}),
                   ),
@@ -769,8 +785,9 @@ class _GlucoseInfusionCardState extends State<_GlucoseInfusionCard> {
                       padding: EdgeInsets.all(AppSpacing.fieldSuffix),
                       child: Text('%'),
                     ),
-                    keyboardType:
-                        const TextInputType.numberWithOptions(decimal: true),
+                    keyboardType: const TextInputType.numberWithOptions(
+                      decimal: true,
+                    ),
                     inputFormatters: Masks.decimal,
                     onChanged: (_) => setState(() {}),
                   ),
@@ -786,7 +803,9 @@ class _GlucoseInfusionCardState extends State<_GlucoseInfusionCard> {
                 padding: EdgeInsets.all(AppSpacing.fieldSuffix),
                 child: Text('kg'),
               ),
-              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              keyboardType: const TextInputType.numberWithOptions(
+                decimal: true,
+              ),
               inputFormatters: Masks.decimal,
               onChanged: (_) => setState(() {}),
             ),
@@ -836,10 +855,13 @@ class _UrineOutputCardState extends State<_UrineOutputCard> {
     final double? hours = Parsers.decimal(_hours.text);
 
     final UrineOutput? output =
-        (volume != null && weight != null && weight > 0 &&
-                hours != null && hours > 0)
-            ? urineOutput(volumeMl: volume, weightKg: weight, hours: hours)
-            : null;
+        (volume != null &&
+            weight != null &&
+            weight > 0 &&
+            hours != null &&
+            hours > 0)
+        ? urineOutput(volumeMl: volume, weightKg: weight, hours: hours)
+        : null;
 
     return Card(
       child: Padding(
@@ -859,8 +881,9 @@ class _UrineOutputCardState extends State<_UrineOutputCard> {
                       padding: EdgeInsets.all(AppSpacing.fieldSuffix),
                       child: Text('mL'),
                     ),
-                    keyboardType:
-                        const TextInputType.numberWithOptions(decimal: true),
+                    keyboardType: const TextInputType.numberWithOptions(
+                      decimal: true,
+                    ),
                     inputFormatters: Masks.decimal,
                     onChanged: (_) => setState(() {}),
                   ),
@@ -874,8 +897,9 @@ class _UrineOutputCardState extends State<_UrineOutputCard> {
                       padding: EdgeInsets.all(AppSpacing.fieldSuffix),
                       child: Text('kg'),
                     ),
-                    keyboardType:
-                        const TextInputType.numberWithOptions(decimal: true),
+                    keyboardType: const TextInputType.numberWithOptions(
+                      decimal: true,
+                    ),
                     inputFormatters: Masks.decimal,
                     onChanged: (_) => setState(() {}),
                   ),
@@ -885,8 +909,9 @@ class _UrineOutputCardState extends State<_UrineOutputCard> {
                   child: AppTextField(
                     label: 'Horas',
                     controller: _hours,
-                    keyboardType:
-                        const TextInputType.numberWithOptions(decimal: true),
+                    keyboardType: const TextInputType.numberWithOptions(
+                      decimal: true,
+                    ),
                     inputFormatters: Masks.decimal,
                     onChanged: (_) => setState(() {}),
                   ),
@@ -955,7 +980,8 @@ class _OsmolarityCardState extends State<_OsmolarityCard> {
           )
         : null;
 
-    final bool outOfRange = osm != null &&
+    final bool outOfRange =
+        osm != null &&
         (osm < normalSerumOsmolarityRange.$1 ||
             osm > normalSerumOsmolarityRange.$2);
 
@@ -977,8 +1003,9 @@ class _OsmolarityCardState extends State<_OsmolarityCard> {
                       padding: EdgeInsets.all(AppSpacing.fieldSuffix),
                       child: Text('mEq/L'),
                     ),
-                    keyboardType:
-                        const TextInputType.numberWithOptions(decimal: true),
+                    keyboardType: const TextInputType.numberWithOptions(
+                      decimal: true,
+                    ),
                     inputFormatters: Masks.decimal,
                     onChanged: (_) => setState(() {}),
                   ),
@@ -992,8 +1019,9 @@ class _OsmolarityCardState extends State<_OsmolarityCard> {
                       padding: EdgeInsets.all(AppSpacing.fieldSuffix),
                       child: Text('mg/dL'),
                     ),
-                    keyboardType:
-                        const TextInputType.numberWithOptions(decimal: true),
+                    keyboardType: const TextInputType.numberWithOptions(
+                      decimal: true,
+                    ),
                     inputFormatters: Masks.decimal,
                     onChanged: (_) => setState(() {}),
                   ),
@@ -1008,8 +1036,9 @@ class _OsmolarityCardState extends State<_OsmolarityCard> {
                       padding: EdgeInsets.all(AppSpacing.fieldSuffix),
                       child: Text('mg/dL'),
                     ),
-                    keyboardType:
-                        const TextInputType.numberWithOptions(decimal: true),
+                    keyboardType: const TextInputType.numberWithOptions(
+                      decimal: true,
+                    ),
                     inputFormatters: Masks.decimal,
                     onChanged: (_) => setState(() {}),
                   ),
@@ -1028,7 +1057,10 @@ class _OsmolarityCardState extends State<_OsmolarityCard> {
                   ),
                   if (outOfRange) ...<Widget>[
                     const SizedBox(width: AppSpacing.sm),
-                    const AppTag(label: 'Fora da faixa', color: AppColors.warning),
+                    const AppTag(
+                      label: 'Fora da faixa',
+                      color: AppColors.warning,
+                    ),
                   ],
                 ],
               ),

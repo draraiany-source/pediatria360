@@ -46,8 +46,7 @@ class ContentVersion extends Equatable {
         (data['snapshot'] as Map<dynamic, dynamic>?) ??
             const <dynamic, dynamic>{},
       ),
-      createdAt:
-          (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
+      createdAt: (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
       authorUid: (data['authorUid'] as String?) ?? '',
       authorName: data['authorName'] as String?,
       note: data['note'] as String?,
@@ -170,16 +169,16 @@ class VersionDiff {
   }
 
   static String _fieldLabel(String field) => switch (field) {
-        'title' => 'Título',
-        'summary' => 'Resumo',
-        'category' => 'Categoria',
-        'audience' => 'Público',
-        'type' => 'Tipo',
-        'readMinutes' => 'Tempo de leitura',
-        'reviewedBy' => 'Revisor',
-        'published' => 'Publicação',
-        _ => field,
-      };
+    'title' => 'Título',
+    'summary' => 'Resumo',
+    'category' => 'Categoria',
+    'audience' => 'Público',
+    'type' => 'Tipo',
+    'readMinutes' => 'Tempo de leitura',
+    'reviewedBy' => 'Revisor',
+    'published' => 'Publicação',
+    _ => field,
+  };
 }
 
 /// Operações de edição de conteúdo, restritas a admin.
@@ -192,8 +191,8 @@ class AdminContentRepository {
   const AdminContentRepository({
     required FirebaseFirestore firestore,
     required FirebaseFunctions functions,
-  })  : _firestore = firestore,
-        _functions = functions;
+  }) : _firestore = firestore,
+       _functions = functions;
 
   final FirebaseFirestore _firestore;
   final FirebaseFunctions _functions;
@@ -232,22 +231,21 @@ class AdminContentRepository {
     required Map<String, dynamic> data,
     required String note,
     required bool publish,
-  }) =>
-      guard(() async {
-        final HttpsCallableResult<dynamic> response =
-            await _functions.httpsCallable('saveContent').call(
-          <String, dynamic>{
-            if (contentId != null) 'contentId': contentId,
-            'data': data,
-            'note': note,
-            'publish': publish,
-          },
-        );
+  }) => guard(() async {
+    final HttpsCallableResult<dynamic> response = await _functions
+        .httpsCallable('saveContent')
+        .call(<String, dynamic>{
+          if (contentId != null) 'contentId': contentId,
+          'data': data,
+          'note': note,
+          'publish': publish,
+        });
 
-        final Map<String, dynamic> result =
-            Map<String, dynamic>.from(response.data as Map<dynamic, dynamic>);
-        return (result['contentId'] as String?) ?? '';
-      });
+    final Map<String, dynamic> result = Map<String, dynamic>.from(
+      response.data as Map<dynamic, dynamic>,
+    );
+    return (result['contentId'] as String?) ?? '';
+  });
 
   /// Volta para uma versão anterior.
   ///
@@ -257,27 +255,24 @@ class AdminContentRepository {
     required String contentId,
     required String versionId,
     required String note,
-  }) =>
-      guard(() async {
-        await _functions.httpsCallable('restoreContentVersion').call(
-          <String, dynamic>{
-            'contentId': contentId,
-            'versionId': versionId,
-            'note': note,
-          },
-        );
-      });
+  }) => guard(() async {
+    await _functions.httpsCallable('restoreContentVersion').call(
+      <String, dynamic>{
+        'contentId': contentId,
+        'versionId': versionId,
+        'note': note,
+      },
+    );
+  });
 
   /// Tira do ar sem apagar. Despublicar é reversível; excluir não.
   Future<Result<void>> unpublish(String contentId) => guard(() async {
-        await _functions.httpsCallable('saveContent').call(
-          <String, dynamic>{
-            'contentId': contentId,
-            'data': <String, dynamic>{'published': false},
-            'note': 'Retirado do ar',
-            'publish': false,
-            'partial': true,
-          },
-        );
-      });
+    await _functions.httpsCallable('saveContent').call(<String, dynamic>{
+      'contentId': contentId,
+      'data': <String, dynamic>{'published': false},
+      'note': 'Retirado do ar',
+      'publish': false,
+      'partial': true,
+    });
+  });
 }

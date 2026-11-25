@@ -42,12 +42,12 @@ class ChildrenRepositoryImpl implements ChildrenRepository {
     required LocalDatabase? database,
     required String Function() currentUserId,
     required String? Function() currentUserName,
-  })  : _firestore = firestore,
-        _storage = storage,
-        _sync = sync,
-        _db = database,
-        _uid = currentUserId,
-        _userName = currentUserName;
+  }) : _firestore = firestore,
+       _storage = storage,
+       _sync = sync,
+       _db = database,
+       _uid = currentUserId,
+       _userName = currentUserName;
 
   final FirebaseFirestore _firestore;
   final FirebaseStorage _storage;
@@ -105,10 +105,7 @@ class ChildrenRepositoryImpl implements ChildrenRepository {
       final bool dirty = (existing?['dirty'] as int? ?? 0) == 1;
       if (dirty) continue;
 
-      await db.upsert(
-        LocalDatabase.tableChildren,
-        ChildMapper.toRow(child),
-      );
+      await db.upsert(LocalDatabase.tableChildren, ChildMapper.toRow(child));
     }
   }
 
@@ -123,88 +120,86 @@ class ChildrenRepositoryImpl implements ChildrenRepository {
 
   @override
   Future<Result<Child>> saveChild(Child child) => guard(() async {
-        final String ownerId = _uid();
-        final bool isNew = child.id.isEmpty;
-        final Child prepared = isNew
-            ? Child(
-                id: _uuid.v4(),
-                ownerId: ownerId,
-                name: child.name,
-                birthDate: child.birthDate,
-                sex: child.sex,
-                photoUrl: child.photoUrl,
-                bloodType: child.bloodType,
-                allergies: child.allergies,
-                conditions: child.conditions,
-                medications: child.medications,
-                gestationalWeeks: child.gestationalWeeks,
-                birthWeightKg: child.birthWeightKg,
-                birthHeightCm: child.birthHeightCm,
-                guardianName: child.guardianName?.trim().isNotEmpty == true
-                    ? child.guardianName
-                    : _userName(),
-                guardianPhone: child.guardianPhone,
-                phone: child.phone,
-                address: child.address,
-                cpf: child.cpf,
-                insurance: child.insurance,
-                updatedAt: DateTime.now(),
-              )
-            : child.copyWith(updatedAt: DateTime.now());
+    final String ownerId = _uid();
+    final bool isNew = child.id.isEmpty;
+    final Child prepared = isNew
+        ? Child(
+            id: _uuid.v4(),
+            ownerId: ownerId,
+            name: child.name,
+            birthDate: child.birthDate,
+            sex: child.sex,
+            photoUrl: child.photoUrl,
+            bloodType: child.bloodType,
+            allergies: child.allergies,
+            conditions: child.conditions,
+            medications: child.medications,
+            gestationalWeeks: child.gestationalWeeks,
+            birthWeightKg: child.birthWeightKg,
+            birthHeightCm: child.birthHeightCm,
+            guardianName: child.guardianName?.trim().isNotEmpty == true
+                ? child.guardianName
+                : _userName(),
+            guardianPhone: child.guardianPhone,
+            phone: child.phone,
+            address: child.address,
+            cpf: child.cpf,
+            insurance: child.insurance,
+            updatedAt: DateTime.now(),
+          )
+        : child.copyWith(updatedAt: DateTime.now());
 
-        await _db?.upsert(
-          LocalDatabase.tableChildren,
-          ChildMapper.toRow(prepared, dirty: true),
-        );
+    await _db?.upsert(
+      LocalDatabase.tableChildren,
+      ChildMapper.toRow(prepared, dirty: true),
+    );
 
-        await _sync.enqueue(
-          id: _uuid.v4(),
-          entity: SyncEntity.children,
-          entityId: prepared.id,
-          operation:
-              isNew ? OutboxOperation.create : OutboxOperation.update,
-          payload: ChildMapper.toOutboxPayload(prepared),
-        );
+    await _sync.enqueue(
+      id: _uuid.v4(),
+      entity: SyncEntity.children,
+      entityId: prepared.id,
+      operation: isNew ? OutboxOperation.create : OutboxOperation.update,
+      payload: ChildMapper.toOutboxPayload(prepared),
+    );
 
-        // Quando a criança é nova, o calendário vacinal é materializado
-        // localmente na hora: o responsável abre a aba de vacinas e já vê as
-        // datas, mesmo sem rede.
-        if (isNew) await _seedVaccineSchedule(prepared);
+    // Quando a criança é nova, o calendário vacinal é materializado
+    // localmente na hora: o responsável abre a aba de vacinas e já vê as
+    // datas, mesmo sem rede.
+    if (isNew) await _seedVaccineSchedule(prepared);
 
-        return prepared.copyWith(pendingSync: true);
-      });
+    return prepared.copyWith(pendingSync: true);
+  });
 
   @override
   Future<Result<void>> deleteChild(String childId) => guard(() async {
-        await _db?.softDelete(LocalDatabase.tableChildren, childId);
-        await _sync.enqueue(
-          id: _uuid.v4(),
-          entity: SyncEntity.children,
-          entityId: childId,
-          operation: OutboxOperation.delete,
-          payload: <String, dynamic>{'ownerId': _uid()},
-        );
-      });
+    await _db?.softDelete(LocalDatabase.tableChildren, childId);
+    await _sync.enqueue(
+      id: _uuid.v4(),
+      entity: SyncEntity.children,
+      entityId: childId,
+      operation: OutboxOperation.delete,
+      payload: <String, dynamic>{'ownerId': _uid()},
+    );
+  });
 
   @override
   Future<Result<String>> uploadPhoto({
     required String childId,
     required List<int> bytes,
     required String fileName,
-  }) =>
-      guard(() async {
-        // Upload de foto exige rede: não faz sentido enfileirar bytes de
-        // imagem na outbox, que é feita para payloads pequenos de texto.
-        final Reference ref = _storage
-            .ref()
-            .child('users/${_uid()}/children/$childId/$fileName');
+  }) => guard(() async {
+    // Upload de foto exige rede: não faz sentido enfileirar bytes de
+    // imagem na outbox, que é feita para payloads pequenos de texto.
+    final Reference ref = _storage.ref().child(
+      'users/${_uid()}/children/$childId/$fileName',
+    );
 
-        final TaskSnapshot snapshot = await ref.putData(
-          Uint8List.fromList(bytes),
-          SettableMetadata(contentType: _contentTypeFor(fileName)),
-        );
-        return snapshot.ref.getDownloadURL();
-      });
+    final TaskSnapshot snapshot = await ref.putData(
+      Uint8List.fromList(bytes),
+      SettableMetadata(contentType: _contentTypeFor(fileName)),
+    );
+    return snapshot.ref.getDownloadURL();
+  });
 
   static String _contentTypeFor(String fileName) {
     final String lower = fileName.toLowerCase();
@@ -232,8 +227,10 @@ class ChildrenRepositoryImpl implements ChildrenRepository {
       if (db != null) {
         for (final QueryDocumentSnapshot<Map<String, dynamic>> doc
             in snapshot.docs) {
-          final Map<String, Object?>? existing =
-              await db.queryById(LocalDatabase.tableGrowth, doc.id);
+          final Map<String, Object?>? existing = await db.queryById(
+            LocalDatabase.tableGrowth,
+            doc.id,
+          );
           if ((existing?['dirty'] as int? ?? 0) == 1) continue;
           await db.upsert(
             LocalDatabase.tableGrowth,
@@ -285,8 +282,7 @@ class ChildrenRepositoryImpl implements ChildrenRepository {
           id: _uuid.v4(),
           entity: SyncEntity.growth,
           entityId: prepared.id,
-          operation:
-              isNew ? OutboxOperation.create : OutboxOperation.update,
+          operation: isNew ? OutboxOperation.create : OutboxOperation.update,
           payload: GrowthRecordMapper.toOutboxPayload(prepared, _uid()),
         );
 
@@ -297,17 +293,16 @@ class ChildrenRepositoryImpl implements ChildrenRepository {
   Future<Result<void>> deleteGrowth({
     required String childId,
     required String recordId,
-  }) =>
-      guard(() async {
-        await _db?.softDelete(LocalDatabase.tableGrowth, recordId);
-        await _sync.enqueue(
-          id: _uuid.v4(),
-          entity: SyncEntity.growth,
-          entityId: recordId,
-          operation: OutboxOperation.delete,
-          payload: <String, dynamic>{'ownerId': _uid(), 'childId': childId},
-        );
-      });
+  }) => guard(() async {
+    await _db?.softDelete(LocalDatabase.tableGrowth, recordId);
+    await _sync.enqueue(
+      id: _uuid.v4(),
+      entity: SyncEntity.growth,
+      entityId: recordId,
+      operation: OutboxOperation.delete,
+      payload: <String, dynamic>{'ownerId': _uid(), 'childId': childId},
+    );
+  });
 
   // --------------------------------------------------------------- Vacinas
 
@@ -327,8 +322,10 @@ class ChildrenRepositoryImpl implements ChildrenRepository {
       if (db != null) {
         for (final QueryDocumentSnapshot<Map<String, dynamic>> doc
             in snapshot.docs) {
-          final Map<String, Object?>? existing =
-              await db.queryById(LocalDatabase.tableVaccineDoses, doc.id);
+          final Map<String, Object?>? existing = await db.queryById(
+            LocalDatabase.tableVaccineDoses,
+            doc.id,
+          );
           if ((existing?['dirty'] as int? ?? 0) == 1) continue;
           await db.upsert(
             LocalDatabase.tableVaccineDoses,

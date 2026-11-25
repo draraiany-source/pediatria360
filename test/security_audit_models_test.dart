@@ -6,9 +6,18 @@ void main() {
     test('critical actions', () {
       expect(classifyAuditSeverity('delete'), SecurityAuditSeverity.critical);
       expect(classifyAuditSeverity('refund'), SecurityAuditSeverity.critical);
-      expect(classifyAuditSeverity('blockedAccess'), SecurityAuditSeverity.critical);
-      expect(classifyAuditSeverity('permissionChange'), SecurityAuditSeverity.critical);
-      expect(classifyAuditSeverity('massExport'), SecurityAuditSeverity.critical);
+      expect(
+        classifyAuditSeverity('blockedAccess'),
+        SecurityAuditSeverity.critical,
+      );
+      expect(
+        classifyAuditSeverity('permissionChange'),
+        SecurityAuditSeverity.critical,
+      );
+      expect(
+        classifyAuditSeverity('massExport'),
+        SecurityAuditSeverity.critical,
+      );
     });
 
     test('warning for export', () {

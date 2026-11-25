@@ -12,15 +12,15 @@ enum VoiceSessionStatus {
   discarded;
 
   String get label => switch (this) {
-        VoiceSessionStatus.awaitingConsent => 'Aguardando consentimento',
-        VoiceSessionStatus.recording => 'Gravando',
-        VoiceSessionStatus.paused => 'Pausada',
-        VoiceSessionStatus.processing => 'Processando',
-        VoiceSessionStatus.draftReady => 'Rascunho pronto',
-        VoiceSessionStatus.underReview => 'Em revisao',
-        VoiceSessionStatus.applied => 'Aplicado',
-        VoiceSessionStatus.discarded => 'Descartada',
-      };
+    VoiceSessionStatus.awaitingConsent => 'Aguardando consentimento',
+    VoiceSessionStatus.recording => 'Gravando',
+    VoiceSessionStatus.paused => 'Pausada',
+    VoiceSessionStatus.processing => 'Processando',
+    VoiceSessionStatus.draftReady => 'Rascunho pronto',
+    VoiceSessionStatus.underReview => 'Em revisao',
+    VoiceSessionStatus.applied => 'Aplicado',
+    VoiceSessionStatus.discarded => 'Descartada',
+  };
 
   static VoiceSessionStatus fromName(String? value) =>
       VoiceSessionStatus.values.firstWhere(
@@ -37,11 +37,11 @@ enum TranscriptSpeaker {
   unknown;
 
   String get label => switch (this) {
-        TranscriptSpeaker.doctor => 'Medico(a)',
-        TranscriptSpeaker.guardian => 'Responsavel',
-        TranscriptSpeaker.patient => 'Paciente',
-        TranscriptSpeaker.unknown => 'Desconhecido',
-      };
+    TranscriptSpeaker.doctor => 'Medico(a)',
+    TranscriptSpeaker.guardian => 'Responsavel',
+    TranscriptSpeaker.patient => 'Paciente',
+    TranscriptSpeaker.unknown => 'Desconhecido',
+  };
 
   static TranscriptSpeaker fromName(String? value) =>
       TranscriptSpeaker.values.firstWhere(
@@ -57,11 +57,10 @@ enum AudioRetentionPolicy {
   neverStore;
 
   String get label => switch (this) {
-        AudioRetentionPolicy.deleteAfterValidation =>
-          'Excluir apos validacao',
-        AudioRetentionPolicy.retainDays => 'Reter por dias definidos',
-        AudioRetentionPolicy.neverStore => 'Nunca armazenar audio',
-      };
+    AudioRetentionPolicy.deleteAfterValidation => 'Excluir apos validacao',
+    AudioRetentionPolicy.retainDays => 'Reter por dias definidos',
+    AudioRetentionPolicy.neverStore => 'Nunca armazenar audio',
+  };
 
   static AudioRetentionPolicy fromName(String? value) =>
       AudioRetentionPolicy.values.firstWhere(
@@ -97,16 +96,15 @@ class TranscriptSegment extends Equatable {
   final bool markedImportant;
 
   Map<String, dynamic> toMap() => <String, dynamic>{
-        'id': id,
-        'speaker': speaker.name,
-        'text': text,
-        'at': at.toIso8601String(),
-        'markedImportant': markedImportant,
-      };
+    'id': id,
+    'speaker': speaker.name,
+    'text': text,
+    'at': at.toIso8601String(),
+    'markedImportant': markedImportant,
+  };
 
   @override
-  List<Object?> get props =>
-      <Object?>[id, speaker, text, at, markedImportant];
+  List<Object?> get props => <Object?>[id, speaker, text, at, markedImportant];
 }
 
 /// Rascunho estruturado gerado pela IA — sempre DRAFT ate confirmacao medica.
@@ -159,9 +157,8 @@ class VoiceStructuredDraft extends Equatable {
       socialHistory: (map['socialHistory'] as String?) ?? '',
       reviewOfSystems: _stringMap(map['reviewOfSystems']),
       examFindings: _stringMap(map['examFindings'] ?? map['findings']),
-      examNotes: (map['examNotes'] as String?) ??
-          (map['notes'] as String?) ??
-          '',
+      examNotes:
+          (map['examNotes'] as String?) ?? (map['notes'] as String?) ?? '',
       assessment: (map['assessment'] as String?) ?? '',
       plan: (map['plan'] as String?) ?? '',
       missingFields: _strings(map['missingFields']),
@@ -207,59 +204,59 @@ class VoiceStructuredDraft extends Equatable {
   final String disclaimer;
 
   Map<String, dynamic> toMap() => <String, dynamic>{
-        'chiefComplaint': chiefComplaint,
-        'historyOfPresentIllness': historyOfPresentIllness,
-        'pastMedicalHistory': pastMedicalHistory,
-        'gestationalHistory': gestationalHistory,
-        'birthHistory': birthHistory,
-        'developmentHistory': developmentHistory,
-        'feedingHistory': feedingHistory,
-        'sleepHistory': sleepHistory,
-        'eliminationHistory': eliminationHistory,
-        'immunizationStatus': immunizationStatus,
-        'allergies': allergies,
-        'currentMedications': currentMedications,
-        'familyHistory': familyHistory,
-        'socialHistory': socialHistory,
-        'reviewOfSystems': reviewOfSystems,
-        'examFindings': examFindings,
-        'examNotes': examNotes,
-        'assessment': assessment,
-        'plan': plan,
-        'missingFields': missingFields,
-        'evolutionText': evolutionText,
-        'hypotheses': hypotheses,
-        'suggestedCids': suggestedCids,
-        'disclaimer': disclaimer,
-      };
+    'chiefComplaint': chiefComplaint,
+    'historyOfPresentIllness': historyOfPresentIllness,
+    'pastMedicalHistory': pastMedicalHistory,
+    'gestationalHistory': gestationalHistory,
+    'birthHistory': birthHistory,
+    'developmentHistory': developmentHistory,
+    'feedingHistory': feedingHistory,
+    'sleepHistory': sleepHistory,
+    'eliminationHistory': eliminationHistory,
+    'immunizationStatus': immunizationStatus,
+    'allergies': allergies,
+    'currentMedications': currentMedications,
+    'familyHistory': familyHistory,
+    'socialHistory': socialHistory,
+    'reviewOfSystems': reviewOfSystems,
+    'examFindings': examFindings,
+    'examNotes': examNotes,
+    'assessment': assessment,
+    'plan': plan,
+    'missingFields': missingFields,
+    'evolutionText': evolutionText,
+    'hypotheses': hypotheses,
+    'suggestedCids': suggestedCids,
+    'disclaimer': disclaimer,
+  };
 
   /// Mapa no formato de atualizacao de Encounter (rascunho).
   Map<String, dynamic> toEncounterDraftPatch() => <String, dynamic>{
-        'anamnesis': <String, dynamic>{
-          'chiefComplaint': chiefComplaint,
-          'historyOfPresentIllness': historyOfPresentIllness,
-          'pastMedicalHistory': pastMedicalHistory,
-          'gestationalHistory': gestationalHistory,
-          'birthHistory': birthHistory,
-          'developmentHistory': developmentHistory,
-          'feedingHistory': feedingHistory,
-          'sleepHistory': sleepHistory,
-          'eliminationHistory': eliminationHistory,
-          'immunizationStatus': immunizationStatus,
-          'allergies': allergies,
-          'currentMedications': currentMedications,
-          'familyHistory': familyHistory,
-          'socialHistory': socialHistory,
-          'reviewOfSystems': reviewOfSystems,
-        },
-        'exam': <String, dynamic>{
-          'findings': examFindings,
-          'systemsExamined': examFindings.keys.toList(growable: false),
-          'notes': examNotes,
-        },
-        'assessment': assessment,
-        'plan': plan,
-      };
+    'anamnesis': <String, dynamic>{
+      'chiefComplaint': chiefComplaint,
+      'historyOfPresentIllness': historyOfPresentIllness,
+      'pastMedicalHistory': pastMedicalHistory,
+      'gestationalHistory': gestationalHistory,
+      'birthHistory': birthHistory,
+      'developmentHistory': developmentHistory,
+      'feedingHistory': feedingHistory,
+      'sleepHistory': sleepHistory,
+      'eliminationHistory': eliminationHistory,
+      'immunizationStatus': immunizationStatus,
+      'allergies': allergies,
+      'currentMedications': currentMedications,
+      'familyHistory': familyHistory,
+      'socialHistory': socialHistory,
+      'reviewOfSystems': reviewOfSystems,
+    },
+    'exam': <String, dynamic>{
+      'findings': examFindings,
+      'systemsExamined': examFindings.keys.toList(growable: false),
+      'notes': examNotes,
+    },
+    'assessment': assessment,
+    'plan': plan,
+  };
 
   static List<String> _strings(Object? value) =>
       (value as List<dynamic>?)?.whereType<String>().toList(growable: false) ??
@@ -276,15 +273,15 @@ class VoiceStructuredDraft extends Equatable {
 
   @override
   List<Object?> get props => <Object?>[
-        chiefComplaint,
-        historyOfPresentIllness,
-        assessment,
-        plan,
-        missingFields,
-        evolutionText,
-        hypotheses,
-        suggestedCids,
-      ];
+    chiefComplaint,
+    historyOfPresentIllness,
+    assessment,
+    plan,
+    missingFields,
+    evolutionText,
+    hypotheses,
+    suggestedCids,
+  ];
 }
 
 /// Sessao completa de consulta assistida por voz.
@@ -324,10 +321,12 @@ class VoiceConsultationSession extends Equatable {
       professionalId: (map['professionalId'] as String?) ?? '',
       professionalName: (map['professionalName'] as String?) ?? '',
       status: VoiceSessionStatus.fromName(map['status'] as String?),
-      consentAt: DateTime.tryParse((map['consentAt'] as String?) ?? '') ??
+      consentAt:
+          DateTime.tryParse((map['consentAt'] as String?) ?? '') ??
           DateTime.now(),
       consentByUid: (map['consentByUid'] as String?) ?? '',
-      startedAt: DateTime.tryParse((map['startedAt'] as String?) ?? '') ??
+      startedAt:
+          DateTime.tryParse((map['startedAt'] as String?) ?? '') ??
           DateTime.now(),
       endedAt: map['endedAt'] != null
           ? DateTime.tryParse(map['endedAt'] as String)
@@ -373,38 +372,37 @@ class VoiceConsultationSession extends Equatable {
   final bool audioStored;
 
   Map<String, dynamic> toMap() => <String, dynamic>{
-        'id': id,
-        'encounterId': encounterId,
-        'appointmentId': appointmentId,
-        'childId': childId,
-        'childName': childName,
-        'professionalId': professionalId,
-        'professionalName': professionalName,
-        'status': status.name,
-        'consentAt': consentAt.toIso8601String(),
-        'consentByUid': consentByUid,
-        'startedAt': startedAt.toIso8601String(),
-        'endedAt': endedAt?.toIso8601String(),
-        'durationSeconds': durationSeconds,
-        'segments':
-            segments.map((TranscriptSegment s) => s.toMap()).toList(),
-        'draft': draft?.toMap(),
-        'audioRetentionPolicy': audioRetentionPolicy.name,
-        'audioStored': audioStored,
-        'aiDisclaimer': aiDisclaimer,
-      };
+    'id': id,
+    'encounterId': encounterId,
+    'appointmentId': appointmentId,
+    'childId': childId,
+    'childName': childName,
+    'professionalId': professionalId,
+    'professionalName': professionalName,
+    'status': status.name,
+    'consentAt': consentAt.toIso8601String(),
+    'consentByUid': consentByUid,
+    'startedAt': startedAt.toIso8601String(),
+    'endedAt': endedAt?.toIso8601String(),
+    'durationSeconds': durationSeconds,
+    'segments': segments.map((TranscriptSegment s) => s.toMap()).toList(),
+    'draft': draft?.toMap(),
+    'audioRetentionPolicy': audioRetentionPolicy.name,
+    'audioStored': audioStored,
+    'aiDisclaimer': aiDisclaimer,
+  };
 
   @override
   List<Object?> get props => <Object?>[
-        id,
-        encounterId,
-        appointmentId,
-        childId,
-        status,
-        durationSeconds,
-        segments,
-        draft,
-        audioRetentionPolicy,
-        audioStored,
-      ];
+    id,
+    encounterId,
+    appointmentId,
+    childId,
+    status,
+    durationSeconds,
+    segments,
+    draft,
+    audioRetentionPolicy,
+    audioStored,
+  ];
 }

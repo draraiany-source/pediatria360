@@ -8,10 +8,10 @@ enum SupplementGoal {
   maintenance;
 
   String get label => switch (this) {
-        SupplementGoal.prophylaxis => 'Profilaxia',
-        SupplementGoal.treatment => 'Tratamento',
-        SupplementGoal.maintenance => 'Manutencao',
-      };
+    SupplementGoal.prophylaxis => 'Profilaxia',
+    SupplementGoal.treatment => 'Tratamento',
+    SupplementGoal.maintenance => 'Manutencao',
+  };
 }
 
 class SupplementCalculatorInput {
@@ -78,7 +78,8 @@ class SupplementCalculatorEngine {
     final List<String> alerts = <String>[
       kSupplementClinicalDisclaimer,
       'Nenhuma dose automatica foi aplicada. Preencha e confirme com base em fonte validada.',
-      if (input.weightKg == null) 'Peso nao informado ? necessario para dose por kg.',
+      if (input.weightKg == null)
+        'Peso nao informado ? necessario para dose por kg.',
       if (input.ageMonths == null && input.ageYears == null)
         'Idade nao informada ? revisar faixa etaria antes de qualquer esquema.',
       if (input.preterm)
@@ -91,13 +92,25 @@ class SupplementCalculatorEngine {
       ..writeln(
         'Idade: ${input.ageYears ?? '-'} a / ${input.ageMonths ?? '-'} m',
       )
-      ..writeln('Peso: ${input.weightKg ?? '-'} kg | Sexo: ${input.sex.isEmpty ? '-' : input.sex}')
-      ..writeln('Prematuro: ${input.preterm ? 'sim' : 'nao'}'
-          '${input.gestationalAgeWeeks == null ? '' : ' (IG ${input.gestationalAgeWeeks} sem)'}')
-      ..writeln('Diagnostico informado: ${input.diagnosis.isEmpty ? 'Nao informado' : input.diagnosis}')
-      ..writeln('Exame: ${input.relatedExamId.isEmpty ? 'Nao informado' : input.relatedExamId}')
-      ..writeln('Resultado: ${input.labResultText.isEmpty ? 'Nao informado' : input.labResultText}')
-      ..writeln('Apresentacao: ${input.presentation.isEmpty ? 'Nao informado' : input.presentation}')
+      ..writeln(
+        'Peso: ${input.weightKg ?? '-'} kg | Sexo: ${input.sex.isEmpty ? '-' : input.sex}',
+      )
+      ..writeln(
+        'Prematuro: ${input.preterm ? 'sim' : 'nao'}'
+        '${input.gestationalAgeWeeks == null ? '' : ' (IG ${input.gestationalAgeWeeks} sem)'}',
+      )
+      ..writeln(
+        'Diagnostico informado: ${input.diagnosis.isEmpty ? 'Nao informado' : input.diagnosis}',
+      )
+      ..writeln(
+        'Exame: ${input.relatedExamId.isEmpty ? 'Nao informado' : input.relatedExamId}',
+      )
+      ..writeln(
+        'Resultado: ${input.labResultText.isEmpty ? 'Nao informado' : input.labResultText}',
+      )
+      ..writeln(
+        'Apresentacao: ${input.presentation.isEmpty ? 'Nao informado' : input.presentation}',
+      )
       ..writeln()
       ..writeln(kSupplementContentPending);
 

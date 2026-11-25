@@ -92,8 +92,7 @@ class VaccineDose extends Equatable {
   bool isUpcoming({DateTime? at}) {
     if (isApplied || dueAt == null) return false;
     final DateTime now = at ?? DateTime.now();
-    return dueAt!.isAfter(now) &&
-        dueAt!.difference(now).inDays <= 30;
+    return dueAt!.isAfter(now) && dueAt!.difference(now).inDays <= 30;
   }
 
   VaccineDose copyWith({
@@ -105,35 +104,34 @@ class VaccineDose extends Equatable {
     DateTime? updatedAt,
     bool? pendingSync,
     bool clearApplied = false,
-  }) =>
-      VaccineDose(
-        id: id,
-        childId: childId,
-        vaccineId: vaccineId,
-        doseIndex: doseIndex,
-        dueAt: dueAt ?? this.dueAt,
-        appliedAt: clearApplied ? null : (appliedAt ?? this.appliedAt),
-        lot: lot ?? this.lot,
-        clinic: clinic ?? this.clinic,
-        proofUrl: proofUrl ?? this.proofUrl,
-        updatedAt: updatedAt ?? this.updatedAt,
-        pendingSync: pendingSync ?? this.pendingSync,
-      );
+  }) => VaccineDose(
+    id: id,
+    childId: childId,
+    vaccineId: vaccineId,
+    doseIndex: doseIndex,
+    dueAt: dueAt ?? this.dueAt,
+    appliedAt: clearApplied ? null : (appliedAt ?? this.appliedAt),
+    lot: lot ?? this.lot,
+    clinic: clinic ?? this.clinic,
+    proofUrl: proofUrl ?? this.proofUrl,
+    updatedAt: updatedAt ?? this.updatedAt,
+    pendingSync: pendingSync ?? this.pendingSync,
+  );
 
   @override
   List<Object?> get props => <Object?>[
-        id,
-        childId,
-        vaccineId,
-        doseIndex,
-        dueAt,
-        appliedAt,
-        lot,
-        clinic,
-        proofUrl,
-        updatedAt,
-        pendingSync,
-      ];
+    id,
+    childId,
+    vaccineId,
+    doseIndex,
+    dueAt,
+    appliedAt,
+    lot,
+    clinic,
+    proofUrl,
+    updatedAt,
+    pendingSync,
+  ];
 }
 
 /// Situação de uma dose, para agrupar a lista na tela.
@@ -144,9 +142,9 @@ enum DoseStatus {
   scheduled;
 
   String get label => switch (this) {
-        DoseStatus.applied => 'Aplicada',
-        DoseStatus.overdue => 'Em atraso',
-        DoseStatus.upcoming => 'Próxima',
-        DoseStatus.scheduled => 'Prevista',
-      };
+    DoseStatus.applied => 'Aplicada',
+    DoseStatus.overdue => 'Em atraso',
+    DoseStatus.upcoming => 'Próxima',
+    DoseStatus.scheduled => 'Prevista',
+  };
 }

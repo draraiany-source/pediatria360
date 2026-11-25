@@ -17,19 +17,21 @@ class ClinicScheduleConfigScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final ClinicMembership? membership =
-        ref.watch(activeClinicMembershipProvider);
-    final String? clinicId =
-        ref.watch(activeClinicIdProvider).valueOrNull;
+    final ClinicMembership? membership = ref.watch(
+      activeClinicMembershipProvider,
+    );
+    final String? clinicId = ref.watch(activeClinicIdProvider).valueOrNull;
     final AsyncValue<List<ClinicRoom>> rooms = ref.watch(clinicRoomsProvider);
-    final AsyncValue<List<ScheduleBlock>> blocks =
-        ref.watch(clinicScheduleBlocksProvider);
+    final AsyncValue<List<ScheduleBlock>> blocks = ref.watch(
+      clinicScheduleBlocksProvider,
+    );
 
     if (clinicId == null || clinicId.isEmpty) {
       return const Scaffold(
         body: EmptyState(
           title: 'Selecione uma clinica',
-          message: 'Ative uma clinica em Minha clinica antes de configurar salas.',
+          message:
+              'Ative uma clinica em Minha clinica antes de configurar salas.',
         ),
       );
     }
@@ -75,8 +77,10 @@ class ClinicScheduleConfigScreen extends ConsumerWidget {
                       (ClinicRoom r) => ListTile(
                         title: Text(r.name),
                         subtitle: Text(
-                          r.active ? 'Ativa' : 'Inativa'
-                          '${r.unitId.isEmpty ? '' : ' · unidade ${r.unitId}'}',
+                          r.active
+                              ? 'Ativa'
+                              : 'Inativa'
+                                    '${r.unitId.isEmpty ? '' : ' · unidade ${r.unitId}'}',
                         ),
                       ),
                     )
@@ -165,17 +169,19 @@ class ClinicScheduleConfigScreen extends ConsumerWidget {
     );
     if (ok != true || !context.mounted) return;
     final String id = DateTime.now().millisecondsSinceEpoch.toString();
-    final Result<void> result =
-        await ref.read(clinicScheduleRepositoryProvider).upsertRoom(
-              clinicId: clinicId,
-              room: ClinicRoom(id: id, name: name.text.trim()),
-              membership: membership,
-            );
+    final Result<void> result = await ref
+        .read(clinicScheduleRepositoryProvider)
+        .upsertRoom(
+          clinicId: clinicId,
+          room: ClinicRoom(id: id, name: name.text.trim()),
+          membership: membership,
+        );
     if (!context.mounted) return;
     result.fold(
       (_) {},
-      (Failure f) => ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text(f.message))),
+      (Failure f) => ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(f.message))),
     );
   }
 
@@ -203,27 +209,39 @@ class ClinicScheduleConfigScreen extends ConsumerWidget {
       initialTime: const TimeOfDay(hour: 13, minute: 0),
     );
     if (end == null || !context.mounted) return;
-    final DateTime startsAt =
-        DateTime(day.year, day.month, day.day, start.hour, start.minute);
-    final DateTime endsAt =
-        DateTime(day.year, day.month, day.day, end.hour, end.minute);
+    final DateTime startsAt = DateTime(
+      day.year,
+      day.month,
+      day.day,
+      start.hour,
+      start.minute,
+    );
+    final DateTime endsAt = DateTime(
+      day.year,
+      day.month,
+      day.day,
+      end.hour,
+      end.minute,
+    );
     final String id = DateTime.now().millisecondsSinceEpoch.toString();
-    final Result<void> result =
-        await ref.read(clinicScheduleRepositoryProvider).upsertBlock(
-              clinicId: clinicId,
-              block: ScheduleBlock(
-                id: id,
-                startsAt: startsAt,
-                endsAt: endsAt,
-                reason: 'Bloqueio manual',
-              ),
-              membership: membership,
-            );
+    final Result<void> result = await ref
+        .read(clinicScheduleRepositoryProvider)
+        .upsertBlock(
+          clinicId: clinicId,
+          block: ScheduleBlock(
+            id: id,
+            startsAt: startsAt,
+            endsAt: endsAt,
+            reason: 'Bloqueio manual',
+          ),
+          membership: membership,
+        );
     if (!context.mounted) return;
     result.fold(
       (_) {},
-      (Failure f) => ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text(f.message))),
+      (Failure f) => ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(f.message))),
     );
   }
 }

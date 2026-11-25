@@ -2,72 +2,47 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 
 import 'package:equatable/equatable.dart';
 
-
-
 enum CoverageType {
-
   private_,
 
   insurance,
 
   plan;
 
-
-
   static CoverageType fromName(String? value) {
-
     switch (value) {
-
       case 'private':
-
         return CoverageType.private_;
 
       case 'insurance':
-
         return CoverageType.insurance;
 
       case 'plan':
-
         return CoverageType.plan;
 
       default:
-
         return CoverageType.insurance;
-
     }
-
   }
 
-
-
   String get firestoreName => switch (this) {
+    CoverageType.private_ => 'private',
 
-        CoverageType.private_ => 'private',
+    CoverageType.insurance => 'insurance',
 
-        CoverageType.insurance => 'insurance',
-
-        CoverageType.plan => 'plan',
-
-      };
-
-
+    CoverageType.plan => 'plan',
+  };
 
   String get label => switch (this) {
+    CoverageType.private_ => 'Particular',
 
-        CoverageType.private_ => 'Particular',
+    CoverageType.insurance => 'Convenio',
 
-        CoverageType.insurance => 'Convenio',
-
-        CoverageType.plan => 'Plano',
-
-      };
-
+    CoverageType.plan => 'Plano',
+  };
 }
 
-
-
 enum AuthorizationStatus {
-
   pending,
 
   authorized,
@@ -78,24 +53,15 @@ enum AuthorizationStatus {
 
   cancelled;
 
-
-
   static AuthorizationStatus fromName(String? value) =>
-
       AuthorizationStatus.values.firstWhere(
-
         (AuthorizationStatus s) => s.name == value,
 
         orElse: () => AuthorizationStatus.pending,
-
       );
-
 }
 
-
-
 enum BillingGuideType {
-
   consultation,
 
   procedure,
@@ -106,24 +72,15 @@ enum BillingGuideType {
 
   admission;
 
-
-
   static BillingGuideType fromName(String? value) =>
-
       BillingGuideType.values.firstWhere(
-
         (BillingGuideType t) => t.name == value,
 
         orElse: () => BillingGuideType.consultation,
-
       );
-
 }
 
-
-
 enum BillingGuideStatus {
-
   draft,
 
   ready,
@@ -138,24 +95,15 @@ enum BillingGuideStatus {
 
   cancelled;
 
-
-
   static BillingGuideStatus fromName(String? value) =>
-
       BillingGuideStatus.values.firstWhere(
-
         (BillingGuideStatus s) => s.name == value,
 
         orElse: () => BillingGuideStatus.draft,
-
       );
-
 }
 
-
-
 enum BillingBatchStatus {
-
   open,
 
   closed,
@@ -170,24 +118,15 @@ enum BillingBatchStatus {
 
   cancelled;
 
-
-
   static BillingBatchStatus fromName(String? value) =>
-
       BillingBatchStatus.values.firstWhere(
-
         (BillingBatchStatus s) => s.name == value,
 
         orElse: () => BillingBatchStatus.open,
-
       );
-
 }
 
-
-
 enum BillingGlosaStatus {
-
   new_,
 
   analyzing,
@@ -202,48 +141,34 @@ enum BillingGlosaStatus {
 
   resolved;
 
-
-
   static BillingGlosaStatus fromName(String? value) {
-
     if (value == 'new') return BillingGlosaStatus.new_;
 
     return BillingGlosaStatus.values.firstWhere(
-
       (BillingGlosaStatus s) => s.name == value,
 
       orElse: () => BillingGlosaStatus.new_,
-
     );
-
   }
 
-
-
   String get firestoreName => switch (this) {
+    BillingGlosaStatus.new_ => 'new',
 
-        BillingGlosaStatus.new_ => 'new',
+    BillingGlosaStatus.analyzing => 'analyzing',
 
-        BillingGlosaStatus.analyzing => 'analyzing',
+    BillingGlosaStatus.appealPrep => 'appealPrep',
 
-        BillingGlosaStatus.appealPrep => 'appealPrep',
+    BillingGlosaStatus.appealSent => 'appealSent',
 
-        BillingGlosaStatus.appealSent => 'appealSent',
+    BillingGlosaStatus.accepted => 'accepted',
 
-        BillingGlosaStatus.accepted => 'accepted',
+    BillingGlosaStatus.denied => 'denied',
 
-        BillingGlosaStatus.denied => 'denied',
-
-        BillingGlosaStatus.resolved => 'resolved',
-
-      };
-
+    BillingGlosaStatus.resolved => 'resolved',
+  };
 }
 
-
-
 enum BillingAuditAction {
-
   planCreated,
 
   guideCreated,
@@ -260,36 +185,27 @@ enum BillingAuditAction {
 
   financeSync;
 
-
-
   String get label => switch (this) {
+    BillingAuditAction.planCreated => 'Plano cadastrado',
 
-        BillingAuditAction.planCreated => 'Plano cadastrado',
+    BillingAuditAction.guideCreated => 'Guia criada',
 
-        BillingAuditAction.guideCreated => 'Guia criada',
+    BillingAuditAction.batchClosed => 'Lote fechado',
 
-        BillingAuditAction.batchClosed => 'Lote fechado',
+    BillingAuditAction.batchSent => 'Lote enviado',
 
-        BillingAuditAction.batchSent => 'Lote enviado',
+    BillingAuditAction.batchReturn => 'Retorno do lote',
 
-        BillingAuditAction.batchReturn => 'Retorno do lote',
+    BillingAuditAction.glosaCreated => 'Glosa registrada',
 
-        BillingAuditAction.glosaCreated => 'Glosa registrada',
+    BillingAuditAction.appealUpdated => 'Recurso atualizado',
 
-        BillingAuditAction.appealUpdated => 'Recurso atualizado',
-
-        BillingAuditAction.financeSync => 'Sync financeiro',
-
-      };
-
+    BillingAuditAction.financeSync => 'Sync financeiro',
+  };
 }
 
-
-
 class InsurancePlan extends Equatable {
-
   const InsurancePlan({
-
     required this.id,
 
     required this.ownerId,
@@ -315,17 +231,14 @@ class InsurancePlan extends Equatable {
     this.notes = '',
 
     this.active = true,
-
   });
 
-
-
-  factory InsurancePlan.fromFirestore(DocumentSnapshot<Map<String, dynamic>> doc) {
-
+  factory InsurancePlan.fromFirestore(
+    DocumentSnapshot<Map<String, dynamic>> doc,
+  ) {
     final Map<String, dynamic> data = doc.data() ?? const <String, dynamic>{};
 
     return InsurancePlan(
-
       id: doc.id,
 
       ownerId: (data['ownerId'] as String?) ?? '',
@@ -351,12 +264,8 @@ class InsurancePlan extends Equatable {
       notes: (data['notes'] as String?) ?? '',
 
       active: (data['active'] as bool?) ?? true,
-
     );
-
   }
-
-
 
   final String id;
 
@@ -384,50 +293,38 @@ class InsurancePlan extends Equatable {
 
   final bool active;
 
-
-
   Map<String, dynamic> toMap() => <String, dynamic>{
+    'ownerId': ownerId,
 
-        'ownerId': ownerId,
+    'operatorName': operatorName,
 
-        'operatorName': operatorName,
+    'planName': planName,
 
-        'planName': planName,
+    'code': code,
 
-        'code': code,
+    'registryNumber': registryNumber,
 
-        'registryNumber': registryNumber,
+    if (feeTableJson != null) 'feeTableJson': feeTableJson,
 
-        if (feeTableJson != null) 'feeTableJson': feeTableJson,
+    'feeNotes': feeNotes,
 
-        'feeNotes': feeNotes,
+    if (validFrom != null) 'validFrom': Timestamp.fromDate(validFrom!),
 
-        if (validFrom != null) 'validFrom': Timestamp.fromDate(validFrom!),
+    if (validUntil != null) 'validUntil': Timestamp.fromDate(validUntil!),
 
-        if (validUntil != null) 'validUntil': Timestamp.fromDate(validUntil!),
+    'rules': rules,
 
-        'rules': rules,
+    'notes': notes,
 
-        'notes': notes,
-
-        'active': active,
-
-      };
-
-
+    'active': active,
+  };
 
   @override
-
   List<Object?> get props => <Object?>[id, ownerId, operatorName, planName];
-
 }
 
-
-
 class PatientInsurance extends Equatable {
-
   const PatientInsurance({
-
     required this.id,
 
     required this.ownerId,
@@ -449,21 +346,14 @@ class PatientInsurance extends Equatable {
     this.isDependent = false,
 
     this.notes = '',
-
   });
 
-
-
   factory PatientInsurance.fromFirestore(
-
     DocumentSnapshot<Map<String, dynamic>> doc,
-
   ) {
-
     final Map<String, dynamic> data = doc.data() ?? const <String, dynamic>{};
 
     return PatientInsurance(
-
       id: doc.id,
 
       ownerId: (data['ownerId'] as String?) ?? '',
@@ -485,12 +375,8 @@ class PatientInsurance extends Equatable {
       isDependent: (data['isDependent'] as bool?) ?? false,
 
       notes: (data['notes'] as String?) ?? '',
-
     );
-
   }
-
-
 
   final String id;
 
@@ -514,58 +400,42 @@ class PatientInsurance extends Equatable {
 
   final String notes;
 
-
-
   bool isCardValid(DateTime now) {
-
     if (coverageType == CoverageType.private_) return true;
 
     if (validUntil == null) return true;
 
     return !validUntil!.isBefore(DateTime(now.year, now.month, now.day));
-
   }
 
-
-
   Map<String, dynamic> toMap() => <String, dynamic>{
+    'ownerId': ownerId,
 
-        'ownerId': ownerId,
+    'childId': childId,
 
-        'childId': childId,
+    if (patientId != null) 'patientId': patientId,
 
-        if (patientId != null) 'patientId': patientId,
+    'coverageType': coverageType.firestoreName,
 
-        'coverageType': coverageType.firestoreName,
+    if (planId != null) 'planId': planId,
 
-        if (planId != null) 'planId': planId,
+    'cardNumber': cardNumber,
 
-        'cardNumber': cardNumber,
+    if (validUntil != null) 'validUntil': Timestamp.fromDate(validUntil!),
 
-        if (validUntil != null) 'validUntil': Timestamp.fromDate(validUntil!),
+    'holderName': holderName,
 
-        'holderName': holderName,
+    'isDependent': isDependent,
 
-        'isDependent': isDependent,
-
-        'notes': notes,
-
-      };
-
-
+    'notes': notes,
+  };
 
   @override
-
   List<Object?> get props => <Object?>[id, childId, planId, cardNumber];
-
 }
 
-
-
 class InsuranceAuthorization extends Equatable {
-
   const InsuranceAuthorization({
-
     required this.id,
 
     required this.ownerId,
@@ -593,21 +463,14 @@ class InsuranceAuthorization extends Equatable {
     this.status = AuthorizationStatus.pending,
 
     this.notes = '',
-
   });
 
-
-
   factory InsuranceAuthorization.fromFirestore(
-
     DocumentSnapshot<Map<String, dynamic>> doc,
-
   ) {
-
     final Map<String, dynamic> data = doc.data() ?? const <String, dynamic>{};
 
     return InsuranceAuthorization(
-
       id: doc.id,
 
       ownerId: (data['ownerId'] as String?) ?? '',
@@ -635,12 +498,8 @@ class InsuranceAuthorization extends Equatable {
       status: AuthorizationStatus.fromName(data['status'] as String?),
 
       notes: (data['notes'] as String?) ?? '',
-
     );
-
   }
-
-
 
   final String id;
 
@@ -670,64 +529,48 @@ class InsuranceAuthorization extends Equatable {
 
   final String notes;
 
-
-
   bool isActiveAuth(DateTime now) {
-
     if (status != AuthorizationStatus.authorized) return false;
 
     if (validUntil == null) return true;
 
     return !validUntil!.isBefore(now);
-
   }
 
-
-
   Map<String, dynamic> toMap() => <String, dynamic>{
+    'ownerId': ownerId,
 
-        'ownerId': ownerId,
+    'childId': childId,
 
-        'childId': childId,
+    if (patientId != null) 'patientId': patientId,
 
-        if (patientId != null) 'patientId': patientId,
+    if (planId != null) 'planId': planId,
 
-        if (planId != null) 'planId': planId,
+    'procedureCode': procedureCode,
 
-        'procedureCode': procedureCode,
+    'procedureName': procedureName,
 
-        'procedureName': procedureName,
+    if (professionalId != null) 'professionalId': professionalId,
 
-        if (professionalId != null) 'professionalId': professionalId,
+    'requestedAt': Timestamp.fromDate(requestedAt),
 
-        'requestedAt': Timestamp.fromDate(requestedAt),
+    'authNumber': authNumber,
 
-        'authNumber': authNumber,
+    if (validUntil != null) 'validUntil': Timestamp.fromDate(validUntil!),
 
-        if (validUntil != null) 'validUntil': Timestamp.fromDate(validUntil!),
+    'qtyAuthorized': qtyAuthorized,
 
-        'qtyAuthorized': qtyAuthorized,
+    'status': status.name,
 
-        'status': status.name,
-
-        'notes': notes,
-
-      };
-
-
+    'notes': notes,
+  };
 
   @override
-
   List<Object?> get props => <Object?>[id, childId, status, authNumber];
-
 }
 
-
-
 class BillingGuide extends Equatable {
-
   const BillingGuide({
-
     required this.id,
 
     required this.ownerId,
@@ -761,17 +604,14 @@ class BillingGuide extends Equatable {
     this.status = BillingGuideStatus.draft,
 
     this.batchId,
-
   });
 
-
-
-  factory BillingGuide.fromFirestore(DocumentSnapshot<Map<String, dynamic>> doc) {
-
+  factory BillingGuide.fromFirestore(
+    DocumentSnapshot<Map<String, dynamic>> doc,
+  ) {
     final Map<String, dynamic> data = doc.data() ?? const <String, dynamic>{};
 
     return BillingGuide(
-
       id: doc.id,
 
       ownerId: (data['ownerId'] as String?) ?? '',
@@ -805,12 +645,8 @@ class BillingGuide extends Equatable {
       status: BillingGuideStatus.fromName(data['status'] as String?),
 
       batchId: data['batchId'] as String?,
-
     );
-
   }
-
-
 
   final String id;
 
@@ -846,56 +682,42 @@ class BillingGuide extends Equatable {
 
   final String? batchId;
 
-
-
   Map<String, dynamic> toMap() => <String, dynamic>{
+    'ownerId': ownerId,
 
-        'ownerId': ownerId,
+    'type': type.name,
 
-        'type': type.name,
+    'childId': childId,
 
-        'childId': childId,
+    if (patientId != null) 'patientId': patientId,
 
-        if (patientId != null) 'patientId': patientId,
+    'beneficiaryName': beneficiaryName,
 
-        'beneficiaryName': beneficiaryName,
+    if (planId != null) 'planId': planId,
 
-        if (planId != null) 'planId': planId,
+    if (professionalId != null) 'professionalId': professionalId,
 
-        if (professionalId != null) 'professionalId': professionalId,
+    'procedureCode': procedureCode,
 
-        'procedureCode': procedureCode,
+    'procedureName': procedureName,
 
-        'procedureName': procedureName,
+    'cid': cid,
 
-        'cid': cid,
+    'serviceDate': Timestamp.fromDate(serviceDate),
 
-        'serviceDate': Timestamp.fromDate(serviceDate),
+    'amountCents': amountCents,
 
-        'amountCents': amountCents,
+    if (authorizationId != null) 'authorizationId': authorizationId,
 
-        if (authorizationId != null) 'authorizationId': authorizationId,
+    if (appointmentId != null) 'appointmentId': appointmentId,
 
-        if (appointmentId != null) 'appointmentId': appointmentId,
+    'status': status.name,
 
-        'status': status.name,
+    if (batchId != null) 'batchId': batchId,
+  };
 
-        if (batchId != null) 'batchId': batchId,
-
-      };
-
-
-
-  BillingGuide copyWith({
-
-    BillingGuideStatus? status,
-
-    String? batchId,
-
-  }) =>
-
+  BillingGuide copyWith({BillingGuideStatus? status, String? batchId}) =>
       BillingGuide(
-
         id: id,
 
         ownerId: ownerId,
@@ -929,23 +751,14 @@ class BillingGuide extends Equatable {
         status: status ?? this.status,
 
         batchId: batchId ?? this.batchId,
-
       );
 
-
-
   @override
-
   List<Object?> get props => <Object?>[id, childId, amountCents, status];
-
 }
 
-
-
 class BillingBatch extends Equatable {
-
   const BillingBatch({
-
     required this.id,
 
     required this.ownerId,
@@ -971,17 +784,14 @@ class BillingBatch extends Equatable {
     this.returnAt,
 
     this.returnNotes = '',
-
   });
 
-
-
-  factory BillingBatch.fromFirestore(DocumentSnapshot<Map<String, dynamic>> doc) {
-
+  factory BillingBatch.fromFirestore(
+    DocumentSnapshot<Map<String, dynamic>> doc,
+  ) {
     final Map<String, dynamic> data = doc.data() ?? const <String, dynamic>{};
 
     return BillingBatch(
-
       id: doc.id,
 
       ownerId: (data['ownerId'] as String?) ?? '',
@@ -993,9 +803,7 @@ class BillingBatch extends Equatable {
       periodEnd: _readDate(data['periodEnd']),
 
       guideIds: List<String>.from(
-
         (data['guideIds'] as List<dynamic>?) ?? const <dynamic>[],
-
       ),
 
       guideCount: (data['guideCount'] as num?)?.toInt() ?? 0,
@@ -1011,12 +819,8 @@ class BillingBatch extends Equatable {
       returnAt: _readDateOrNull(data['returnAt']),
 
       returnNotes: (data['returnNotes'] as String?) ?? '',
-
     );
-
   }
-
-
 
   final String id;
 
@@ -1044,40 +848,33 @@ class BillingBatch extends Equatable {
 
   final String returnNotes;
 
-
-
   Map<String, dynamic> toMap() => <String, dynamic>{
+    'ownerId': ownerId,
 
-        'ownerId': ownerId,
+    if (planId != null) 'planId': planId,
 
-        if (planId != null) 'planId': planId,
+    'periodStart': Timestamp.fromDate(periodStart),
 
-        'periodStart': Timestamp.fromDate(periodStart),
+    'periodEnd': Timestamp.fromDate(periodEnd),
 
-        'periodEnd': Timestamp.fromDate(periodEnd),
+    'guideIds': guideIds,
 
-        'guideIds': guideIds,
+    'guideCount': guideCount,
 
-        'guideCount': guideCount,
+    'totalCents': totalCents,
 
-        'totalCents': totalCents,
+    'status': status.name,
 
-        'status': status.name,
+    'protocol': protocol,
 
-        'protocol': protocol,
+    if (sentAt != null) 'sentAt': Timestamp.fromDate(sentAt!),
 
-        if (sentAt != null) 'sentAt': Timestamp.fromDate(sentAt!),
+    if (returnAt != null) 'returnAt': Timestamp.fromDate(returnAt!),
 
-        if (returnAt != null) 'returnAt': Timestamp.fromDate(returnAt!),
-
-        'returnNotes': returnNotes,
-
-      };
-
-
+    'returnNotes': returnNotes,
+  };
 
   BillingBatch copyWith({
-
     List<String>? guideIds,
 
     int? guideCount,
@@ -1093,53 +890,40 @@ class BillingBatch extends Equatable {
     DateTime? returnAt,
 
     String? returnNotes,
+  }) => BillingBatch(
+    id: id,
 
-  }) =>
+    ownerId: ownerId,
 
-      BillingBatch(
+    planId: planId,
 
-        id: id,
+    periodStart: periodStart,
 
-        ownerId: ownerId,
+    periodEnd: periodEnd,
 
-        planId: planId,
+    guideIds: guideIds ?? this.guideIds,
 
-        periodStart: periodStart,
+    guideCount: guideCount ?? this.guideCount,
 
-        periodEnd: periodEnd,
+    totalCents: totalCents ?? this.totalCents,
 
-        guideIds: guideIds ?? this.guideIds,
+    status: status ?? this.status,
 
-        guideCount: guideCount ?? this.guideCount,
+    protocol: protocol ?? this.protocol,
 
-        totalCents: totalCents ?? this.totalCents,
+    sentAt: sentAt ?? this.sentAt,
 
-        status: status ?? this.status,
+    returnAt: returnAt ?? this.returnAt,
 
-        protocol: protocol ?? this.protocol,
-
-        sentAt: sentAt ?? this.sentAt,
-
-        returnAt: returnAt ?? this.returnAt,
-
-        returnNotes: returnNotes ?? this.returnNotes,
-
-      );
-
-
+    returnNotes: returnNotes ?? this.returnNotes,
+  );
 
   @override
-
   List<Object?> get props => <Object?>[id, status, guideCount, totalCents];
-
 }
 
-
-
 class BillingGlosa extends Equatable {
-
   const BillingGlosa({
-
     required this.id,
 
     required this.ownerId,
@@ -1175,17 +959,14 @@ class BillingGlosa extends Equatable {
     this.assigneeId,
 
     this.responseNotes = '',
-
   });
 
-
-
-  factory BillingGlosa.fromFirestore(DocumentSnapshot<Map<String, dynamic>> doc) {
-
+  factory BillingGlosa.fromFirestore(
+    DocumentSnapshot<Map<String, dynamic>> doc,
+  ) {
     final Map<String, dynamic> data = doc.data() ?? const <String, dynamic>{};
 
     return BillingGlosa(
-
       id: doc.id,
 
       ownerId: (data['ownerId'] as String?) ?? '',
@@ -1217,20 +998,14 @@ class BillingGlosa extends Equatable {
       appealJustification: (data['appealJustification'] as String?) ?? '',
 
       appealDocsUrls: List<String>.from(
-
         (data['appealDocsUrls'] as List<dynamic>?) ?? const <dynamic>[],
-
       ),
 
       assigneeId: data['assigneeId'] as String?,
 
       responseNotes: (data['responseNotes'] as String?) ?? '',
-
     );
-
   }
-
-
 
   final String id;
 
@@ -1268,52 +1043,44 @@ class BillingGlosa extends Equatable {
 
   final String responseNotes;
 
-
-
   Map<String, dynamic> toMap() => <String, dynamic>{
+    'ownerId': ownerId,
 
-        'ownerId': ownerId,
+    'childId': childId,
 
-        'childId': childId,
+    if (appointmentId != null) 'appointmentId': appointmentId,
 
-        if (appointmentId != null) 'appointmentId': appointmentId,
+    if (planId != null) 'planId': planId,
 
-        if (planId != null) 'planId': planId,
+    if (guideId != null) 'guideId': guideId,
 
-        if (guideId != null) 'guideId': guideId,
+    if (batchId != null) 'batchId': batchId,
 
-        if (batchId != null) 'batchId': batchId,
+    'billedCents': billedCents,
 
-        'billedCents': billedCents,
+    'glosedCents': glosedCents,
 
-        'glosedCents': glosedCents,
+    'reason': reason,
 
-        'reason': reason,
+    'glosaDate': Timestamp.fromDate(glosaDate),
 
-        'glosaDate': Timestamp.fromDate(glosaDate),
+    'status': status.firestoreName,
 
-        'status': status.firestoreName,
+    'notes': notes,
 
-        'notes': notes,
+    if (appealDeadline != null)
+      'appealDeadline': Timestamp.fromDate(appealDeadline!),
 
-        if (appealDeadline != null)
+    'appealJustification': appealJustification,
 
-          'appealDeadline': Timestamp.fromDate(appealDeadline!),
+    'appealDocsUrls': appealDocsUrls,
 
-        'appealJustification': appealJustification,
+    if (assigneeId != null) 'assigneeId': assigneeId,
 
-        'appealDocsUrls': appealDocsUrls,
-
-        if (assigneeId != null) 'assigneeId': assigneeId,
-
-        'responseNotes': responseNotes,
-
-      };
-
-
+    'responseNotes': responseNotes,
+  };
 
   BillingGlosa copyWith({
-
     BillingGlosaStatus? status,
 
     String? appealJustification,
@@ -1321,65 +1088,52 @@ class BillingGlosa extends Equatable {
     List<String>? appealDocsUrls,
 
     String? responseNotes,
+  }) => BillingGlosa(
+    id: id,
 
-  }) =>
+    ownerId: ownerId,
 
-      BillingGlosa(
+    childId: childId,
 
-        id: id,
+    appointmentId: appointmentId,
 
-        ownerId: ownerId,
+    planId: planId,
 
-        childId: childId,
+    guideId: guideId,
 
-        appointmentId: appointmentId,
+    batchId: batchId,
 
-        planId: planId,
+    billedCents: billedCents,
 
-        guideId: guideId,
+    glosedCents: glosedCents,
 
-        batchId: batchId,
+    reason: reason,
 
-        billedCents: billedCents,
+    glosaDate: glosaDate,
 
-        glosedCents: glosedCents,
+    status: status ?? this.status,
 
-        reason: reason,
+    notes: notes,
 
-        glosaDate: glosaDate,
+    appealDeadline: appealDeadline,
 
-        status: status ?? this.status,
+    appealJustification: appealJustification ?? this.appealJustification,
 
-        notes: notes,
+    appealDocsUrls: appealDocsUrls ?? this.appealDocsUrls,
 
-        appealDeadline: appealDeadline,
+    assigneeId: assigneeId,
 
-        appealJustification: appealJustification ?? this.appealJustification,
-
-        appealDocsUrls: appealDocsUrls ?? this.appealDocsUrls,
-
-        assigneeId: assigneeId,
-
-        responseNotes: responseNotes ?? this.responseNotes,
-
-      );
-
-
+    responseNotes: responseNotes ?? this.responseNotes,
+  );
 
   @override
-
   List<Object?> get props => <Object?>[id, guideId, glosedCents, status];
-
 }
-
-
 
 /// Esqueleto TISS — integracao real com operadora pendente (nao envia XML).
 
 class TissExportStub extends Equatable {
-
   const TissExportStub({
-
     required this.batchId,
 
     required this.protocol,
@@ -1387,10 +1141,7 @@ class TissExportStub extends Equatable {
     required this.guideCount,
 
     required this.totalCents,
-
   });
-
-
 
   final String batchId;
 
@@ -1400,12 +1151,9 @@ class TissExportStub extends Equatable {
 
   final int totalCents;
 
-
-
   /// Template XML sem transmissao — substituir quando houver conector TISS.
 
   String toTissXmlSkeleton() {
-
     return '''<?xml version="1.0" encoding="UTF-8"?>
 
 <!-- PENDENTE: integracao operadora TISS — export local apenas -->
@@ -1437,23 +1185,14 @@ class TissExportStub extends Equatable {
   </ans:prestadorParaOperadora>
 
 </ans:mensagemTISS>''';
-
   }
 
-
-
   @override
-
   List<Object?> get props => <Object?>[batchId, protocol, guideCount];
-
 }
 
-
-
 class BillingAuditEntry extends Equatable {
-
   const BillingAuditEntry({
-
     required this.id,
 
     required this.ownerId,
@@ -1469,31 +1208,22 @@ class BillingAuditEntry extends Equatable {
     required this.byUserId,
 
     this.metadata = const <String, dynamic>{},
-
   });
 
-
-
   factory BillingAuditEntry.fromFirestore(
-
     DocumentSnapshot<Map<String, dynamic>> doc,
-
   ) {
-
     final Map<String, dynamic> data = doc.data() ?? const <String, dynamic>{};
 
     return BillingAuditEntry(
-
       id: doc.id,
 
       ownerId: (data['ownerId'] as String?) ?? '',
 
       action: BillingAuditAction.values.firstWhere(
-
         (BillingAuditAction a) => a.name == data['action'],
 
         orElse: () => BillingAuditAction.guideCreated,
-
       ),
 
       entityType: (data['entityType'] as String?) ?? '',
@@ -1505,16 +1235,11 @@ class BillingAuditEntry extends Equatable {
       byUserId: (data['byUserId'] as String?) ?? '',
 
       metadata: Map<String, dynamic>.from(
-
-        (data['metadata'] as Map<String, dynamic>?) ?? const <String, dynamic>{},
-
+        (data['metadata'] as Map<String, dynamic>?) ??
+            const <String, dynamic>{},
       ),
-
     );
-
   }
-
-
 
   final String id;
 
@@ -1532,40 +1257,28 @@ class BillingAuditEntry extends Equatable {
 
   final Map<String, dynamic> metadata;
 
-
-
   Map<String, dynamic> toMap() => <String, dynamic>{
+    'ownerId': ownerId,
 
-        'ownerId': ownerId,
+    'action': action.name,
 
-        'action': action.name,
+    'entityType': entityType,
 
-        'entityType': entityType,
+    'entityId': entityId,
 
-        'entityId': entityId,
+    'at': Timestamp.fromDate(at),
 
-        'at': Timestamp.fromDate(at),
+    'byUserId': byUserId,
 
-        'byUserId': byUserId,
-
-        'metadata': metadata,
-
-      };
-
-
+    'metadata': metadata,
+  };
 
   @override
-
   List<Object?> get props => <Object?>[id, action, entityId];
-
 }
 
-
-
 class BillingDashboardKpis extends Equatable {
-
   const BillingDashboardKpis({
-
     required this.billedMonth,
 
     required this.received,
@@ -1581,10 +1294,7 @@ class BillingDashboardKpis extends Equatable {
     this.topRevenuePlan,
 
     this.topGlosaPlan,
-
   });
-
-
 
   final int billedMonth;
 
@@ -1602,32 +1312,25 @@ class BillingDashboardKpis extends Equatable {
 
   final String? topGlosaPlan;
 
-
-
   @override
-
-  List<Object?> get props =>
-
-      <Object?>[billedMonth, received, pending, glosed, glosaRate];
-
+  List<Object?> get props => <Object?>[
+    billedMonth,
+    received,
+    pending,
+    glosed,
+    glosaRate,
+  ];
 }
 
-
-
 DateTime _readDate(Object? value) {
-
   if (value is Timestamp) return value.toDate();
 
   if (value is String) return DateTime.tryParse(value) ?? DateTime.now();
 
   return DateTime.now();
-
 }
 
-
-
 DateTime? _readDateOrNull(Object? value) {
-
   if (value == null) return null;
 
   if (value is Timestamp) return value.toDate();
@@ -1635,6 +1338,4 @@ DateTime? _readDateOrNull(Object? value) {
   if (value is String) return DateTime.tryParse(value);
 
   return null;
-
 }
-

@@ -74,18 +74,18 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
     FocusScope.of(context).unfocus();
     setState(() => _saving = true);
 
-    final Result<AppUser> result =
-        await ref.read(updateProfileProvider).call(
-              UpdateProfileParams(
-                name: _name.text,
-                // Campo vazio precisa **limpar** o telefone, não deixar
-                // como estava — por isso manda string vazia, não null,
-                // quando o usuário apaga tudo.
-                phone: _phone.text.trim(),
-                specialty:
-                    user.role == UserRole.professional ? _specialty : null,
-              ),
-            );
+    final Result<AppUser> result = await ref
+        .read(updateProfileProvider)
+        .call(
+          UpdateProfileParams(
+            name: _name.text,
+            // Campo vazio precisa **limpar** o telefone, não deixar
+            // como estava — por isso manda string vazia, não null,
+            // quando o usuário apaga tudo.
+            phone: _phone.text.trim(),
+            specialty: user.role == UserRole.professional ? _specialty : null,
+          ),
+        );
 
     if (!mounted) return;
     setState(() => _saving = false);
@@ -94,9 +94,7 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
       (_) {
         ScaffoldMessenger.of(context)
           ..hideCurrentSnackBar()
-          ..showSnackBar(
-            const SnackBar(content: Text('Perfil atualizado.')),
-          );
+          ..showSnackBar(const SnackBar(content: Text('Perfil atualizado.')));
         Navigator.of(context).pop();
       },
       (Failure failure) => ScaffoldMessenger.of(context)
@@ -151,8 +149,9 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
                       child: user.photoUrl == null
                           ? Text(
                               user.initials,
-                              style: theme.textTheme.headlineSmall
-                                  ?.copyWith(color: Colors.white),
+                              style: theme.textTheme.headlineSmall?.copyWith(
+                                color: Colors.white,
+                              ),
                             )
                           : null,
                     ),
@@ -180,8 +179,10 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
                       value: _specialty,
                       decoration: const InputDecoration(
                         labelText: 'Área de atuação',
-                        prefixIcon:
-                            Icon(Icons.local_hospital_outlined, size: 20),
+                        prefixIcon: Icon(
+                          Icons.local_hospital_outlined,
+                          size: 20,
+                        ),
                       ),
                       items: professionalSpecialties
                           .map(
@@ -206,7 +207,8 @@ class _ProfileEditScreenState extends ConsumerState<ProfileEditScreen> {
                             ? AppColors.success
                             : AppColors.warning,
                       ),
-                      note: 'Conferido manualmente pela equipe. Para '
+                      note:
+                          'Conferido manualmente pela equipe. Para '
                           'corrigir, fale com o suporte — não é editável '
                           'aqui.',
                     ),

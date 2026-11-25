@@ -20,31 +20,31 @@ void main() {
     );
     final List<FinanceReceivable> rows =
         BillingFinanceIntegration.receivablesForPaidBatch(
-      batch: BillingBatch(
-        id: 'batch1',
-        ownerId: 'owner',
-        periodStart: now,
-        periodEnd: now,
-        guideIds: <String>['guide-abc'],
-        guideCount: 1,
-        totalCents: 20000,
-        status: BillingBatchStatus.paid,
-      ),
-      guidesInBatch: <BillingGuide>[guide],
-      glosasForBatch: <BillingGlosa>[
-        BillingGlosa(
-          id: 'gl1',
-          ownerId: 'owner',
-          childId: 'child',
-          guideId: 'guide-abc',
-          batchId: 'batch1',
-          billedCents: 20000,
-          glosedCents: 5000,
-          glosaDate: now,
-        ),
-      ],
-      now: now,
-    );
+          batch: BillingBatch(
+            id: 'batch1',
+            ownerId: 'owner',
+            periodStart: now,
+            periodEnd: now,
+            guideIds: <String>['guide-abc'],
+            guideCount: 1,
+            totalCents: 20000,
+            status: BillingBatchStatus.paid,
+          ),
+          guidesInBatch: <BillingGuide>[guide],
+          glosasForBatch: <BillingGlosa>[
+            BillingGlosa(
+              id: 'gl1',
+              ownerId: 'owner',
+              childId: 'child',
+              guideId: 'guide-abc',
+              batchId: 'batch1',
+              billedCents: 20000,
+              glosedCents: 5000,
+              glosaDate: now,
+            ),
+          ],
+          now: now,
+        );
     expect(rows.single.id, billingReceivableIdForGuide('guide-abc'));
     expect(rows.single.paidCents, 15000);
     expect(rows.single.origin, RevenueOrigin.insurance);
@@ -65,17 +65,17 @@ void main() {
     );
     final FinanceReceivable adjusted =
         BillingFinanceIntegration.applyGlosaToReceivable(
-      existing: base,
-      glosa: BillingGlosa(
-        id: 'g',
-        ownerId: 'o',
-        childId: 'c',
-        billedCents: 10000,
-        glosedCents: 3000,
-        glosaDate: now,
-      ),
-      now: now,
-    );
+          existing: base,
+          glosa: BillingGlosa(
+            id: 'g',
+            ownerId: 'o',
+            childId: 'c',
+            billedCents: 10000,
+            glosedCents: 3000,
+            glosaDate: now,
+          ),
+          now: now,
+        );
     expect(adjusted.paidCents, 7000);
     expect(adjusted.openCents, 3000);
   });

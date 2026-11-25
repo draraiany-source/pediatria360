@@ -37,9 +37,12 @@ class BiClinicalScreen extends ConsumerWidget {
 
     final snapshot = ref.watch(executiveSnapshotProvider);
     final int today =
-        ref.watch(clinicDashboardStatsProvider).valueOrNull?.todayAppointments ??
-            snapshot.todayAppointments ??
-            0;
+        ref
+            .watch(clinicDashboardStatsProvider)
+            .valueOrNull
+            ?.todayAppointments ??
+        snapshot.todayAppointments ??
+        0;
     final BiClinicalLite clinical = snapshot.clinical;
 
     final List<BiKpiCardData> cards = <BiKpiCardData>[
@@ -91,8 +94,8 @@ class BiClinicalScreen extends ConsumerWidget {
           Text(
             BiClinicalLite.disclaimer,
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: AppColors.navy.withValues(alpha: 0.7),
-                ),
+              color: AppColors.navy.withValues(alpha: 0.7),
+            ),
           ),
           const SizedBox(height: AppSpacing.md),
           GridView.count(

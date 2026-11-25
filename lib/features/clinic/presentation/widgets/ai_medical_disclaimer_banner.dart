@@ -6,10 +6,7 @@ import '../../domain/voice_consultation.dart';
 
 /// Faixa permanente de aviso: saida da IA e sempre rascunho.
 class AiMedicalDisclaimerBanner extends StatelessWidget {
-  const AiMedicalDisclaimerBanner({
-    super.key,
-    this.compact = false,
-  });
+  const AiMedicalDisclaimerBanner({super.key, this.compact = false});
 
   final bool compact;
 

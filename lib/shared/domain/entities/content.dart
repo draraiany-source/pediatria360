@@ -6,12 +6,11 @@ enum ContentType {
   protocol;
 
   static ContentType fromName(String? value) => ContentType.values.firstWhere(
-        (ContentType t) => t.name == value,
-        orElse: () => ContentType.article,
-      );
+    (ContentType t) => t.name == value,
+    orElse: () => ContentType.article,
+  );
 
-  String get label =>
-      this == ContentType.protocol ? 'Protocolo' : 'Artigo';
+  String get label => this == ContentType.protocol ? 'Protocolo' : 'Artigo';
 }
 
 /// Público a que o conteúdo se destina.
@@ -32,10 +31,10 @@ enum ContentAudience {
       );
 
   String get label => switch (this) {
-        ContentAudience.everyone => 'Para todos',
-        ContentAudience.parents => 'Para famílias',
-        ContentAudience.professionals => 'Para profissionais',
-      };
+    ContentAudience.everyone => 'Para todos',
+    ContentAudience.parents => 'Para famílias',
+    ContentAudience.professionals => 'Para profissionais',
+  };
 }
 
 /// Uma seção do corpo do conteúdo.
@@ -51,20 +50,20 @@ class ContentSection extends Equatable {
   });
 
   factory ContentSection.fromMap(Map<String, dynamic> map) => ContentSection(
-        title: (map['title'] as String?) ?? '',
-        body: (map['body'] as String?) ?? '',
-        kind: SectionKind.fromName(map['kind'] as String?),
-      );
+    title: (map['title'] as String?) ?? '',
+    body: (map['body'] as String?) ?? '',
+    kind: SectionKind.fromName(map['kind'] as String?),
+  );
 
   final String title;
   final String body;
   final SectionKind kind;
 
   Map<String, dynamic> toMap() => <String, dynamic>{
-        'title': title,
-        'body': body,
-        'kind': kind.name,
-      };
+    'title': title,
+    'body': body,
+    'kind': kind.name,
+  };
 
   @override
   List<Object?> get props => <Object?>[title, body, kind];
@@ -73,19 +72,23 @@ class ContentSection extends Equatable {
 /// Natureza da seção — muda como ela é desenhada.
 enum SectionKind {
   text,
+
   /// Sinal de alarme: procurar atendimento. Sempre destacado em vermelho.
   redFlag,
+
   /// Passo a passo numerado.
   steps,
+
   /// Posologia ou dose. Só renderiza para profissional verificado.
   dosage,
+
   /// Referência bibliográfica.
   reference;
 
   static SectionKind fromName(String? value) => SectionKind.values.firstWhere(
-        (SectionKind k) => k.name == value,
-        orElse: () => SectionKind.text,
-      );
+    (SectionKind k) => k.name == value,
+    orElse: () => SectionKind.text,
+  );
 }
 
 /// Artigo ou protocolo da biblioteca médica.
@@ -249,12 +252,30 @@ class ContentCategory {
 /// manter um Algolia para um catálogo de algumas centenas de documentos.
 String normalizeForSearch(String input) {
   const Map<String, String> accents = <String, String>{
-    'á': 'a', 'à': 'a', 'ã': 'a', 'â': 'a', 'ä': 'a',
-    'é': 'e', 'è': 'e', 'ê': 'e', 'ë': 'e',
-    'í': 'i', 'ì': 'i', 'î': 'i', 'ï': 'i',
-    'ó': 'o', 'ò': 'o', 'õ': 'o', 'ô': 'o', 'ö': 'o',
-    'ú': 'u', 'ù': 'u', 'û': 'u', 'ü': 'u',
-    'ç': 'c', 'ñ': 'n',
+    'á': 'a',
+    'à': 'a',
+    'ã': 'a',
+    'â': 'a',
+    'ä': 'a',
+    'é': 'e',
+    'è': 'e',
+    'ê': 'e',
+    'ë': 'e',
+    'í': 'i',
+    'ì': 'i',
+    'î': 'i',
+    'ï': 'i',
+    'ó': 'o',
+    'ò': 'o',
+    'õ': 'o',
+    'ô': 'o',
+    'ö': 'o',
+    'ú': 'u',
+    'ù': 'u',
+    'û': 'u',
+    'ü': 'u',
+    'ç': 'c',
+    'ñ': 'n',
   };
 
   final StringBuffer buffer = StringBuffer();

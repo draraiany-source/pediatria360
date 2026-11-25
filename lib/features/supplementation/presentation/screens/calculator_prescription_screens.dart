@@ -15,7 +15,11 @@ import '../providers/supplement_providers.dart';
 import '../widgets/supplement_widgets.dart';
 
 class SupplementCalculatorScreen extends ConsumerStatefulWidget {
-  const SupplementCalculatorScreen({this.micronutrientId, this.childId, super.key});
+  const SupplementCalculatorScreen({
+    this.micronutrientId,
+    this.childId,
+    super.key,
+  });
 
   final String? micronutrientId;
   final String? childId;
@@ -61,23 +65,24 @@ class _SupplementCalculatorScreenState
   }
 
   void _calculate() {
-    final SupplementCalculatorSuggestion s =
-        ref.read(supplementCalculatorProvider).suggest(
-              SupplementCalculatorInput(
-                micronutrientId: _microId,
-                ageYears: int.tryParse(_ageY.text.trim()),
-                ageMonths: int.tryParse(_ageM.text.trim()),
-                weightKg: double.tryParse(_weight.text.trim().replaceAll(',', '.')),
-                sex: _sex.text.trim(),
-                preterm: _preterm,
-                gestationalAgeWeeks: int.tryParse(_ga.text.trim()),
-                diagnosis: _dx.text.trim(),
-                goal: _goal,
-                relatedExamId: _examId,
-                labResultText: _lab.text.trim(),
-                presentation: _presentation.text.trim(),
-              ),
-            );
+    final SupplementCalculatorSuggestion s = ref
+        .read(supplementCalculatorProvider)
+        .suggest(
+          SupplementCalculatorInput(
+            micronutrientId: _microId,
+            ageYears: int.tryParse(_ageY.text.trim()),
+            ageMonths: int.tryParse(_ageM.text.trim()),
+            weightKg: double.tryParse(_weight.text.trim().replaceAll(',', '.')),
+            sex: _sex.text.trim(),
+            preterm: _preterm,
+            gestationalAgeWeeks: int.tryParse(_ga.text.trim()),
+            diagnosis: _dx.text.trim(),
+            goal: _goal,
+            relatedExamId: _examId,
+            labResultText: _lab.text.trim(),
+            presentation: _presentation.text.trim(),
+          ),
+        );
     setState(() => _suggestion = s);
   }
 
@@ -159,7 +164,9 @@ class _SupplementCalculatorScreenState
           const SizedBox(height: AppSpacing.sm),
           TextField(
             controller: _dx,
-            decoration: const InputDecoration(labelText: 'Diagnostico / contexto'),
+            decoration: const InputDecoration(
+              labelText: 'Diagnostico / contexto',
+            ),
           ),
           const SizedBox(height: AppSpacing.sm),
           DropdownButtonFormField<SupplementGoal>(
@@ -194,12 +201,16 @@ class _SupplementCalculatorScreenState
           const SizedBox(height: AppSpacing.sm),
           TextField(
             controller: _lab,
-            decoration: const InputDecoration(labelText: 'Resultado laboratorial'),
+            decoration: const InputDecoration(
+              labelText: 'Resultado laboratorial',
+            ),
           ),
           const SizedBox(height: AppSpacing.sm),
           TextField(
             controller: _presentation,
-            decoration: const InputDecoration(labelText: 'Apresentacao disponivel'),
+            decoration: const InputDecoration(
+              labelText: 'Apresentacao disponivel',
+            ),
           ),
           const SizedBox(height: AppSpacing.lg),
           PrimaryButton(
@@ -232,8 +243,11 @@ class _SupplementCalculatorScreenState
                       child: Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: <Widget>[
-                          const Icon(Icons.warning_amber_rounded,
-                              size: 18, color: AppColors.warning),
+                          const Icon(
+                            Icons.warning_amber_rounded,
+                            size: 18,
+                            color: AppColors.warning,
+                          ),
                           const SizedBox(width: 6),
                           Expanded(child: Text(a)),
                         ],
@@ -243,7 +257,9 @@ class _SupplementCalculatorScreenState
                   if (_suggestion!.requiresLabFollowUp)
                     const Padding(
                       padding: EdgeInsets.only(top: 8),
-                      child: Text('Controle laboratorial: revisar necessidade clinicamente.'),
+                      child: Text(
+                        'Controle laboratorial: revisar necessidade clinicamente.',
+                      ),
                     ),
                 ],
               ),
@@ -251,8 +267,7 @@ class _SupplementCalculatorScreenState
             const SizedBox(height: AppSpacing.md),
             FilledButton.icon(
               onPressed: () {
-                final String q =
-                    'micronutrientId=$_microId&suggestion=1';
+                final String q = 'micronutrientId=$_microId&suggestion=1';
                 context.push('${Routes.supplementPrescriptionPath}?$q');
               },
               icon: const Icon(Icons.rate_review_outlined),
@@ -317,7 +332,8 @@ class _SupplementPrescriptionScreenState
     _duration = TextEditingController();
     _qty = TextEditingController();
     _instructions = TextEditingController(
-      text: 'Conferir dose e duracao antes de dispensar. $kSupplementContentPending',
+      text:
+          'Conferir dose e duracao antes de dispensar. $kSupplementContentPending',
     );
   }
 
@@ -343,35 +359,36 @@ class _SupplementPrescriptionScreenState
     if (uid == null) return;
     final String childId = _child.text.trim();
     if (childId.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Informe o paciente.')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Informe o paciente.')));
       return;
     }
     setState(() => _saving = true);
-    final Result<SupplementPrescription> res =
-        await ref.read(supplementRepositoryProvider).savePrescription(
-              SupplementPrescription(
-                id: _saved?.id ?? '',
-                childId: childId,
-                professionalId: uid,
-                createdAt: _saved?.createdAt ?? DateTime.now(),
-                micronutrientId: _microId,
-                productName: _product.text.trim(),
-                activeIngredient: _active.text.trim(),
-                presentation: _presentation.text.trim(),
-                concentration: _concentration.text.trim(),
-                doseText: _dose.text.trim(),
-                unit: _unit.text.trim(),
-                frequency: _frequency.text.trim(),
-                route: _route.text.trim(),
-                duration: _duration.text.trim(),
-                quantity: _qty.text.trim(),
-                instructions: _instructions.text.trim(),
-                status: SupplementRxStatus.draft,
-                calculatorSuggestion: kSupplementContentPending,
-              ),
-            );
+    final Result<SupplementPrescription> res = await ref
+        .read(supplementRepositoryProvider)
+        .savePrescription(
+          SupplementPrescription(
+            id: _saved?.id ?? '',
+            childId: childId,
+            professionalId: uid,
+            createdAt: _saved?.createdAt ?? DateTime.now(),
+            micronutrientId: _microId,
+            productName: _product.text.trim(),
+            activeIngredient: _active.text.trim(),
+            presentation: _presentation.text.trim(),
+            concentration: _concentration.text.trim(),
+            doseText: _dose.text.trim(),
+            unit: _unit.text.trim(),
+            frequency: _frequency.text.trim(),
+            route: _route.text.trim(),
+            duration: _duration.text.trim(),
+            quantity: _qty.text.trim(),
+            instructions: _instructions.text.trim(),
+            status: SupplementRxStatus.draft,
+            calculatorSuggestion: kSupplementContentPending,
+          ),
+        );
     if (!mounted) return;
     setState(() {
       _saving = false;
@@ -402,18 +419,22 @@ class _SupplementPrescriptionScreenState
           'A responsabilidade clinica e do profissional assistente.',
         ),
         actions: <Widget>[
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancelar')),
-          FilledButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Confirmar')),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancelar'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Confirmar'),
+          ),
         ],
       ),
     );
     if (ok != true) return;
     setState(() => _saving = true);
-    final Result<SupplementPrescription> res =
-        await ref.read(supplementRepositoryProvider).confirmPrescription(
-              rx: draft,
-              confirmedBy: uid,
-            );
+    final Result<SupplementPrescription> res = await ref
+        .read(supplementRepositoryProvider)
+        .confirmPrescription(rx: draft, confirmedBy: uid);
     if (!mounted) return;
     setState(() {
       _saving = false;
@@ -427,7 +448,9 @@ class _SupplementPrescriptionScreenState
       ),
     );
     if (res.isSuccess && mounted) {
-      await context.push(Routes.supplementPrescriptionView(res.valueOrNull!.id));
+      await context.push(
+        Routes.supplementPrescriptionView(res.valueOrNull!.id),
+      );
     }
   }
 
@@ -446,31 +469,68 @@ class _SupplementPrescriptionScreenState
         children: <Widget>[
           const SupplementDisclaimerBanner(),
           const SizedBox(height: AppSpacing.md),
-          TextField(controller: _child, decoration: const InputDecoration(labelText: 'ID do paciente')),
+          TextField(
+            controller: _child,
+            decoration: const InputDecoration(labelText: 'ID do paciente'),
+          ),
           const SizedBox(height: AppSpacing.sm),
-          TextField(controller: _product, decoration: const InputDecoration(labelText: 'Nome do suplemento')),
+          TextField(
+            controller: _product,
+            decoration: const InputDecoration(labelText: 'Nome do suplemento'),
+          ),
           const SizedBox(height: AppSpacing.sm),
-          TextField(controller: _active, decoration: const InputDecoration(labelText: 'Principio ativo')),
+          TextField(
+            controller: _active,
+            decoration: const InputDecoration(labelText: 'Principio ativo'),
+          ),
           const SizedBox(height: AppSpacing.sm),
-          TextField(controller: _presentation, decoration: const InputDecoration(labelText: 'Apresentacao')),
+          TextField(
+            controller: _presentation,
+            decoration: const InputDecoration(labelText: 'Apresentacao'),
+          ),
           const SizedBox(height: AppSpacing.sm),
-          TextField(controller: _concentration, decoration: const InputDecoration(labelText: 'Concentracao')),
+          TextField(
+            controller: _concentration,
+            decoration: const InputDecoration(labelText: 'Concentracao'),
+          ),
           const SizedBox(height: AppSpacing.sm),
           Row(
             children: <Widget>[
-              Expanded(child: TextField(controller: _dose, decoration: const InputDecoration(labelText: 'Dose'))),
+              Expanded(
+                child: TextField(
+                  controller: _dose,
+                  decoration: const InputDecoration(labelText: 'Dose'),
+                ),
+              ),
               const SizedBox(width: AppSpacing.sm),
-              Expanded(child: TextField(controller: _unit, decoration: const InputDecoration(labelText: 'Unidade'))),
+              Expanded(
+                child: TextField(
+                  controller: _unit,
+                  decoration: const InputDecoration(labelText: 'Unidade'),
+                ),
+              ),
             ],
           ),
           const SizedBox(height: AppSpacing.sm),
-          TextField(controller: _frequency, decoration: const InputDecoration(labelText: 'Frequencia')),
+          TextField(
+            controller: _frequency,
+            decoration: const InputDecoration(labelText: 'Frequencia'),
+          ),
           const SizedBox(height: AppSpacing.sm),
-          TextField(controller: _route, decoration: const InputDecoration(labelText: 'Via')),
+          TextField(
+            controller: _route,
+            decoration: const InputDecoration(labelText: 'Via'),
+          ),
           const SizedBox(height: AppSpacing.sm),
-          TextField(controller: _duration, decoration: const InputDecoration(labelText: 'Duracao')),
+          TextField(
+            controller: _duration,
+            decoration: const InputDecoration(labelText: 'Duracao'),
+          ),
           const SizedBox(height: AppSpacing.sm),
-          TextField(controller: _qty, decoration: const InputDecoration(labelText: 'Quantidade')),
+          TextField(
+            controller: _qty,
+            decoration: const InputDecoration(labelText: 'Quantidade'),
+          ),
           const SizedBox(height: AppSpacing.sm),
           TextField(
             controller: _instructions,
@@ -492,7 +552,9 @@ class _SupplementPrescriptionScreenState
           const SizedBox(height: AppSpacing.sm),
           Text(
             'PDF / impressao / compartilhar: disponiveis apos confirmacao na tela de visualizacao.',
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppColors.inkMuted),
+            style: Theme.of(
+              context,
+            ).textTheme.bodySmall?.copyWith(color: AppColors.inkMuted),
           ),
         ],
       ),
@@ -501,7 +563,10 @@ class _SupplementPrescriptionScreenState
 }
 
 class SupplementPrescriptionViewScreen extends ConsumerWidget {
-  const SupplementPrescriptionViewScreen({required this.prescriptionId, super.key});
+  const SupplementPrescriptionViewScreen({
+    required this.prescriptionId,
+    super.key,
+  });
 
   final String prescriptionId;
 
@@ -520,7 +585,9 @@ class SupplementPrescriptionViewScreen extends ConsumerWidget {
             onPressed: () {
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
-                  content: Text('Exportacao PDF preparada — integrar gerador no proximo ciclo.'),
+                  content: Text(
+                    'Exportacao PDF preparada — integrar gerador no proximo ciclo.',
+                  ),
                 ),
               );
             },
@@ -530,7 +597,9 @@ class SupplementPrescriptionViewScreen extends ConsumerWidget {
             tooltip: 'Compartilhar',
             onPressed: () {
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Compartilhamento preparado para integracao.')),
+                const SnackBar(
+                  content: Text('Compartilhamento preparado para integracao.'),
+                ),
               );
             },
             icon: const Icon(Icons.share_outlined),
@@ -546,14 +615,18 @@ class SupplementPrescriptionViewScreen extends ConsumerWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
-                Text('ID: $prescriptionId', style: const TextStyle(fontWeight: FontWeight.w700)),
+                Text(
+                  'ID: $prescriptionId',
+                  style: const TextStyle(fontWeight: FontWeight.w700),
+                ),
                 const SizedBox(height: AppSpacing.sm),
                 const Text(
                   'Visualizacao da prescricao confirmada. Duplicar/renovar: use o gerador com os mesmos campos.',
                 ),
                 const SizedBox(height: AppSpacing.md),
                 FilledButton.tonal(
-                  onPressed: () => context.push(Routes.supplementPrescriptionPath),
+                  onPressed: () =>
+                      context.push(Routes.supplementPrescriptionPath),
                   child: const Text('Nova / duplicar'),
                 ),
               ],

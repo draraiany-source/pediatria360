@@ -13,7 +13,7 @@ import '../domain/consent_history.dart';
 /// em [firestore.indexes.json] enquanto nao houver filtro + orderBy.
 class ConsentHistoryRepository {
   ConsentHistoryRepository({required FirebaseFirestore firestore})
-      : _firestore = firestore;
+    : _firestore = firestore;
 
   final FirebaseFirestore _firestore;
 
@@ -26,9 +26,8 @@ class ConsentHistoryRepository {
         .limit(50)
         .snapshots()
         .map(
-          (QuerySnapshot<Map<String, dynamic>> snap) => snap.docs
-              .map(ConsentHistoryEntry.fromFirestore)
-              .toList(),
+          (QuerySnapshot<Map<String, dynamic>> snap) =>
+              snap.docs.map(ConsentHistoryEntry.fromFirestore).toList(),
         );
   }
 }

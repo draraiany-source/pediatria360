@@ -70,10 +70,7 @@ void main() {
   group('déficit por desidratação', () {
     test('peso x percentual x 10', () {
       expect(
-        PediatricCalculators.dehydrationDeficitMl(
-          weightKg: 10,
-          percentage: 5,
-        ),
+        PediatricCalculators.dehydrationDeficitMl(weightKg: 10, percentage: 5),
         500,
       );
     });
@@ -146,22 +143,28 @@ void main() {
     );
 
     test('dose simples é mg/kg x peso', () {
-      final DoseResult r =
-          DoseCalculator.calculate(protocol: protocol, weightKg: 10);
+      final DoseResult r = DoseCalculator.calculate(
+        protocol: protocol,
+        weightKg: 10,
+      );
       expect(r.singleDoseMg, 150);
       expect(r.dailyDoseMg, 600);
       expect(r.hasWarning, isFalse);
     });
 
     test('converte para volume usando a concentração', () {
-      final DoseResult r =
-          DoseCalculator.calculate(protocol: protocol, weightKg: 10);
+      final DoseResult r = DoseCalculator.calculate(
+        protocol: protocol,
+        weightKg: 10,
+      );
       expect(r.singleDoseMl, closeTo(0.75, 0.001));
     });
 
     test('respeita o teto por dose e sinaliza', () {
-      final DoseResult r =
-          DoseCalculator.calculate(protocol: protocol, weightKg: 60);
+      final DoseResult r = DoseCalculator.calculate(
+        protocol: protocol,
+        weightKg: 60,
+      );
       expect(r.singleDoseMg, 750);
       expect(r.cappedBySingleMax, isTrue);
       expect(r.hasWarning, isTrue);
@@ -175,8 +178,10 @@ void main() {
         source: 'teste',
         maxDailyDoseMg: 1000,
       );
-      final DoseResult r =
-          DoseCalculator.calculate(protocol: capped, weightKg: 30);
+      final DoseResult r = DoseCalculator.calculate(
+        protocol: capped,
+        weightKg: 30,
+      );
 
       expect(r.dailyDoseMg, 1000);
       expect(r.singleDoseMg, 250);
@@ -190,8 +195,10 @@ void main() {
         timesPerDay: 3,
         source: 'teste',
       );
-      final DoseResult r =
-          DoseCalculator.calculate(protocol: noConc, weightKg: 10);
+      final DoseResult r = DoseCalculator.calculate(
+        protocol: noConc,
+        weightKg: 10,
+      );
       expect(r.singleDoseMl, isNull);
     });
 
@@ -213,8 +220,10 @@ void main() {
     });
 
     test('peso inválido devolve zero, não lança', () {
-      final DoseResult r =
-          DoseCalculator.calculate(protocol: protocol, weightKg: 0);
+      final DoseResult r = DoseCalculator.calculate(
+        protocol: protocol,
+        weightKg: 0,
+      );
       expect(r.singleDoseMg, 0);
       expect(r.dailyDoseMg, 0);
     });

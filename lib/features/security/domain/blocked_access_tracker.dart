@@ -12,8 +12,10 @@ class BlockedAccessTracker {
 
   /// Registra tentativa bloqueada; retorna true se atingiu [threshold] na janela.
   bool record(String uid, DateTime now) {
-    final List<DateTime> events =
-        _eventsByUid.putIfAbsent(uid, () => <DateTime>[]);
+    final List<DateTime> events = _eventsByUid.putIfAbsent(
+      uid,
+      () => <DateTime>[],
+    );
     events.add(now);
     events.removeWhere((DateTime t) => now.difference(t) > window);
     return events.length >= threshold;

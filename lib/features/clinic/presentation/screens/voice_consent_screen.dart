@@ -27,19 +27,19 @@ class _VoiceConsentScreenState extends ConsumerState<VoiceConsentScreen> {
   bool _draftOnly = false;
   bool _busy = false;
 
-  bool get _allChecked =>
-      _informed && _purpose && _retention && _draftOnly;
+  bool get _allChecked => _informed && _purpose && _retention && _draftOnly;
 
   Future<void> _authorize() async {
     if (!_allChecked) return;
     final user = ref.read(currentUserProvider);
     if (user == null) return;
 
-    final String? childId =
-        GoRouterState.of(context).uri.queryParameters['childId'];
+    final String? childId = GoRouterState.of(
+      context,
+    ).uri.queryParameters['childId'];
     final String childName =
         GoRouterState.of(context).uri.queryParameters['childName'] ??
-            'Paciente';
+        'Paciente';
 
     if (childId == null || childId.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -66,9 +66,9 @@ class _VoiceConsentScreenState extends ConsumerState<VoiceConsentScreen> {
         context.pushReplacement(Routes.clinicVoiceLive(session.id));
       },
       (failure) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(failure.message)),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(failure.message)));
       },
     );
   }
@@ -93,22 +93,20 @@ class _VoiceConsentScreenState extends ConsumerState<VoiceConsentScreen> {
                 Text(
                   'Antes de gravar',
                   style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                        color: AppColors.navy,
-                        fontWeight: FontWeight.w800,
-                      ),
+                    color: AppColors.navy,
+                    fontWeight: FontWeight.w800,
+                  ),
                 ),
                 const SizedBox(height: AppSpacing.md),
                 _check(
                   value: _informed,
                   onChanged: (bool? v) =>
                       setState(() => _informed = v ?? false),
-                  label:
-                      'Paciente/responsavel foi informado sobre a gravacao.',
+                  label: 'Paciente/responsavel foi informado sobre a gravacao.',
                 ),
                 _check(
                   value: _purpose,
-                  onChanged: (bool? v) =>
-                      setState(() => _purpose = v ?? false),
+                  onChanged: (bool? v) => setState(() => _purpose = v ?? false),
                   label:
                       'O audio sera usado apenas para gerar rascunho clinico.',
                 ),

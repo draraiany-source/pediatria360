@@ -44,28 +44,28 @@ class ContentMapper {
 
   /// Serialização para o cache do Hive. Datas viram millis, tuplas viram lista.
   static Map<String, dynamic> toCacheMap(Content content) => <String, dynamic>{
-        'id': content.id,
-        'title': content.title,
-        'summary': content.summary,
-        'type': content.type.name,
-        'audience': content.audience.name,
-        'category': content.category,
-        'updatedAt': content.updatedAt.toUtc().millisecondsSinceEpoch,
-        'sections': content.sections
-            .map((ContentSection s) => s.toMap())
-            .toList(growable: false),
-        'tags': content.tags,
-        'searchTerms': content.searchTerms,
-        'coverUrl': content.coverUrl,
-        'author': content.author,
-        'reviewedBy': content.reviewedBy,
-        'reviewedAt': content.reviewedAt?.toUtc().millisecondsSinceEpoch,
-        'readMinutes': content.readMinutes,
-        'ageRangeMonths': content.ageRangeMonths == null
-            ? null
-            : <int>[content.ageRangeMonths!.$1, content.ageRangeMonths!.$2],
-        'published': content.published,
-      };
+    'id': content.id,
+    'title': content.title,
+    'summary': content.summary,
+    'type': content.type.name,
+    'audience': content.audience.name,
+    'category': content.category,
+    'updatedAt': content.updatedAt.toUtc().millisecondsSinceEpoch,
+    'sections': content.sections
+        .map((ContentSection s) => s.toMap())
+        .toList(growable: false),
+    'tags': content.tags,
+    'searchTerms': content.searchTerms,
+    'coverUrl': content.coverUrl,
+    'author': content.author,
+    'reviewedBy': content.reviewedBy,
+    'reviewedAt': content.reviewedAt?.toUtc().millisecondsSinceEpoch,
+    'readMinutes': content.readMinutes,
+    'ageRangeMonths': content.ageRangeMonths == null
+        ? null
+        : <int>[content.ageRangeMonths!.$1, content.ageRangeMonths!.$2],
+    'published': content.published,
+  };
 
   static Content fromCacheMap(Map<String, dynamic> map) =>
       fromMap(map['id'] as String? ?? '', map);
@@ -75,10 +75,10 @@ class ContentMapper {
       const <String>[];
 
   static DateTime? _date(Object? value) => switch (value) {
-        Timestamp t => t.toDate(),
-        DateTime d => d,
-        int ms => DateTime.fromMillisecondsSinceEpoch(ms),
-        String s => DateTime.tryParse(s),
-        _ => null,
-      };
+    Timestamp t => t.toDate(),
+    DateTime d => d,
+    int ms => DateTime.fromMillisecondsSinceEpoch(ms),
+    String s => DateTime.tryParse(s),
+    _ => null,
+  };
 }

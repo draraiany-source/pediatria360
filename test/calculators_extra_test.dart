@@ -159,14 +159,8 @@ void main() {
     });
 
     test('peso ou tempo inválido não lança', () {
-      expect(
-        urineOutput(volumeMl: 100, weightKg: 0, hours: 1).rate,
-        0,
-      );
-      expect(
-        urineOutput(volumeMl: 100, weightKg: 10, hours: 0).rate,
-        0,
-      );
+      expect(urineOutput(volumeMl: 100, weightKg: 0, hours: 1).rate, 0);
+      expect(urineOutput(volumeMl: 100, weightKg: 10, hours: 0).rate, 0);
     });
   });
 
@@ -182,8 +176,7 @@ void main() {
     });
 
     test('classifica por faixa', () {
-      GestationalAge ga(int weeks) =>
-          GestationalAge(weeks: weeks, days: 0);
+      GestationalAge ga(int weeks) => GestationalAge(weeks: weeks, days: 0);
 
       expect(ga(26).classification, 'Prematuridade extrema');
       expect(ga(30).classification, 'Prematuridade grave');

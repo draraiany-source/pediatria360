@@ -22,11 +22,7 @@ class SplashScreen extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: <Widget>[
-              SvgPicture.asset(
-                AppAssets.iconLogo,
-                width: 96,
-                height: 96,
-              )
+              SvgPicture.asset(AppAssets.iconLogo, width: 96, height: 96)
                   .animate()
                   .fadeIn(duration: AppMotion.slow, curve: AppMotion.enter)
                   .scale(
@@ -51,11 +47,11 @@ class SplashScreen extends StatelessWidget {
               ).animate(delay: AppMotion.fast).fadeIn(duration: AppMotion.slow),
               const SizedBox(height: AppSpacing.sm),
               Text(
-                'Gestão Clínica em Pediatria',
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  color: AppColors.inkMuted,
-                ),
-              )
+                    'Gestão Clínica em Pediatria',
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: AppColors.inkMuted,
+                    ),
+                  )
                   .animate(delay: AppMotion.normal)
                   .fadeIn(duration: AppMotion.slow),
               const SizedBox(height: AppSpacing.xxxl),

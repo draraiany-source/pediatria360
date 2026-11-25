@@ -16,12 +16,12 @@ import '../../../emr/presentation/screens/patient_timeline_screen.dart'
 /// simples, nunca o prontuário técnico. Rascunho nunca aparece aqui: a
 /// regra do servidor já filtra isso antes mesmo do app pedir.
 final StreamProviderFamily<List<VisitSummary>, String>
-    releasedVisitSummariesProvider =
+releasedVisitSummariesProvider =
     StreamProvider.family<List<VisitSummary>, String>(
-  (Ref ref, String childId) => ref
-      .watch(encounterRepositoryProvider)
-      .watchReleasedVisitSummaries(childId),
-);
+      (Ref ref, String childId) => ref
+          .watch(encounterRepositoryProvider)
+          .watchReleasedVisitSummaries(childId),
+    );
 
 class VisitSummariesScreen extends ConsumerWidget {
   const VisitSummariesScreen({required this.childId, super.key});
@@ -30,8 +30,9 @@ class VisitSummariesScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final AsyncValue<List<VisitSummary>> summaries =
-        ref.watch(releasedVisitSummariesProvider(childId));
+    final AsyncValue<List<VisitSummary>> summaries = ref.watch(
+      releasedVisitSummariesProvider(childId),
+    );
 
     return Scaffold(
       appBar: AppBar(
@@ -46,13 +47,15 @@ class VisitSummariesScreen extends ConsumerWidget {
         loading: () => const SkeletonList(itemCount: 3, itemHeight: 96),
         error: (Object error, StackTrace stack) => ErrorState(
           failure: ErrorMapper.map(error, stack),
-          onRetry: () => ref.invalidate(releasedVisitSummariesProvider(childId)),
+          onRetry: () =>
+              ref.invalidate(releasedVisitSummariesProvider(childId)),
         ),
         data: (List<VisitSummary> list) => list.isEmpty
             ? const EmptyState(
                 icon: Icons.summarize_outlined,
                 title: 'Nenhum resumo ainda',
-                message: 'Depois de uma consulta, o resumo aparece aqui '
+                message:
+                    'Depois de uma consulta, o resumo aparece aqui '
                     'assim que o profissional liberar.',
               )
             : ListView.builder(
@@ -92,8 +95,11 @@ class _SummaryCard extends StatelessWidget {
               children: <Widget>[
                 Row(
                   children: <Widget>[
-                    const Icon(Icons.summarize_outlined,
-                        size: 18, color: AppColors.petrol),
+                    const Icon(
+                      Icons.summarize_outlined,
+                      size: 18,
+                      color: AppColors.petrol,
+                    ),
                     const SizedBox(width: AppSpacing.sm),
                     Expanded(
                       child: Text(
@@ -118,7 +124,8 @@ class _SummaryCard extends StatelessWidget {
                 if (summary.warningSigns.isNotEmpty) ...<Widget>[
                   const SizedBox(height: AppSpacing.sm),
                   AppTag(
-                    label: '${summary.warningSigns.length} '
+                    label:
+                        '${summary.warningSigns.length} '
                         '${summary.warningSigns.length == 1 ? 'sinal de alerta' : 'sinais de alerta'}',
                     color: AppColors.warning,
                   ),
@@ -177,20 +184,30 @@ class _SummaryDetailSheet extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: <Widget>[
-                      Text('Procure ajuda se notar',
-                          style: theme.textTheme.labelSmall),
+                      Text(
+                        'Procure ajuda se notar',
+                        style: theme.textTheme.labelSmall,
+                      ),
                       const SizedBox(height: AppSpacing.xs),
                       for (final String sign in summary.warningSigns)
                         Padding(
-                          padding: const EdgeInsets.only(bottom: AppSpacing.xxs),
+                          padding: const EdgeInsets.only(
+                            bottom: AppSpacing.xxs,
+                          ),
                           child: Row(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: <Widget>[
-                              const Icon(Icons.warning_amber_rounded,
-                                  size: 16, color: AppColors.warning),
+                              const Icon(
+                                Icons.warning_amber_rounded,
+                                size: 16,
+                                color: AppColors.warning,
+                              ),
                               const SizedBox(width: AppSpacing.xs),
                               Expanded(
-                                child: Text(sign, style: theme.textTheme.bodyMedium),
+                                child: Text(
+                                  sign,
+                                  style: theme.textTheme.bodyMedium,
+                                ),
                               ),
                             ],
                           ),
@@ -200,13 +217,17 @@ class _SummaryDetailSheet extends StatelessWidget {
                 ),
               section('Retorno', summary.followUpNotes),
               if (summary.followUpDate != null)
-                section('Data de retorno', Formatters.date(summary.followUpDate!)),
+                section(
+                  'Data de retorno',
+                  Formatters.date(summary.followUpDate!),
+                ),
               if (summary.releasedDocumentIds.isNotEmpty)
                 Text(
                   '${summary.releasedDocumentIds.length} documento(s) desta '
                   'consulta — veja em Documentos.',
-                  style: theme.textTheme.bodySmall
-                      ?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
                 ),
             ],
           ),

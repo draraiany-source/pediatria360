@@ -40,11 +40,11 @@ enum ConflictStrategy {
   lastWriteWins;
 
   String get label => switch (this) {
-        ConflictStrategy.keepBoth => 'Manter ambos',
-        ConflictStrategy.mergeFields => 'Mesclar campos',
-        ConflictStrategy.preferEarliest => 'Manter o mais antigo',
-        ConflictStrategy.lastWriteWins => 'Manter o mais recente',
-      };
+    ConflictStrategy.keepBoth => 'Manter ambos',
+    ConflictStrategy.mergeFields => 'Mesclar campos',
+    ConflictStrategy.preferEarliest => 'Manter o mais antigo',
+    ConflictStrategy.lastWriteWins => 'Manter o mais recente',
+  };
 }
 
 /// Resultado de uma resolução.
@@ -87,11 +87,11 @@ class ConflictResolver {
 
   /// Estratégia de cada entidade.
   static ConflictStrategy strategyFor(String entity) => switch (entity) {
-        'growth_records' => ConflictStrategy.keepBoth,
-        'vaccine_doses' => ConflictStrategy.preferEarliest,
-        'children' => ConflictStrategy.mergeFields,
-        _ => ConflictStrategy.lastWriteWins,
-      };
+    'growth_records' => ConflictStrategy.keepBoth,
+    'vaccine_doses' => ConflictStrategy.preferEarliest,
+    'children' => ConflictStrategy.mergeFields,
+    _ => ConflictStrategy.lastWriteWins,
+  };
 
   /// Resolve o conflito entre a versão local e a do servidor.
   static ConflictResolution resolve({
@@ -105,20 +105,23 @@ class ConflictResolver {
       // Medição é evento: duas no mesmo dia são dois fatos, não uma
       // contradição. A escrita local segue com id próprio.
       ConflictStrategy.keepBoth => ConflictResolution(
-          strategy: strategy,
-          merged: local,
-        ),
+        strategy: strategy,
+        merged: local,
+      ),
 
-      ConflictStrategy.preferEarliest =>
-        _preferEarliest(strategy, local, remote),
+      ConflictStrategy.preferEarliest => _preferEarliest(
+        strategy,
+        local,
+        remote,
+      ),
 
       ConflictStrategy.mergeFields => _mergeFields(strategy, local, remote),
 
       ConflictStrategy.lastWriteWins => ConflictResolution(
-          strategy: strategy,
-          merged: local,
-          discarded: remote,
-        ),
+        strategy: strategy,
+        merged: local,
+        discarded: remote,
+      ),
     };
   }
 
@@ -232,11 +235,11 @@ class ConflictResolver {
   }
 
   static DateTime? _date(Object? value) => switch (value) {
-        DateTime d => d,
-        int ms => DateTime.fromMillisecondsSinceEpoch(ms),
-        String s => DateTime.tryParse(s),
-        _ => null,
-      };
+    DateTime d => d,
+    int ms => DateTime.fromMillisecondsSinceEpoch(ms),
+    String s => DateTime.tryParse(s),
+    _ => null,
+  };
 }
 
 /// Espera entre tentativas de envio.
@@ -266,8 +269,7 @@ class SyncBackoff {
     final int capped = math.min(exponential, ceiling.inMilliseconds);
 
     // Ruído de até 25% para baixo — nunca aumenta a espera além do teto.
-    final double jitter =
-        1 - ((random ?? math.Random()).nextDouble() * 0.25);
+    final double jitter = 1 - ((random ?? math.Random()).nextDouble() * 0.25);
 
     return Duration(milliseconds: (capped * jitter).round());
   }
@@ -307,22 +309,22 @@ class SyncEvent {
   });
 
   factory SyncEvent.fromRow(Map<String, Object?> row) => SyncEvent(
-        id: row['id']! as String,
-        at: DateTime.fromMillisecondsSinceEpoch(
-          row['at']! as int,
-          isUtc: true,
-        ).toLocal(),
-        entity: row['entity']! as String,
-        entityId: row['entity_id']! as String,
-        outcome: SyncOutcome.fromName(row['outcome'] as String?),
-        strategy: row['strategy'] as String?,
-        conflictedFields: ((row['conflicted_fields'] as String?) ?? '')
-            .split(',')
-            .where((String s) => s.isNotEmpty)
-            .toList(growable: false),
-        error: row['error'] as String?,
-        attempts: (row['attempts'] as int?) ?? 0,
-      );
+    id: row['id']! as String,
+    at: DateTime.fromMillisecondsSinceEpoch(
+      row['at']! as int,
+      isUtc: true,
+    ).toLocal(),
+    entity: row['entity']! as String,
+    entityId: row['entity_id']! as String,
+    outcome: SyncOutcome.fromName(row['outcome'] as String?),
+    strategy: row['strategy'] as String?,
+    conflictedFields: ((row['conflicted_fields'] as String?) ?? '')
+        .split(',')
+        .where((String s) => s.isNotEmpty)
+        .toList(growable: false),
+    error: row['error'] as String?,
+    attempts: (row['attempts'] as int?) ?? 0,
+  );
 
   final String id;
   final DateTime at;
@@ -335,16 +337,16 @@ class SyncEvent {
   final int attempts;
 
   Map<String, Object?> toRow() => <String, Object?>{
-        'id': id,
-        'at': at.toUtc().millisecondsSinceEpoch,
-        'entity': entity,
-        'entity_id': entityId,
-        'outcome': outcome.name,
-        'strategy': strategy,
-        'conflicted_fields': conflictedFields.join(','),
-        'error': error,
-        'attempts': attempts,
-      };
+    'id': id,
+    'at': at.toUtc().millisecondsSinceEpoch,
+    'entity': entity,
+    'entity_id': entityId,
+    'outcome': outcome.name,
+    'strategy': strategy,
+    'conflicted_fields': conflictedFields.join(','),
+    'error': error,
+    'attempts': attempts,
+  };
 }
 
 enum SyncOutcome {
@@ -355,17 +357,17 @@ enum SyncOutcome {
   abandoned;
 
   static SyncOutcome fromName(String? value) => SyncOutcome.values.firstWhere(
-        (SyncOutcome o) => o.name == value,
-        orElse: () => SyncOutcome.failed,
-      );
+    (SyncOutcome o) => o.name == value,
+    orElse: () => SyncOutcome.failed,
+  );
 
   String get label => switch (this) {
-        SyncOutcome.sent => 'Enviado',
-        SyncOutcome.merged => 'Mesclado com a versão do servidor',
-        SyncOutcome.discardedLocal => 'Versão local descartada',
-        SyncOutcome.failed => 'Falhou',
-        SyncOutcome.abandoned => 'Abandonado após várias tentativas',
-      };
+    SyncOutcome.sent => 'Enviado',
+    SyncOutcome.merged => 'Mesclado com a versão do servidor',
+    SyncOutcome.discardedLocal => 'Versão local descartada',
+    SyncOutcome.failed => 'Falhou',
+    SyncOutcome.abandoned => 'Abandonado após várias tentativas',
+  };
 
   bool get isProblem =>
       this == SyncOutcome.failed ||

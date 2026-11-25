@@ -7,15 +7,15 @@ void main() {
   final DateTime t = DateTime(2026);
 
   AppUser pro({required String uid, bool verified = true}) => AppUser(
-        uid: uid,
-        email: '$uid@test.com',
-        name: 'Pro',
-        role: UserRole.professional,
-        plan: UserPlan.pro,
-        createdAt: t,
-        onboardingDone: true,
-        professionalVerified: verified,
-      );
+    uid: uid,
+    email: '$uid@test.com',
+    name: 'Pro',
+    role: UserRole.professional,
+    plan: UserPlan.pro,
+    createdAt: t,
+    onboardingDone: true,
+    professionalVerified: verified,
+  );
 
   ClinicMembership membership(ClinicRole role, {String clinicId = 'clinicA'}) =>
       ClinicMembership(
@@ -89,8 +89,14 @@ void main() {
 
     test('membership clinic A does not imply clinic B (app-level context)', () {
       final AppUser user = pro(uid: 'phy');
-      final ClinicMembership clinicA = membership(ClinicRole.physician, clinicId: 'A');
-      final ClinicMembership clinicB = membership(ClinicRole.receptionist, clinicId: 'B');
+      final ClinicMembership clinicA = membership(
+        ClinicRole.physician,
+        clinicId: 'A',
+      );
+      final ClinicMembership clinicB = membership(
+        ClinicRole.receptionist,
+        clinicId: 'B',
+      );
       expect(
         PermissionMatrix.allows(
           user: user,

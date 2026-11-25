@@ -39,8 +39,9 @@ class _PendingCenterScreenState extends ConsumerState<PendingCenterScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final AsyncValue<List<PendingItem>> async =
-        ref.watch(professionalPendingItemsProvider);
+    final AsyncValue<List<PendingItem>> async = ref.watch(
+      professionalPendingItemsProvider,
+    );
     final ThemeData theme = Theme.of(context);
 
     return Scaffold(
@@ -91,8 +92,7 @@ class _PendingCenterScreenState extends ConsumerState<PendingCenterScreen> {
                             child: FilterChip(
                               label: Text(f.label),
                               selected: _filter == f,
-                              onSelected: (_) =>
-                                  setState(() => _filter = f),
+                              onSelected: (_) => setState(() => _filter = f),
                             ),
                           ),
                         )
@@ -120,21 +120,22 @@ class _PendingCenterScreenState extends ConsumerState<PendingCenterScreen> {
                           item,
                           item.primaryAction,
                         ),
-                        onSecondary: item.secondaryAction ==
-                                PendingActionKind.none
+                        onSecondary:
+                            item.secondaryAction == PendingActionKind.none
                             ? null
                             : () => runPendingAction(
-                                  context,
-                                  ref,
-                                  item,
-                                  item.secondaryAction,
-                                ),
+                                context,
+                                ref,
+                                item,
+                                item.secondaryAction,
+                              ),
                         onStatus: (PendingWorkflowStatus status) =>
                             updatePendingStatus(ref, item, status),
                         canUpdateStatus: PendingAccess.canUpdateStatus(
                           user: ref.read(currentUserProvider),
-                          clinicMembership:
-                              ref.read(activeClinicMembershipProvider),
+                          clinicMembership: ref.read(
+                            activeClinicMembershipProvider,
+                          ),
                           item: item,
                         ),
                       ),

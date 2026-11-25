@@ -26,11 +26,7 @@ class NoParams extends Equatable {
 
 /// Parametros de paginacao reutilizaveis.
 class PageParams extends Equatable {
-  const PageParams({
-    this.limit = 20,
-    this.cursor,
-    this.query,
-  });
+  const PageParams({this.limit = 20, this.cursor, this.query});
 
   final int limit;
 
@@ -40,7 +36,8 @@ class PageParams extends Equatable {
   /// Termo de busca opcional.
   final String? query;
 
-  PageParams copyWith({int? limit, String? cursor, String? query}) => PageParams(
+  PageParams copyWith({int? limit, String? cursor, String? query}) =>
+      PageParams(
         limit: limit ?? this.limit,
         cursor: cursor ?? this.cursor,
         query: query ?? this.query,
@@ -59,19 +56,19 @@ class Paginated<T> extends Equatable {
   });
 
   const Paginated.empty()
-      : items = const <Never>[],
-        hasMore = false,
-        nextCursor = null;
+    : items = const <Never>[],
+      hasMore = false,
+      nextCursor = null;
 
   final List<T> items;
   final bool hasMore;
   final String? nextCursor;
 
   Paginated<T> merge(Paginated<T> next) => Paginated<T>(
-        items: <T>[...items, ...next.items],
-        hasMore: next.hasMore,
-        nextCursor: next.nextCursor,
-      );
+    items: <T>[...items, ...next.items],
+    hasMore: next.hasMore,
+    nextCursor: next.nextCursor,
+  );
 
   @override
   List<Object?> get props => <Object?>[items, hasMore, nextCursor];

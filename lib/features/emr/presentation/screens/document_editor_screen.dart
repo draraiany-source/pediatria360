@@ -42,8 +42,7 @@ class DocumentEditorScreen extends ConsumerStatefulWidget {
       _DocumentEditorScreenState();
 }
 
-class _DocumentEditorScreenState
-    extends ConsumerState<DocumentEditorScreen> {
+class _DocumentEditorScreenState extends ConsumerState<DocumentEditorScreen> {
   final TextEditingController _content = TextEditingController();
   final List<_ItemDraft> _items = <_ItemDraft>[];
 
@@ -56,8 +55,7 @@ class _DocumentEditorScreenState
 
   bool _issuing = false;
 
-  bool get _isPrescription =>
-      widget.type == ClinicalDocumentType.prescription;
+  bool get _isPrescription => widget.type == ClinicalDocumentType.prescription;
 
   @override
   void initState() {
@@ -90,43 +88,42 @@ class _DocumentEditorScreenState
   }
 
   String _initialTemplate() => switch (widget.type) {
-        ClinicalDocumentType.certificate => DocumentTemplates.certificate(
-            patientName: _patientName,
-            days: _certificateDays,
-            cid: _includeCid ? _primaryCid : null,
-          ),
-        ClinicalDocumentType.referral => DocumentTemplates.referral(
-            patientName: _patientName,
-            specialty: '[especialidade]',
-            reason: widget.encounter.assessment.isEmpty
-                ? '[motivo]'
-                : widget.encounter.assessment,
-            cid: _primaryCid,
-          ),
-        ClinicalDocumentType.examRequest => DocumentTemplates.examRequest(
-            patientName: _patientName,
-            exams: const <String>['[exame]'],
-            clinicalIndication: widget.encounter.assessment.isEmpty
-                ? null
-                : widget.encounter.assessment,
-          ),
-        ClinicalDocumentType.dischargeSummary =>
-          DocumentTemplates.dischargeSummary(
-            patientName: _patientName,
-            admission: widget.encounter.startedAt,
-            discharge: DateTime.now(),
-            diagnosis: _primaryCid ?? '[diagnóstico]',
-            course: '[evolução]',
-            medications: '[medicações]',
-            followUp: '[orientações e retorno]',
-          ),
-        ClinicalDocumentType.report =>
-          'Relatório médico referente ao atendimento de $_patientName em '
-              '${Formatters.date(widget.encounter.startedAt)}.\n\n'
-              '${widget.encounter.assessment}\n\n'
-              '${widget.encounter.plan}',
-        ClinicalDocumentType.prescription => '',
-      };
+    ClinicalDocumentType.certificate => DocumentTemplates.certificate(
+      patientName: _patientName,
+      days: _certificateDays,
+      cid: _includeCid ? _primaryCid : null,
+    ),
+    ClinicalDocumentType.referral => DocumentTemplates.referral(
+      patientName: _patientName,
+      specialty: '[especialidade]',
+      reason: widget.encounter.assessment.isEmpty
+          ? '[motivo]'
+          : widget.encounter.assessment,
+      cid: _primaryCid,
+    ),
+    ClinicalDocumentType.examRequest => DocumentTemplates.examRequest(
+      patientName: _patientName,
+      exams: const <String>['[exame]'],
+      clinicalIndication: widget.encounter.assessment.isEmpty
+          ? null
+          : widget.encounter.assessment,
+    ),
+    ClinicalDocumentType.dischargeSummary => DocumentTemplates.dischargeSummary(
+      patientName: _patientName,
+      admission: widget.encounter.startedAt,
+      discharge: DateTime.now(),
+      diagnosis: _primaryCid ?? '[diagnóstico]',
+      course: '[evolução]',
+      medications: '[medicações]',
+      followUp: '[orientações e retorno]',
+    ),
+    ClinicalDocumentType.report =>
+      'Relatório médico referente ao atendimento de $_patientName em '
+          '${Formatters.date(widget.encounter.startedAt)}.\n\n'
+          '${widget.encounter.assessment}\n\n'
+          '${widget.encounter.plan}',
+    ClinicalDocumentType.prescription => '',
+  };
 
   /// Reconstrói o texto quando um parâmetro do modelo muda.
   ///
@@ -160,28 +157,26 @@ class _DocumentEditorScreenState
 
     setState(() => _issuing = true);
 
-    final Result<ClinicalDocument> result =
-        await ref.read(encounterRepositoryProvider).issueDocument(
-              encounterId: widget.encounter.id,
-              type: widget.type,
-              content: content,
-              items: items,
-            );
+    final Result<ClinicalDocument> result = await ref
+        .read(encounterRepositoryProvider)
+        .issueDocument(
+          encounterId: widget.encounter.id,
+          type: widget.type,
+          content: content,
+          items: items,
+        );
 
     if (!mounted) return;
     setState(() => _issuing = false);
 
-    result.fold(
-      (ClinicalDocument document) async {
-        _snack('${widget.type.label} emitido.');
-        await ClinicalPdfService.printDocument(
-          document: document,
-          clinicName: 'Crisdepaula Pediatria',
-        );
-        if (mounted) Navigator.of(context).pop();
-      },
-      (Failure failure) => _snack(failure.message, error: true),
-    );
+    result.fold((ClinicalDocument document) async {
+      _snack('${widget.type.label} emitido.');
+      await ClinicalPdfService.printDocument(
+        document: document,
+        clinicName: 'Crisdepaula Pediatria',
+      );
+      if (mounted) Navigator.of(context).pop();
+    }, (Failure failure) => _snack(failure.message, error: true));
   }
 
   void _snack(String message, {bool error = false}) {
@@ -267,146 +262,147 @@ class _DocumentEditorScreenState
   // ------------------------------------------------------------- Receita
 
   List<Widget> _prescriptionFields(ThemeData theme) => <Widget>[
-        SectionHeader(
-          title: 'Medicamentos',
-          eyebrow: '${_items.length} ${_items.length == 1 ? 'item' : 'itens'}',
-          actionLabel: 'Adicionar',
-          onAction: () => setState(() => _items.add(_ItemDraft.empty())),
-        ),
-        for (int i = 0; i < _items.length; i++)
-          _PrescriptionItemCard(
-            key: ValueKey<_ItemDraft>(_items[i]),
-            draft: _items[i],
-            index: i + 1,
-            weightKg: widget.encounter.vitals.weightKg,
-            ageMonths: widget.encounter.patientAgeMonthsAtEncounter,
-            onChanged: () => setState(() {}),
-            onRemove: _items.length == 1
-                ? null
-                : () => setState(() => _items.removeAt(i).dispose()),
-          ),
-        const SectionHeader(title: 'Orientações', eyebrow: 'Opcional'),
-        AppTextField(
-          label: 'Orientações gerais',
-          controller: _content,
-          maxLines: 4,
-          hint: 'Retornar se febre persistir por mais de 3 dias...',
-          textCapitalization: TextCapitalization.sentences,
-        ),
-      ];
+    SectionHeader(
+      title: 'Medicamentos',
+      eyebrow: '${_items.length} ${_items.length == 1 ? 'item' : 'itens'}',
+      actionLabel: 'Adicionar',
+      onAction: () => setState(() => _items.add(_ItemDraft.empty())),
+    ),
+    for (int i = 0; i < _items.length; i++)
+      _PrescriptionItemCard(
+        key: ValueKey<_ItemDraft>(_items[i]),
+        draft: _items[i],
+        index: i + 1,
+        weightKg: widget.encounter.vitals.weightKg,
+        ageMonths: widget.encounter.patientAgeMonthsAtEncounter,
+        onChanged: () => setState(() {}),
+        onRemove: _items.length == 1
+            ? null
+            : () => setState(() => _items.removeAt(i).dispose()),
+      ),
+    const SectionHeader(title: 'Orientações', eyebrow: 'Opcional'),
+    AppTextField(
+      label: 'Orientações gerais',
+      controller: _content,
+      maxLines: 4,
+      hint: 'Retornar se febre persistir por mais de 3 dias...',
+      textCapitalization: TextCapitalization.sentences,
+    ),
+  ];
 
   // ------------------------------------------------------------ Atestado
 
   List<Widget> _certificateFields(ThemeData theme) => <Widget>[
-        const SectionHeader(title: 'Afastamento'),
-        Row(
-          children: <Widget>[
-            Text('Dias', style: theme.textTheme.bodyMedium),
-            Expanded(
-              child: Slider(
-                value: _certificateDays.toDouble(),
-                min: 1,
-                max: 15,
-                divisions: 14,
-                label: '$_certificateDays',
-                onChanged: (double v) {
-                  final String previous = _initialTemplate();
-                  setState(() => _certificateDays = v.round());
-                  _refreshTemplate(previousTemplate: previous);
-                },
-              ),
-            ),
-            Text('$_certificateDays', style: theme.textTheme.titleSmall),
-          ],
-        ),
-        // O CFM garante ao paciente o direito de pedir atestado sem CID.
-        // Deixar isso como escolha explícita no momento da emissão evita que
-        // o diagnóstico chegue à escola ou ao empregador por descuido.
-        SwitchListTile(
-          value: _includeCid,
-          onChanged: _primaryCid == null
-              ? null
-              : (bool v) {
-                  final String previous = _initialTemplate();
-                  setState(() => _includeCid = v);
-                  _refreshTemplate(previousTemplate: previous);
-                },
-          title: const Text('Incluir CID'),
-          subtitle: Text(
-            _primaryCid == null
-                ? 'Nenhum diagnóstico registrado no atendimento'
-                : 'O responsável pode pedir a supressão do CID',
+    const SectionHeader(title: 'Afastamento'),
+    Row(
+      children: <Widget>[
+        Text('Dias', style: theme.textTheme.bodyMedium),
+        Expanded(
+          child: Slider(
+            value: _certificateDays.toDouble(),
+            min: 1,
+            max: 15,
+            divisions: 14,
+            label: '$_certificateDays',
+            onChanged: (double v) {
+              final String previous = _initialTemplate();
+              setState(() => _certificateDays = v.round());
+              _refreshTemplate(previousTemplate: previous);
+            },
           ),
-          contentPadding: EdgeInsets.zero,
         ),
-      ];
+        Text('$_certificateDays', style: theme.textTheme.titleSmall),
+      ],
+    ),
+    // O CFM garante ao paciente o direito de pedir atestado sem CID.
+    // Deixar isso como escolha explícita no momento da emissão evita que
+    // o diagnóstico chegue à escola ou ao empregador por descuido.
+    SwitchListTile(
+      value: _includeCid,
+      onChanged: _primaryCid == null
+          ? null
+          : (bool v) {
+              final String previous = _initialTemplate();
+              setState(() => _includeCid = v);
+              _refreshTemplate(previousTemplate: previous);
+            },
+      title: const Text('Incluir CID'),
+      subtitle: Text(
+        _primaryCid == null
+            ? 'Nenhum diagnóstico registrado no atendimento'
+            : 'O responsável pode pedir a supressão do CID',
+      ),
+      contentPadding: EdgeInsets.zero,
+    ),
+  ];
 
   // ------------------------------------------------------ Encaminhamento
 
   List<Widget> _referralFields() => <Widget>[
-        const SectionHeader(title: 'Destino'),
-        AppTextField(
-          label: 'Especialidade',
-          controller: _specialty,
-          hint: 'Neuropediatria',
-          textCapitalization: TextCapitalization.words,
-          onChanged: (String v) {
-            _content.text = DocumentTemplates.referral(
-              patientName: _patientName,
-              specialty: v.isEmpty ? '[especialidade]' : v,
-              reason: _reason.text.isEmpty
-                  ? (widget.encounter.assessment.isEmpty
-                      ? '[motivo]'
-                      : widget.encounter.assessment)
-                  : _reason.text,
-              cid: _primaryCid,
-            );
-          },
-        ),
-        const SizedBox(height: AppSpacing.lg),
-        AppTextField(
-          label: 'Motivo',
-          controller: _reason,
-          maxLines: 3,
-          textCapitalization: TextCapitalization.sentences,
-          onChanged: (String v) {
-            _content.text = DocumentTemplates.referral(
-              patientName: _patientName,
-              specialty:
-                  _specialty.text.isEmpty ? '[especialidade]' : _specialty.text,
-              reason: v.isEmpty ? '[motivo]' : v,
-              cid: _primaryCid,
-            );
-          },
-        ),
-      ];
+    const SectionHeader(title: 'Destino'),
+    AppTextField(
+      label: 'Especialidade',
+      controller: _specialty,
+      hint: 'Neuropediatria',
+      textCapitalization: TextCapitalization.words,
+      onChanged: (String v) {
+        _content.text = DocumentTemplates.referral(
+          patientName: _patientName,
+          specialty: v.isEmpty ? '[especialidade]' : v,
+          reason: _reason.text.isEmpty
+              ? (widget.encounter.assessment.isEmpty
+                    ? '[motivo]'
+                    : widget.encounter.assessment)
+              : _reason.text,
+          cid: _primaryCid,
+        );
+      },
+    ),
+    const SizedBox(height: AppSpacing.lg),
+    AppTextField(
+      label: 'Motivo',
+      controller: _reason,
+      maxLines: 3,
+      textCapitalization: TextCapitalization.sentences,
+      onChanged: (String v) {
+        _content.text = DocumentTemplates.referral(
+          patientName: _patientName,
+          specialty: _specialty.text.isEmpty
+              ? '[especialidade]'
+              : _specialty.text,
+          reason: v.isEmpty ? '[motivo]' : v,
+          cid: _primaryCid,
+        );
+      },
+    ),
+  ];
 
   // ------------------------------------------------------------- Exames
 
   List<Widget> _examFields() => <Widget>[
-        const SectionHeader(title: 'Exames solicitados'),
-        AppTextField(
-          label: 'Um por linha',
-          controller: _exams,
-          maxLines: 6,
-          hint: 'Hemograma completo\nPCR\nUrina tipo I',
-          onChanged: (String v) {
-            final List<String> list = v
-                .split('\n')
-                .map((String s) => s.trim())
-                .where((String s) => s.isNotEmpty)
-                .toList(growable: false);
+    const SectionHeader(title: 'Exames solicitados'),
+    AppTextField(
+      label: 'Um por linha',
+      controller: _exams,
+      maxLines: 6,
+      hint: 'Hemograma completo\nPCR\nUrina tipo I',
+      onChanged: (String v) {
+        final List<String> list = v
+            .split('\n')
+            .map((String s) => s.trim())
+            .where((String s) => s.isNotEmpty)
+            .toList(growable: false);
 
-            _content.text = DocumentTemplates.examRequest(
-              patientName: _patientName,
-              exams: list.isEmpty ? const <String>['[exame]'] : list,
-              clinicalIndication: widget.encounter.assessment.isEmpty
-                  ? null
-                  : widget.encounter.assessment,
-            );
-          },
-        ),
-      ];
+        _content.text = DocumentTemplates.examRequest(
+          patientName: _patientName,
+          exams: list.isEmpty ? const <String>['[exame]'] : list,
+          clinicalIndication: widget.encounter.assessment.isEmpty
+              ? null
+              : widget.encounter.assessment,
+        );
+      },
+    ),
+  ];
 }
 
 class _PatientCard extends StatelessWidget {
@@ -475,18 +471,18 @@ class _ItemDraft {
   });
 
   factory _ItemDraft.empty() => _ItemDraft(
-        drug: TextEditingController(),
-        presentation: TextEditingController(),
-        dose: TextEditingController(),
-        frequency: TextEditingController(),
-        duration: TextEditingController(),
-        instructions: TextEditingController(),
-        quantity: TextEditingController(),
-        mgPerKg: TextEditingController(),
-        maxSingleDoseMg: TextEditingController(),
-        maxDailyDoseMg: TextEditingController(),
-        timesPerDay: TextEditingController(),
-      );
+    drug: TextEditingController(),
+    presentation: TextEditingController(),
+    dose: TextEditingController(),
+    frequency: TextEditingController(),
+    duration: TextEditingController(),
+    instructions: TextEditingController(),
+    quantity: TextEditingController(),
+    mgPerKg: TextEditingController(),
+    maxSingleDoseMg: TextEditingController(),
+    maxDailyDoseMg: TextEditingController(),
+    timesPerDay: TextEditingController(),
+  );
 
   final TextEditingController drug;
   final TextEditingController presentation;
@@ -504,24 +500,33 @@ class _ItemDraft {
   bool controlled = false;
 
   PrescriptionItem toItem() => PrescriptionItem(
-        drug: drug.text.trim(),
-        presentation: presentation.text.trim(),
-        dose: dose.text.trim(),
-        route: route,
-        frequency: frequency.text.trim(),
-        duration: duration.text.trim(),
-        instructions:
-            instructions.text.trim().isEmpty ? null : instructions.text.trim(),
-        quantity: quantity.text.trim().isEmpty ? null : quantity.text.trim(),
-        mgPerKg: Parsers.decimal(mgPerKg.text),
-        isControlled: controlled,
-      );
+    drug: drug.text.trim(),
+    presentation: presentation.text.trim(),
+    dose: dose.text.trim(),
+    route: route,
+    frequency: frequency.text.trim(),
+    duration: duration.text.trim(),
+    instructions: instructions.text.trim().isEmpty
+        ? null
+        : instructions.text.trim(),
+    quantity: quantity.text.trim().isEmpty ? null : quantity.text.trim(),
+    mgPerKg: Parsers.decimal(mgPerKg.text),
+    isControlled: controlled,
+  );
 
   void dispose() {
     for (final TextEditingController c in <TextEditingController>[
-      drug, presentation, dose, frequency, duration,
-      instructions, quantity, mgPerKg,
-      maxSingleDoseMg, maxDailyDoseMg, timesPerDay,
+      drug,
+      presentation,
+      dose,
+      frequency,
+      duration,
+      instructions,
+      quantity,
+      mgPerKg,
+      maxSingleDoseMg,
+      maxDailyDoseMg,
+      timesPerDay,
     ]) {
       c.dispose();
     }
@@ -589,7 +594,8 @@ class _PrescriptionItemCardState extends State<_PrescriptionItemCard> {
     final double? perKg = Parsers.decimal(widget.draft.mgPerKg.text);
     if (perKg == null || perKg <= 0 || widget.weightKg == null) return null;
 
-    final int times = int.tryParse(widget.draft.timesPerDay.text.trim()) ??
+    final int times =
+        int.tryParse(widget.draft.timesPerDay.text.trim()) ??
         _timesFromFrequency(widget.draft.frequency.text);
 
     return DoseCalculator.calculate(
@@ -705,8 +711,9 @@ class _PrescriptionItemCardState extends State<_PrescriptionItemCard> {
                       value: _frequencies.contains(widget.draft.frequency.text)
                           ? widget.draft.frequency.text
                           : null,
-                      decoration:
-                          const InputDecoration(labelText: 'Frequência'),
+                      decoration: const InputDecoration(
+                        labelText: 'Frequência',
+                      ),
                       items: _frequencies
                           .map(
                             (String f) => DropdownMenuItem<String>(
@@ -739,8 +746,9 @@ class _PrescriptionItemCardState extends State<_PrescriptionItemCard> {
                       label: 'mg/kg',
                       controller: widget.draft.mgPerKg,
                       hint: '15',
-                      keyboardType:
-                          const TextInputType.numberWithOptions(decimal: true),
+                      keyboardType: const TextInputType.numberWithOptions(
+                        decimal: true,
+                      ),
                       inputFormatters: Masks.decimal,
                       onChanged: (_) => setState(() {}),
                     ),
@@ -882,8 +890,7 @@ class _DoseCheckBox extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final ThemeData theme = Theme.of(context);
-    final Color color =
-        result.hasWarning ? AppColors.warning : AppColors.vital;
+    final Color color = result.hasWarning ? AppColors.warning : AppColors.vital;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,

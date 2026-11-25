@@ -54,8 +54,7 @@ String formatLabsSummary(List<LabResult> labs) {
   if (labs.isEmpty) return 'Sem registro';
 
   final LabResult last = labs.reduce(
-    (LabResult a, LabResult b) =>
-        a.collectedAt.isAfter(b.collectedAt) ? a : b,
+    (LabResult a, LabResult b) => a.collectedAt.isAfter(b.collectedAt) ? a : b,
   );
 
   final String plural = labs.length == 1 ? 'exame' : 'exames';
@@ -66,8 +65,9 @@ String formatLabsSummary(List<LabResult> labs) {
 /// Texto do indicador de documentos — contagem de documentos ativos
 /// (cancelado não conta, mas continua existindo no histórico da timeline).
 String formatDocumentsSummary(List<ClinicalDocument> documents) {
-  final List<ClinicalDocument> active =
-      documents.where((ClinicalDocument d) => !d.cancelled).toList();
+  final List<ClinicalDocument> active = documents
+      .where((ClinicalDocument d) => !d.cancelled)
+      .toList();
   if (active.isEmpty) return 'Sem registro';
 
   final ClinicalDocument last = active.reduce(

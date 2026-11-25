@@ -16,41 +16,40 @@ enum ClinicWorkflowStatus {
   rescheduled;
 
   String get label => switch (this) {
-        ClinicWorkflowStatus.scheduled => 'Agendado',
-        ClinicWorkflowStatus.confirmed => 'Confirmado',
-        ClinicWorkflowStatus.arrived => 'Chegou',
-        ClinicWorkflowStatus.triage => 'Em triagem',
-        ClinicWorkflowStatus.waitingDoctor => 'Aguardando médico',
-        ClinicWorkflowStatus.called => 'Chamado',
-        ClinicWorkflowStatus.inService => 'Em atendimento',
-        ClinicWorkflowStatus.finished => 'Finalizado',
-        ClinicWorkflowStatus.noShow => 'Não compareceu',
-        ClinicWorkflowStatus.cancelled => 'Cancelado',
-        ClinicWorkflowStatus.rescheduled => 'Remarcado',
-      };
+    ClinicWorkflowStatus.scheduled => 'Agendado',
+    ClinicWorkflowStatus.confirmed => 'Confirmado',
+    ClinicWorkflowStatus.arrived => 'Chegou',
+    ClinicWorkflowStatus.triage => 'Em triagem',
+    ClinicWorkflowStatus.waitingDoctor => 'Aguardando médico',
+    ClinicWorkflowStatus.called => 'Chamado',
+    ClinicWorkflowStatus.inService => 'Em atendimento',
+    ClinicWorkflowStatus.finished => 'Finalizado',
+    ClinicWorkflowStatus.noShow => 'Não compareceu',
+    ClinicWorkflowStatus.cancelled => 'Cancelado',
+    ClinicWorkflowStatus.rescheduled => 'Remarcado',
+  };
 
   /// Colunas tipicas da recepcao (fluxo ativo do dia).
   bool get isReceptionColumn => switch (this) {
-        ClinicWorkflowStatus.scheduled ||
-        ClinicWorkflowStatus.confirmed ||
-        ClinicWorkflowStatus.arrived ||
-        ClinicWorkflowStatus.triage ||
-        ClinicWorkflowStatus.waitingDoctor ||
-        ClinicWorkflowStatus.called ||
-        ClinicWorkflowStatus.inService =>
-          true,
-        _ => false,
-      };
+    ClinicWorkflowStatus.scheduled ||
+    ClinicWorkflowStatus.confirmed ||
+    ClinicWorkflowStatus.arrived ||
+    ClinicWorkflowStatus.triage ||
+    ClinicWorkflowStatus.waitingDoctor ||
+    ClinicWorkflowStatus.called ||
+    ClinicWorkflowStatus.inService => true,
+    _ => false,
+  };
 
   /// Ordem na fila operacional (menor = mais cedo no fluxo).
   int get queueOrder => switch (this) {
-        ClinicWorkflowStatus.arrived => 0,
-        ClinicWorkflowStatus.triage => 1,
-        ClinicWorkflowStatus.waitingDoctor => 2,
-        ClinicWorkflowStatus.called => 3,
-        ClinicWorkflowStatus.inService => 4,
-        _ => 99,
-      };
+    ClinicWorkflowStatus.arrived => 0,
+    ClinicWorkflowStatus.triage => 1,
+    ClinicWorkflowStatus.waitingDoctor => 2,
+    ClinicWorkflowStatus.called => 3,
+    ClinicWorkflowStatus.inService => 4,
+    _ => 99,
+  };
 
   static ClinicWorkflowStatus fromName(String? value) =>
       ClinicWorkflowStatus.values.firstWhere(
@@ -87,17 +86,16 @@ enum ClinicWorkflowStatus {
   /// Status de agenda correspondente, quando o fluxo precisa refletir na
   /// colecao appointments.status (compatibilidade com telas existentes).
   String? toAppointmentStatusName() => switch (this) {
-        ClinicWorkflowStatus.scheduled => 'requested',
-        ClinicWorkflowStatus.confirmed ||
-        ClinicWorkflowStatus.arrived ||
-        ClinicWorkflowStatus.triage ||
-        ClinicWorkflowStatus.waitingDoctor ||
-        ClinicWorkflowStatus.called =>
-          'confirmed',
-        ClinicWorkflowStatus.inService => 'inProgress',
-        ClinicWorkflowStatus.finished => 'completed',
-        ClinicWorkflowStatus.cancelled => 'cancelled',
-        ClinicWorkflowStatus.noShow => 'noShow',
-        ClinicWorkflowStatus.rescheduled => 'cancelled',
-      };
+    ClinicWorkflowStatus.scheduled => 'requested',
+    ClinicWorkflowStatus.confirmed ||
+    ClinicWorkflowStatus.arrived ||
+    ClinicWorkflowStatus.triage ||
+    ClinicWorkflowStatus.waitingDoctor ||
+    ClinicWorkflowStatus.called => 'confirmed',
+    ClinicWorkflowStatus.inService => 'inProgress',
+    ClinicWorkflowStatus.finished => 'completed',
+    ClinicWorkflowStatus.cancelled => 'cancelled',
+    ClinicWorkflowStatus.noShow => 'noShow',
+    ClinicWorkflowStatus.rescheduled => 'cancelled',
+  };
 }

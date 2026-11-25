@@ -63,11 +63,8 @@ class ClinicalPdfService {
           clinicPhone: clinicPhone,
           bold: bold,
         ),
-        footer: (pw.Context context) => _footer(
-          document: document,
-          context: context,
-          mono: mono,
-        ),
+        footer: (pw.Context context) =>
+            _footer(document: document, context: context, mono: mono),
         build: (pw.Context context) => <pw.Widget>[
           _patientBlock(
             document: document,
@@ -99,28 +96,28 @@ class ClinicalPdfService {
     required String clinicName,
     String? clinicAddress,
     String? clinicPhone,
-  }) =>
-      Printing.layoutPdf(
-        name: '${document.type.label}_${document.id.substring(0, 6)}',
-        onLayout: (PdfPageFormat format) => build(
-          document: document,
-          clinicName: clinicName,
-          clinicAddress: clinicAddress,
-          clinicPhone: clinicPhone,
-        ),
-      );
+  }) => Printing.layoutPdf(
+    name: '${document.type.label}_${document.id.substring(0, 6)}',
+    onLayout: (PdfPageFormat format) => build(
+      document: document,
+      clinicName: clinicName,
+      clinicAddress: clinicAddress,
+      clinicPhone: clinicPhone,
+    ),
+  );
 
   static Future<void> share({
     required ClinicalDocument document,
     required String clinicName,
   }) async {
-    final Uint8List bytes =
-        await build(document: document, clinicName: clinicName);
+    final Uint8List bytes = await build(
+      document: document,
+      clinicName: clinicName,
+    );
 
     await Printing.sharePdf(
       bytes: bytes,
-      filename:
-          '${document.type.label.toLowerCase().replaceAll(' ', '_')}.pdf',
+      filename: '${document.type.label.toLowerCase().replaceAll(' ', '_')}.pdf',
     );
   }
 
@@ -196,127 +193,117 @@ class ClinicalPdfService {
     required pw.Font bold,
     String? birthDateLabel,
     String? patientDocument,
-  }) =>
-      pw.Container(
-        padding: const pw.EdgeInsets.all(12),
-        decoration: pw.BoxDecoration(
-          color: const PdfColor.fromInt(0xFFF4F8F8),
-          borderRadius: pw.BorderRadius.circular(6),
+  }) => pw.Container(
+    padding: const pw.EdgeInsets.all(12),
+    decoration: pw.BoxDecoration(
+      color: const PdfColor.fromInt(0xFFF4F8F8),
+      borderRadius: pw.BorderRadius.circular(6),
+    ),
+    child: pw.Column(
+      crossAxisAlignment: pw.CrossAxisAlignment.start,
+      children: <pw.Widget>[
+        pw.Text(
+          'PACIENTE',
+          style: pw.TextStyle(font: bold, fontSize: 7, color: _muted),
         ),
-        child: pw.Column(
-          crossAxisAlignment: pw.CrossAxisAlignment.start,
-          children: <pw.Widget>[
-            pw.Text(
-              'PACIENTE',
-              style: pw.TextStyle(font: bold, fontSize: 7, color: _muted),
-            ),
-            pw.SizedBox(height: 3),
-            pw.Text(
-              document.patientName ?? '—',
-              style: pw.TextStyle(font: bold, fontSize: 12),
-            ),
-            if (birthDateLabel != null || patientDocument != null)
-              pw.Padding(
-                padding: const pw.EdgeInsets.only(top: 2),
-                child: pw.Text(
-                  <String>[
-                    if (birthDateLabel != null) 'Nascimento: $birthDateLabel',
-                    if (patientDocument != null) patientDocument,
-                  ].join('   ·   '),
-                  style: const pw.TextStyle(fontSize: 8, color: _muted),
-                ),
-              ),
-          ],
+        pw.SizedBox(height: 3),
+        pw.Text(
+          document.patientName ?? '—',
+          style: pw.TextStyle(font: bold, fontSize: 12),
         ),
-      );
+        if (birthDateLabel != null || patientDocument != null)
+          pw.Padding(
+            padding: const pw.EdgeInsets.only(top: 2),
+            child: pw.Text(
+              <String>[
+                if (birthDateLabel != null) 'Nascimento: $birthDateLabel',
+                if (patientDocument != null) patientDocument,
+              ].join('   ·   '),
+              style: const pw.TextStyle(fontSize: 8, color: _muted),
+            ),
+          ),
+      ],
+    ),
+  );
 
   /// Corpo de uma receita: itens numerados, posologia destacada.
   static List<pw.Widget> _prescriptionBody(
     ClinicalDocument document,
     pw.Font bold,
     pw.Font mono,
-  ) =>
-      <pw.Widget>[
-        for (int i = 0; i < document.items.length; i++)
-          pw.Container(
-            margin: const pw.EdgeInsets.only(bottom: 14),
-            padding: const pw.EdgeInsets.only(bottom: 12),
-            decoration: pw.BoxDecoration(
-              border: i < document.items.length - 1
-                  ? const pw.Border(
-                      bottom: pw.BorderSide(color: _line, width: 0.5),
-                    )
-                  : null,
+  ) => <pw.Widget>[
+    for (int i = 0; i < document.items.length; i++)
+      pw.Container(
+        margin: const pw.EdgeInsets.only(bottom: 14),
+        padding: const pw.EdgeInsets.only(bottom: 12),
+        decoration: pw.BoxDecoration(
+          border: i < document.items.length - 1
+              ? const pw.Border(bottom: pw.BorderSide(color: _line, width: 0.5))
+              : null,
+        ),
+        child: pw.Row(
+          crossAxisAlignment: pw.CrossAxisAlignment.start,
+          children: <pw.Widget>[
+            pw.Container(
+              width: 20,
+              child: pw.Text(
+                '${i + 1}.',
+                style: pw.TextStyle(font: bold, fontSize: 11),
+              ),
             ),
-            child: pw.Row(
-              crossAxisAlignment: pw.CrossAxisAlignment.start,
-              children: <pw.Widget>[
-                pw.Container(
-                  width: 20,
-                  child: pw.Text(
-                    '${i + 1}.',
+            pw.Expanded(
+              child: pw.Column(
+                crossAxisAlignment: pw.CrossAxisAlignment.start,
+                children: <pw.Widget>[
+                  pw.Text(
+                    document.items[i].printedLine,
                     style: pw.TextStyle(font: bold, fontSize: 11),
                   ),
-                ),
-                pw.Expanded(
-                  child: pw.Column(
-                    crossAxisAlignment: pw.CrossAxisAlignment.start,
-                    children: <pw.Widget>[
-                      pw.Text(
-                        document.items[i].printedLine,
-                        style: pw.TextStyle(font: bold, fontSize: 11),
-                      ),
-                      pw.SizedBox(height: 3),
-                      // Posologia em fonte monoespaçada: números de dose são o
-                      // que o responsável precisa ler sem ambiguidade.
-                      pw.Text(
-                        document.items[i].printedPosology,
-                        style: pw.TextStyle(font: mono, fontSize: 10),
-                      ),
-                      if (document.items[i].instructions != null)
-                        pw.Padding(
-                          padding: const pw.EdgeInsets.only(top: 3),
-                          child: pw.Text(
-                            document.items[i].instructions!,
-                            style: const pw.TextStyle(
-                              fontSize: 9,
-                              color: _muted,
-                            ),
-                          ),
-                        ),
-                      if (document.items[i].quantity != null)
-                        pw.Padding(
-                          padding: const pw.EdgeInsets.only(top: 3),
-                          child: pw.Text(
-                            'Quantidade: ${document.items[i].quantity}',
-                            style: const pw.TextStyle(fontSize: 9),
-                          ),
-                        ),
-                    ],
+                  pw.SizedBox(height: 3),
+                  // Posologia em fonte monoespaçada: números de dose são o
+                  // que o responsável precisa ler sem ambiguidade.
+                  pw.Text(
+                    document.items[i].printedPosology,
+                    style: pw.TextStyle(font: mono, fontSize: 10),
                   ),
-                ),
-              ],
+                  if (document.items[i].instructions != null)
+                    pw.Padding(
+                      padding: const pw.EdgeInsets.only(top: 3),
+                      child: pw.Text(
+                        document.items[i].instructions!,
+                        style: const pw.TextStyle(fontSize: 9, color: _muted),
+                      ),
+                    ),
+                  if (document.items[i].quantity != null)
+                    pw.Padding(
+                      padding: const pw.EdgeInsets.only(top: 3),
+                      child: pw.Text(
+                        'Quantidade: ${document.items[i].quantity}',
+                        style: const pw.TextStyle(fontSize: 9),
+                      ),
+                    ),
+                ],
+              ),
             ),
-          ),
-        if (document.content.trim().isNotEmpty) ...<pw.Widget>[
-          pw.SizedBox(height: 8),
-          pw.Text(
-            'Orientações',
-            style: pw.TextStyle(font: bold, fontSize: 9, color: _muted),
-          ),
-          pw.SizedBox(height: 4),
-          pw.Text(
-            document.content,
-            style: const pw.TextStyle(fontSize: 10, lineSpacing: 3),
-          ),
-        ],
-      ];
+          ],
+        ),
+      ),
+    if (document.content.trim().isNotEmpty) ...<pw.Widget>[
+      pw.SizedBox(height: 8),
+      pw.Text(
+        'Orientações',
+        style: pw.TextStyle(font: bold, fontSize: 9, color: _muted),
+      ),
+      pw.SizedBox(height: 4),
+      pw.Text(
+        document.content,
+        style: const pw.TextStyle(fontSize: 10, lineSpacing: 3),
+      ),
+    ],
+  ];
 
   /// Corpo de atestado, declaração, encaminhamento, relatório e alta.
-  static List<pw.Widget> _textBody(
-    ClinicalDocument document,
-    pw.Font bold,
-  ) =>
+  static List<pw.Widget> _textBody(ClinicalDocument document, pw.Font bold) =>
       <pw.Widget>[
         pw.Text(
           document.content,
@@ -332,10 +319,7 @@ class ClinicalPdfService {
         ],
       ];
 
-  static pw.Widget _signatureBlock(
-    ClinicalDocument document,
-    pw.Font bold,
-  ) =>
+  static pw.Widget _signatureBlock(ClinicalDocument document, pw.Font bold) =>
       pw.Column(
         crossAxisAlignment: pw.CrossAxisAlignment.center,
         children: <pw.Widget>[
@@ -388,10 +372,7 @@ class ClinicalPdfService {
         ],
       );
 
-  static pw.Widget _cancelledBanner(
-    ClinicalDocument document,
-    pw.Font bold,
-  ) =>
+  static pw.Widget _cancelledBanner(ClinicalDocument document, pw.Font bold) =>
       pw.Container(
         width: double.infinity,
         padding: const pw.EdgeInsets.all(10),
@@ -419,43 +400,42 @@ class ClinicalPdfService {
     required ClinicalDocument document,
     required pw.Context context,
     required pw.Font mono,
-  }) =>
-      pw.Container(
-        padding: const pw.EdgeInsets.only(top: 8),
-        decoration: const pw.BoxDecoration(
-          border: pw.Border(top: pw.BorderSide(color: _line, width: 0.5)),
+  }) => pw.Container(
+    padding: const pw.EdgeInsets.only(top: 8),
+    decoration: const pw.BoxDecoration(
+      border: pw.Border(top: pw.BorderSide(color: _line, width: 0.5)),
+    ),
+    child: pw.Row(
+      crossAxisAlignment: pw.CrossAxisAlignment.start,
+      children: <pw.Widget>[
+        pw.Expanded(
+          child: pw.Column(
+            crossAxisAlignment: pw.CrossAxisAlignment.start,
+            children: <pw.Widget>[
+              if (document.verificationCode != null) ...<pw.Widget>[
+                pw.Text(
+                  'Código de conferência',
+                  style: const pw.TextStyle(fontSize: 6, color: _muted),
+                ),
+                pw.Text(
+                  document.verificationCode!,
+                  style: pw.TextStyle(font: mono, fontSize: 10),
+                ),
+                pw.Text(
+                  'Confira a autenticidade em pediatria360.app/verificar',
+                  style: const pw.TextStyle(fontSize: 6, color: _muted),
+                ),
+              ],
+            ],
+          ),
         ),
-        child: pw.Row(
-          crossAxisAlignment: pw.CrossAxisAlignment.start,
-          children: <pw.Widget>[
-            pw.Expanded(
-              child: pw.Column(
-                crossAxisAlignment: pw.CrossAxisAlignment.start,
-                children: <pw.Widget>[
-                  if (document.verificationCode != null) ...<pw.Widget>[
-                    pw.Text(
-                      'Código de conferência',
-                      style: const pw.TextStyle(fontSize: 6, color: _muted),
-                    ),
-                    pw.Text(
-                      document.verificationCode!,
-                      style: pw.TextStyle(font: mono, fontSize: 10),
-                    ),
-                    pw.Text(
-                      'Confira a autenticidade em pediatria360.app/verificar',
-                      style: const pw.TextStyle(fontSize: 6, color: _muted),
-                    ),
-                  ],
-                ],
-              ),
-            ),
-            pw.Text(
-              'Página ${context.pageNumber} de ${context.pagesCount}',
-              style: const pw.TextStyle(fontSize: 7, color: _muted),
-            ),
-          ],
+        pw.Text(
+          'Página ${context.pageNumber} de ${context.pagesCount}',
+          style: const pw.TextStyle(fontSize: 7, color: _muted),
         ),
-      );
+      ],
+    ),
+  );
 
   static String _formatDate(DateTime date) =>
       '${date.day.toString().padLeft(2, '0')}/'

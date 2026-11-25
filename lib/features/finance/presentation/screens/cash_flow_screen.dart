@@ -34,7 +34,10 @@ class CashFlowScreen extends ConsumerWidget {
                         LineChartBarData(
                           spots: <FlSpot>[
                             for (int i = 0; i < buckets.length; i++)
-                              FlSpot(i.toDouble(), buckets[i].cumulative / 100.0),
+                              FlSpot(
+                                i.toDouble(),
+                                buckets[i].cumulative / 100.0,
+                              ),
                           ],
                           isCurved: true,
                           color: AppColors.brand,

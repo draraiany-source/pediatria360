@@ -45,10 +45,7 @@ class TenantScope {
 
   /// [unitIds] vazio + [ClinicRole.clinicAdmin] = todas as unidades da clinica.
   /// Caso contrario, [unitId] deve estar em [membership.unitIds] (se informado).
-  static bool canAccessUnit(
-    ClinicMembership? membership,
-    String? unitId,
-  ) {
+  static bool canAccessUnit(ClinicMembership? membership, String? unitId) {
     if (membership == null || !membership.active) {
       return false;
     }
@@ -93,7 +90,8 @@ class TenantScope {
     }
     requireClinicAccess(membership, membership.clinicId);
     data.putIfAbsent('clinicId', () => membership.clinicId);
-    final String? resolvedUnit = unitId ??
+    final String? resolvedUnit =
+        unitId ??
         (membership.unitIds.length == 1 ? membership.unitIds.first : null);
     if (resolvedUnit != null && resolvedUnit.isNotEmpty) {
       data.putIfAbsent('unitId', () => resolvedUnit);

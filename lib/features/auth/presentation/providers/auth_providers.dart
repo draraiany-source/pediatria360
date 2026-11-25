@@ -19,24 +19,25 @@ import '../../domain/usecases/auth_usecases.dart';
 
 final Provider<AuthRemoteDataSource> authRemoteDataSourceProvider =
     Provider<AuthRemoteDataSource>(
-  (Ref ref) => AuthRemoteDataSource(
-    auth: ref.watch(firebaseAuthProvider),
-    firestore: ref.watch(firestoreProvider),
-    functions: ref.watch(firebaseFunctionsProvider),
-  ),
-);
+      (Ref ref) => AuthRemoteDataSource(
+        auth: ref.watch(firebaseAuthProvider),
+        firestore: ref.watch(firestoreProvider),
+        functions: ref.watch(firebaseFunctionsProvider),
+      ),
+    );
 
-final Provider<AuthRepository> authRepositoryProvider = Provider<AuthRepository>(
-  (Ref ref) => AuthRepositoryImpl(
-    remote: ref.watch(authRemoteDataSourceProvider),
-    analytics: ref.watch(analyticsProvider),
-    onSignOut: () async {
-      // Apaga tudo que ficou no aparelho: cache de leitura e banco local.
-      await ref.read(cacheServiceProvider).clear();
-      await ref.read(localDatabaseProvider)?.wipe();
-    },
-  ),
-);
+final Provider<AuthRepository> authRepositoryProvider =
+    Provider<AuthRepository>(
+      (Ref ref) => AuthRepositoryImpl(
+        remote: ref.watch(authRemoteDataSourceProvider),
+        analytics: ref.watch(analyticsProvider),
+        onSignOut: () async {
+          // Apaga tudo que ficou no aparelho: cache de leitura e banco local.
+          await ref.read(cacheServiceProvider).clear();
+          await ref.read(localDatabaseProvider)?.wipe();
+        },
+      ),
+    );
 
 // ------------------------------------------------------------- Estado
 
@@ -44,18 +45,18 @@ final Provider<AuthRepository> authRepositoryProvider = Provider<AuthRepository>
 
 final Provider<SignInWithEmail> signInWithEmailProvider =
     Provider<SignInWithEmail>(
-  (Ref ref) => SignInWithEmail(ref.watch(authRepositoryProvider)),
-);
+      (Ref ref) => SignInWithEmail(ref.watch(authRepositoryProvider)),
+    );
 
 final Provider<SignUpWithEmail> signUpWithEmailProvider =
     Provider<SignUpWithEmail>(
-  (Ref ref) => SignUpWithEmail(ref.watch(authRepositoryProvider)),
-);
+      (Ref ref) => SignUpWithEmail(ref.watch(authRepositoryProvider)),
+    );
 
 final Provider<SignInWithGoogle> signInWithGoogleProvider =
     Provider<SignInWithGoogle>(
-  (Ref ref) => SignInWithGoogle(ref.watch(authRepositoryProvider)),
-);
+      (Ref ref) => SignInWithGoogle(ref.watch(authRepositoryProvider)),
+    );
 
 final Provider<SignOut> signOutProvider = Provider<SignOut>(
   (Ref ref) => SignOut(ref.watch(authRepositoryProvider)),
@@ -63,13 +64,13 @@ final Provider<SignOut> signOutProvider = Provider<SignOut>(
 
 final Provider<SendPasswordReset> sendPasswordResetProvider =
     Provider<SendPasswordReset>(
-  (Ref ref) => SendPasswordReset(ref.watch(authRepositoryProvider)),
-);
+      (Ref ref) => SendPasswordReset(ref.watch(authRepositoryProvider)),
+    );
 
 final Provider<CompleteOnboarding> completeOnboardingProvider =
     Provider<CompleteOnboarding>(
-  (Ref ref) => CompleteOnboarding(ref.watch(authRepositoryProvider)),
-);
+      (Ref ref) => CompleteOnboarding(ref.watch(authRepositoryProvider)),
+    );
 
 final Provider<UpdateProfile> updateProfileProvider = Provider<UpdateProfile>(
   (Ref ref) => UpdateProfile(ref.watch(authRepositoryProvider)),
@@ -90,15 +91,15 @@ final Provider<DeleteAccount> deleteAccountProvider = Provider<DeleteAccount>(
 ///
 /// Se houver Auth real (homologação após “Entrar com conta”), o perfil
 /// Firestore prevalece — não mascara a sessão com o convidado.
-final StreamProvider<AppUser?> authStateProvider =
-    StreamProvider<AppUser?>(
-  (Ref ref) {
-    final Stream<AppUser?> firebase =
-        ref.watch(authRepositoryProvider).watchCurrentUser();
-    if (!DevMode.isEnabled) return firebase;
-    return firebase.map((AppUser? user) => user ?? DevMode.user);
-  },
-);
+final StreamProvider<AppUser?> authStateProvider = StreamProvider<AppUser?>((
+  Ref ref,
+) {
+  final Stream<AppUser?> firebase = ref
+      .watch(authRepositoryProvider)
+      .watchCurrentUser();
+  if (!DevMode.isEnabled) return firebase;
+  return firebase.map((AppUser? user) => user ?? DevMode.user);
+});
 
 /// Usuário da sessão atual, ou `null`.
 ///
@@ -111,11 +112,7 @@ final Provider<AppUser?> currentUserProvider = Provider<AppUser?>(
 /// Estado das acoes de autenticacao (login, cadastro, recuperacao).
 @immutable
 class AuthActionState {
-  const AuthActionState({
-    this.isLoading = false,
-    this.failure,
-    this.message,
-  });
+  const AuthActionState({this.isLoading = false, this.failure, this.message});
 
   final bool isLoading;
   final Failure? failure;
@@ -128,12 +125,11 @@ class AuthActionState {
     Failure? failure,
     String? message,
     bool clear = false,
-  }) =>
-      AuthActionState(
-        isLoading: isLoading ?? this.isLoading,
-        failure: clear ? null : (failure ?? this.failure),
-        message: clear ? null : (message ?? this.message),
-      );
+  }) => AuthActionState(
+    isLoading: isLoading ?? this.isLoading,
+    failure: clear ? null : (failure ?? this.failure),
+    message: clear ? null : (message ?? this.message),
+  );
 }
 
 /// Executa as acoes de autenticacao e expoe carregamento/erro para a tela.
@@ -141,10 +137,7 @@ class AuthController extends Notifier<AuthActionState> {
   @override
   AuthActionState build() => const AuthActionState();
 
-  Future<bool> signIn({
-    required String email,
-    required String password,
-  }) =>
+  Future<bool> signIn({required String email, required String password}) =>
       _run(
         () => ref.read(signInWithEmailProvider)(
           SignInParams(email: email, password: password),
@@ -155,27 +148,24 @@ class AuthController extends Notifier<AuthActionState> {
     required String name,
     required String email,
     required String password,
-  }) =>
-      _run(
-        () => ref.read(signUpWithEmailProvider)(
-          SignUpParams(name: name, email: email, password: password),
-        ),
-      );
+  }) => _run(
+    () => ref.read(signUpWithEmailProvider)(
+      SignUpParams(name: name, email: email, password: password),
+    ),
+  );
 
-  Future<bool> signInWithGoogle() => _run(
-        () => ref.read(signInWithGoogleProvider)(const NoParams()),
-      );
+  Future<bool> signInWithGoogle() =>
+      _run(() => ref.read(signInWithGoogleProvider)(const NoParams()));
 
   Future<bool> completeOnboarding({
     required UserRole role,
     String? crm,
     String? specialty,
-  }) =>
-      _run(
-        () => ref.read(completeOnboardingProvider)(
-          OnboardingParams(role: role, crm: crm, specialty: specialty),
-        ),
-      );
+  }) => _run(
+    () => ref.read(completeOnboardingProvider)(
+      OnboardingParams(role: role, crm: crm, specialty: specialty),
+    ),
+  );
 
   Future<bool> sendPasswordReset(String email) async {
     final bool ok = await _run(
@@ -189,13 +179,11 @@ class AuthController extends Notifier<AuthActionState> {
     return ok;
   }
 
-  Future<bool> signOut() => _run(
-        () => ref.read(signOutProvider)(const NoParams()),
-      );
+  Future<bool> signOut() =>
+      _run(() => ref.read(signOutProvider)(const NoParams()));
 
-  Future<bool> deleteAccount(String password) => _run(
-        () => ref.read(deleteAccountProvider)(password),
-      );
+  Future<bool> deleteAccount(String password) =>
+      _run(() => ref.read(deleteAccountProvider)(password));
 
   /// Limpa erro e mensagem — chamado ao sair da tela ou ao editar o formulario.
   void clear() => state = const AuthActionState();

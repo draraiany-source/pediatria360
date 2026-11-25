@@ -5,10 +5,10 @@ enum SupplementRxStatus {
   cancelled;
 
   String get label => switch (this) {
-        SupplementRxStatus.draft => 'Rascunho',
-        SupplementRxStatus.confirmed => 'Confirmada',
-        SupplementRxStatus.cancelled => 'Cancelada',
-      };
+    SupplementRxStatus.draft => 'Rascunho',
+    SupplementRxStatus.confirmed => 'Confirmada',
+    SupplementRxStatus.cancelled => 'Cancelada',
+  };
 
   static SupplementRxStatus fromName(String? v) =>
       SupplementRxStatus.values.firstWhere(
@@ -43,12 +43,16 @@ class SupplementPrescription {
     this.clinicalNote = '',
   });
 
-  factory SupplementPrescription.fromMap(Map<String, dynamic> map, {String? id}) {
+  factory SupplementPrescription.fromMap(
+    Map<String, dynamic> map, {
+    String? id,
+  }) {
     return SupplementPrescription(
       id: id ?? (map['id'] as String?) ?? '',
       childId: (map['childId'] as String?) ?? '',
       professionalId: (map['professionalId'] as String?) ?? '',
-      createdAt: DateTime.tryParse((map['createdAt'] as String?) ?? '') ??
+      createdAt:
+          DateTime.tryParse((map['createdAt'] as String?) ?? '') ??
           DateTime.fromMillisecondsSinceEpoch(0),
       updatedAt: map['updatedAt'] == null
           ? null
@@ -101,27 +105,27 @@ class SupplementPrescription {
   bool get isEditable => status == SupplementRxStatus.draft;
 
   Map<String, dynamic> toMap() => <String, dynamic>{
-        'id': id,
-        'childId': childId,
-        'professionalId': professionalId,
-        'createdAt': createdAt.toIso8601String(),
-        'updatedAt': updatedAt?.toIso8601String(),
-        'micronutrientId': micronutrientId,
-        'productName': productName,
-        'activeIngredient': activeIngredient,
-        'presentation': presentation,
-        'concentration': concentration,
-        'doseText': doseText,
-        'unit': unit,
-        'frequency': frequency,
-        'route': route,
-        'duration': duration,
-        'quantity': quantity,
-        'instructions': instructions,
-        'status': status.name,
-        'confirmedAt': confirmedAt?.toIso8601String(),
-        'confirmedBy': confirmedBy,
-        'calculatorSuggestion': calculatorSuggestion,
-        'clinicalNote': clinicalNote,
-      };
+    'id': id,
+    'childId': childId,
+    'professionalId': professionalId,
+    'createdAt': createdAt.toIso8601String(),
+    'updatedAt': updatedAt?.toIso8601String(),
+    'micronutrientId': micronutrientId,
+    'productName': productName,
+    'activeIngredient': activeIngredient,
+    'presentation': presentation,
+    'concentration': concentration,
+    'doseText': doseText,
+    'unit': unit,
+    'frequency': frequency,
+    'route': route,
+    'duration': duration,
+    'quantity': quantity,
+    'instructions': instructions,
+    'status': status.name,
+    'confirmedAt': confirmedAt?.toIso8601String(),
+    'confirmedBy': confirmedBy,
+    'calculatorSuggestion': calculatorSuggestion,
+    'clinicalNote': clinicalNote,
+  };
 }

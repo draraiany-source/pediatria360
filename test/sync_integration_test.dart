@@ -42,8 +42,9 @@ class _Server {
     required DateTime at,
   }) {
     final bool serverChangedSince =
-        updatedAt != null && device.queuedAt != null &&
-            updatedAt!.isAfter(device.queuedAt!);
+        updatedAt != null &&
+        device.queuedAt != null &&
+        updatedAt!.isAfter(device.queuedAt!);
 
     final ConflictResolution resolution = serverChangedSince
         ? ConflictResolver.resolve(
@@ -70,8 +71,8 @@ class _Server {
         outcome: !resolution.shouldWrite
             ? SyncOutcome.discardedLocal
             : resolution.hasConflict
-                ? SyncOutcome.merged
-                : SyncOutcome.sent,
+            ? SyncOutcome.merged
+            : SyncOutcome.sent,
         strategy: resolution.strategy.name,
         conflictedFields: resolution.conflictedFields,
       ),
@@ -91,10 +92,7 @@ void main() {
 
     setUp(() {
       servidor = _Server()
-        ..state = <String, dynamic>{
-          'name': 'Manuela',
-          'allergies': <String>[],
-        }
+        ..state = <String, dynamic>{'name': 'Manuela', 'allergies': <String>[]}
         ..updatedAt = t0;
 
       celular = _Device('celular')
@@ -109,14 +107,12 @@ void main() {
     test('edições em campos diferentes convivem', () {
       // Cenário real: mãe corrige o telefone no celular enquanto o pai
       // adiciona o tipo sanguíneo no tablet.
-      celular.edit(
-        <String, dynamic>{'phone': '11988887777'},
-        at: t0.add(const Duration(minutes: 1)),
-      );
-      tablet.edit(
-        <String, dynamic>{'bloodType': 'O+'},
-        at: t0.add(const Duration(minutes: 2)),
-      );
+      celular.edit(<String, dynamic>{
+        'phone': '11988887777',
+      }, at: t0.add(const Duration(minutes: 1)));
+      tablet.edit(<String, dynamic>{
+        'bloodType': 'O+',
+      }, at: t0.add(const Duration(minutes: 2)));
 
       servidor.receive(
         entity: 'children',
@@ -134,27 +130,18 @@ void main() {
       expect(servidor.state['name'], 'Manuela');
 
       // Nada foi descartado.
-      expect(
-        servidor.log.any((SyncEvent e) => e.outcome.isProblem),
-        isFalse,
-      );
+      expect(servidor.log.any((SyncEvent e) => e.outcome.isProblem), isFalse);
     });
 
     test('alergias registradas em aparelhos diferentes se somam', () {
       // O caso que motivou abandonar "última escrita vence". Perder uma
       // alergia na sincronização é o tipo de erro que machuca.
-      celular.edit(
-        <String, dynamic>{
-          'allergies': <String>['amendoim'],
-        },
-        at: t0.add(const Duration(minutes: 1)),
-      );
-      tablet.edit(
-        <String, dynamic>{
-          'allergies': <String>['dipirona'],
-        },
-        at: t0.add(const Duration(minutes: 2)),
-      );
+      celular.edit(<String, dynamic>{
+        'allergies': <String>['amendoim'],
+      }, at: t0.add(const Duration(minutes: 1)));
+      tablet.edit(<String, dynamic>{
+        'allergies': <String>['dipirona'],
+      }, at: t0.add(const Duration(minutes: 2)));
 
       servidor.receive(
         entity: 'children',
@@ -167,22 +154,19 @@ void main() {
         at: t0.add(const Duration(minutes: 4)),
       );
 
-      final List<dynamic> finais =
-          servidor.state['allergies'] as List<dynamic>;
+      final List<dynamic> finais = servidor.state['allergies'] as List<dynamic>;
 
       expect(finais, containsAll(<String>['amendoim', 'dipirona']));
       expect(finais.length, 2);
     });
 
     test('mesmo campo divergente registra o conflito', () {
-      celular.edit(
-        <String, dynamic>{'bloodType': 'O+'},
-        at: t0.add(const Duration(minutes: 1)),
-      );
-      tablet.edit(
-        <String, dynamic>{'bloodType': 'A+'},
-        at: t0.add(const Duration(minutes: 2)),
-      );
+      celular.edit(<String, dynamic>{
+        'bloodType': 'O+',
+      }, at: t0.add(const Duration(minutes: 1)));
+      tablet.edit(<String, dynamic>{
+        'bloodType': 'A+',
+      }, at: t0.add(const Duration(minutes: 2)));
 
       servidor.receive(
         entity: 'children',
@@ -199,10 +183,7 @@ void main() {
       expect(second.conflictedFields, <String>['bloodType']);
       // O histórico guarda o que foi descartado.
       expect(second.discarded!['bloodType'], 'O+');
-      expect(
-        servidor.log.last.outcome,
-        SyncOutcome.merged,
-      );
+      expect(servidor.log.last.outcome, SyncOutcome.merged);
     });
   });
 
@@ -278,10 +259,7 @@ void main() {
 
       expect(a.shouldWrite, isTrue);
       expect(b.shouldWrite, isTrue);
-      expect(
-        servidor.log.every((SyncEvent e) => !e.outcome.isProblem),
-        isTrue,
-      );
+      expect(servidor.log.every((SyncEvent e) => !e.outcome.isProblem), isTrue);
     });
   });
 
@@ -304,10 +282,7 @@ void main() {
       ];
 
       for (int i = 0; i < fila.length; i++) {
-        offline.edit(
-          fila[i],
-          at: DateTime(2026, 7, 20, 9, i),
-        );
+        offline.edit(fila[i], at: DateTime(2026, 7, 20, 9, i));
         servidor.receive(
           entity: 'children',
           device: offline,
@@ -318,10 +293,7 @@ void main() {
       expect(servidor.state['phone'], '2222');
       expect(servidor.state['bloodType'], 'O+');
       expect(servidor.log.length, 3);
-      expect(
-        servidor.log.every((SyncEvent e) => !e.outcome.isProblem),
-        isTrue,
-      );
+      expect(servidor.log.every((SyncEvent e) => !e.outcome.isProblem), isTrue);
     });
 
     test('item que nunca passa é abandonado e registrado', () {

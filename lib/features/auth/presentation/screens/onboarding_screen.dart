@@ -29,19 +29,15 @@ class OnboardingPrefs {
 }
 
 /// Provider que o roteador observa para saber se deve mostrar a apresentacao.
-final FutureProvider<bool> onboardingSeenProvider = FutureProvider<bool>(
-  (Ref ref) async {
-    if (DevMode.isEnabled) return true;
-    return OnboardingPrefs.seen();
-  },
-);
+final FutureProvider<bool> onboardingSeenProvider = FutureProvider<bool>((
+  Ref ref,
+) async {
+  if (DevMode.isEnabled) return true;
+  return OnboardingPrefs.seen();
+});
 
 class _Slide {
-  const _Slide({
-    required this.image,
-    required this.title,
-    required this.body,
-  });
+  const _Slide({required this.image, required this.title, required this.body});
 
   final String image;
   final String title;
@@ -53,19 +49,22 @@ const List<_Slide> _slides = <_Slide>[
   _Slide(
     image: AppAssets.onboarding1,
     title: 'Acompanhe cada fase',
-    body: 'Peso, altura e perimetro cefalico plotados nas curvas da OMS, '
+    body:
+        'Peso, altura e perimetro cefalico plotados nas curvas da OMS, '
         'com idade corrigida para prematuros.',
   ),
   _Slide(
     image: AppAssets.onboarding2,
     title: 'Respostas com base clinica',
-    body: 'A IA responde a partir de protocolos pediatricos e sempre mostra '
+    body:
+        'A IA responde a partir de protocolos pediatricos e sempre mostra '
         'a fonte. Nao substitui o pediatra — prepara a conversa com ele.',
   ),
   _Slide(
     image: AppAssets.onboarding3,
     title: 'Nunca perca uma vacina',
-    body: 'Calendario do PNI com lembrete no dia certo e comprovante '
+    body:
+        'Calendario do PNI com lembrete no dia certo e comprovante '
         'guardado junto.',
   ),
 ];

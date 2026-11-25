@@ -17,9 +17,7 @@ class ServerException extends AppException {
 }
 
 class NetworkException extends AppException {
-  const NetworkException([
-    super.message = 'Sem conexao com a internet.',
-  ]);
+  const NetworkException([super.message = 'Sem conexao com a internet.']);
 }
 
 class CacheException extends AppException {

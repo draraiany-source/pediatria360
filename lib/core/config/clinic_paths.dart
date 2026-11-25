@@ -16,11 +16,9 @@ abstract final class ClinicPaths {
       '${memberships(clinicId)}/$membershipId';
 
   /// Indice invertido: users/{uid}/clinic_memberships/{clinicId}
-  static String userMemberships(String uid) =>
-      'users/$uid/clinic_memberships';
+  static String userMemberships(String uid) => 'users/$uid/clinic_memberships';
   static String userMembership(String uid, String clinicId) =>
       '${userMemberships(uid)}/$clinicId';
 
-  static String auditLogs(String clinicId) =>
-      '${clinic(clinicId)}/audit_logs';
+  static String auditLogs(String clinicId) => '${clinic(clinicId)}/audit_logs';
 }

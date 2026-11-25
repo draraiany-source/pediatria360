@@ -14,18 +14,17 @@ void main() {
     ReceivableStatus status = ReceivableStatus.pending,
     RevenueOrigin origin = RevenueOrigin.private_,
     String? appointmentId,
-  }) =>
-      FinanceReceivable(
-        id: id,
-        ownerId: 'o1',
-        totalCents: total,
-        paidCents: paid,
-        status: status,
-        dueAt: due ?? now.subtract(const Duration(days: 5)),
-        createdAt: now.subtract(const Duration(days: 10)),
-        origin: origin,
-        appointmentId: appointmentId,
-      );
+  }) => FinanceReceivable(
+    id: id,
+    ownerId: 'o1',
+    totalCents: total,
+    paidCents: paid,
+    status: status,
+    dueAt: due ?? now.subtract(const Duration(days: 5)),
+    createdAt: now.subtract(const Duration(days: 10)),
+    origin: origin,
+    appointmentId: appointmentId,
+  );
 
   group('FinanceDashboardKpis', () {
     test('computes balance and delinquency', () {

@@ -47,8 +47,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
 
   void _onScroll() {
     // Carrega a próxima página 400px antes do fim: o usuário não vê o vazio.
-    if (_scroll.position.pixels >=
-        _scroll.position.maxScrollExtent - 400) {
+    if (_scroll.position.pixels >= _scroll.position.maxScrollExtent - 400) {
       ref.read(libraryProvider.notifier).loadMore();
     }
   }
@@ -115,9 +114,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
               child: CustomScrollView(
                 controller: _scroll,
                 slivers: <Widget>[
-                  SliverToBoxAdapter(
-                    child: _Filters(filter: filter),
-                  ),
+                  SliverToBoxAdapter(child: _Filters(filter: filter)),
                   if (state.isLoading)
                     const SliverToBoxAdapter(
                       child: SkeletonList(itemCount: 5, itemHeight: 80),
@@ -136,8 +133,9 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
                               title: filter.category == null
                                   ? 'Biblioteca vazia'
                                   : 'Nada em '
-                                      '${ContentCategory.labelOf(filter.category!)}',
-                              message: 'O conteúdo é publicado pelo painel '
+                                        '${ContentCategory.labelOf(filter.category!)}',
+                              message:
+                                  'O conteúdo é publicado pelo painel '
                                   'administrativo e aparece aqui assim que '
                                   'for cadastrado.',
                               actionLabel: filter.category == null
@@ -146,8 +144,8 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
                               onAction: filter.category == null
                                   ? null
                                   : () => ref
-                                      .read(libraryFilterProvider.notifier)
-                                      .clear(),
+                                        .read(libraryFilterProvider.notifier)
+                                        .clear(),
                             ),
                     )
                   else
@@ -159,8 +157,8 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
                         AppSpacing.xxxl,
                       ),
                       sliver: SliverList.separated(
-                        itemCount: state.items.length +
-                            (state.isLoadingMore ? 1 : 0),
+                        itemCount:
+                            state.items.length + (state.isLoadingMore ? 1 : 0),
                         separatorBuilder: (_, __) =>
                             const SizedBox(height: AppSpacing.md),
                         itemBuilder: (BuildContext context, int index) {
@@ -194,8 +192,9 @@ class _Filters extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final LibraryFilterController controller =
-        ref.read(libraryFilterProvider.notifier);
+    final LibraryFilterController controller = ref.read(
+      libraryFilterProvider.notifier,
+    );
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -261,8 +260,9 @@ class _SearchResults extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final AsyncValue<List<Content>> results =
-        ref.watch(librarySearchProvider(query));
+    final AsyncValue<List<Content>> results = ref.watch(
+      librarySearchProvider(query),
+    );
 
     return results.when(
       loading: () => const SkeletonList(itemCount: 4, itemHeight: 80),
@@ -278,7 +278,8 @@ class _SearchResults extends ConsumerWidget {
           return EmptyState(
             icon: Icons.search_off_rounded,
             title: 'Nada encontrado',
-            message: 'Não achamos nada para "$query". Tente outra palavra — '
+            message:
+                'Não achamos nada para "$query". Tente outra palavra — '
                 'buscar por sintoma costuma funcionar melhor que por frase.',
           );
         }

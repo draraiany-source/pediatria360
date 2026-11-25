@@ -42,26 +42,26 @@ class ChildMapper {
   }
 
   static Map<String, dynamic> toFirestore(Child child) => <String, dynamic>{
-        'ownerId': child.ownerId,
-        'name': child.name,
-        'birthDate': Timestamp.fromDate(child.birthDate),
-        'sex': child.sex.name,
-        'photoUrl': child.photoUrl,
-        'bloodType': child.bloodType,
-        'allergies': child.allergies,
-        'conditions': child.conditions,
-        'medications': child.medications,
-        'gestationalWeeks': child.gestationalWeeks,
-        'birthWeightKg': child.birthWeightKg,
-        'birthHeightCm': child.birthHeightCm,
-        'guardianName': child.guardianName,
-        'guardianPhone': child.guardianPhone,
-        'phone': child.phone,
-        'address': child.address,
-        'cpf': child.cpf,
-        'insurance': child.insurance,
-        'updatedAt': FieldValue.serverTimestamp(),
-      };
+    'ownerId': child.ownerId,
+    'name': child.name,
+    'birthDate': Timestamp.fromDate(child.birthDate),
+    'sex': child.sex.name,
+    'photoUrl': child.photoUrl,
+    'bloodType': child.bloodType,
+    'allergies': child.allergies,
+    'conditions': child.conditions,
+    'medications': child.medications,
+    'gestationalWeeks': child.gestationalWeeks,
+    'birthWeightKg': child.birthWeightKg,
+    'birthHeightCm': child.birthHeightCm,
+    'guardianName': child.guardianName,
+    'guardianPhone': child.guardianPhone,
+    'phone': child.phone,
+    'address': child.address,
+    'cpf': child.cpf,
+    'insurance': child.insurance,
+    'updatedAt': FieldValue.serverTimestamp(),
+  };
 
   /// Payload serializavel para a outbox (nao pode conter `FieldValue`, que
   /// nao sobrevive a um `jsonEncode`).
@@ -73,59 +73,58 @@ class ChildMapper {
   /// reabrir o app offline até a próxima sincronização. Limitação real,
   /// documentada, não escondida.
   static Map<String, dynamic> toOutboxPayload(Child child) => <String, dynamic>{
-        'ownerId': child.ownerId,
-        'name': child.name,
-        'birthDate': child.birthDate.toUtc().toIso8601String(),
-        'sex': child.sex.name,
-        'photoUrl': child.photoUrl,
-        'bloodType': child.bloodType,
-        'allergies': child.allergies,
-        'conditions': child.conditions,
-        'medications': child.medications,
-        'gestationalWeeks': child.gestationalWeeks,
-        'birthWeightKg': child.birthWeightKg,
-        'birthHeightCm': child.birthHeightCm,
-        'guardianName': child.guardianName,
-        'guardianPhone': child.guardianPhone,
-        'phone': child.phone,
-        'address': child.address,
-        'cpf': child.cpf,
-        'insurance': child.insurance,
-      };
+    'ownerId': child.ownerId,
+    'name': child.name,
+    'birthDate': child.birthDate.toUtc().toIso8601String(),
+    'sex': child.sex.name,
+    'photoUrl': child.photoUrl,
+    'bloodType': child.bloodType,
+    'allergies': child.allergies,
+    'conditions': child.conditions,
+    'medications': child.medications,
+    'gestationalWeeks': child.gestationalWeeks,
+    'birthWeightKg': child.birthWeightKg,
+    'birthHeightCm': child.birthHeightCm,
+    'guardianName': child.guardianName,
+    'guardianPhone': child.guardianPhone,
+    'phone': child.phone,
+    'address': child.address,
+    'cpf': child.cpf,
+    'insurance': child.insurance,
+  };
 
   /// Converte o payload da outbox em dados prontos para o Firestore.
   static Map<String, dynamic> outboxPayloadToFirestore(
     Map<String, dynamic> payload,
-  ) =>
-      <String, dynamic>{
-        ...payload,
-        'birthDate': Timestamp.fromDate(
-          DateTime.parse(payload['birthDate'] as String),
-        ),
-        'updatedAt': FieldValue.serverTimestamp(),
-      };
+  ) => <String, dynamic>{
+    ...payload,
+    'birthDate': Timestamp.fromDate(
+      DateTime.parse(payload['birthDate'] as String),
+    ),
+    'updatedAt': FieldValue.serverTimestamp(),
+  };
 
   // ---------------------------------------------------------------- SQLite
 
   static Child fromRow(Map<String, Object?> row) => Child(
-        id: row['id']! as String,
-        ownerId: row['owner_id']! as String,
-        name: row['name']! as String,
-        birthDate: DateTime.fromMillisecondsSinceEpoch(
-          row['birth_date']! as int,
-          isUtc: true,
-        ).toLocal(),
-        sex: ChildSex.fromName(row['sex'] as String?),
-        photoUrl: row['photo_url'] as String?,
-        bloodType: row['blood_type'] as String?,
-        allergies: _decodeList(row['allergies'] as String?),
-        conditions: _decodeList(row['conditions'] as String?),
-        updatedAt: DateTime.fromMillisecondsSinceEpoch(
-          row['updated_at']! as int,
-          isUtc: true,
-        ).toLocal(),
-        pendingSync: (row['dirty'] as int? ?? 0) == 1,
-      );
+    id: row['id']! as String,
+    ownerId: row['owner_id']! as String,
+    name: row['name']! as String,
+    birthDate: DateTime.fromMillisecondsSinceEpoch(
+      row['birth_date']! as int,
+      isUtc: true,
+    ).toLocal(),
+    sex: ChildSex.fromName(row['sex'] as String?),
+    photoUrl: row['photo_url'] as String?,
+    bloodType: row['blood_type'] as String?,
+    allergies: _decodeList(row['allergies'] as String?),
+    conditions: _decodeList(row['conditions'] as String?),
+    updatedAt: DateTime.fromMillisecondsSinceEpoch(
+      row['updated_at']! as int,
+      isUtc: true,
+    ).toLocal(),
+    pendingSync: (row['dirty'] as int? ?? 0) == 1,
+  );
 
   static Map<String, Object?> toRow(Child child, {bool dirty = false}) =>
       <String, Object?>{
@@ -152,19 +151,19 @@ class ChildMapper {
   static List<String> _decodeList(String? raw) {
     if (raw == null || raw.isEmpty) return const <String>[];
     try {
-      return (jsonDecode(raw) as List<dynamic>)
-          .whereType<String>()
-          .toList(growable: false);
+      return (jsonDecode(raw) as List<dynamic>).whereType<String>().toList(
+        growable: false,
+      );
     } catch (_) {
       return const <String>[];
     }
   }
 
   static DateTime? _date(Object? value) => switch (value) {
-        Timestamp t => t.toDate(),
-        DateTime d => d,
-        int ms => DateTime.fromMillisecondsSinceEpoch(ms),
-        String s => DateTime.tryParse(s),
-        _ => null,
-      };
+    Timestamp t => t.toDate(),
+    DateTime d => d,
+    int ms => DateTime.fromMillisecondsSinceEpoch(ms),
+    String s => DateTime.tryParse(s),
+    _ => null,
+  };
 }

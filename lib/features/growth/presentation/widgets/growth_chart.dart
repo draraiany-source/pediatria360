@@ -30,15 +30,16 @@ class GrowthChart extends StatelessWidget {
 
   /// Extrai o valor do indicador de um registro.
   double? _valueOf(GrowthRecord record) => switch (indicator) {
-        GrowthIndicator.weightForAge => record.weightKg,
-        GrowthIndicator.heightForAge => record.heightCm,
-        GrowthIndicator.headForAge => record.headCircumferenceCm,
-        GrowthIndicator.bmiForAge => record.bmi,
-      };
+    GrowthIndicator.weightForAge => record.weightKg,
+    GrowthIndicator.heightForAge => record.heightCm,
+    GrowthIndicator.headForAge => record.headCircumferenceCm,
+    GrowthIndicator.bmiForAge => record.bmi,
+  };
 
   /// Idade em meses na data da medição, com correção para prematuros.
   double _ageAt(DateTime at) {
-    int months = (at.year - child.birthDate.year) * 12 +
+    int months =
+        (at.year - child.birthDate.year) * 12 +
         (at.month - child.birthDate.month);
     if (at.day < child.birthDate.day) months -= 1;
     if (months < 0) months = 0;
@@ -88,13 +89,14 @@ class GrowthChart extends StatelessWidget {
           color: AppColors.vital,
           barWidth: 3,
           dotData: FlDotData(
-            getDotPainter: (FlSpot spot, double _, LineChartBarData __, int ___) =>
-                FlDotCirclePainter(
-              radius: 4,
-              color: Colors.white,
-              strokeWidth: 2.5,
-              strokeColor: AppColors.vital,
-            ),
+            getDotPainter:
+                (FlSpot spot, double _, LineChartBarData __, int ___) =>
+                    FlDotCirclePainter(
+                      radius: 4,
+                      color: Colors.white,
+                      strokeWidth: 2.5,
+                      strokeColor: AppColors.vital,
+                    ),
           ),
         ),
     ];
@@ -105,7 +107,10 @@ class GrowthChart extends StatelessWidget {
     return AspectRatio(
       aspectRatio: 1.35,
       child: Padding(
-        padding: const EdgeInsets.only(right: AppSpacing.md, top: AppSpacing.md),
+        padding: const EdgeInsets.only(
+          right: AppSpacing.md,
+          top: AppSpacing.md,
+        ),
         child: LineChart(
           LineChartData(
             minX: 0,
@@ -138,9 +143,7 @@ class GrowthChart extends StatelessWidget {
               rightTitles: const AxisTitles(),
               bottomTitles: AxisTitles(
                 axisNameWidget: Text(
-                  child.isPreterm
-                      ? 'Idade corrigida (meses)'
-                      : 'Idade (meses)',
+                  child.isPreterm ? 'Idade corrigida (meses)' : 'Idade (meses)',
                   style: theme.textTheme.bodySmall,
                 ),
                 axisNameSize: 22,
@@ -207,8 +210,7 @@ class GrowthChart extends StatelessWidget {
   }
 
   LineChartBarData _referenceBar(double z, Color color, int maxMonth) {
-    final List<({double month, double value})> points =
-        reference.referenceLine(
+    final List<({double month, double value})> points = reference.referenceLine(
       indicator: indicator,
       sex: child.sex,
       z: z,
@@ -274,19 +276,19 @@ class GrowthChartLegend extends StatelessWidget {
     final ThemeData theme = Theme.of(context);
 
     Widget item(Color color, String label, {bool dashed = true}) => Row(
-          mainAxisSize: MainAxisSize.min,
-          children: <Widget>[
-            SizedBox(
-              width: 18,
-              height: 2.5,
-              child: CustomPaint(
-                painter: _LinePainter(color: color, dashed: dashed),
-              ),
-            ),
-            const SizedBox(width: AppSpacing.xs),
-            Text(label, style: theme.textTheme.bodySmall),
-          ],
-        );
+      mainAxisSize: MainAxisSize.min,
+      children: <Widget>[
+        SizedBox(
+          width: 18,
+          height: 2.5,
+          child: CustomPaint(
+            painter: _LinePainter(color: color, dashed: dashed),
+          ),
+        ),
+        const SizedBox(width: AppSpacing.xs),
+        Text(label, style: theme.textTheme.bodySmall),
+      ],
+    );
 
     return Wrap(
       spacing: AppSpacing.lg,

@@ -65,7 +65,10 @@ class PendingItemTile extends StatelessWidget {
             spacing: 8,
             runSpacing: 8,
             children: <Widget>[
-              FilledButton.tonal(onPressed: onPrimary, child: const Text('Ação')),
+              FilledButton.tonal(
+                onPressed: onPrimary,
+                child: const Text('Ação'),
+              ),
               if (onSecondary != null)
                 OutlinedButton(
                   onPressed: onSecondary,
@@ -77,19 +80,19 @@ class PendingItemTile extends StatelessWidget {
                   onSelected: onStatus,
                   itemBuilder: (BuildContext context) =>
                       <PopupMenuEntry<PendingWorkflowStatus>>[
-                    const PopupMenuItem<PendingWorkflowStatus>(
-                      value: PendingWorkflowStatus.inProgress,
-                      child: Text('Em andamento'),
-                    ),
-                    const PopupMenuItem<PendingWorkflowStatus>(
-                      value: PendingWorkflowStatus.resolved,
-                      child: Text('Resolvida'),
-                    ),
-                    const PopupMenuItem<PendingWorkflowStatus>(
-                      value: PendingWorkflowStatus.ignored,
-                      child: Text('Ignorada'),
-                    ),
-                  ],
+                        const PopupMenuItem<PendingWorkflowStatus>(
+                          value: PendingWorkflowStatus.inProgress,
+                          child: Text('Em andamento'),
+                        ),
+                        const PopupMenuItem<PendingWorkflowStatus>(
+                          value: PendingWorkflowStatus.resolved,
+                          child: Text('Resolvida'),
+                        ),
+                        const PopupMenuItem<PendingWorkflowStatus>(
+                          value: PendingWorkflowStatus.ignored,
+                          child: Text('Ignorada'),
+                        ),
+                      ],
                   child: const Padding(
                     padding: EdgeInsets.symmetric(horizontal: 8),
                     child: Icon(Icons.more_horiz),
@@ -104,10 +107,7 @@ class PendingItemTile extends StatelessWidget {
 }
 
 class _StatusChip extends StatelessWidget {
-  const _StatusChip({
-    required this.display,
-    required this.workflow,
-  });
+  const _StatusChip({required this.display, required this.workflow});
 
   final PendingDisplayStatus display;
   final PendingWorkflowStatus workflow;
@@ -136,9 +136,9 @@ class _StatusChip extends StatelessWidget {
       child: Text(
         label,
         style: Theme.of(context).textTheme.labelSmall?.copyWith(
-              color: color,
-              fontWeight: FontWeight.w700,
-            ),
+          color: color,
+          fontWeight: FontWeight.w700,
+        ),
       ),
     );
   }
