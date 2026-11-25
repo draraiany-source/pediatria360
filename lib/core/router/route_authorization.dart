@@ -92,6 +92,7 @@ String? resolveRouteRedirect({
       location.startsWith(Routes.multidisciplinaryPath) ||
       location.startsWith(Routes.unitsPath) ||
       location.startsWith(Routes.insuranceHubPath) ||
+      location.startsWith(Routes.adminHubPath) ||
       location.startsWith(Routes.aiHubPath) ||
       location.startsWith(Routes.financeHubPath) ||
       location.startsWith(Routes.reportsHubPath) ||

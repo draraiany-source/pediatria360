@@ -334,6 +334,8 @@ class Routes {
   static const String unitsName = 'unidades';
   static const String insuranceHubPath = '/convenios';
   static const String insuranceHubName = 'convenios';
+  static const String adminHubPath = '/administracao';
+  static const String adminHubName = 'administracao';
   static const String aiHubPath = '/central-ia';
   static const String aiHubName = 'central-ia';
   static const String financeHubPath = '/painel-financeiro';

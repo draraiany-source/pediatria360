@@ -140,6 +140,12 @@ const List<_Destination> _professionalSidebar = <_Destination>[
     icon: Icons.family_restroom_rounded,
   ),
   _Destination(
+    route: Routes.adminHubPath,
+    label: 'Permissões',
+    icon: Icons.admin_panel_settings_rounded,
+    professionalOnly: true,
+  ),
+  _Destination(
     route: Routes.profilePath,
     label: 'Configurações',
     icon: Icons.settings_rounded,

@@ -873,6 +873,12 @@ final Provider<GoRouter> routerProvider = Provider<GoRouter>((Ref ref) {
                 const NoTransitionPage<void>(child: CrismedFinanceHubScreen()),
           ),
           GoRoute(
+            path: Routes.adminHubPath,
+            name: Routes.adminHubName,
+            pageBuilder: (BuildContext context, GoRouterState state) =>
+                const NoTransitionPage<void>(child: CrismedAdminScreen()),
+          ),
+          GoRoute(
             path: Routes.reportsHubPath,
             name: Routes.reportsHubName,
             pageBuilder: (BuildContext context, GoRouterState state) =>
