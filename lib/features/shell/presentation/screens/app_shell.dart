@@ -347,17 +347,27 @@ class AppShell extends ConsumerWidget {
         context.screenSize == ScreenSize.large;
 
     if (!wide) {
+      final bool portalPage =
+          location == Routes.patientAreaPath ||
+          location == Routes.kidsPath ||
+          location == Routes.familyAgendaPath ||
+          location == Routes.preVisitPath;
       return Scaffold(
         body: content,
-        bottomNavigationBar: NavigationBar(
-          selectedIndex: primaryIndex.clamp(0, primary.length - 1),
-          indicatorColor: primaryHit ? AppColors.softPink : Colors.transparent,
-          onDestinationSelected: (int i) => _go(context, primary[i], sidebar),
-          destinations: <NavigationDestination>[
-            for (final _Destination d in primary)
-              NavigationDestination(icon: Icon(d.icon), label: d.label),
-          ],
-        ),
+        bottomNavigationBar: portalPage
+            ? null
+            : NavigationBar(
+                selectedIndex: primaryIndex.clamp(0, primary.length - 1),
+                indicatorColor: primaryHit
+                    ? AppColors.softPink
+                    : Colors.transparent,
+                onDestinationSelected: (int i) =>
+                    _go(context, primary[i], sidebar),
+                destinations: <NavigationDestination>[
+                  for (final _Destination d in primary)
+                    NavigationDestination(icon: Icon(d.icon), label: d.label),
+                ],
+              ),
       );
     }
 

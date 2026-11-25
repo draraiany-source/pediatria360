@@ -346,6 +346,8 @@ class Routes {
   static const String clinicalAiName = 'ia-clinica';
   static const String patientAreaPath = '/area-do-paciente';
   static const String patientAreaName = 'area-do-paciente';
+  static const String familyAgendaPath = '/agenda-familia';
+  static const String familyAgendaName = 'agenda-familia';
   static const String kidsPath = '/espaco-kids';
   static const String kidsName = 'espaco-kids';
   static const String storiesPath = '/historias';

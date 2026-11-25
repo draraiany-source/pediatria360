@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
 
+import 'package:go_router/go_router.dart';
+
 import '../../../core/config/app_config.dart';
+import '../../../core/router/routes.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/crismed_ui.dart';
 import '../domain/kids_logic.dart';
+import 'family_chrome.dart';
 
 /// Estado local do Espaço Kids. Não grava voz, prontuário nem Firestore.
 class KidsHub extends ChangeNotifier {
@@ -37,15 +41,16 @@ class KidsSpaceScreen extends StatelessWidget {
       builder: (BuildContext context, Widget? _) {
         final KidsHub hub = KidsHub.instance;
         return Scaffold(
-          backgroundColor: const Color(0xFFF6F1FB),
+          backgroundColor: const Color(0xFFF4ECFF),
           body: Column(
             children: <Widget>[
+              const FamilyPortalHeader(),
               Expanded(
                 child: ListView(
-                  padding: const EdgeInsets.all(16),
+                  padding: const EdgeInsets.all(12),
                   children: <Widget>[
                     Text(
-                      'Olá! Eu sou a Tia Cris.',
+                      'Espaço Kids da Tia Cris',
                       style: Theme.of(context).textTheme.headlineSmall
                           ?.copyWith(
                             color: AppColors.navy,
@@ -53,7 +58,7 @@ class KidsSpaceScreen extends StatelessWidget {
                           ),
                     ),
                     Text(
-                      'Espaço Kids de ${AppConfig.appName}. Assistente virtual, não médica.',
+                      'Jogos, histórias e atividades de ${AppConfig.appName}. Assistente virtual, não médica.',
                       style: const TextStyle(color: AppColors.inkMuted),
                     ),
                     const SizedBox(height: 12),
@@ -111,21 +116,30 @@ class KidsSpaceScreen extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 8),
-                    for (final KidsGameInfo game in KidsCatalog.games)
-                      if (hub.controls.allows(game.id))
-                        Padding(
-                          padding: const EdgeInsets.only(bottom: 8),
-                          child: KidsGameCard(
-                            game: game,
-                            done: hub.progress.completed.contains(game.id),
-                            onPlay: () =>
-                                _open(context, KidsPlayScreen(gameId: game.id)),
-                          ),
-                        ),
+                    GridView.count(
+                      crossAxisCount: 2,
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      mainAxisSpacing: 8,
+                      crossAxisSpacing: 8,
+                      childAspectRatio: 0.92,
+                      children: <Widget>[
+                        for (final KidsGameInfo game in KidsCatalog.games)
+                          if (hub.controls.allows(game.id))
+                            _GameTile(
+                              game: game,
+                              done: hub.progress.completed.contains(game.id),
+                              onPlay: () => _open(
+                                context,
+                                KidsPlayScreen(gameId: game.id),
+                              ),
+                            ),
+                      ],
+                    ),
                   ],
                 ),
               ),
-              const _KidsBar(),
+              const FamilyBottomBar(current: 'Espaço Kids'),
             ],
           ),
         );
@@ -147,6 +161,68 @@ class TiaCrisAvatar extends StatelessWidget {
       radius: 28,
       backgroundColor: Color(0xFFF3E9FF),
       child: Icon(Icons.face_3_rounded, color: AppColors.brand, size: 32),
+    );
+  }
+}
+
+class _GameTile extends StatelessWidget {
+  const _GameTile({
+    required this.game,
+    required this.onPlay,
+    required this.done,
+  });
+
+  final KidsGameInfo game;
+  final VoidCallback onPlay;
+  final bool done;
+
+  @override
+  Widget build(BuildContext context) {
+    const List<Color> colors = <Color>[
+      Color(0xFFD7E4FF),
+      Color(0xFFE7D4FF),
+      Color(0xFFFFE0C2),
+      Color(0xFFFFF3C4),
+      Color(0xFFFFD6E8),
+      Color(0xFFD9F7E8),
+      Color(0xFFFFD0D0),
+      Color(0xFFD6F0FF),
+      Color(0xFFE4F7C8),
+      Color(0xFFE6E0FF),
+    ];
+    final int index = KidsCatalog.games.indexWhere(
+      (KidsGameInfo g) => g.id == game.id,
+    );
+    final Color color = colors[index.clamp(0, colors.length - 1)];
+    return Material(
+      color: color,
+      borderRadius: BorderRadius.circular(22),
+      child: Padding(
+        padding: const EdgeInsets.all(10),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            Text(
+              game.title,
+              style: const TextStyle(fontWeight: FontWeight.w800),
+            ),
+            Text(
+              game.subtitle,
+              style: const TextStyle(fontSize: 11, color: AppColors.inkMuted),
+            ),
+            const Spacer(),
+            FilledButton.icon(
+              onPressed: onPlay,
+              icon: const Icon(Icons.play_arrow_rounded, size: 16),
+              label: Text(done ? 'De novo' : 'Jogar'),
+              style: FilledButton.styleFrom(
+                backgroundColor: AppColors.brand,
+                visualDensity: VisualDensity.compact,
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

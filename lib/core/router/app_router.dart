@@ -57,6 +57,7 @@ import '../../features/growth/presentation/screens/growth_screen.dart';
 import '../../features/vaccines/presentation/screens/vaccines_screen.dart';
 import '../../features/crismed/presentation/clinical_pages.dart';
 import '../../features/crismed/presentation/engagement_pages.dart';
+import '../../features/kids/presentation/family_portal.dart';
 import '../../features/shell/presentation/screens/app_shell.dart';
 import '../../features/shell/presentation/screens/home_screen.dart';
 import '../../features/shell/presentation/screens/maintenance_screen.dart';
@@ -895,6 +896,12 @@ final Provider<GoRouter> routerProvider = Provider<GoRouter>((Ref ref) {
             name: Routes.patientAreaName,
             pageBuilder: (BuildContext context, GoRouterState state) =>
                 const NoTransitionPage<void>(child: CrismedPatientAreaScreen()),
+          ),
+          GoRoute(
+            path: Routes.familyAgendaPath,
+            name: Routes.familyAgendaName,
+            pageBuilder: (BuildContext context, GoRouterState state) =>
+                const NoTransitionPage<void>(child: FamilySmartAgenda()),
           ),
           GoRoute(
             path: Routes.kidsPath,
