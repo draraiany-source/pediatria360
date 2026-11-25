@@ -71,7 +71,7 @@ Future<void> main() async {
   }
 
   AppLogger.info(
-    'Crismed iniciado (${AppConfig.environment})',
+    '${AppConfig.appName} iniciado (${AppConfig.environment})',
     tag: 'boot',
   );
 
@@ -218,7 +218,7 @@ class _FirebaseNotConfiguredApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'Crismed',
+      title: 'Crisdepaula Pediatria',
       theme: ThemeData(
         useMaterial3: true,
         colorSchemeSeed: const Color(0xFF7A4EBF),
@@ -247,7 +247,7 @@ class _FirebaseNotConfiguredApp extends StatelessWidget {
                     const SizedBox(height: 12),
                     Text(
                       'Este build ainda tem as chaves de exemplo do '
-                      'Crismed. Configure o projeto antes de abrir '
+                      'Crisdepaula Pediatria. Configure o projeto antes de abrir '
                       'o app.',
                       style: Theme.of(context).textTheme.bodyMedium,
                       textAlign: TextAlign.center,

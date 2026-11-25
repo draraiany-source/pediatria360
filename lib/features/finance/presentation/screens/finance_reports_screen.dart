@@ -98,7 +98,7 @@ class FinanceReportsScreen extends ConsumerWidget {
     final bytes = await ReceiptPdfService.build(
       receipt: receipt,
       receivable: r,
-      clinicName: 'Crismed',
+      clinicName: 'Crisdepaula Pediatria',
     );
     if (context.mounted) {
       await Printing.layoutPdf(onLayout: (_) async => bytes);

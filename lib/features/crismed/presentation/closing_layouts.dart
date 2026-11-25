@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/router/routes.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/crismed_ui.dart';
+import '../../kids/presentation/kids_screens.dart';
 import '../../finance/domain/finance_aggregators.dart';
 import '../../finance/presentation/providers/finance_providers.dart';
 import '../../library/presentation/screens/library_screen.dart';
@@ -560,129 +561,9 @@ class CrismedKidsScreen extends StatefulWidget {
 }
 
 class _CrismedKidsScreenState extends State<CrismedKidsScreen> {
-  int _age = 1;
-
   @override
   Widget build(BuildContext context) {
-    const List<String> ages = <String>['0–2', '3–5', '6–8', '9–12'];
-    final bool stories = widget.stories;
-    return CrismedScaffold(
-      actions: <CrismedActionSpec>[
-        CrismedActionSpec(
-          label: stories ? 'Jogos' : 'Histórias',
-          icon: Icons.swap_horiz_rounded,
-          onPressed: () =>
-              context.go(stories ? Routes.kidsPath : Routes.storiesPath),
-        ),
-      ],
-      body: CrismedBody(
-        sample: true,
-        sampleMessage:
-            'Conteúdo ilustrativo. Não há mídia publicada nesta sessão.',
-        children: <Widget>[
-          CrismedPageHeader(
-            title: stories
-                ? 'Espaço Kids — Histórias e Entretenimento'
-                : 'Espaço Kids — Jogos Educativos',
-            subtitle: stories
-                ? 'Histórias, vídeos, músicas e atividades da faixa ${ages[_age]}'
-                : 'Aprender brincando · faixa ${ages[_age]}',
-            icon: Icons.toys_rounded,
-            primaryLabel: 'Tia Cris Kids',
-            onPrimary: () => crismedToast(
-              context,
-              'A assistente kids é exemplo. Não inicia jogo.',
-            ),
-            onAi: () => crismedToast(
-              context,
-              'Sugestão de história curta para a idade (exemplo).',
-            ),
-          ),
-          const SizedBox(height: 12),
-          CrismedPillTabs(
-            labels: ages,
-            index: _age,
-            onChanged: (int i) => setState(() => _age = i),
-          ),
-          const SizedBox(height: 12),
-          if (stories) ...<Widget>[
-            const CrismedSectionTitle('Histórias em destaque'),
-            const Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: <Widget>[
-                Chip(label: Text('Aventuras do Enzo no consultório')),
-                Chip(label: Text('A turminha da vacina')),
-                Chip(label: Text('Comendo bem, crescendo saudável')),
-                Chip(label: Text('A hora mágica do sono')),
-              ],
-            ),
-            const SizedBox(height: 12),
-            const CrismedSectionTitle('Vídeos, desenhos, músicas e áudio'),
-            const CrismedCard(
-              child: Text(
-                'Vídeo “Como nossos pulmões funcionam”, desenho para colorir, música da saúde (02:45) e áudio para dormir (08:24). Tudo exemplo, sem arquivo de mídia.',
-              ),
-            ),
-          ] else
-            const CrismedWrap(
-              minWidth: 140,
-              children: <Widget>[
-                _Tone(
-                  'Jogo da memória',
-                  'Cores',
-                  AppColors.brand,
-                  Icons.extension_rounded,
-                ),
-                _Tone(
-                  'Quebra-cabeça',
-                  'Higiene',
-                  AppColors.raspberry,
-                  Icons.grid_view_rounded,
-                ),
-                _Tone(
-                  'Números',
-                  'Contagem',
-                  AppColors.success,
-                  Icons.pin_rounded,
-                ),
-                _Tone(
-                  'Letras',
-                  'Palavras',
-                  AppColors.moduleLibrary,
-                  Icons.abc_rounded,
-                ),
-                _Tone(
-                  'Sono',
-                  'Rotina',
-                  AppColors.brandSoft,
-                  Icons.bedtime_rounded,
-                ),
-                _Tone(
-                  'Histórias',
-                  'Educativas',
-                  AppColors.honey,
-                  Icons.auto_stories_rounded,
-                ),
-              ],
-            ),
-          const SizedBox(height: 12),
-          const CrismedCard(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: <Widget>[
-                CrismedSectionTitle('Trilha e conquistas (exemplo)'),
-                Text('Progresso 78% · nível explorador · 12 conquistas.'),
-                SizedBox(height: 8),
-                Text(
-                  'Controle parental: modo seguro, tempo de uso aprovado por pediatras — ilustrativo.',
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
+    return KidsSpaceScreen(startOnStories: widget.stories);
   }
 }
 

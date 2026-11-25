@@ -760,12 +760,12 @@ class CrismedUnitsScreen extends ConsumerWidget {
                   )
                 else ...const <Widget>[
                   Text(
-                    'Crismed Matriz · Canal das Caraíbas · PA · Ativa (exemplo)',
+                    'Crisdepaula Matriz · Canal das Caraíbas · PA · Ativa (exemplo)',
                   ),
                   Text(
-                    'Crismed Filial 01 · Parauapebas · PA · Ativa (exemplo)',
+                    'Crisdepaula Filial 01 · Parauapebas · PA · Ativa (exemplo)',
                   ),
-                  Text('Crismed Filial 02 · Diamantino · MT · Ativa (exemplo)'),
+                  Text('Crisdepaula Filial 02 · Diamantino · MT · Ativa (exemplo)'),
                 ],
               ],
             ),
@@ -838,7 +838,7 @@ class _CrismedSettingsScreenState extends State<CrismedSettingsScreen> {
         children: <Widget>[
           CrismedPageHeader(
             title: 'Configurações e Identidade Visual',
-            subtitle: 'Ajuste a clínica, permissões e a cara do Crismed',
+            subtitle: 'Ajuste a clínica, permissões e a cara do Crisdepaula Pediatria',
             icon: Icons.tune_rounded,
             primaryLabel: 'Editar perfil',
             onPrimary: () => Navigator.of(context).push(
@@ -869,7 +869,7 @@ class _CrismedSettingsScreenState extends State<CrismedSettingsScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
                 CrismedSectionTitle('Informações da clínica'),
-                Text('Nome: Crismed — Pediatria e Saúde Infantil (exemplo)'),
+                Text('Nome: Crisdepaula Pediatria (exemplo)'),
                 Text('CNPJ: 00.000.000/0001-00 (exemplo)'),
                 Text('Endereço: Canal das Caraíbas — PA (exemplo)'),
               ],

@@ -578,7 +578,7 @@ class CrismedClinicFooter extends StatelessWidget {
         spacing: 16,
         runSpacing: 4,
         children: <Widget>[
-          Text('Clínica Crismed (exemplo)', style: style),
+          Text('Clínica Crisdepaula Pediatria (exemplo)', style: style),
           Text('CNPJ 00.000.000/0001-00 (exemplo)', style: style),
           Text('Ambiente de demonstração', style: style),
           Text('LGPD', style: style),

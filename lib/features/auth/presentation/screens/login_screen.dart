@@ -114,7 +114,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                     TextSpan(
                                       children: <TextSpan>[
                                         TextSpan(
-                                          text: 'Crismed',
+                                          text: 'Crisdepaula Pediatria',
                                           style: theme.textTheme.titleLarge
                                               ?.copyWith(
                                             color: AppColors.navy,

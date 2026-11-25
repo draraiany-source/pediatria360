@@ -105,7 +105,7 @@ class PremiumTopBar extends ConsumerWidget {
                 showDialog<void>(
                   context: context,
                   builder: (BuildContext context) => AlertDialog(
-                    title: const Text('Ajuda Crismed'),
+                    title: const Text('Ajuda Crisdepaula Pediatria'),
                     content: Text(
                       '${AppConfig.appTagline}. '
                       'Dúvidas: ${AppConfig.supportEmail}. '

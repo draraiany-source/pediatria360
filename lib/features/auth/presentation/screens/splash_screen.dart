@@ -40,7 +40,7 @@ class SplashScreen extends StatelessWidget {
                 TextSpan(
                   children: <TextSpan>[
                     TextSpan(
-                      text: 'Crismed',
+                      text: 'Crisdepaula Pediatria',
                       style: theme.textTheme.displaySmall?.copyWith(
                         color: AppColors.navy,
                         fontWeight: FontWeight.w800,

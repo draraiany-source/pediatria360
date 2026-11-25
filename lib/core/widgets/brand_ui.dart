@@ -60,7 +60,7 @@ class AppHeader extends StatelessWidget {
                         TextSpan(
                           children: <TextSpan>[
                             TextSpan(
-                              text: 'Crismed',
+                              text: 'Crisdepaula Pediatria',
                               style: theme.textTheme.titleMedium?.copyWith(
                                 color: AppColors.navy,
                                 fontWeight: FontWeight.w800,

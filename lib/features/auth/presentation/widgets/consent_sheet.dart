@@ -163,7 +163,7 @@ class _ConsentSheetState extends ConsumerState<_ConsentSheet> {
                 Text('Antes de continuar', style: theme.textTheme.headlineSmall),
                 const SizedBox(height: AppSpacing.xs),
                 Text(
-                  'O Crismed trata dado de saúde de crianças. A lei '
+                  'O Crisdepaula Pediatria trata dado de saúde de crianças. A lei '
                   'exige que você saiba exatamente o que autoriza, e possa '
                   'escolher o que é opcional.',
                   style: theme.textTheme.bodyMedium?.copyWith(
