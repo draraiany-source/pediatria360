@@ -114,18 +114,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                     TextSpan(
                                       children: <TextSpan>[
                                         TextSpan(
-                                          text: 'Pediatria',
+                                          text: 'Crismed',
                                           style: theme.textTheme.titleLarge
                                               ?.copyWith(
                                             color: AppColors.navy,
-                                            fontWeight: FontWeight.w800,
-                                          ),
-                                        ),
-                                        TextSpan(
-                                          text: '360',
-                                          style: theme.textTheme.titleLarge
-                                              ?.copyWith(
-                                            color: AppColors.teal,
                                             fontWeight: FontWeight.w800,
                                           ),
                                         ),
@@ -133,7 +125,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                     ),
                                   ),
                                   Text(
-                                    'Cuidado integral, cada fase importa',
+                                    'Gestão Clínica em Pediatria',
                                     style: theme.textTheme.bodySmall?.copyWith(
                                       color: AppColors.inkMuted,
                                     ),

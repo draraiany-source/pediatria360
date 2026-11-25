@@ -110,8 +110,8 @@ class AppTheme {
         shadowColor: scheme.shadow,
         margin: EdgeInsets.zero,
         shape: RoundedRectangleBorder(
-          borderRadius: AppRadius.mdAll,
-          side: BorderSide(color: line.withValues(alpha: 0.55)),
+          borderRadius: AppRadius.lgAll,
+          side: BorderSide(color: line.withValues(alpha: 0.45)),
         ),
       ),
       dividerTheme: DividerThemeData(color: line, thickness: 1, space: 1),

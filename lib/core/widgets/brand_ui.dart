@@ -60,16 +60,9 @@ class AppHeader extends StatelessWidget {
                         TextSpan(
                           children: <TextSpan>[
                             TextSpan(
-                              text: 'Pediatria',
+                              text: 'Crismed',
                               style: theme.textTheme.titleMedium?.copyWith(
                                 color: AppColors.navy,
-                                fontWeight: FontWeight.w800,
-                              ),
-                            ),
-                            TextSpan(
-                              text: '360',
-                              style: theme.textTheme.titleMedium?.copyWith(
-                                color: AppColors.teal,
                                 fontWeight: FontWeight.w800,
                               ),
                             ),
@@ -79,7 +72,7 @@ class AppHeader extends StatelessWidget {
                         overflow: TextOverflow.ellipsis,
                       ),
                       Text(
-                        'Cuidado integral, cada fase importa',
+                        'Gestão Clínica em Pediatria',
                         style: theme.textTheme.labelSmall?.copyWith(
                           color: AppColors.inkMuted,
                           fontWeight: FontWeight.w500,

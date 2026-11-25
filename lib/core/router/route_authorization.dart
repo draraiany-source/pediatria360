@@ -80,7 +80,22 @@ String? resolveRouteRedirect({
       location.startsWith(Routes.auditPath) ||
       location.startsWith(Routes.permissionsPath) ||
       location.startsWith(Routes.supplementPath) ||
-      location.startsWith(Routes.clinicOrgPath);
+      location.startsWith(Routes.clinicOrgPath) ||
+      location.startsWith(Routes.consultasPath) ||
+      location.startsWith(Routes.chartHubPath) ||
+      location.startsWith(Routes.prescriptionsPath) ||
+      location.startsWith(Routes.examsHubPath) ||
+      location.startsWith(Routes.vaccinationHubPath) ||
+      location.startsWith(Routes.growthHubPath) ||
+      location.startsWith(Routes.childcarePath) ||
+      location.startsWith(Routes.multidisciplinaryPath) ||
+      location.startsWith(Routes.financeHubPath) ||
+      location.startsWith(Routes.reportsHubPath) ||
+      location.startsWith(Routes.clinicalAiPath) ||
+      location.startsWith(Routes.homologationPath) ||
+      location.startsWith(Routes.plansHubPath) ||
+      location.startsWith(Routes.receptionistPath) ||
+      location.startsWith(Routes.voiceChatPath);
   if (isProfessionalArea && user.role != UserRole.professional) {
     return Routes.homePath;
   }
@@ -88,6 +103,7 @@ String? resolveRouteRedirect({
   // 8. FASE 2 — RBAC clinico: recepcao nao abre evolucao/prontuario por URL.
   if (user.role == UserRole.professional && clinicMembership != null) {
     final bool isChartArea = location.startsWith(Routes.patientsPath) ||
+        location.startsWith(Routes.chartHubPath) ||
         location.startsWith(Routes.clinicVoicePath);
     if (isChartArea &&
         !PermissionMatrix.allows(

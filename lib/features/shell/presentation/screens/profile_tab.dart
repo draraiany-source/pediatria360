@@ -295,7 +295,7 @@ class ProfileTab extends ConsumerWidget {
                             final Uri mail = Uri(
                               scheme: 'mailto',
                               path: AppConfig.supportEmail,
-                              query: 'subject=Suporte%20Pediatria360',
+                              query: 'subject=Suporte%20Crismed',
                             );
                             final bool ok = await launchUrl(mail);
                             if (!context.mounted) return;

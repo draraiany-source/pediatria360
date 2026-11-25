@@ -176,7 +176,7 @@ class _DocumentEditorScreenState
         _snack('${widget.type.label} emitido.');
         await ClinicalPdfService.printDocument(
           document: document,
-          clinicName: 'Pediatria 360',
+          clinicName: 'Crismed',
         );
         if (mounted) Navigator.of(context).pop();
       },

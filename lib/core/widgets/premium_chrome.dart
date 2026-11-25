@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:url_launcher/url_launcher.dart';
+
+import '../config/app_config.dart';
 
 import '../router/routes.dart';
 import '../theme/app_colors.dart';
@@ -28,10 +31,10 @@ class PremiumTopBar extends ConsumerWidget {
     final ThemeData theme = Theme.of(context);
     final String name = user?.name.trim().isNotEmpty == true
         ? user!.name
-        : 'Profissional';
+        : 'Dra. Tia Cris';
     final String roleLabel = (user?.specialty ?? '').isNotEmpty
         ? user!.specialty!
-        : (user?.role.isProfessional == true ? 'Pediatra' : 'Conta');
+        : 'Pediatra';
 
     return Material(
       color: Colors.white,
@@ -78,6 +81,47 @@ class PremiumTopBar extends ConsumerWidget {
               ),
             ),
             const SizedBox(width: AppSpacing.md),
+            IconButton(
+              tooltip: 'WhatsApp',
+              onPressed: () async {
+                final Uri uri = Uri.parse('https://wa.me/');
+                final bool opened = await launchUrl(
+                  uri,
+                  mode: LaunchMode.externalApplication,
+                );
+                if (!opened && context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Não foi possível abrir o WhatsApp.'),
+                    ),
+                  );
+                }
+              },
+              icon: const Icon(Icons.chat_rounded, color: AppColors.success),
+            ),
+            IconButton(
+              tooltip: 'Ajuda',
+              onPressed: () {
+                showDialog<void>(
+                  context: context,
+                  builder: (BuildContext context) => AlertDialog(
+                    title: const Text('Ajuda Crismed'),
+                    content: Text(
+                      '${AppConfig.appTagline}. '
+                      'Dúvidas: ${AppConfig.supportEmail}. '
+                      'Dados de saúde seguem a LGPD e o acesso do seu perfil.',
+                    ),
+                    actions: <Widget>[
+                      TextButton(
+                        onPressed: () => Navigator.of(context).pop(),
+                        child: const Text('Fechar'),
+                      ),
+                    ],
+                  ),
+                );
+              },
+              icon: const Icon(Icons.help_outline_rounded, color: AppColors.navy),
+            ),
             IconButton(
               tooltip: 'Notificacoes',
               onPressed: () => context.go(Routes.notificationsPath),

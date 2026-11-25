@@ -71,7 +71,7 @@ Future<void> main() async {
   }
 
   AppLogger.info(
-    'Pediatria 360 iniciado (${AppConfig.environment})',
+    'Crismed iniciado (${AppConfig.environment})',
     tag: 'boot',
   );
 
@@ -218,10 +218,10 @@ class _FirebaseNotConfiguredApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'Pediatria 360',
+      title: 'Crismed',
       theme: ThemeData(
         useMaterial3: true,
-        colorSchemeSeed: const Color(0xFF14676B),
+        colorSchemeSeed: const Color(0xFF7A4EBF),
       ),
       home: Scaffold(
         body: SafeArea(
@@ -236,7 +236,7 @@ class _FirebaseNotConfiguredApp extends StatelessWidget {
                     const Icon(
                       Icons.local_hospital_outlined,
                       size: 56,
-                      color: Color(0xFF14676B),
+                      color: Color(0xFF7A4EBF),
                     ),
                     const SizedBox(height: 24),
                     Text(
@@ -247,7 +247,7 @@ class _FirebaseNotConfiguredApp extends StatelessWidget {
                     const SizedBox(height: 12),
                     Text(
                       'Este build ainda tem as chaves de exemplo do '
-                      'Pediatria 360. Configure o projeto antes de abrir '
+                      'Crismed. Configure o projeto antes de abrir '
                       'o app.',
                       style: Theme.of(context).textTheme.bodyMedium,
                       textAlign: TextAlign.center,

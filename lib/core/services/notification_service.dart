@@ -35,7 +35,7 @@ class NotificationService {
 
   static const AndroidNotificationChannel _channel = AndroidNotificationChannel(
     'p360_default',
-    'Avisos do Pediatria 360',
+    'Avisos do Crismed',
     description: 'Lembretes de vacina, consultas e respostas da IA.',
     importance: Importance.high,
   );

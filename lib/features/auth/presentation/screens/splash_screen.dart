@@ -40,16 +40,9 @@ class SplashScreen extends StatelessWidget {
                 TextSpan(
                   children: <TextSpan>[
                     TextSpan(
-                      text: 'Pediatria',
+                      text: 'Crismed',
                       style: theme.textTheme.displaySmall?.copyWith(
                         color: AppColors.navy,
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                    TextSpan(
-                      text: '360',
-                      style: theme.textTheme.displaySmall?.copyWith(
-                        color: AppColors.teal,
                         fontWeight: FontWeight.w800,
                       ),
                     ),
@@ -58,7 +51,7 @@ class SplashScreen extends StatelessWidget {
               ).animate(delay: AppMotion.fast).fadeIn(duration: AppMotion.slow),
               const SizedBox(height: AppSpacing.sm),
               Text(
-                'Cuidado integral, cada fase importa',
+                'Gestão Clínica em Pediatria',
                 style: theme.textTheme.bodyMedium?.copyWith(
                   color: AppColors.inkMuted,
                 ),

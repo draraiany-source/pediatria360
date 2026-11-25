@@ -220,7 +220,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                   ),
                   const SizedBox(height: AppSpacing.lg),
                   Text(
-                    'O Pediatria 360 e uma ferramenta de apoio e educacao. '
+                    'O Crismed e uma ferramenta de apoio e educacao. '
                     'Ele nao faz diagnostico nem substitui a consulta com um '
                     'pediatra.',
                     style: theme.textTheme.bodySmall?.copyWith(

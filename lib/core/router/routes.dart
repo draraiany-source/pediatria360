@@ -312,6 +312,48 @@ class Routes {
   static const String clinicOrgCreatePath = '/clinica/nova';
   static const String clinicOrgCreateName = 'clinic-org-create';
 
+  // Crismed — hubs visuais (dentro do shell)
+  static const String consultasPath = '/consultas';
+  static const String consultasName = 'consultas';
+  static const String chartHubPath = '/prontuario';
+  static const String chartHubName = 'prontuario';
+  static const String prescriptionsPath = '/prescricoes';
+  static const String prescriptionsName = 'prescricoes';
+  static const String examsHubPath = '/exames';
+  static const String examsHubName = 'exames';
+  static const String vaccinationHubPath = '/vacinacao';
+  static const String vaccinationHubName = 'vacinacao';
+  static const String growthHubPath = '/crescimento';
+  static const String growthHubName = 'crescimento-hub';
+  static const String childcarePath = '/puericultura';
+  static const String childcareName = 'puericultura';
+  static const String multidisciplinaryPath = '/multidisciplinar';
+  static const String multidisciplinaryName = 'multidisciplinar';
+  static const String financeHubPath = '/painel-financeiro';
+  static const String financeHubName = 'painel-financeiro';
+  static const String reportsHubPath = '/relatorios';
+  static const String reportsHubName = 'relatorios';
+  static const String clinicalAiPath = '/ia-clinica';
+  static const String clinicalAiName = 'ia-clinica';
+  static const String patientAreaPath = '/area-do-paciente';
+  static const String patientAreaName = 'area-do-paciente';
+  static const String kidsPath = '/espaco-kids';
+  static const String kidsName = 'espaco-kids';
+  static const String storiesPath = '/historias';
+  static const String storiesName = 'historias';
+  static const String homologationPath = '/homologacao';
+  static const String homologationName = 'homologacao';
+  static const String diaryPath = '/diario';
+  static const String diaryName = 'diario';
+  static const String preVisitPath = '/pre-consulta';
+  static const String preVisitName = 'pre-consulta';
+  static const String plansHubPath = '/planos';
+  static const String plansHubName = 'planos';
+  static const String receptionistPath = '/recepcionista';
+  static const String receptionistName = 'recepcionista';
+  static const String voiceChatPath = '/atendimento-ia';
+  static const String voiceChatName = 'atendimento-ia';
+
   // Conta
   static const String settingsPath = '/ajustes';
   static const String settingsName = 'settings';

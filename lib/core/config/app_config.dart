@@ -11,7 +11,8 @@
 class AppConfig {
   const AppConfig._();
 
-  static const String appName = 'Pediatria 360';
+  static const String appName = 'Crismed';
+  static const String appTagline = 'Gestão Clínica em Pediatria';
   static const String supportEmail = 'suporte@pediatria360.app';
 
   // ------------------------------------------------------------------- Legal

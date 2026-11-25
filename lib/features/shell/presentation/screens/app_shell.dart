@@ -2,240 +2,99 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../../shared/widgets/sync_banner.dart';
-
+import '../../../../core/config/app_config.dart';
 import '../../../../core/providers/core_providers.dart';
 import '../../../../core/providers/sync_providers.dart';
 import '../../../../core/responsive/responsive.dart';
 import '../../../../core/router/routes.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_tokens.dart';
-import '../../../../core/theme/app_icons.dart';
-import '../../../../core/widgets/app_icon.dart';
+import '../../../../core/widgets/crismed_ui.dart';
 import '../../../../core/widgets/premium_chrome.dart';
 import '../../../../core/widgets/state_views.dart';
+import '../../../../shared/domain/entities/app_user.dart';
+import '../../../../shared/widgets/sync_banner.dart';
 import '../../../auth/presentation/providers/auth_providers.dart';
 import '../../../notifications/presentation/notification_center_screen.dart';
-import '../../../../shared/domain/entities/app_user.dart';
 
-/// Destino da navegacao principal.
+/// Destino da navegação principal.
 class _Destination {
   const _Destination({
     required this.route,
     required this.label,
     required this.icon,
-    required this.selectedIcon,
-    this.asset,
     this.professionalOnly = false,
-    this.showUnreadBadge = false,
   });
 
   final String route;
   final String label;
   final IconData icon;
-  final IconData selectedIcon;
-  /// Icone premium (PNG). Se nulo, usa [icon]/selectedIcon].
-  final String? asset;
   final bool professionalOnly;
-  final bool showUnreadBadge;
 }
 
-/// Bottom / rail ? itens essenciais (mobile + tablet).
-const List<_Destination> _professionalPrimary = <_Destination>[
-  _Destination(
-    route: Routes.homePath,
-    label: 'Inicio',
-    asset: AppIcons.home,
-    icon: Icons.home_outlined,
-    selectedIcon: Icons.home_rounded,
-  ),
-  _Destination(
-    route: Routes.patientsPath,
-    label: 'Pacientes',
-    asset: AppIcons.patients,
-    icon: Icons.groups_outlined,
-    selectedIcon: Icons.groups_rounded,
-    professionalOnly: true,
-  ),
-  _Destination(
-    route: Routes.agendaPath,
-    label: 'Agenda',
-    asset: AppIcons.schedule,
-    icon: Icons.calendar_month_outlined,
-    selectedIcon: Icons.calendar_month_rounded,
-    professionalOnly: true,
-  ),
-  _Destination(
-    route: Routes.notificationsPath,
-    label: 'Mensagens',
-    asset: AppIcons.messages,
-    icon: Icons.chat_bubble_outline_rounded,
-    selectedIcon: Icons.chat_bubble_rounded,
-    showUnreadBadge: true,
-  ),
-  _Destination(
-    route: Routes.profilePath,
-    label: 'Perfil',
-    asset: AppIcons.profile,
-    icon: Icons.person_outline_rounded,
-    selectedIcon: Icons.person_rounded,
-  ),
+const List<_Destination> _professionalSidebar = <_Destination>[
+  _Destination(route: Routes.homePath, label: 'Dashboard', icon: Icons.dashboard_rounded),
+  _Destination(route: Routes.agendaPath, label: 'Agenda', icon: Icons.calendar_month_rounded, professionalOnly: true),
+  _Destination(route: Routes.patientsPath, label: 'Pacientes', icon: Icons.groups_rounded, professionalOnly: true),
+  _Destination(route: Routes.consultasPath, label: 'Consultas', icon: Icons.medical_services_rounded, professionalOnly: true),
+  _Destination(route: Routes.chartHubPath, label: 'Prontuário', icon: Icons.folder_shared_rounded, professionalOnly: true),
+  _Destination(route: Routes.prescriptionsPath, label: 'Prescrições', icon: Icons.description_rounded, professionalOnly: true),
+  _Destination(route: Routes.examsHubPath, label: 'Exames', icon: Icons.biotech_rounded, professionalOnly: true),
+  _Destination(route: Routes.vaccinationHubPath, label: 'Vacinação', icon: Icons.vaccines_rounded, professionalOnly: true),
+  _Destination(route: Routes.growthHubPath, label: 'Crescimento', icon: Icons.show_chart_rounded, professionalOnly: true),
+  _Destination(route: Routes.childcarePath, label: 'Puericultura', icon: Icons.child_care_rounded, professionalOnly: true),
+  _Destination(route: Routes.multidisciplinaryPath, label: 'Multidisciplinar', icon: Icons.diversity_3_rounded, professionalOnly: true),
+  _Destination(route: Routes.financeHubPath, label: 'Financeiro', icon: Icons.account_balance_wallet_rounded, professionalOnly: true),
+  _Destination(route: Routes.reportsHubPath, label: 'Relatórios', icon: Icons.insights_rounded, professionalOnly: true),
+  _Destination(route: Routes.clinicalAiPath, label: 'IA Clínica', icon: Icons.auto_awesome_rounded, professionalOnly: true),
+  _Destination(route: Routes.patientAreaPath, label: 'Área do Paciente', icon: Icons.family_restroom_rounded),
+  _Destination(route: Routes.profilePath, label: 'Configurações', icon: Icons.settings_rounded),
 ];
 
-/// Sidebar desktop ? menu completo das referencias.
-const List<_Destination> _professionalSidebar = <_Destination>[
-  _Destination(
-    route: Routes.homePath,
-    label: 'Inicio',
-    asset: AppIcons.home,
-    icon: Icons.home_outlined,
-    selectedIcon: Icons.home_rounded,
-  ),
-  _Destination(
-    route: Routes.patientsPath,
-    label: 'Pacientes',
-    asset: AppIcons.patients,
-    icon: Icons.groups_outlined,
-    selectedIcon: Icons.groups_rounded,
-    professionalOnly: true,
-  ),
-  _Destination(
-    route: Routes.agendaPath,
-    label: 'Agenda',
-    asset: AppIcons.schedule,
-    icon: Icons.calendar_month_outlined,
-    selectedIcon: Icons.calendar_month_rounded,
-    professionalOnly: true,
-  ),
-  _Destination(
-    route: Routes.notificationsPath,
-    label: 'Mensagens',
-    asset: AppIcons.messages,
-    icon: Icons.chat_bubble_outline_rounded,
-    selectedIcon: Icons.chat_bubble_rounded,
-    showUnreadBadge: true,
-  ),
-  _Destination(
-    route: Routes.patientsPath,
-    label: 'Prontuario',
-    asset: AppIcons.medicalRecord,
-    icon: Icons.folder_shared_outlined,
-    selectedIcon: Icons.folder_shared_rounded,
-    professionalOnly: true,
-  ),
-  _Destination(
-    route: Routes.childrenPath,
-    label: 'Vacinas',
-    asset: AppIcons.vaccines,
-    icon: Icons.vaccines_outlined,
-    selectedIcon: Icons.vaccines_rounded,
-  ),
-  _Destination(
-    route: Routes.telemedicinePath,
-    label: 'Telemedicina',
-    asset: AppIcons.telemedicine,
-    icon: Icons.videocam_outlined,
-    selectedIcon: Icons.videocam_rounded,
-  ),
-  _Destination(
-    route: Routes.libraryPath,
-    label: 'Biblioteca',
-    asset: AppIcons.library,
-    icon: Icons.menu_book_outlined,
-    selectedIcon: Icons.menu_book_rounded,
-  ),
-  _Destination(
-    route: Routes.clinicPath,
-    label: 'Consultorio',
-    asset: AppIcons.clinic,
-    icon: Icons.local_hospital_outlined,
-    selectedIcon: Icons.local_hospital_rounded,
-    professionalOnly: true,
-  ),
-  _Destination(
-    route: Routes.supplementPath,
-    label: 'Suplementacao',
-    asset: AppIcons.supplement,
-    icon: Icons.science_outlined,
-    selectedIcon: Icons.science_rounded,
-    professionalOnly: true,
-  ),
-  _Destination(
-    route: Routes.clinicOrgPath,
-    label: 'Minha clinica',
-    asset: AppIcons.clinic,
-    icon: Icons.apartment_outlined,
-    selectedIcon: Icons.apartment_rounded,
-    professionalOnly: true,
-  ),
-  _Destination(
-    route: Routes.profilePath,
-    label: 'Perfil',
-    asset: AppIcons.profile,
-    icon: Icons.person_outline_rounded,
-    selectedIcon: Icons.person_rounded,
-  ),
+const List<_Destination> _professionalPrimary = <_Destination>[
+  _Destination(route: Routes.homePath, label: 'Início', icon: Icons.dashboard_rounded),
+  _Destination(route: Routes.agendaPath, label: 'Agenda', icon: Icons.calendar_month_rounded, professionalOnly: true),
+  _Destination(route: Routes.patientsPath, label: 'Pacientes', icon: Icons.groups_rounded, professionalOnly: true),
+  _Destination(route: Routes.consultasPath, label: 'Consultas', icon: Icons.medical_services_rounded, professionalOnly: true),
+  _Destination(route: '__menu__', label: 'Mais', icon: Icons.menu_rounded),
 ];
 
 const List<_Destination> _familyDestinations = <_Destination>[
-  _Destination(
-    route: Routes.homePath,
-    label: 'Inicio',
-    asset: AppIcons.home,
-    icon: Icons.home_outlined,
-    selectedIcon: Icons.home_rounded,
-  ),
-  _Destination(
-    route: Routes.libraryPath,
-    label: 'Conteudos',
-    asset: AppIcons.library,
-    icon: Icons.menu_book_outlined,
-    selectedIcon: Icons.menu_book_rounded,
-  ),
-  _Destination(
-    route: Routes.toolsPath,
-    label: 'Cuidados',
-    asset: AppIcons.stethoscope,
-    icon: Icons.medical_services_outlined,
-    selectedIcon: Icons.medical_services_rounded,
-  ),
-  _Destination(
-    route: Routes.notificationsPath,
-    label: 'Mensagens',
-    asset: AppIcons.messages,
-    icon: Icons.chat_bubble_outline_rounded,
-    selectedIcon: Icons.chat_bubble_rounded,
-    showUnreadBadge: true,
-  ),
-  _Destination(
-    route: Routes.profilePath,
-    label: 'Perfil',
-    asset: AppIcons.profile,
-    icon: Icons.person_outline_rounded,
-    selectedIcon: Icons.person_rounded,
-  ),
+  _Destination(route: Routes.homePath, label: 'Início', icon: Icons.home_rounded),
+  _Destination(route: Routes.patientAreaPath, label: 'Família', icon: Icons.family_restroom_rounded),
+  _Destination(route: Routes.kidsPath, label: 'Kids', icon: Icons.toys_rounded),
+  _Destination(route: Routes.diaryPath, label: 'Diário', icon: Icons.menu_book_rounded),
+  _Destination(route: Routes.libraryPath, label: 'Biblioteca', icon: Icons.local_library_rounded),
+  _Destination(route: Routes.profilePath, label: 'Configurações', icon: Icons.settings_rounded),
 ];
 
-/// Casca do app autenticado ? navegacao por papel.
+const List<_Destination> _familyPrimary = <_Destination>[
+  _Destination(route: Routes.homePath, label: 'Início', icon: Icons.home_rounded),
+  _Destination(route: Routes.patientAreaPath, label: 'Família', icon: Icons.family_restroom_rounded),
+  _Destination(route: Routes.kidsPath, label: 'Kids', icon: Icons.toys_rounded),
+  _Destination(route: Routes.libraryPath, label: 'Biblioteca', icon: Icons.local_library_rounded),
+  _Destination(route: '__menu__', label: 'Mais', icon: Icons.menu_rounded),
+];
+
+/// Casca autenticada: sidebar Crismed no desktop, barra inferior no celular.
 class AppShell extends ConsumerWidget {
   const AppShell({required this.child, required this.location, super.key});
 
   final Widget child;
   final String location;
 
-  List<_Destination> _primaryFor(AppUser? user) {
+  List<_Destination> _sidebarFor(AppUser? user) {
     final bool isPro = user?.role.isProfessional ?? false;
-    final List<_Destination> base =
-        isPro ? _professionalPrimary : _familyDestinations;
+    final List<_Destination> base = isPro ? _professionalSidebar : _familyDestinations;
     return base
         .where((_Destination d) => !d.professionalOnly || isPro)
         .toList(growable: false);
   }
 
-  List<_Destination> _sidebarFor(AppUser? user) {
+  List<_Destination> _primaryFor(AppUser? user) {
     final bool isPro = user?.role.isProfessional ?? false;
-    if (!isPro) return _primaryFor(user);
-    return _professionalSidebar
+    final List<_Destination> base = isPro ? _professionalPrimary : _familyPrimary;
+    return base
         .where((_Destination d) => !d.professionalOnly || isPro)
         .toList(growable: false);
   }
@@ -245,23 +104,58 @@ class AppShell extends ConsumerWidget {
     int bestLen = -1;
     for (int i = 0; i < destinations.length; i++) {
       final String route = destinations[i].route;
+      if (route == '__menu__') continue;
       if (location == route || location.startsWith('$route/')) {
-        // Prefer exact / longer matches; avoid Inicio swallowing everything.
         if (route.length > bestLen) {
           best = i;
           bestLen = route.length;
         }
       }
     }
-    return best;
+    return bestLen < 0 ? 0 : best;
   }
 
-  void _go(BuildContext context, _Destination destination) {
-    if (location == destination.route ||
-        location.startsWith('${destination.route}/')) {
+  bool _matches(List<_Destination> destinations) {
+    for (final _Destination d in destinations) {
+      if (d.route == '__menu__') continue;
+      if (location == d.route || location.startsWith('${d.route}/')) return true;
+    }
+    return false;
+  }
+
+  void _go(BuildContext context, _Destination destination, List<_Destination> menu) {
+    if (destination.route == '__menu__') {
+      _openMenu(context, menu);
+      return;
+    }
+    if (location == destination.route || location.startsWith('${destination.route}/')) {
       return;
     }
     context.go(destination.route);
+  }
+
+  void _openMenu(BuildContext context, List<_Destination> menu) {
+    showModalBottomSheet<void>(
+      context: context,
+      showDragHandle: true,
+      builder: (BuildContext sheetContext) {
+        return SafeArea(
+          child: ListView(
+            children: <Widget>[
+              for (final _Destination d in menu)
+                ListTile(
+                  leading: Icon(d.icon, color: AppColors.brand),
+                  title: Text(d.label),
+                  onTap: () {
+                    Navigator.of(sheetContext).pop();
+                    context.go(d.route);
+                  },
+                ),
+            ],
+          ),
+        );
+      },
+    );
   }
 
   @override
@@ -271,8 +165,8 @@ class AppShell extends ConsumerWidget {
     final List<_Destination> sidebar = _sidebarFor(user);
     final int primaryIndex = _indexFor(primary);
     final int sidebarIndex = _indexFor(sidebar);
+    final bool primaryHit = _matches(primary);
     final int unread = ref.watch(unreadCountProvider);
-
     final bool isOnline = ref.watch(isOnlineProvider);
     final int pending = ref.watch(pendingSyncCountProvider);
 
@@ -286,441 +180,150 @@ class AppShell extends ConsumerWidget {
       ],
     );
 
-    return switch (context.screenSize) {
-      ScreenSize.compact => Scaffold(
-          body: content,
-          bottomNavigationBar: NavigationBar(
-            selectedIndex: primaryIndex.clamp(0, primary.length - 1),
-            onDestinationSelected: (int i) => _go(context, primary[i]),
-            backgroundColor: Colors.white,
-            indicatorColor: AppColors.softBlue,
-            destinations: primary
-                .map(
-                  (_Destination d) => NavigationDestination(
-                    icon: _NavIcon(
-                      icon: d.icon,
-                      asset: d.asset,
-                      selected: false,
-                      badge: d.showUnreadBadge ? unread : 0,
-                    ),
-                    selectedIcon: _NavIcon(
-                      icon: d.selectedIcon,
-                      asset: d.asset,
-                      selected: true,
-                      badge: d.showUnreadBadge ? unread : 0,
-                    ),
-                    label: d.label,
-                  ),
-                )
-                .toList(),
-          ),
-        ),
-      ScreenSize.medium || ScreenSize.expanded => Scaffold(
-          body: Column(
-            children: <Widget>[
-              PremiumTopBar(notificationCount: unread),
-              Expanded(
-                child: Row(
-                  children: <Widget>[
-                    NavigationRail(
-                      selectedIndex: primaryIndex.clamp(0, primary.length - 1),
-                      onDestinationSelected: (int i) =>
-                          _go(context, primary[i]),
-                      labelType: NavigationRailLabelType.all,
-                      backgroundColor: Colors.white,
-                      indicatorColor: AppColors.softBlue,
-                      selectedIconTheme: const IconThemeData(
-                        color: AppColors.brand,
-                        size: 24,
-                      ),
-                      unselectedIconTheme: const IconThemeData(
-                        color: AppColors.inkMuted,
-                        size: 22,
-                      ),
-                      selectedLabelTextStyle: const TextStyle(
-                        color: AppColors.brand,
-                        fontWeight: FontWeight.w800,
-                        fontSize: 12,
-                      ),
-                      unselectedLabelTextStyle: const TextStyle(
-                        color: AppColors.inkMuted,
-                        fontWeight: FontWeight.w600,
-                        fontSize: 12,
-                      ),
-                      destinations: primary
-                          .map(
-                            (_Destination d) => NavigationRailDestination(
-                              icon: d.asset != null
-                                  ? AppIcon(
-                                      asset: d.asset!,
-                                      size: AppIcon.nav,
-                                      fallback: d.icon,
-                                    )
-                                  : Icon(d.icon),
-                              selectedIcon: d.asset != null
-                                  ? AppIcon(
-                                      asset: d.asset!,
-                                      size: AppIcon.nav,
-                                      fallback: d.selectedIcon,
-                                    )
-                                  : Icon(d.selectedIcon),
-                              label: Text(d.label),
-                            ),
-                          )
-                          .toList(),
-                    ),
-                    const VerticalDivider(width: 1, color: AppColors.line),
-                    Expanded(child: content),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-      ScreenSize.large => Scaffold(
-          body: Row(
-            children: <Widget>[
-              _PremiumSidebar(
-                destinations: sidebar,
-                selectedIndex: sidebarIndex.clamp(0, sidebar.length - 1),
-                onSelected: (int i) => _go(context, sidebar[i]),
-                user: user,
-                unread: unread,
-              ),
-              Expanded(
-                child: Column(
-                  children: <Widget>[
-                    PremiumTopBar(notificationCount: unread),
-                    Expanded(child: content),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-    };
-  }
-}
+    final bool wide = context.screenSize == ScreenSize.expanded ||
+        context.screenSize == ScreenSize.large;
 
-class _NavIcon extends StatelessWidget {
-  const _NavIcon({
-    required this.icon,
-    required this.selected,
-    required this.badge,
-    this.asset,
-  });
+    if (!wide) {
+      return Scaffold(
+        body: content,
+        bottomNavigationBar: NavigationBar(
+          selectedIndex: primaryIndex.clamp(0, primary.length - 1),
+          indicatorColor: primaryHit ? AppColors.softPink : Colors.transparent,
+          onDestinationSelected: (int i) => _go(context, primary[i], sidebar),
+          destinations: <NavigationDestination>[
+            for (final _Destination d in primary)
+              NavigationDestination(
+                icon: Icon(d.icon),
+                label: d.label,
+              ),
+          ],
+        ),
+      );
+    }
 
-  final IconData icon;
-  final String? asset;
-  final bool selected;
-  final int badge;
-
-  @override
-  Widget build(BuildContext context) {
-    final Widget child = asset != null
-        ? AppIcon(
-            asset: asset!,
-            size: AppIcon.nav,
-            fallback: icon,
-          )
-        : Icon(
-            icon,
-            color: selected ? AppColors.brand : AppColors.inkMuted,
-          );
-    if (badge <= 0) return child;
-    return Badge(
-      label: Text(badge > 9 ? '9+' : '$badge'),
-      child: child,
+    return Scaffold(
+      body: Row(
+        children: <Widget>[
+          _CrismedSidebar(
+            destinations: sidebar,
+            selectedIndex: _matches(sidebar) ? sidebarIndex : -1,
+            onSelected: (int i) => _go(context, sidebar[i], sidebar),
+          ),
+          Expanded(
+            child: Column(
+              children: <Widget>[
+                PremiumTopBar(notificationCount: unread),
+                Expanded(child: content),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
 
-class _PremiumSidebar extends ConsumerWidget {
-  const _PremiumSidebar({
+class _CrismedSidebar extends ConsumerWidget {
+  const _CrismedSidebar({
     required this.destinations,
     required this.selectedIndex,
     required this.onSelected,
-    required this.user,
-    required this.unread,
   });
 
   final List<_Destination> destinations;
   final int selectedIndex;
   final ValueChanged<int> onSelected;
-  final AppUser? user;
-  final int unread;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final ThemeData theme = Theme.of(context);
-
-    return SizedBox(
-      width: 272,
-      child: Material(
-        color: Colors.white,
-        child: DecoratedBox(
-          decoration: const BoxDecoration(
-            border: Border(right: BorderSide(color: AppColors.line)),
-          ),
-          child: SafeArea(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: <Widget>[
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 22, 20, 12),
-                  child: Row(
-                    children: <Widget>[
-                      Container(
-                        width: 42,
-                        height: 42,
-                        decoration: const BoxDecoration(
-                          color: AppColors.softBlue,
-                          borderRadius: AppRadius.mdAll,
-                        ),
-                        child: const AppIcon(
-                          asset: AppIcons.home,
-                          size: 28,
-                          fallback: Icons.favorite_rounded,
-                        ),
-                      ),
-                      const SizedBox(width: AppSpacing.md),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: <Widget>[
-                            Text(
-                              'Pediatria360',
-                              style: theme.textTheme.titleMedium?.copyWith(
-                                color: AppColors.navy,
-                                fontWeight: FontWeight.w800,
-                              ),
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                            Text(
-                              'Cuidando de cada infancia',
-                              style: theme.textTheme.labelSmall?.copyWith(
-                                color: AppColors.inkMuted,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 16),
-                  child: Divider(height: 1, color: AppColors.line),
-                ),
-                const SizedBox(height: AppSpacing.md),
-                Expanded(
-                  child: ListView.builder(
-                    padding: const EdgeInsets.symmetric(horizontal: 12),
-                    itemCount: destinations.length,
-                    itemBuilder: (BuildContext context, int i) {
-                      final _Destination d = destinations[i];
-                      final bool selected = i == selectedIndex;
-                      final int badge =
-                          d.showUnreadBadge && unread > 0 ? unread : 0;
-                      return Padding(
-                        padding: const EdgeInsets.only(bottom: 6),
-                        child: Material(
-                          color: Colors.transparent,
-                          child: InkWell(
-                            onTap: () => onSelected(i),
-                            borderRadius: AppRadius.lgAll,
-                            child: AnimatedContainer(
-                              duration: AppMotion.fast,
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 14,
-                                vertical: 12,
-                              ),
-                              decoration: BoxDecoration(
-                                color: selected
-                                    ? AppColors.brand
-                                    : Colors.transparent,
-                                borderRadius: AppRadius.lgAll,
-                              ),
-                              child: Row(
-                                children: <Widget>[
-                                  d.asset != null
-                                      ? AppIcon(
-                                          asset: d.asset!,
-                                          size: AppIcon.nav,
-                                          fallback: selected
-                                              ? d.selectedIcon
-                                              : d.icon,
-                                        )
-                                      : Icon(
-                                          selected
-                                              ? d.selectedIcon
-                                              : d.icon,
-                                          size: 22,
-                                          color: selected
-                                              ? Colors.white
-                                              : AppColors.inkMuted,
-                                        ),
-                                  const SizedBox(width: 12),
-                                  Expanded(
-                                    child: Text(
-                                      d.label,
-                                      style: theme.textTheme.titleSmall
-                                          ?.copyWith(
-                                        color: selected
-                                            ? Colors.white
-                                            : AppColors.navy,
-                                        fontWeight: selected
-                                            ? FontWeight.w800
-                                            : FontWeight.w600,
-                                      ),
-                                    ),
-                                  ),
-                                  if (badge > 0)
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 7,
-                                        vertical: 2,
-                                      ),
-                                      decoration: BoxDecoration(
-                                        color: selected
-                                            ? Colors.white
-                                            : AppColors.danger,
-                                        borderRadius: AppRadius.pillAll,
-                                      ),
-                                      child: Text(
-                                        badge > 9 ? '9+' : '$badge',
-                                        style: TextStyle(
-                                          color: selected
-                                              ? AppColors.brand
-                                              : Colors.white,
-                                          fontSize: 11,
-                                          fontWeight: FontWeight.w800,
-                                        ),
-                                      ),
-                                    ),
-                                ],
-                              ),
-                            ),
+    return Container(
+      width: 248,
+      decoration: const BoxDecoration(gradient: AppColors.sidebarGradient),
+      child: SafeArea(
+        child: Column(
+          children: <Widget>[
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+              child: Row(
+                children: <Widget>[
+                  const CrismedLogo(onDark: true, size: 40),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: <Widget>[
+                        Text(
+                          AppConfig.appName,
+                          style: theme.textTheme.titleMedium?.copyWith(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w800,
                           ),
                         ),
-                      );
-                    },
-                  ),
-                ),
-                if (user != null)
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
-                    child: Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: AppColors.lightBackground,
-                        borderRadius: AppRadius.lgAll,
-                        border: Border.all(color: AppColors.line),
-                      ),
-                      child: Row(
-                        children: <Widget>[
-                          CircleAvatar(
-                            radius: 20,
-                            backgroundColor: AppColors.softBlue,
-                            child: Text(
-                              user!.initials,
-                              style: theme.textTheme.labelMedium?.copyWith(
-                                color: AppColors.brand,
-                                fontWeight: FontWeight.w800,
-                              ),
-                            ),
+                        Text(
+                          AppConfig.appTagline,
+                          style: theme.textTheme.labelSmall?.copyWith(
+                            color: Colors.white.withValues(alpha: 0.85),
                           ),
-                          const SizedBox(width: AppSpacing.md),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: <Widget>[
-                                Text(
-                                  user!.name,
-                                  style: theme.textTheme.titleSmall?.copyWith(
-                                    color: AppColors.navy,
-                                    fontWeight: FontWeight.w700,
-                                  ),
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                                Text(
-                                  _subtitleFor(user!),
-                                  style: theme.textTheme.bodySmall?.copyWith(
-                                    color: AppColors.inkMuted,
-                                  ),
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
+                        ),
+                      ],
                     ),
                   ),
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(12, 0, 12, 16),
-                  child: Column(
-                    children: <Widget>[
-                      ListTile(
-                        dense: true,
-                        contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                        ),
-                        leading: const Icon(
-                          Icons.settings_outlined,
-                          color: AppColors.inkMuted,
-                        ),
-                        title: Text(
-                          'Configuracoes',
-                          style: theme.textTheme.titleSmall?.copyWith(
-                            color: AppColors.navy,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                        onTap: () => context.go(Routes.profilePath),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: AppRadius.lgAll,
-                        ),
-                      ),
-                      ListTile(
-                        dense: true,
-                        contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                        ),
-                        leading: const Icon(
-                          Icons.logout_rounded,
-                          color: AppColors.danger,
-                        ),
-                        title: Text(
-                          'Sair',
-                          style: theme.textTheme.titleSmall?.copyWith(
-                            color: AppColors.danger,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                        onTap: () =>
-                            ref.read(authControllerProvider.notifier).signOut(),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: AppRadius.lgAll,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
+            Expanded(
+              child: ListView.builder(
+                padding: const EdgeInsets.symmetric(horizontal: 10),
+                itemCount: destinations.length,
+                itemBuilder: (BuildContext context, int i) {
+                  final _Destination d = destinations[i];
+                  final bool selected = i == selectedIndex;
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 4),
+                    child: Material(
+                      color: selected ? AppColors.pinkActive : Colors.transparent,
+                      borderRadius: AppRadius.lgAll,
+                      child: InkWell(
+                        onTap: () => onSelected(i),
+                        borderRadius: AppRadius.lgAll,
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                          child: Row(
+                            children: <Widget>[
+                              Icon(d.icon, size: 20, color: Colors.white),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: Text(
+                                  d.label,
+                                  style: theme.textTheme.labelLarge?.copyWith(
+                                    color: Colors.white,
+                                    fontWeight: selected ? FontWeight.w800 : FontWeight.w600,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 12),
+              child: TiaCrisMascot(height: 108),
+            ),
+            TextButton.icon(
+              onPressed: () => ref.read(authControllerProvider.notifier).signOut(),
+              icon: const Icon(Icons.logout_rounded, color: Colors.white),
+              label: const Text('Sair', style: TextStyle(color: Colors.white)),
+            ),
+            const SizedBox(height: 8),
+          ],
         ),
       ),
     );
-  }
-
-  String _subtitleFor(AppUser user) {
-    final List<String> parts = <String>[];
-    if ((user.specialty ?? '').isNotEmpty) parts.add(user.specialty!);
-    if ((user.crm ?? '').isNotEmpty) parts.add('CRM ${user.crm}');
-    if (parts.isNotEmpty) return parts.join(' ? ');
-    return user.role.isProfessional ? 'Area profissional' : 'Area da familia';
   }
 }

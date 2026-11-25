@@ -49,7 +49,7 @@ class _DocumentViewerScreenState
 
   Future<Uint8List> _render(_) => ClinicalPdfService.build(
         document: _doc,
-        clinicName: 'Pediatria 360',
+        clinicName: 'Crismed',
         patientBirthDateLabel: null,
       );
 
@@ -57,7 +57,7 @@ class _DocumentViewerScreenState
     setState(() => _busy = true);
     await ClinicalPdfService.share(
       document: _doc,
-      clinicName: 'Pediatria 360',
+      clinicName: 'Crismed',
     );
     if (mounted) setState(() => _busy = false);
   }

@@ -48,7 +48,6 @@ import '../../features/supplementation/presentation/screens/lab_screens.dart';
 import '../../features/supplementation/presentation/screens/micronutrient_screens.dart';
 import '../../features/supplementation/presentation/screens/supplement_dashboard_screen.dart';
 import '../../features/supplementation/presentation/screens/supplement_more_screens.dart';
-import '../../features/emr/presentation/screens/professional_patients_screen.dart';
 import '../../features/gamification/presentation/gamification_screen.dart';
 import '../../features/children/presentation/screens/child_detail_screen.dart';
 import '../../features/children/presentation/screens/child_form_screen.dart';
@@ -56,19 +55,18 @@ import '../../features/children/presentation/screens/children_list_screen.dart';
 import '../../features/courses/presentation/screens/courses_screens.dart';
 import '../../features/growth/presentation/screens/growth_screen.dart';
 import '../../features/vaccines/presentation/screens/vaccines_screen.dart';
+import '../../features/crismed/presentation/clinical_pages.dart';
+import '../../features/crismed/presentation/engagement_pages.dart';
 import '../../features/shell/presentation/screens/app_shell.dart';
 import '../../features/shell/presentation/screens/home_screen.dart';
 import '../../features/shell/presentation/screens/maintenance_screen.dart';
 import '../../features/shell/presentation/screens/not_found_screen.dart';
 import '../../features/ai/presentation/screens/ai_chat_screen.dart';
 import '../../features/library/presentation/screens/content_detail_screen.dart';
-import '../../features/library/presentation/screens/library_screen.dart';
 import '../../features/shop/presentation/screens/shop_screens.dart';
-import '../../features/telemedicine/presentation/professional_agenda_screen.dart';
 import '../../features/telemedicine/presentation/telemedicine_screen.dart';
 import '../../features/shell/presentation/screens/profile_tab.dart';
 import '../../features/tools/presentation/screens/tools_screen.dart';
-import '../../features/notifications/presentation/notification_center_screen.dart';
 import '../../shared/domain/entities/app_user.dart';
 import '../config/dev_mode.dart';
 import '../providers/core_providers.dart';
@@ -797,7 +795,7 @@ final Provider<GoRouter> routerProvider = Provider<GoRouter>((Ref ref) {
             name: Routes.agendaName,
             pageBuilder: (BuildContext context, GoRouterState state) =>
                 const NoTransitionPage<void>(
-              child: ProfessionalAgendaScreen(),
+              child: CrismedAgendaScreen(),
             ),
           ),
           GoRoute(
@@ -805,7 +803,7 @@ final Provider<GoRouter> routerProvider = Provider<GoRouter>((Ref ref) {
             name: Routes.patientsName,
             pageBuilder: (BuildContext context, GoRouterState state) =>
                 const NoTransitionPage<void>(
-              child: ProfessionalPatientsScreen(),
+              child: CrismedPatientsScreen(),
             ),
           ),
           GoRoute(
@@ -813,14 +811,150 @@ final Provider<GoRouter> routerProvider = Provider<GoRouter>((Ref ref) {
             name: Routes.notificationsName,
             pageBuilder: (BuildContext context, GoRouterState state) =>
                 const NoTransitionPage<void>(
-              child: NotificationCenterScreen(),
+              child: CrismedNotificationsScreen(),
             ),
           ),
           GoRoute(
             path: Routes.libraryPath,
             name: Routes.libraryName,
             pageBuilder: (BuildContext context, GoRouterState state) =>
-                const NoTransitionPage<void>(child: LibraryScreen()),
+                const NoTransitionPage<void>(
+              child: CrismedLibraryHubScreen(),
+            ),
+          ),
+          GoRoute(
+            path: Routes.consultasPath,
+            name: Routes.consultasName,
+            pageBuilder: (BuildContext context, GoRouterState state) =>
+                const NoTransitionPage<void>(child: CrismedConsultasScreen()),
+          ),
+          GoRoute(
+            path: Routes.chartHubPath,
+            name: Routes.chartHubName,
+            pageBuilder: (BuildContext context, GoRouterState state) =>
+                const NoTransitionPage<void>(child: CrismedChartScreen()),
+          ),
+          GoRoute(
+            path: Routes.prescriptionsPath,
+            name: Routes.prescriptionsName,
+            pageBuilder: (BuildContext context, GoRouterState state) =>
+                const NoTransitionPage<void>(
+              child: CrismedPrescriptionsScreen(),
+            ),
+          ),
+          GoRoute(
+            path: Routes.examsHubPath,
+            name: Routes.examsHubName,
+            pageBuilder: (BuildContext context, GoRouterState state) =>
+                const NoTransitionPage<void>(child: CrismedExamsScreen()),
+          ),
+          GoRoute(
+            path: Routes.vaccinationHubPath,
+            name: Routes.vaccinationHubName,
+            pageBuilder: (BuildContext context, GoRouterState state) =>
+                const NoTransitionPage<void>(
+              child: CrismedVaccinationScreen(),
+            ),
+          ),
+          GoRoute(
+            path: Routes.growthHubPath,
+            name: Routes.growthHubName,
+            pageBuilder: (BuildContext context, GoRouterState state) =>
+                const NoTransitionPage<void>(child: CrismedGrowthHubScreen()),
+          ),
+          GoRoute(
+            path: Routes.childcarePath,
+            name: Routes.childcareName,
+            pageBuilder: (BuildContext context, GoRouterState state) =>
+                const NoTransitionPage<void>(child: CrismedChildcareScreen()),
+          ),
+          GoRoute(
+            path: Routes.multidisciplinaryPath,
+            name: Routes.multidisciplinaryName,
+            pageBuilder: (BuildContext context, GoRouterState state) =>
+                const NoTransitionPage<void>(child: CrismedMultiScreen()),
+          ),
+          GoRoute(
+            path: Routes.financeHubPath,
+            name: Routes.financeHubName,
+            pageBuilder: (BuildContext context, GoRouterState state) =>
+                const NoTransitionPage<void>(
+              child: CrismedFinanceHubScreen(),
+            ),
+          ),
+          GoRoute(
+            path: Routes.reportsHubPath,
+            name: Routes.reportsHubName,
+            pageBuilder: (BuildContext context, GoRouterState state) =>
+                const NoTransitionPage<void>(child: CrismedReportsHubScreen()),
+          ),
+          GoRoute(
+            path: Routes.clinicalAiPath,
+            name: Routes.clinicalAiName,
+            pageBuilder: (BuildContext context, GoRouterState state) =>
+                const NoTransitionPage<void>(child: CrismedClinicalAiScreen()),
+          ),
+          GoRoute(
+            path: Routes.patientAreaPath,
+            name: Routes.patientAreaName,
+            pageBuilder: (BuildContext context, GoRouterState state) =>
+                const NoTransitionPage<void>(
+              child: CrismedPatientAreaScreen(),
+            ),
+          ),
+          GoRoute(
+            path: Routes.kidsPath,
+            name: Routes.kidsName,
+            pageBuilder: (BuildContext context, GoRouterState state) =>
+                const NoTransitionPage<void>(child: CrismedKidsScreen()),
+          ),
+          GoRoute(
+            path: Routes.storiesPath,
+            name: Routes.storiesName,
+            pageBuilder: (BuildContext context, GoRouterState state) =>
+                const NoTransitionPage<void>(
+              child: CrismedKidsScreen(stories: true),
+            ),
+          ),
+          GoRoute(
+            path: Routes.homologationPath,
+            name: Routes.homologationName,
+            pageBuilder: (BuildContext context, GoRouterState state) =>
+                const NoTransitionPage<void>(
+              child: CrismedHomologationScreen(),
+            ),
+          ),
+          GoRoute(
+            path: Routes.diaryPath,
+            name: Routes.diaryName,
+            pageBuilder: (BuildContext context, GoRouterState state) =>
+                const NoTransitionPage<void>(child: CrismedDiaryScreen()),
+          ),
+          GoRoute(
+            path: Routes.preVisitPath,
+            name: Routes.preVisitName,
+            pageBuilder: (BuildContext context, GoRouterState state) =>
+                const NoTransitionPage<void>(child: CrismedPreVisitScreen()),
+          ),
+          GoRoute(
+            path: Routes.plansHubPath,
+            name: Routes.plansHubName,
+            pageBuilder: (BuildContext context, GoRouterState state) =>
+                const NoTransitionPage<void>(child: CrismedPlansScreen()),
+          ),
+          GoRoute(
+            path: Routes.receptionistPath,
+            name: Routes.receptionistName,
+            pageBuilder: (BuildContext context, GoRouterState state) =>
+                const NoTransitionPage<void>(
+              child: CrismedReceptionistScreen(),
+            ),
+          ),
+          GoRoute(
+            path: Routes.voiceChatPath,
+            name: Routes.voiceChatName,
+            pageBuilder: (BuildContext context, GoRouterState state) =>
+                const NoTransitionPage<void>(child: CrismedVoiceChatScreen()),
           ),
           GoRoute(
             path: Routes.aiPath,
