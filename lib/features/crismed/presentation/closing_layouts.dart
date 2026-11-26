@@ -188,7 +188,8 @@ class CrismedPatientAreaScreen extends StatelessWidget {
   const CrismedPatientAreaScreen({super.key});
 
   @override
-  Widget build(BuildContext context) => const FamilyHomePortal();
+  Widget build(BuildContext context) =>
+      const FamilyHomePortal(section: 'Família');
 }
 
 class CrismedReceptionistScreen extends StatelessWidget {

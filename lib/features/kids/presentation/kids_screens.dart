@@ -40,106 +40,96 @@ class KidsSpaceScreen extends StatelessWidget {
       animation: KidsHub.instance,
       builder: (BuildContext context, Widget? _) {
         final KidsHub hub = KidsHub.instance;
-        return Scaffold(
-          backgroundColor: const Color(0xFFF4ECFF),
-          body: Column(
+        return FamilyScaffold(
+          section: 'Espaço Kids',
+          child: ListView(
+            padding: const EdgeInsets.fromLTRB(12, 12, 12, 16),
             children: <Widget>[
-              const FamilyPortalHeader(),
-              Expanded(
-                child: ListView(
-                  padding: const EdgeInsets.all(12),
+              const FamilyHero(
+                portrait: FamilyArt.kids,
+                title: 'Espaço Kids da Tia Cris',
+                body:
+                    'Jogos, histórias e atividades educativas para aprender, se divertir e se preparar para a consulta!',
+                trailing: FamilyTeddy(size: 76),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                '${hub.childName} · ${hub.ageBand} · '
+                '${hub.progress.completed.length} nesta sessão. '
+                'Assistente de ${AppConfig.appName}, não médica.',
+                style: const TextStyle(color: AppColors.inkMuted, fontSize: 11),
+              ),
+              const SizedBox(height: 8),
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
                   children: <Widget>[
-                    Text(
-                      'Espaço Kids da Tia Cris',
-                      style: Theme.of(context).textTheme.headlineSmall
-                          ?.copyWith(
-                            color: AppColors.navy,
-                            fontWeight: FontWeight.w800,
-                          ),
+                    _Nav('Jogos', () {}),
+                    _Nav(
+                      'Histórias',
+                      () => _open(context, const KidsStoriesScreen()),
                     ),
-                    Text(
-                      'Jogos, histórias e atividades de ${AppConfig.appName}. Assistente virtual, não médica.',
-                      style: const TextStyle(color: AppColors.inkMuted),
+                    _Nav(
+                      'Desenhos',
+                      () => _open(context, const KidsColorScreen()),
                     ),
-                    const SizedBox(height: 12),
-                    CrismedCard(
-                      child: Row(
-                        children: <Widget>[
-                          const TiaCrisAvatar(),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Text(
-                              '${hub.childName} · ${hub.ageBand}\n'
-                              '${hub.progress.completed.length} atividades concluídas nesta sessão.',
-                            ),
-                          ),
-                        ],
-                      ),
+                    _Nav(
+                      'Vídeos Educativos',
+                      () => context.go(Routes.libraryPath),
                     ),
-                    const SizedBox(height: 12),
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      children: <Widget>[
-                        _Nav(
-                          'Histórias',
-                          () => _open(context, const KidsStoriesScreen()),
-                        ),
-                        _Nav(
-                          'Colorir',
-                          () => _open(context, const KidsColorScreen()),
-                        ),
-                        _Nav(
-                          'Conversar',
-                          () => _open(context, const KidsAssistantScreen()),
-                        ),
-                        _Nav(
-                          'Responsáveis',
-                          () => _open(context, const KidsParentScreen()),
-                        ),
-                        _Nav(
-                          'Recepção',
-                          () => _open(context, const KidsReceptionScreen()),
-                        ),
-                        _Nav(
-                          'Painel Kids',
-                          () => _open(context, const KidsAdminScreen()),
-                        ),
-                      ],
+                    _Nav(
+                      'Atividades',
+                      () => _open(context, const KidsAssistantScreen()),
                     ),
-                    const SizedBox(height: 12),
-                    const Text(
-                      'Jogos',
-                      style: TextStyle(
-                        fontWeight: FontWeight.w800,
-                        color: AppColors.navy,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    GridView.count(
-                      crossAxisCount: 2,
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      mainAxisSpacing: 8,
-                      crossAxisSpacing: 8,
-                      childAspectRatio: 0.92,
-                      children: <Widget>[
-                        for (final KidsGameInfo game in KidsCatalog.games)
-                          if (hub.controls.allows(game.id))
-                            _GameTile(
-                              game: game,
-                              done: hub.progress.completed.contains(game.id),
-                              onPlay: () => _open(
-                                context,
-                                KidsPlayScreen(gameId: game.id),
-                              ),
-                            ),
-                      ],
+                    _Nav(
+                      'Minhas Conquistas',
+                      () => _open(context, const KidsParentScreen()),
                     ),
                   ],
                 ),
               ),
-              const FamilyBottomBar(current: 'Espaço Kids'),
+              const SizedBox(height: 10),
+              GridView.count(
+                crossAxisCount: 2,
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                mainAxisSpacing: 8,
+                crossAxisSpacing: 8,
+                childAspectRatio: 0.72,
+                children: <Widget>[
+                  for (final KidsGameInfo game in KidsCatalog.games)
+                    if (hub.controls.allows(game.id))
+                      _GameTile(
+                        game: game,
+                        done: hub.progress.completed.contains(game.id),
+                        onPlay: () =>
+                            _open(context, KidsPlayScreen(gameId: game.id)),
+                      ),
+                ],
+              ),
+              const SizedBox(height: 10),
+              Row(
+                children: <Widget>[
+                  _FootCard(
+                    Icons.emoji_events_rounded,
+                    'Minhas Conquistas',
+                    'Veja seus troféus, medalhas e progresso!',
+                    () => _open(context, const KidsParentScreen()),
+                  ),
+                  _FootCard(
+                    Icons.bar_chart_rounded,
+                    'Meu Progresso',
+                    'Acompanhe os jogos que você já completou!',
+                    () => _open(context, const KidsParentScreen()),
+                  ),
+                  _FootCard(
+                    Icons.settings_rounded,
+                    'Configurações Kids',
+                    'Tempo de uso, som e preferências.',
+                    () => _kidsSettings(context),
+                  ),
+                ],
+              ),
             ],
           ),
         );
@@ -149,6 +139,47 @@ class KidsSpaceScreen extends StatelessWidget {
 
   void _open(BuildContext context, Widget page) {
     Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => page));
+  }
+
+  void _kidsSettings(BuildContext context) {
+    showModalBottomSheet<void>(
+      context: context,
+      showDragHandle: true,
+      builder: (BuildContext sheet) {
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              ListTile(
+                leading: const Icon(Icons.family_restroom_rounded),
+                title: const Text('Controles dos responsáveis'),
+                onTap: () {
+                  Navigator.pop(sheet);
+                  _open(context, const KidsParentScreen());
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.desk_rounded),
+                title: const Text('Modo recepção'),
+                subtitle: const Text('Não grava a sessão'),
+                onTap: () {
+                  Navigator.pop(sheet);
+                  _open(context, const KidsReceptionScreen());
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.admin_panel_settings_rounded),
+                title: const Text('Painel Kids'),
+                onTap: () {
+                  Navigator.pop(sheet);
+                  _open(context, const KidsAdminScreen());
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
   }
 }
 
@@ -176,51 +207,121 @@ class _GameTile extends StatelessWidget {
   final VoidCallback onPlay;
   final bool done;
 
+  static const Map<String, String> _blurbs = <String, String>{
+    'doctor': 'Cuide dos pacientes e aprenda brincando!',
+    'brush': 'Aprenda a cuidar dos seus dentinhos!',
+    'food': 'Monte pratos saudáveis e nutritivos!',
+    'memory': 'Encontre os pares e treine sua memória!',
+    'puzzle': 'Monte imagens incríveis!',
+    'hands': 'Aprenda o jeito certo de se proteger!',
+    'feelings': 'Reconheça e expresse suas emoções!',
+    'vaccine': 'Descubra por que as vacinas são importantes!',
+    'shapes': 'Brinque e aprenda com formas, cores e números!',
+    'sleep': 'Aprenda hábitos para dormir melhor!',
+  };
+
   @override
   Widget build(BuildContext context) {
-    const List<Color> colors = <Color>[
-      Color(0xFFD7E4FF),
-      Color(0xFFE7D4FF),
-      Color(0xFFFFE0C2),
-      Color(0xFFFFF3C4),
-      Color(0xFFFFD6E8),
-      Color(0xFFD9F7E8),
-      Color(0xFFFFD0D0),
-      Color(0xFFD6F0FF),
-      Color(0xFFE4F7C8),
-      Color(0xFFE6E0FF),
-    ];
-    final int index = KidsCatalog.games.indexWhere(
-      (KidsGameInfo g) => g.id == game.id,
-    );
-    final Color color = colors[index.clamp(0, colors.length - 1)];
+    final String title = game.id == 'puzzle' ? 'Quebra-Cabeça' : game.title;
+    final String? art = FamilyArt.games[game.id];
     return Material(
-      color: color,
+      color: Colors.white,
       borderRadius: BorderRadius.circular(22),
       child: Padding(
-        padding: const EdgeInsets.all(10),
+        padding: const EdgeInsets.all(8),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
+            Expanded(
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(16),
+                child: art == null
+                    ? const ColoredBox(color: Color(0xFFF3E9FF))
+                    : Image.asset(
+                        art,
+                        width: double.infinity,
+                        fit: BoxFit.cover,
+                      ),
+              ),
+            ),
+            const SizedBox(height: 6),
             Text(
-              game.title,
-              style: const TextStyle(fontWeight: FontWeight.w800),
+              title,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 13),
             ),
             Text(
-              game.subtitle,
-              style: const TextStyle(fontSize: 11, color: AppColors.inkMuted),
+              _blurbs[game.id] ?? game.subtitle,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(fontSize: 10, color: AppColors.inkMuted),
             ),
-            const Spacer(),
-            FilledButton.icon(
-              onPressed: onPlay,
-              icon: const Icon(Icons.play_arrow_rounded, size: 16),
-              label: Text(done ? 'De novo' : 'Jogar'),
-              style: FilledButton.styleFrom(
-                backgroundColor: AppColors.brand,
-                visualDensity: VisualDensity.compact,
+            const SizedBox(height: 6),
+            SizedBox(
+              width: double.infinity,
+              child: FilledButton.icon(
+                onPressed: onPlay,
+                icon: const Icon(Icons.play_arrow_rounded, size: 16),
+                label: Text(done ? 'De novo' : 'Jogar'),
+                style: FilledButton.styleFrom(
+                  backgroundColor: const Color(0xFF7A4EBF),
+                  visualDensity: VisualDensity.compact,
+                ),
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+class _FootCard extends StatelessWidget {
+  const _FootCard(this.icon, this.title, this.body, this.onTap);
+
+  final IconData icon;
+  final String title;
+  final String body;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 3),
+        child: Material(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          child: InkWell(
+            onTap: onTap,
+            borderRadius: BorderRadius.circular(16),
+            child: Padding(
+              padding: const EdgeInsets.all(8),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  Icon(icon, color: AppColors.brand, size: 18),
+                  Text(
+                    title,
+                    maxLines: 2,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w800,
+                      fontSize: 11,
+                    ),
+                  ),
+                  Text(
+                    body,
+                    maxLines: 3,
+                    style: const TextStyle(
+                      fontSize: 9,
+                      color: AppColors.inkMuted,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
         ),
       ),
     );
@@ -1029,45 +1130,5 @@ class _Nav extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ActionChip(label: Text(label), onPressed: onTap);
-  }
-}
-
-class _KidsBar extends StatelessWidget {
-  const _KidsBar();
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: Colors.white,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 8),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
-          children: const <Widget>[
-            _BarItem(Icons.home_rounded, 'Início'),
-            _BarItem(Icons.toys_rounded, 'Kids'),
-            _BarItem(Icons.family_restroom_rounded, 'Família'),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _BarItem extends StatelessWidget {
-  const _BarItem(this.icon, this.label);
-
-  final IconData icon;
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: <Widget>[
-        Icon(icon, color: AppColors.brand),
-        Text(label, style: const TextStyle(fontSize: 11)),
-      ],
-    );
   }
 }
