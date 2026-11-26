@@ -124,7 +124,6 @@ class _CrismedClinicalAiScreenState extends State<CrismedClinicalAiScreen> {
                 SwitchListTile(
                   contentPadding: EdgeInsets.zero,
                   value: _consent,
-                  activeThumbColor: AppColors.success,
                   title: const Text(
                     'Consentimento LGPD para transcrever esta consulta',
                   ),

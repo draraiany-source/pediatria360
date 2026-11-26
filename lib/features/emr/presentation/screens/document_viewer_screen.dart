@@ -140,7 +140,6 @@ class _DocumentViewerScreenState extends ConsumerState<DocumentViewerScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final ThemeData theme = Theme.of(context);
     final bool isIssuer =
         ref.watch(currentUserProvider)?.uid == _doc.professionalId;
 
