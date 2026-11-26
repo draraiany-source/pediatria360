@@ -10,7 +10,9 @@ import 'package:pediatria360/shared/domain/entities/app_user.dart';
 
 /// Confirma que, com DevMode, a sessão local leva à Home sem tela de login.
 void main() {
-  testWidgets('DevMode abre Home e não a tela de login', (WidgetTester tester) async {
+  testWidgets('DevMode abre Home e não a tela de login', (
+    WidgetTester tester,
+  ) async {
     expect(DevMode.isEnabled, isTrue);
 
     final GoRouter router = GoRouter(

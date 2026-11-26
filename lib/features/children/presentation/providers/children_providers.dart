@@ -15,43 +15,43 @@ import '../../domain/repositories/children_repository.dart';
 
 final Provider<ChildrenRepository> childrenRepositoryProvider =
     Provider<ChildrenRepository>(
-  (Ref ref) => ChildrenRepositoryImpl(
-    firestore: ref.watch(firestoreProvider),
-    storage: ref.watch(firebaseStorageProvider),
-    sync: ref.watch(syncServiceProvider),
-    database: ref.watch(localDatabaseProvider),
-    currentUserId: () => ref.read(currentUserProvider)?.uid ?? '',
-    currentUserName: () => ref.read(currentUserProvider)?.name,
-  ),
-);
+      (Ref ref) => ChildrenRepositoryImpl(
+        firestore: ref.watch(firestoreProvider),
+        storage: ref.watch(firebaseStorageProvider),
+        sync: ref.watch(syncServiceProvider),
+        database: ref.watch(localDatabaseProvider),
+        currentUserId: () => ref.read(currentUserProvider)?.uid ?? '',
+        currentUserName: () => ref.read(currentUserProvider)?.name,
+      ),
+    );
 
 /// Lista de crianças do responsável logado.
 final StreamProvider<List<Child>> childrenProvider =
     StreamProvider<List<Child>>((Ref ref) {
-  // Sem sessão não há o que observar — evita uma consulta com uid vazio.
-  if (ref.watch(currentUserProvider) == null) {
-    return Stream<List<Child>>.value(const <Child>[]);
-  }
-  return ref.watch(childrenRepositoryProvider).watchChildren();
-});
+      // Sem sessão não há o que observar — evita uma consulta com uid vazio.
+      if (ref.watch(currentUserProvider) == null) {
+        return Stream<List<Child>>.value(const <Child>[]);
+      }
+      return ref.watch(childrenRepositoryProvider).watchChildren();
+    });
 
 final StreamProviderFamily<Child?, String> childProvider =
     StreamProvider.family<Child?, String>(
-  (Ref ref, String childId) =>
-      ref.watch(childrenRepositoryProvider).watchChild(childId),
-);
+      (Ref ref, String childId) =>
+          ref.watch(childrenRepositoryProvider).watchChild(childId),
+    );
 
 final StreamProviderFamily<List<GrowthRecord>, String> growthProvider =
     StreamProvider.family<List<GrowthRecord>, String>(
-  (Ref ref, String childId) =>
-      ref.watch(childrenRepositoryProvider).watchGrowth(childId),
-);
+      (Ref ref, String childId) =>
+          ref.watch(childrenRepositoryProvider).watchGrowth(childId),
+    );
 
 final StreamProviderFamily<List<VaccineDose>, String> vaccineDosesProvider =
     StreamProvider.family<List<VaccineDose>, String>(
-  (Ref ref, String childId) =>
-      ref.watch(childrenRepositoryProvider).watchVaccineDoses(childId),
-);
+      (Ref ref, String childId) =>
+          ref.watch(childrenRepositoryProvider).watchVaccineDoses(childId),
+    );
 
 /// Tabela de referência da OMS, carregada uma vez por sessão.
 final FutureProvider<WhoReference> whoReferenceProvider =
@@ -60,31 +60,31 @@ final FutureProvider<WhoReference> whoReferenceProvider =
 /// Resumo vacinal de uma criança: quantas em atraso, quantas próximas.
 final ProviderFamily<VaccineSummary, String> vaccineSummaryProvider =
     Provider.family<VaccineSummary, String>((Ref ref, String childId) {
-  final List<VaccineDose> doses =
-      ref.watch(vaccineDosesProvider(childId)).valueOrNull ??
+      final List<VaccineDose> doses =
+          ref.watch(vaccineDosesProvider(childId)).valueOrNull ??
           const <VaccineDose>[];
 
-  int applied = 0;
-  int overdue = 0;
-  int upcoming = 0;
+      int applied = 0;
+      int overdue = 0;
+      int upcoming = 0;
 
-  for (final VaccineDose dose in doses) {
-    if (dose.isApplied) {
-      applied++;
-    } else if (dose.isOverdue()) {
-      overdue++;
-    } else if (dose.isUpcoming()) {
-      upcoming++;
-    }
-  }
+      for (final VaccineDose dose in doses) {
+        if (dose.isApplied) {
+          applied++;
+        } else if (dose.isOverdue()) {
+          overdue++;
+        } else if (dose.isUpcoming()) {
+          upcoming++;
+        }
+      }
 
-  return VaccineSummary(
-    total: doses.length,
-    applied: applied,
-    overdue: overdue,
-    upcoming: upcoming,
-  );
-});
+      return VaccineSummary(
+        total: doses.length,
+        applied: applied,
+        overdue: overdue,
+        upcoming: upcoming,
+      );
+    });
 
 class VaccineSummary {
   const VaccineSummary({
@@ -103,13 +103,15 @@ class VaccineSummary {
 }
 
 /// Avalia a última medição de cada indicador contra a referência da OMS.
-final ProviderFamily<List<GrowthAssessment>, String> latestAssessmentsProvider =
-    Provider.family<List<GrowthAssessment>, String>((Ref ref, String childId) {
+final ProviderFamily<List<GrowthAssessment>, String>
+latestAssessmentsProvider = Provider.family<List<GrowthAssessment>, String>((
+  Ref ref,
+  String childId,
+) {
   final Child? child = ref.watch(childProvider(childId)).valueOrNull;
   final WhoReference? who = ref.watch(whoReferenceProvider).valueOrNull;
   final List<GrowthRecord> records =
-      ref.watch(growthProvider(childId)).valueOrNull ??
-          const <GrowthRecord>[];
+      ref.watch(growthProvider(childId)).valueOrNull ?? const <GrowthRecord>[];
 
   if (child == null || who == null || records.isEmpty) {
     return const <GrowthAssessment>[];
@@ -157,7 +159,8 @@ final ProviderFamily<List<GrowthAssessment>, String> latestAssessmentsProvider =
 
 /// Idade, em meses, na data da medição — com correção para prematuros.
 int _ageMonthsAt(Child child, DateTime at) {
-  int months = (at.year - child.birthDate.year) * 12 +
+  int months =
+      (at.year - child.birthDate.year) * 12 +
       (at.month - child.birthDate.month);
   if (at.day < child.birthDate.day) months -= 1;
   if (months < 0) months = 0;
@@ -184,23 +187,26 @@ class ChildrenController extends Notifier<ChildActionState> {
 
   Future<Child?> saveChild(Child child) async {
     state = const ChildActionState(isLoading: true);
-    final Result<Child> result =
-        await ref.read(childrenRepositoryProvider).saveChild(child);
+    final Result<Child> result = await ref
+        .read(childrenRepositoryProvider)
+        .saveChild(child);
     return _finish<Child>(result);
   }
 
   Future<bool> deleteChild(String childId) async {
     state = const ChildActionState(isLoading: true);
-    final Result<void> result =
-        await ref.read(childrenRepositoryProvider).deleteChild(childId);
+    final Result<void> result = await ref
+        .read(childrenRepositoryProvider)
+        .deleteChild(childId);
     _finish<void>(result);
     return result.isSuccess;
   }
 
   Future<GrowthRecord?> saveGrowth(GrowthRecord record) async {
     state = const ChildActionState(isLoading: true);
-    final Result<GrowthRecord> result =
-        await ref.read(childrenRepositoryProvider).saveGrowth(record);
+    final Result<GrowthRecord> result = await ref
+        .read(childrenRepositoryProvider)
+        .saveGrowth(record);
     return _finish<GrowthRecord>(result);
   }
 
@@ -234,8 +240,9 @@ class ChildrenController extends Notifier<ChildActionState> {
           )
         : dose.copyWith(clearApplied: true);
 
-    final Result<VaccineDose> result =
-        await ref.read(childrenRepositoryProvider).saveVaccineDose(updated);
+    final Result<VaccineDose> result = await ref
+        .read(childrenRepositoryProvider)
+        .saveVaccineDose(updated);
     _finish<VaccineDose>(result);
     return result.isSuccess;
   }
@@ -245,11 +252,13 @@ class ChildrenController extends Notifier<ChildActionState> {
   Future<void> ensureSchedule(Child child) async {
     final List<VaccineDose> existing =
         ref.read(vaccineDosesProvider(child.id)).valueOrNull ??
-            const <VaccineDose>[];
+        const <VaccineDose>[];
     if (existing.isNotEmpty) return;
 
     for (final VaccineDoseSchedule schedule in PniCalendar.schedule) {
-      await ref.read(childrenRepositoryProvider).saveVaccineDose(
+      await ref
+          .read(childrenRepositoryProvider)
+          .saveVaccineDose(
             VaccineDose(
               id: '${child.id}-${schedule.vaccineId}-${schedule.doseIndex}',
               childId: child.id,
@@ -263,19 +272,19 @@ class ChildrenController extends Notifier<ChildActionState> {
   }
 
   T? _finish<T>(Result<T> result) => result.fold(
-        (T value) {
-          state = const ChildActionState();
-          return value;
-        },
-        (Failure failure) {
-          state = ChildActionState(failure: failure);
-          return null;
-        },
-      );
+    (T value) {
+      state = const ChildActionState();
+      return value;
+    },
+    (Failure failure) {
+      state = ChildActionState(failure: failure);
+      return null;
+    },
+  );
 }
 
 final NotifierProvider<ChildrenController, ChildActionState>
-    childrenControllerProvider =
+childrenControllerProvider =
     NotifierProvider<ChildrenController, ChildActionState>(
-  ChildrenController.new,
-);
+      ChildrenController.new,
+    );

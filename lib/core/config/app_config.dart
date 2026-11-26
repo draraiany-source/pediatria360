@@ -11,7 +11,8 @@
 class AppConfig {
   const AppConfig._();
 
-  static const String appName = 'Pediatria 360';
+  static const String appName = 'Crisdepaula Pediatria';
+  static const String appTagline = 'Gestão Clínica em Pediatria';
   static const String supportEmail = 'suporte@pediatria360.app';
 
   // ------------------------------------------------------------------- Legal
@@ -36,35 +37,44 @@ class AppConfig {
   static const bool videoConsultationEnabled = false;
 
   // ---------------------------------------------------------------- Ambiente
-  static const String environment =
-      String.fromEnvironment('ENV', defaultValue: 'dev');
+  static const String environment = String.fromEnvironment(
+    'ENV',
+    defaultValue: 'dev',
+  );
 
   static bool get isProduction => environment == 'prod';
   static bool get isDevelopment => environment == 'dev';
 
   /// Quando `true`, o app usa os emuladores locais do Firebase.
-  static const bool useFirebaseEmulator =
-      bool.fromEnvironment('USE_FIREBASE_EMULATOR');
+  static const bool useFirebaseEmulator = bool.fromEnvironment(
+    'USE_FIREBASE_EMULATOR',
+  );
 
-  static const String emulatorHost =
-      String.fromEnvironment('EMULATOR_HOST', defaultValue: 'localhost');
+  static const String emulatorHost = String.fromEnvironment(
+    'EMULATOR_HOST',
+    defaultValue: 'localhost',
+  );
 
   // -------------------------------------------------------------- Bunny.net
   /// Id da biblioteca do Bunny Stream (videos, lives, podcasts).
-  static const String bunnyStreamLibraryId =
-      String.fromEnvironment('BUNNY_STREAM_LIBRARY_ID');
+  static const String bunnyStreamLibraryId = String.fromEnvironment(
+    'BUNNY_STREAM_LIBRARY_ID',
+  );
 
   /// Hostname do CDN de video, ex.: `vz-1a2b3c.b-cdn.net`.
-  static const String bunnyCdnHostname =
-      String.fromEnvironment('BUNNY_CDN_HOSTNAME');
+  static const String bunnyCdnHostname = String.fromEnvironment(
+    'BUNNY_CDN_HOSTNAME',
+  );
 
   /// Zona de storage do Bunny (imagens e PDFs da biblioteca medica).
-  static const String bunnyStorageZone =
-      String.fromEnvironment('BUNNY_STORAGE_ZONE');
+  static const String bunnyStorageZone = String.fromEnvironment(
+    'BUNNY_STORAGE_ZONE',
+  );
 
   /// Hostname publico do Bunny Storage (pull zone), ex.: `p360.b-cdn.net`.
-  static const String bunnyStorageHostname =
-      String.fromEnvironment('BUNNY_STORAGE_HOSTNAME');
+  static const String bunnyStorageHostname = String.fromEnvironment(
+    'BUNNY_STORAGE_HOSTNAME',
+  );
 
   static const String bunnyStreamApiBase = 'https://video.bunnycdn.com';
   static const String bunnyStorageApiBase = 'https://storage.bunnycdn.com';

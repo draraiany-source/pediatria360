@@ -30,12 +30,12 @@ enum AppointmentType {
       );
 
   String get label => switch (this) {
-        AppointmentType.presencial => 'Presencial',
-        AppointmentType.teleconsulta => 'Teleconsulta',
-        AppointmentType.primeiraConsulta => 'Primeira consulta',
-        AppointmentType.retorno => 'Retorno',
-        AppointmentType.procedimento => 'Procedimento',
-      };
+    AppointmentType.presencial => 'Presencial',
+    AppointmentType.teleconsulta => 'Teleconsulta',
+    AppointmentType.primeiraConsulta => 'Primeira consulta',
+    AppointmentType.retorno => 'Retorno',
+    AppointmentType.procedimento => 'Procedimento',
+  };
 }
 
 enum AppointmentStatus {
@@ -53,13 +53,13 @@ enum AppointmentStatus {
       );
 
   String get label => switch (this) {
-        AppointmentStatus.requested => 'Aguardando confirmação',
-        AppointmentStatus.confirmed => 'Confirmada',
-        AppointmentStatus.inProgress => 'Em andamento',
-        AppointmentStatus.completed => 'Realizada',
-        AppointmentStatus.cancelled => 'Cancelada',
-        AppointmentStatus.noShow => 'Não compareceu',
-      };
+    AppointmentStatus.requested => 'Aguardando confirmação',
+    AppointmentStatus.confirmed => 'Confirmada',
+    AppointmentStatus.inProgress => 'Em andamento',
+    AppointmentStatus.completed => 'Realizada',
+    AppointmentStatus.cancelled => 'Cancelada',
+    AppointmentStatus.noShow => 'Não compareceu',
+  };
 
   bool get isActive =>
       this == AppointmentStatus.requested ||
@@ -108,8 +108,7 @@ class Appointment extends Equatable {
       startsAt: (data['startsAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
       durationMinutes: (data['durationMinutes'] as num?)?.toInt() ?? 30,
       status: AppointmentStatus.fromName(data['status'] as String?),
-      createdAt:
-          (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
+      createdAt: (data['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
       type: AppointmentType.fromName(data['type'] as String?),
       childId: data['childId'] as String?,
       childName: data['childName'] as String?,
@@ -184,23 +183,22 @@ class Appointment extends Equatable {
 
   /// Cancelamento sem custo até 24 h antes — depois disso o horário já não
   /// pode ser reocupado.
-  bool get canCancelFree =>
-      startsAt.difference(DateTime.now()).inHours >= 24;
+  bool get canCancelFree => startsAt.difference(DateTime.now()).inHours >= 24;
 
   @override
   List<Object?> get props => <Object?>[
-        id,
-        status,
-        startsAt,
-        roomUrl,
-        type,
-        workflowStatus,
-        arrivedAt,
-        clinicId,
-        roomId,
-        unitId,
-        childId,
-      ];
+    id,
+    status,
+    startsAt,
+    roomUrl,
+    type,
+    workflowStatus,
+    arrivedAt,
+    clinicId,
+    roomId,
+    unitId,
+    childId,
+  ];
 }
 
 /// Um horário disponível na agenda.
@@ -212,10 +210,10 @@ class TimeSlot extends Equatable {
   });
 
   factory TimeSlot.fromMap(Map<String, dynamic> map) => TimeSlot(
-        startsAt: DateTime.parse(map['startsAt'] as String).toLocal(),
-        durationMinutes: (map['durationMinutes'] as num?)?.toInt() ?? 30,
-        available: (map['available'] as bool?) ?? true,
-      );
+    startsAt: DateTime.parse(map['startsAt'] as String).toLocal(),
+    durationMinutes: (map['durationMinutes'] as num?)?.toInt() ?? 30,
+    available: (map['available'] as bool?) ?? true,
+  );
 
   final DateTime startsAt;
   final int durationMinutes;
@@ -286,8 +284,8 @@ class TelemedicineRepository {
   const TelemedicineRepository({
     required FirebaseFirestore firestore,
     required FirebaseFunctions functions,
-  })  : _firestore = firestore,
-        _functions = functions;
+  }) : _firestore = firestore,
+       _functions = functions;
 
   final FirebaseFirestore _firestore;
   final FirebaseFunctions _functions;
@@ -322,43 +320,43 @@ class TelemedicineRepository {
     List<String> allergies = const <String>[],
     String additionalNotes = '',
     List<String> attachmentUrls = const <String>[],
-  }) =>
-      guard(() async {
-        final PreVisitQuestionnaire q = PreVisitQuestionnaire(
-          appointmentId: appointmentId,
-          patientId: patientId,
-          childId: childId,
-          professionalId: professionalId,
-          submittedAt: DateTime.now(),
-          reason: reason,
-          symptoms: symptoms,
-          symptomsStartedAt: symptomsStartedAt,
-          hasFever: hasFever,
-          feverTemperatureC: feverTemperatureC,
-          feedingNotes: feedingNotes,
-          sleepNotes: sleepNotes,
-          eliminationNotes: eliminationNotes,
-          currentMedications: currentMedications,
-          allergies: allergies,
-          additionalNotes: additionalNotes,
-          attachmentUrls: attachmentUrls,
-        );
-        await _preVisitQuestionnaires
-            .doc(appointmentId)
-            .set(PreVisitQuestionnaireMapper.toFirestore(q));
-      });
+  }) => guard(() async {
+    final PreVisitQuestionnaire q = PreVisitQuestionnaire(
+      appointmentId: appointmentId,
+      patientId: patientId,
+      childId: childId,
+      professionalId: professionalId,
+      submittedAt: DateTime.now(),
+      reason: reason,
+      symptoms: symptoms,
+      symptomsStartedAt: symptomsStartedAt,
+      hasFever: hasFever,
+      feverTemperatureC: feverTemperatureC,
+      feedingNotes: feedingNotes,
+      sleepNotes: sleepNotes,
+      eliminationNotes: eliminationNotes,
+      currentMedications: currentMedications,
+      allergies: allergies,
+      additionalNotes: additionalNotes,
+      attachmentUrls: attachmentUrls,
+    );
+    await _preVisitQuestionnaires
+        .doc(appointmentId)
+        .set(PreVisitQuestionnaireMapper.toFirestore(q));
+  });
 
   /// Lida pelo profissional antes/durante o atendimento, e pelo responsável
   /// que preencheu, para conferir o que enviou. `null` quando a família
   /// ainda não preencheu nada — estado normal, não erro.
   Stream<PreVisitQuestionnaire?> watchPreVisitQuestionnaire(
     String appointmentId,
-  ) =>
-      _preVisitQuestionnaires.doc(appointmentId).snapshots().map(
-            (DocumentSnapshot<Map<String, dynamic>> doc) => doc.exists
-                ? PreVisitQuestionnaireMapper.fromFirestore(doc)
-                : null,
-          );
+  ) => _preVisitQuestionnaires
+      .doc(appointmentId)
+      .snapshots()
+      .map(
+        (DocumentSnapshot<Map<String, dynamic>> doc) =>
+            doc.exists ? PreVisitQuestionnaireMapper.fromFirestore(doc) : null,
+      );
 
   /// Lê a disponibilidade semanal do próprio profissional.
   ///
@@ -367,22 +365,20 @@ class TelemedicineRepository {
   /// (0 = domingo, igual ao `getUTCDay()` do JavaScript). Não existe uma
   /// coleção `professional_schedules` separada — o campo já vive direto no
   /// documento do próprio usuário, e é lá que a Function sempre leu.
-  Future<Result<Map<String, List<String>>>> myWeeklyAvailability(
-    String uid,
-  ) =>
+  Future<Result<Map<String, List<String>>>> myWeeklyAvailability(String uid) =>
       guard(() async {
-        final DocumentSnapshot<Map<String, dynamic>> doc =
-            await _firestore.collection(FirestorePaths.users).doc(uid).get();
+        final DocumentSnapshot<Map<String, dynamic>> doc = await _firestore
+            .collection(FirestorePaths.users)
+            .doc(uid)
+            .get();
 
         final Map<String, dynamic> raw =
             (doc.data()?['availability'] as Map<String, dynamic>?) ??
-                const <String, dynamic>{};
+            const <String, dynamic>{};
 
         return raw.map(
-          (String weekday, dynamic times) => MapEntry(
-            weekday,
-            (times as List<dynamic>).cast<String>(),
-          ),
+          (String weekday, dynamic times) =>
+              MapEntry(weekday, (times as List<dynamic>).cast<String>()),
         );
       });
 
@@ -398,31 +394,29 @@ class TelemedicineRepository {
     required String uid,
     required Map<String, List<String>> availability,
     required int consultationMinutes,
-  }) =>
-      guard(() async {
-        await _firestore.collection(FirestorePaths.users).doc(uid).update(
-          <String, dynamic>{
-            'availability': availability,
-            'consultationMinutes': consultationMinutes,
-          },
-        );
-      });
+  }) => guard(() async {
+    await _firestore.collection(FirestorePaths.users).doc(uid).update(
+      <String, dynamic>{
+        'availability': availability,
+        'consultationMinutes': consultationMinutes,
+      },
+    );
+  });
 
   /// Profissionais disponíveis para atendimento.
-  Future<Result<List<ProfessionalProfile>>> professionals() =>
-      guard(() async {
-        final QuerySnapshot<Map<String, dynamic>> snapshot = await _firestore
-            .collection(FirestorePaths.users)
-            .where('role', isEqualTo: 'professional')
-            .where('professionalVerified', isEqualTo: true)
-            .where('acceptsNewPatients', isEqualTo: true)
-            .limit(50)
-            .get();
+  Future<Result<List<ProfessionalProfile>>> professionals() => guard(() async {
+    final QuerySnapshot<Map<String, dynamic>> snapshot = await _firestore
+        .collection(FirestorePaths.users)
+        .where('role', isEqualTo: 'professional')
+        .where('professionalVerified', isEqualTo: true)
+        .where('acceptsNewPatients', isEqualTo: true)
+        .limit(50)
+        .get();
 
-        return snapshot.docs
-            .map(ProfessionalProfile.fromFirestore)
-            .toList(growable: false);
-      });
+    return snapshot.docs
+        .map(ProfessionalProfile.fromFirestore)
+        .toList(growable: false);
+  });
 
   /// Horários livres de um profissional numa data.
   ///
@@ -432,27 +426,29 @@ class TelemedicineRepository {
   Future<Result<List<TimeSlot>>> availability({
     required String professionalId,
     required DateTime date,
-  }) =>
-      guard(() async {
-        final HttpsCallableResult<dynamic> response =
-            await _functions.httpsCallable('getAvailability').call(
-          <String, dynamic>{
-            'professionalId': professionalId,
-            'date': DateTime(date.year, date.month, date.day)
-                .toUtc()
-                .toIso8601String(),
-          },
-        );
+  }) => guard(() async {
+    final HttpsCallableResult<dynamic> response = await _functions
+        .httpsCallable('getAvailability')
+        .call(<String, dynamic>{
+          'professionalId': professionalId,
+          'date': DateTime(
+            date.year,
+            date.month,
+            date.day,
+          ).toUtc().toIso8601String(),
+        });
 
-        final List<dynamic> slots =
-            (response.data as Map<dynamic, dynamic>)['slots'] as List<dynamic>;
+    final List<dynamic> slots =
+        (response.data as Map<dynamic, dynamic>)['slots'] as List<dynamic>;
 
-        return slots
-            .whereType<Map<dynamic, dynamic>>()
-            .map((Map<dynamic, dynamic> m) =>
-                TimeSlot.fromMap(Map<String, dynamic>.from(m)))
-            .toList(growable: false);
-      });
+    return slots
+        .whereType<Map<dynamic, dynamic>>()
+        .map(
+          (Map<dynamic, dynamic> m) =>
+              TimeSlot.fromMap(Map<String, dynamic>.from(m)),
+        )
+        .toList(growable: false);
+  });
 
   /// Solicita uma consulta.
   ///
@@ -463,22 +459,21 @@ class TelemedicineRepository {
     required DateTime startsAt,
     String? childId,
     String? reason,
-  }) =>
-      guard(() async {
-        final HttpsCallableResult<dynamic> response =
-            await _functions.httpsCallable('bookAppointment').call(
-          <String, dynamic>{
-            'professionalId': professionalId,
-            'startsAt': startsAt.toUtc().toIso8601String(),
-            if (childId != null) 'childId': childId,
-            if (reason != null) 'reason': reason,
-          },
-        );
+  }) => guard(() async {
+    final HttpsCallableResult<dynamic> response = await _functions
+        .httpsCallable('bookAppointment')
+        .call(<String, dynamic>{
+          'professionalId': professionalId,
+          'startsAt': startsAt.toUtc().toIso8601String(),
+          if (childId != null) 'childId': childId,
+          if (reason != null) 'reason': reason,
+        });
 
-        final Map<String, dynamic> data =
-            Map<String, dynamic>.from(response.data as Map<dynamic, dynamic>);
-        return (data['appointmentId'] as String?) ?? '';
-      });
+    final Map<String, dynamic> data = Map<String, dynamic>.from(
+      response.data as Map<dynamic, dynamic>,
+    );
+    return (data['appointmentId'] as String?) ?? '';
+  });
 
   Stream<List<Appointment>> watchMyAppointments(String uid) => _appointments
       .where('patientId', isEqualTo: uid)
@@ -491,16 +486,15 @@ class TelemedicineRepository {
       );
 
   /// Agenda do profissional.
-  Stream<List<Appointment>> watchProfessionalAgenda(String uid) =>
-      _appointments
-          .where('professionalId', isEqualTo: uid)
-          .orderBy('startsAt')
-          .limit(100)
-          .snapshots()
-          .map(
-            (QuerySnapshot<Map<String, dynamic>> s) =>
-                s.docs.map(Appointment.fromFirestore).toList(growable: false),
-          );
+  Stream<List<Appointment>> watchProfessionalAgenda(String uid) => _appointments
+      .where('professionalId', isEqualTo: uid)
+      .orderBy('startsAt')
+      .limit(100)
+      .snapshots()
+      .map(
+        (QuerySnapshot<Map<String, dynamic>> s) =>
+            s.docs.map(Appointment.fromFirestore).toList(growable: false),
+      );
 
   /// Agendamentos de uma crianca (visao 360 / timeline clinica).
   Stream<List<Appointment>> watchChildAppointments(String childId) =>
@@ -515,55 +509,55 @@ class TelemedicineRepository {
           );
 
   Future<Result<void>> cancel(String appointmentId) => guard(() async {
-        await _appointments.doc(appointmentId).update(<String, dynamic>{
-          'status': AppointmentStatus.cancelled.name,
-          'cancelledAt': FieldValue.serverTimestamp(),
-        });
-      });
+    await _appointments.doc(appointmentId).update(<String, dynamic>{
+      'status': AppointmentStatus.cancelled.name,
+      'cancelledAt': FieldValue.serverTimestamp(),
+    });
+  });
 
   /// Confirma uma consulta solicitada. Só o profissional dono do
   /// agendamento pode — a mesma regra que já protege `cancel()` (que é do
   /// paciente) protege esta (que é do profissional), por
   /// `resource.data.professionalId == request.auth.uid`.
   Future<Result<void>> confirm(String appointmentId) => guard(() async {
-        await _appointments.doc(appointmentId).update(<String, dynamic>{
-          'status': AppointmentStatus.confirmed.name,
-        });
-      });
+    await _appointments.doc(appointmentId).update(<String, dynamic>{
+      'status': AppointmentStatus.confirmed.name,
+    });
+  });
 
   Future<Result<void>> markCompleted(String appointmentId) => guard(() async {
-        await _appointments.doc(appointmentId).update(<String, dynamic>{
-          'status': AppointmentStatus.completed.name,
-        });
-      });
+    await _appointments.doc(appointmentId).update(<String, dynamic>{
+      'status': AppointmentStatus.completed.name,
+    });
+  });
 
   /// Entra na sala. A URL é gerada na hora e expira.
   Future<Result<String>> joinRoom(String appointmentId) => guard(() async {
-        final HttpsCallableResult<dynamic> response = await _functions
-            .httpsCallable('joinConsultation')
-            .call(<String, dynamic>{'appointmentId': appointmentId});
+    final HttpsCallableResult<dynamic> response = await _functions
+        .httpsCallable('joinConsultation')
+        .call(<String, dynamic>{'appointmentId': appointmentId});
 
-        final Map<String, dynamic> data =
-            Map<String, dynamic>.from(response.data as Map<dynamic, dynamic>);
+    final Map<String, dynamic> data = Map<String, dynamic>.from(
+      response.data as Map<dynamic, dynamic>,
+    );
 
-        final String? url = data['roomUrl'] as String?;
-        if (url == null || url.isEmpty) {
-          throw StateError('Sala indisponível no momento.');
-        }
-        return url;
-      });
+    final String? url = data['roomUrl'] as String?;
+    if (url == null || url.isEmpty) {
+      throw StateError('Sala indisponível no momento.');
+    }
+    return url;
+  });
 
   /// Agenda da clinica (recepcao / admin) — mesma collection `appointments`.
-  Stream<List<Appointment>> watchClinicAgenda(String clinicId) =>
-      _appointments
-          .where('clinicId', isEqualTo: clinicId)
-          .orderBy('startsAt')
-          .limit(200)
-          .snapshots()
-          .map(
-            (QuerySnapshot<Map<String, dynamic>> s) =>
-                s.docs.map(Appointment.fromFirestore).toList(growable: false),
-          );
+  Stream<List<Appointment>> watchClinicAgenda(String clinicId) => _appointments
+      .where('clinicId', isEqualTo: clinicId)
+      .orderBy('startsAt')
+      .limit(200)
+      .snapshots()
+      .map(
+        (QuerySnapshot<Map<String, dynamic>> s) =>
+            s.docs.map(Appointment.fromFirestore).toList(growable: false),
+      );
 
   /// Cria consulta no consultorio (recepcao/profissional), com checagem de
   /// conflito de profissional/sala e bloqueios. Nao gera segunda agenda.
@@ -585,63 +579,62 @@ class TelemedicineRepository {
     AppointmentStatus status = AppointmentStatus.confirmed,
     List<Appointment> existingInWindow = const <Appointment>[],
     List<ScheduleBlock> blocks = const <ScheduleBlock>[],
-  }) =>
-      guard(() async {
-        final int duration = durationMinutes ??
-            defaultDurationForAppointmentType(type.name);
-        final AgendaConflict? conflict = findAgendaConflict(
-          startsAt: startsAt,
-          durationMinutes: duration,
-          professionalId: professionalId,
-          roomId: roomId ?? '',
-          existing: existingInWindow
-              .map(
-                (Appointment a) => AgendaInterval(
-                  id: a.id,
-                  startsAt: a.startsAt,
-                  durationMinutes: a.durationMinutes,
-                  professionalId: a.professionalId,
-                  roomId: a.roomId ?? '',
-                  status: a.status.name,
-                ),
-              )
-              .toList(growable: false),
-          blocks: blocks,
-        );
-        if (conflict != null) {
-          throw StateError(conflict.reason);
-        }
+  }) => guard(() async {
+    final int duration =
+        durationMinutes ?? defaultDurationForAppointmentType(type.name);
+    final AgendaConflict? conflict = findAgendaConflict(
+      startsAt: startsAt,
+      durationMinutes: duration,
+      professionalId: professionalId,
+      roomId: roomId ?? '',
+      existing: existingInWindow
+          .map(
+            (Appointment a) => AgendaInterval(
+              id: a.id,
+              startsAt: a.startsAt,
+              durationMinutes: a.durationMinutes,
+              professionalId: a.professionalId,
+              roomId: a.roomId ?? '',
+              status: a.status.name,
+            ),
+          )
+          .toList(growable: false),
+      blocks: blocks,
+    );
+    if (conflict != null) {
+      throw StateError(conflict.reason);
+    }
 
-        final DocumentReference<Map<String, dynamic>> ref = _appointments.doc();
-        final Map<String, dynamic> payload = <String, dynamic>{
-          'patientId': patientOwnerId,
-          'professionalId': professionalId,
-          'professionalName': professionalName,
-          'startsAt': Timestamp.fromDate(startsAt.toUtc()),
-          'durationMinutes': duration,
-          'status': status.name,
-          'createdAt': FieldValue.serverTimestamp(),
-          'type': type.name,
-          'clinicId': clinicId,
-          if (childId != null) 'childId': childId,
-          if (childName != null) 'childName': childName,
-          if (unitId != null) 'unitId': unitId,
-          if (roomId != null) 'roomId': roomId,
-          if (roomLabel != null) 'roomLabel': roomLabel,
-          if (reason != null) 'reason': reason,
-          'workflowStatus': 'scheduled',
-          'createdBy': actorUid,
-        };
-        await ref.set(payload);
-        await _appendAppointmentChange(
-          appointmentId: ref.id,
-          actorUid: actorUid,
-          action: 'created',
-          before: null,
-          after: payload,
-        );
-        return ref.id;
-      });
+    final DocumentReference<Map<String, dynamic>> ref = _appointments.doc();
+    final Map<String, dynamic> payload = <String, dynamic>{
+      'patientId': patientOwnerId,
+      'professionalId': professionalId,
+      'professionalName': professionalName,
+      'startsAt': Timestamp.fromDate(startsAt.toUtc()),
+      'durationMinutes': duration,
+      'status': status.name,
+      'createdAt': FieldValue.serverTimestamp(),
+      'type': type.name,
+      'clinicId': clinicId,
+      if (childId != null) 'childId': childId,
+      if (childName != null) 'childName': childName,
+      if (unitId != null) 'unitId': unitId,
+      if (roomId != null) 'roomId': roomId,
+      if (roomLabel != null) 'roomLabel': roomLabel,
+      if (reason != null) 'reason': reason,
+      'workflowStatus': 'scheduled',
+      'createdBy': actorUid,
+    };
+    await ref.set(payload);
+    await _appendAppointmentChange(
+      appointmentId: ref.id,
+      actorUid: actorUid,
+      action: 'created',
+      before: null,
+      after: payload,
+    );
+    return ref.id;
+  });
 
   /// Reagenda consulta existente (mesmo id — evita duplicata).
   Future<Result<void>> reschedule({
@@ -653,113 +646,113 @@ class TelemedicineRepository {
     String? roomLabel,
     List<Appointment> existingInWindow = const <Appointment>[],
     List<ScheduleBlock> blocks = const <ScheduleBlock>[],
-  }) =>
-      guard(() async {
-        final DocumentSnapshot<Map<String, dynamic>> snap =
-            await _appointments.doc(appointmentId).get();
-        if (!snap.exists) {
-          throw StateError('Agendamento nao encontrado.');
-        }
-        final Appointment current = Appointment.fromFirestore(snap);
-        final int duration = durationMinutes ?? current.durationMinutes;
-        final String effectiveRoom = roomId ?? current.roomId ?? '';
-        final AgendaConflict? conflict = findAgendaConflict(
-          startsAt: newStartsAt,
-          durationMinutes: duration,
-          professionalId: current.professionalId,
-          roomId: effectiveRoom,
-          ignoreAppointmentId: appointmentId,
-          existing: existingInWindow
-              .map(
-                (Appointment a) => AgendaInterval(
-                  id: a.id,
-                  startsAt: a.startsAt,
-                  durationMinutes: a.durationMinutes,
-                  professionalId: a.professionalId,
-                  roomId: a.roomId ?? '',
-                  status: a.status.name,
-                ),
-              )
-              .toList(growable: false),
-          blocks: blocks,
-        );
-        if (conflict != null) {
-          throw StateError(conflict.reason);
-        }
+  }) => guard(() async {
+    final DocumentSnapshot<Map<String, dynamic>> snap = await _appointments
+        .doc(appointmentId)
+        .get();
+    if (!snap.exists) {
+      throw StateError('Agendamento nao encontrado.');
+    }
+    final Appointment current = Appointment.fromFirestore(snap);
+    final int duration = durationMinutes ?? current.durationMinutes;
+    final String effectiveRoom = roomId ?? current.roomId ?? '';
+    final AgendaConflict? conflict = findAgendaConflict(
+      startsAt: newStartsAt,
+      durationMinutes: duration,
+      professionalId: current.professionalId,
+      roomId: effectiveRoom,
+      ignoreAppointmentId: appointmentId,
+      existing: existingInWindow
+          .map(
+            (Appointment a) => AgendaInterval(
+              id: a.id,
+              startsAt: a.startsAt,
+              durationMinutes: a.durationMinutes,
+              professionalId: a.professionalId,
+              roomId: a.roomId ?? '',
+              status: a.status.name,
+            ),
+          )
+          .toList(growable: false),
+      blocks: blocks,
+    );
+    if (conflict != null) {
+      throw StateError(conflict.reason);
+    }
 
-        final Map<String, dynamic> before = snap.data()!;
-        final Map<String, dynamic> patch = <String, dynamic>{
-          'startsAt': Timestamp.fromDate(newStartsAt.toUtc()),
-          'durationMinutes': duration,
-          if (roomId != null) 'roomId': roomId,
-          if (roomLabel != null) 'roomLabel': roomLabel,
-          'rescheduledAt': FieldValue.serverTimestamp(),
-          'rescheduledBy': actorUid,
-          'previousStartsAt': before['startsAt'],
-        };
-        await _appointments.doc(appointmentId).update(patch);
-        await _appendAppointmentChange(
-          appointmentId: appointmentId,
-          actorUid: actorUid,
-          action: 'rescheduled',
-          before: before,
-          after: <String, dynamic>{...before, ...patch},
-        );
-      });
+    final Map<String, dynamic> before = snap.data()!;
+    final Map<String, dynamic> patch = <String, dynamic>{
+      'startsAt': Timestamp.fromDate(newStartsAt.toUtc()),
+      'durationMinutes': duration,
+      if (roomId != null) 'roomId': roomId,
+      if (roomLabel != null) 'roomLabel': roomLabel,
+      'rescheduledAt': FieldValue.serverTimestamp(),
+      'rescheduledBy': actorUid,
+      'previousStartsAt': before['startsAt'],
+    };
+    await _appointments.doc(appointmentId).update(patch);
+    await _appendAppointmentChange(
+      appointmentId: appointmentId,
+      actorUid: actorUid,
+      action: 'rescheduled',
+      before: before,
+      after: <String, dynamic>{...before, ...patch},
+    );
+  });
 
   Future<Result<void>> cancelWithAudit({
     required String appointmentId,
     required String actorUid,
     String? reason,
-  }) =>
-      guard(() async {
-        final DocumentSnapshot<Map<String, dynamic>> snap =
-            await _appointments.doc(appointmentId).get();
-        if (!snap.exists) {
-          throw StateError('Agendamento nao encontrado.');
-        }
-        final Map<String, dynamic> before = snap.data()!;
-        final Map<String, dynamic> patch = <String, dynamic>{
-          'status': AppointmentStatus.cancelled.name,
-          'cancelledAt': FieldValue.serverTimestamp(),
-          'cancelledBy': actorUid,
-          if (reason != null) 'cancelReason': reason,
-        };
-        await _appointments.doc(appointmentId).update(patch);
-        await _appendAppointmentChange(
-          appointmentId: appointmentId,
-          actorUid: actorUid,
-          action: 'cancelled',
-          before: before,
-          after: <String, dynamic>{...before, ...patch},
-        );
-      });
+  }) => guard(() async {
+    final DocumentSnapshot<Map<String, dynamic>> snap = await _appointments
+        .doc(appointmentId)
+        .get();
+    if (!snap.exists) {
+      throw StateError('Agendamento nao encontrado.');
+    }
+    final Map<String, dynamic> before = snap.data()!;
+    final Map<String, dynamic> patch = <String, dynamic>{
+      'status': AppointmentStatus.cancelled.name,
+      'cancelledAt': FieldValue.serverTimestamp(),
+      'cancelledBy': actorUid,
+      if (reason != null) 'cancelReason': reason,
+    };
+    await _appointments.doc(appointmentId).update(patch);
+    await _appendAppointmentChange(
+      appointmentId: appointmentId,
+      actorUid: actorUid,
+      action: 'cancelled',
+      before: before,
+      after: <String, dynamic>{...before, ...patch},
+    );
+  });
 
   Future<Result<void>> confirmWithAudit({
     required String appointmentId,
     required String actorUid,
-  }) =>
-      guard(() async {
-        final DocumentSnapshot<Map<String, dynamic>> snap =
-            await _appointments.doc(appointmentId).get();
-        if (!snap.exists) {
-          throw StateError('Agendamento nao encontrado.');
-        }
-        final Map<String, dynamic> before = snap.data()!;
-        final Map<String, dynamic> patch = <String, dynamic>{
-          'status': AppointmentStatus.confirmed.name,
-          'confirmedAt': FieldValue.serverTimestamp(),
-          'confirmedBy': actorUid,
-        };
-        await _appointments.doc(appointmentId).update(patch);
-        await _appendAppointmentChange(
-          appointmentId: appointmentId,
-          actorUid: actorUid,
-          action: 'confirmed',
-          before: before,
-          after: <String, dynamic>{...before, ...patch},
-        );
-      });
+  }) => guard(() async {
+    final DocumentSnapshot<Map<String, dynamic>> snap = await _appointments
+        .doc(appointmentId)
+        .get();
+    if (!snap.exists) {
+      throw StateError('Agendamento nao encontrado.');
+    }
+    final Map<String, dynamic> before = snap.data()!;
+    final Map<String, dynamic> patch = <String, dynamic>{
+      'status': AppointmentStatus.confirmed.name,
+      'confirmedAt': FieldValue.serverTimestamp(),
+      'confirmedBy': actorUid,
+    };
+    await _appointments.doc(appointmentId).update(patch);
+    await _appendAppointmentChange(
+      appointmentId: appointmentId,
+      actorUid: actorUid,
+      action: 'confirmed',
+      before: before,
+      after: <String, dynamic>{...before, ...patch},
+    );
+  });
 
   Future<void> _appendAppointmentChange({
     required String appointmentId,
@@ -768,8 +761,10 @@ class TelemedicineRepository {
     Map<String, dynamic>? before,
     Map<String, dynamic>? after,
   }) async {
-    final DocumentReference<Map<String, dynamic>> ref =
-        _appointments.doc(appointmentId).collection('change_log').doc();
+    final DocumentReference<Map<String, dynamic>> ref = _appointments
+        .doc(appointmentId)
+        .collection('change_log')
+        .doc();
     await ref.set(<String, dynamic>{
       'id': ref.id,
       'action': action,

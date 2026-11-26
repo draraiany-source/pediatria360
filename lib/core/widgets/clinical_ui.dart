@@ -27,7 +27,8 @@ class PremiumCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final ThemeData theme = Theme.of(context);
     final bool isDark = theme.brightness == Brightness.dark;
-    final Color? border = borderColor ??
+    final Color? border =
+        borderColor ??
         (isDark ? AppColors.brand.withValues(alpha: 0.22) : null);
 
     final Widget content = Padding(
@@ -355,16 +356,17 @@ class PersonAvatar extends StatelessWidget {
     return CircleAvatar(
       radius: radius,
       backgroundColor: AppColors.avatarFor(seed),
-      backgroundImage:
-          photoUrl != null && photoUrl!.isNotEmpty ? NetworkImage(photoUrl!) : null,
+      backgroundImage: photoUrl != null && photoUrl!.isNotEmpty
+          ? NetworkImage(photoUrl!)
+          : null,
       child: photoUrl != null && photoUrl!.isNotEmpty
           ? null
           : Text(
               _initials,
               style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w700,
-                  ),
+                color: Colors.white,
+                fontWeight: FontWeight.w700,
+              ),
             ),
     );
   }

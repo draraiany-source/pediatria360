@@ -6,7 +6,7 @@ import 'pending_tracking_record.dart';
 
 class PendingRepository {
   PendingRepository({required FirebaseFirestore firestore})
-      : _firestore = firestore;
+    : _firestore = firestore;
 
   final FirebaseFirestore _firestore;
 
@@ -15,24 +15,22 @@ class PendingRepository {
 
   Stream<Map<String, PendingTrackingRecord>> watchTrackingBySourceKey(
     String professionalId,
-  ) =>
-      _tracking
-          .where('professionalId', isEqualTo: professionalId)
-          .limit(500)
-          .snapshots()
-          .map(
-            (QuerySnapshot<Map<String, dynamic>> snap) {
-              final Map<String, PendingTrackingRecord> map =
-                  <String, PendingTrackingRecord>{};
-              for (final QueryDocumentSnapshot<Map<String, dynamic>> doc
-                  in snap.docs) {
-                final PendingTrackingRecord r =
-                    PendingTrackingRecord.fromFirestore(doc);
-                map[r.sourceKey] = r;
-              }
-              return map;
-            },
+  ) => _tracking
+      .where('professionalId', isEqualTo: professionalId)
+      .limit(500)
+      .snapshots()
+      .map((QuerySnapshot<Map<String, dynamic>> snap) {
+        final Map<String, PendingTrackingRecord> map =
+            <String, PendingTrackingRecord>{};
+        for (final QueryDocumentSnapshot<Map<String, dynamic>> doc
+            in snap.docs) {
+          final PendingTrackingRecord r = PendingTrackingRecord.fromFirestore(
+            doc,
           );
+          map[r.sourceKey] = r;
+        }
+        return map;
+      });
 
   Future<Result<void>> upsertStatus({
     required String professionalId,
@@ -40,32 +38,27 @@ class PendingRepository {
     required PendingWorkflowStatus status,
     required String updatedBy,
     String? notes,
-  }) =>
-      guard(() async {
-        final String docId =
-            PendingTrackingRecord.docIdForSourceKey(item.sourceKey);
-        final DateTime? resolvedAt =
-            status == PendingWorkflowStatus.resolved ||
-                    status == PendingWorkflowStatus.ignored
-                ? DateTime.now()
-                : null;
-        final String? resolvedBy =
-            resolvedAt != null ? updatedBy : null;
+  }) => guard(() async {
+    final String docId = PendingTrackingRecord.docIdForSourceKey(
+      item.sourceKey,
+    );
+    final DateTime? resolvedAt =
+        status == PendingWorkflowStatus.resolved ||
+            status == PendingWorkflowStatus.ignored
+        ? DateTime.now()
+        : null;
+    final String? resolvedBy = resolvedAt != null ? updatedBy : null;
 
-        await _tracking.doc(docId).set(
-          <String, dynamic>{
-            'professionalId': professionalId,
-            'sourceKey': item.sourceKey,
-            'kind': item.kind.name,
-            if (item.patientId != null) 'patientId': item.patientId,
-            'status': status.name,
-            'updatedAt': FieldValue.serverTimestamp(),
-            if (resolvedAt != null)
-              'resolvedAt': Timestamp.fromDate(resolvedAt),
-            if (resolvedBy != null) 'resolvedBy': resolvedBy,
-            if (notes != null) 'notes': notes,
-          },
-          SetOptions(merge: true),
-        );
-      });
+    await _tracking.doc(docId).set(<String, dynamic>{
+      'professionalId': professionalId,
+      'sourceKey': item.sourceKey,
+      'kind': item.kind.name,
+      if (item.patientId != null) 'patientId': item.patientId,
+      'status': status.name,
+      'updatedAt': FieldValue.serverTimestamp(),
+      if (resolvedAt != null) 'resolvedAt': Timestamp.fromDate(resolvedAt),
+      if (resolvedBy != null) 'resolvedBy': resolvedBy,
+      if (notes != null) 'notes': notes,
+    }, SetOptions(merge: true));
+  });
 }

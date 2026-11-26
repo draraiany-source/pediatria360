@@ -45,8 +45,10 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
     final ThemeData theme = Theme.of(context);
     final AuthActionState state = ref.watch(authControllerProvider);
 
-    ref.listen<AuthActionState>(authControllerProvider,
-        (AuthActionState? previous, AuthActionState next) {
+    ref.listen<AuthActionState>(authControllerProvider, (
+      AuthActionState? previous,
+      AuthActionState next,
+    ) {
       if (next.failure != null && context.mounted) {
         ScaffoldMessenger.of(context)
           ..hideCurrentSnackBar()
@@ -147,10 +149,7 @@ class _SentConfirmation extends StatelessWidget {
           textAlign: TextAlign.center,
         ),
         const SizedBox(height: AppSpacing.xxl),
-        AppButton(
-          label: 'Voltar ao login',
-          onPressed: () => context.pop(),
-        ),
+        AppButton(label: 'Voltar ao login', onPressed: () => context.pop()),
       ],
     );
   }

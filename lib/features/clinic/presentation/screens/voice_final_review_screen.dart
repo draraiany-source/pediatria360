@@ -47,9 +47,9 @@ class _VoiceFinalReviewScreenState
           ),
         );
       },
-      (failure) => ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(failure.message)),
-      ),
+      (failure) => ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(failure.message))),
     );
   }
 
@@ -65,8 +65,9 @@ class _VoiceFinalReviewScreenState
 
   @override
   Widget build(BuildContext context) {
-    final AsyncValue<VoiceConsultationSession?> async =
-        ref.watch(voiceSessionProvider(widget.sessionId));
+    final AsyncValue<VoiceConsultationSession?> async = ref.watch(
+      voiceSessionProvider(widget.sessionId),
+    );
 
     return Scaffold(
       backgroundColor: AppColors.lightBackground,
@@ -82,9 +83,8 @@ class _VoiceFinalReviewScreenState
           Expanded(
             child: async.when(
               loading: () => const LoadingState(label: 'Carregando…'),
-              error: (Object e, StackTrace _) => ErrorState(
-                failure: ServerFailure(e.toString()),
-              ),
+              error: (Object e, StackTrace _) =>
+                  ErrorState(failure: ServerFailure(e.toString())),
               data: (VoiceConsultationSession? session) {
                 final VoiceStructuredDraft? draft = session?.draft;
                 final String? encounterId =
@@ -100,9 +100,9 @@ class _VoiceFinalReviewScreenState
                         'Nao assina o atendimento. Voce deve revisar e '
                         'assinar no editor de prontuario.',
                         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                              color: AppColors.navy,
-                              fontWeight: FontWeight.w600,
-                            ),
+                          color: AppColors.navy,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
                     ),
                     const SizedBox(height: AppSpacing.lg),
@@ -111,9 +111,9 @@ class _VoiceFinalReviewScreenState
                         'Resumo do rascunho',
                         style: Theme.of(context).textTheme.titleMedium
                             ?.copyWith(
-                          color: AppColors.navy,
-                          fontWeight: FontWeight.w800,
-                        ),
+                              color: AppColors.navy,
+                              fontWeight: FontWeight.w800,
+                            ),
                       ),
                       const SizedBox(height: AppSpacing.sm),
                       Text(
@@ -144,8 +144,8 @@ class _VoiceFinalReviewScreenState
                       onPressed: _busy
                           ? null
                           : () => context.push(
-                                Routes.clinicVoiceReview(widget.sessionId),
-                              ),
+                              Routes.clinicVoiceReview(widget.sessionId),
+                            ),
                       child: const Text('Voltar e editar sugestoes'),
                     ),
                     const SizedBox(height: AppSpacing.sm),
@@ -153,8 +153,8 @@ class _VoiceFinalReviewScreenState
                       onPressed: _busy ? null : _discard,
                       child: const Text('Descartar sessao'),
                     ),
-                    if (encounterId != null && encounterId.isNotEmpty) ...<
-                        Widget>[
+                    if (encounterId != null &&
+                        encounterId.isNotEmpty) ...<Widget>[
                       const SizedBox(height: AppSpacing.xl),
                       PrimaryButton(
                         label: 'Abrir prontuario (rascunho)',

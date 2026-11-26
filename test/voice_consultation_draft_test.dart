@@ -59,9 +59,9 @@ void main() {
 
       final Map<String, dynamic> merged =
           VoiceConsultationRepository.mergeDraftIntoEncounterMap(
-        existing,
-        draft,
-      );
+            existing,
+            draft,
+          );
 
       expect(merged['status'], 'draft');
       expect(merged.containsKey('signedAt'), isFalse);

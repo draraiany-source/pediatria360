@@ -11,11 +11,7 @@ import '../providers/security_providers.dart';
 
 /// Exibido quando a funcao nao e permitida — registra [blockedAccess] (throttle).
 class UnauthorizedAccessView extends ConsumerStatefulWidget {
-  const UnauthorizedAccessView({
-    super.key,
-    required this.module,
-    this.reason,
-  });
+  const UnauthorizedAccessView({super.key, required this.module, this.reason});
 
   final PermissionModule module;
   final String? reason;
@@ -25,7 +21,8 @@ class UnauthorizedAccessView extends ConsumerStatefulWidget {
       _UnauthorizedAccessViewState();
 }
 
-class _UnauthorizedAccessViewState extends ConsumerState<UnauthorizedAccessView> {
+class _UnauthorizedAccessViewState
+    extends ConsumerState<UnauthorizedAccessView> {
   @override
   void initState() {
     super.initState();
@@ -50,15 +47,19 @@ class _UnauthorizedAccessViewState extends ConsumerState<UnauthorizedAccessView>
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
-            Icon(Icons.lock_outline_rounded, size: 48, color: AppColors.navy.withValues(alpha: 0.6)),
+            Icon(
+              Icons.lock_outline_rounded,
+              size: 48,
+              color: AppColors.navy.withValues(alpha: 0.6),
+            ),
             const SizedBox(height: AppSpacing.md),
             Text(
               'Acesso nao autorizado para esta funcao.',
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    color: AppColors.navy,
-                    fontWeight: FontWeight.w700,
-                  ),
+                color: AppColors.navy,
+                fontWeight: FontWeight.w700,
+              ),
             ),
             if (widget.reason != null && widget.reason!.isNotEmpty) ...<Widget>[
               const SizedBox(height: AppSpacing.sm),
@@ -66,8 +67,8 @@ class _UnauthorizedAccessViewState extends ConsumerState<UnauthorizedAccessView>
                 widget.reason!,
                 textAlign: TextAlign.center,
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: AppColors.navy.withValues(alpha: 0.65),
-                    ),
+                  color: AppColors.navy.withValues(alpha: 0.65),
+                ),
               ),
             ],
           ],

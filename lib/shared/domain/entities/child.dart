@@ -8,9 +8,9 @@ enum ChildSex {
   female;
 
   static ChildSex fromName(String? value) => ChildSex.values.firstWhere(
-        (ChildSex s) => s.name == value,
-        orElse: () => ChildSex.male,
-      );
+    (ChildSex s) => s.name == value,
+    orElse: () => ChildSex.male,
+  );
 
   String get label => this == ChildSex.male ? 'Menino' : 'Menina';
 }
@@ -92,8 +92,7 @@ class Child extends Equatable {
   /// `true` quando ha alteracao local ainda nao enviada ao servidor.
   final bool pendingSync;
 
-  bool get isPreterm =>
-      gestationalWeeks != null && gestationalWeeks! < 37;
+  bool get isPreterm => gestationalWeeks != null && gestationalWeeks! < 37;
 
   int get ageInMonths {
     final DateTime now = DateTime.now();
@@ -116,8 +115,7 @@ class Child extends Equatable {
   }
 
   /// Idade que deve alimentar as curvas e os calculos de dose.
-  int get clinicalAgeInMonths =>
-      isPreterm ? correctedAgeInMonths : ageInMonths;
+  int get clinicalAgeInMonths => isPreterm ? correctedAgeInMonths : ageInMonths;
 
   /// Aniversario mais proximo, usado no card da home.
   int get daysUntilBirthday {
@@ -154,53 +152,52 @@ class Child extends Equatable {
     String? cpf,
     String? insurance,
     bool? pendingSync,
-  }) =>
-      Child(
-        id: id,
-        ownerId: ownerId,
-        name: name ?? this.name,
-        birthDate: birthDate ?? this.birthDate,
-        sex: sex ?? this.sex,
-        updatedAt: updatedAt ?? this.updatedAt,
-        photoUrl: photoUrl ?? this.photoUrl,
-        bloodType: bloodType ?? this.bloodType,
-        allergies: allergies ?? this.allergies,
-        conditions: conditions ?? this.conditions,
-        medications: medications ?? this.medications,
-        gestationalWeeks: gestationalWeeks ?? this.gestationalWeeks,
-        birthWeightKg: birthWeightKg ?? this.birthWeightKg,
-        birthHeightCm: birthHeightCm ?? this.birthHeightCm,
-        guardianName: guardianName ?? this.guardianName,
-        guardianPhone: guardianPhone ?? this.guardianPhone,
-        phone: phone ?? this.phone,
-        address: address ?? this.address,
-        cpf: cpf ?? this.cpf,
-        insurance: insurance ?? this.insurance,
-        pendingSync: pendingSync ?? this.pendingSync,
-      );
+  }) => Child(
+    id: id,
+    ownerId: ownerId,
+    name: name ?? this.name,
+    birthDate: birthDate ?? this.birthDate,
+    sex: sex ?? this.sex,
+    updatedAt: updatedAt ?? this.updatedAt,
+    photoUrl: photoUrl ?? this.photoUrl,
+    bloodType: bloodType ?? this.bloodType,
+    allergies: allergies ?? this.allergies,
+    conditions: conditions ?? this.conditions,
+    medications: medications ?? this.medications,
+    gestationalWeeks: gestationalWeeks ?? this.gestationalWeeks,
+    birthWeightKg: birthWeightKg ?? this.birthWeightKg,
+    birthHeightCm: birthHeightCm ?? this.birthHeightCm,
+    guardianName: guardianName ?? this.guardianName,
+    guardianPhone: guardianPhone ?? this.guardianPhone,
+    phone: phone ?? this.phone,
+    address: address ?? this.address,
+    cpf: cpf ?? this.cpf,
+    insurance: insurance ?? this.insurance,
+    pendingSync: pendingSync ?? this.pendingSync,
+  );
 
   @override
   List<Object?> get props => <Object?>[
-        id,
-        ownerId,
-        name,
-        birthDate,
-        sex,
-        photoUrl,
-        bloodType,
-        allergies,
-        conditions,
-        medications,
-        gestationalWeeks,
-        birthWeightKg,
-        birthHeightCm,
-        guardianName,
-        guardianPhone,
-        phone,
-        address,
-        cpf,
-        insurance,
-        updatedAt,
-        pendingSync,
-      ];
+    id,
+    ownerId,
+    name,
+    birthDate,
+    sex,
+    photoUrl,
+    bloodType,
+    allergies,
+    conditions,
+    medications,
+    gestationalWeeks,
+    birthWeightKg,
+    birthHeightCm,
+    guardianName,
+    guardianPhone,
+    phone,
+    address,
+    cpf,
+    insurance,
+    updatedAt,
+    pendingSync,
+  ];
 }

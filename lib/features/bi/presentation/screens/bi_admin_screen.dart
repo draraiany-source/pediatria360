@@ -33,7 +33,9 @@ class BiAdminScreen extends ConsumerWidget {
       return Scaffold(
         appBar: AppBar(title: const Text('BI Administrativo')),
         body: const ErrorState(
-          failure: AuthFailure('Sem permissao para indicadores administrativos.'),
+          failure: AuthFailure(
+            'Sem permissao para indicadores administrativos.',
+          ),
         ),
       );
     }

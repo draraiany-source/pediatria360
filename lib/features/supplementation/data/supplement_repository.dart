@@ -9,7 +9,7 @@ import 'supplement_paths.dart';
 /// Persistencia clinica de suplementacao (profissional verificado).
 class SupplementRepository {
   SupplementRepository({required FirebaseFirestore firestore})
-      : _firestore = firestore;
+    : _firestore = firestore;
 
   final FirebaseFirestore _firestore;
 
@@ -175,7 +175,9 @@ class SupplementRepository {
         calculatorSuggestion: rx.calculatorSuggestion,
         clinicalNote: rx.clinicalNote,
       );
-      await _rx.doc(confirmed.id).set(confirmed.toMap(), SetOptions(merge: true));
+      await _rx
+          .doc(confirmed.id)
+          .set(confirmed.toMap(), SetOptions(merge: true));
       await _appendTimeline(
         childId: confirmed.childId,
         kind: SupplementTimelineKind.prescription,
@@ -306,8 +308,9 @@ class SupplementRepository {
     required String micronutrientId,
   }) {
     return guard(() async {
-      final DocumentReference<Map<String, dynamic>> ref =
-          _firestore.doc(SupplementPaths.favoritesDoc(professionalId));
+      final DocumentReference<Map<String, dynamic>> ref = _firestore.doc(
+        SupplementPaths.favoritesDoc(professionalId),
+      );
       final DocumentSnapshot<Map<String, dynamic>> snap = await ref.get();
       final List<String> ids = List<String>.from(
         (snap.data()?['ids'] as List<dynamic>?) ?? <dynamic>[],
@@ -329,10 +332,10 @@ class SupplementRepository {
         .doc(SupplementPaths.favoritesDoc(professionalId))
         .snapshots()
         .map((DocumentSnapshot<Map<String, dynamic>> snap) {
-      final List<dynamic> raw =
-          (snap.data()?['ids'] as List<dynamic>?) ?? <dynamic>[];
-      return raw.map((dynamic e) => e.toString()).toList(growable: false);
-    });
+          final List<dynamic> raw =
+              (snap.data()?['ids'] as List<dynamic>?) ?? <dynamic>[];
+          return raw.map((dynamic e) => e.toString()).toList(growable: false);
+        });
   }
 
   Future<Result<void>> trackRecent({
@@ -342,12 +345,14 @@ class SupplementRepository {
     required String label,
   }) {
     return guard(() async {
-      final DocumentReference<Map<String, dynamic>> ref =
-          _firestore.doc(SupplementPaths.recentDoc(professionalId));
+      final DocumentReference<Map<String, dynamic>> ref = _firestore.doc(
+        SupplementPaths.recentDoc(professionalId),
+      );
       final DocumentSnapshot<Map<String, dynamic>> snap = await ref.get();
       final List<Map<String, dynamic>> items = List<Map<String, dynamic>>.from(
-        ((snap.data()?['items'] as List<dynamic>?) ?? <dynamic>[])
-            .map((dynamic e) => Map<String, dynamic>.from(e as Map)),
+        ((snap.data()?['items'] as List<dynamic>?) ?? <dynamic>[]).map(
+          (dynamic e) => Map<String, dynamic>.from(e as Map),
+        ),
       );
       items.removeWhere(
         (Map<String, dynamic> e) =>
@@ -371,12 +376,12 @@ class SupplementRepository {
         .doc(SupplementPaths.recentDoc(professionalId))
         .snapshots()
         .map((DocumentSnapshot<Map<String, dynamic>> snap) {
-      final List<dynamic> raw =
-          (snap.data()?['items'] as List<dynamic>?) ?? <dynamic>[];
-      return raw
-          .map((dynamic e) => Map<String, dynamic>.from(e as Map))
-          .toList(growable: false);
-    });
+          final List<dynamic> raw =
+              (snap.data()?['items'] as List<dynamic>?) ?? <dynamic>[];
+          return raw
+              .map((dynamic e) => Map<String, dynamic>.from(e as Map))
+              .toList(growable: false);
+        });
   }
 
   Future<void> _appendTimeline({
@@ -389,7 +394,9 @@ class SupplementRepository {
     String relatedRxId = '',
   }) async {
     final String id = _timeline.doc().id;
-    await _timeline.doc(id).set(
+    await _timeline
+        .doc(id)
+        .set(
           SupplementTimelineEvent(
             id: id,
             childId: childId,

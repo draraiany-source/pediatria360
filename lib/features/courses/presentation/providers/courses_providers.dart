@@ -18,59 +18,58 @@ final Provider<BunnyService> bunnyServiceProvider = Provider<BunnyService>(
 
 final Provider<CoursesRepository> coursesRepositoryProvider =
     Provider<CoursesRepository>(
-  (Ref ref) => CoursesRepository(
-    firestore: ref.watch(firestoreProvider),
-    cache: ref.watch(cacheServiceProvider),
-  ),
-);
+      (Ref ref) => CoursesRepository(
+        firestore: ref.watch(firestoreProvider),
+        cache: ref.watch(cacheServiceProvider),
+      ),
+    );
 
 /// Catálogo, com o cache pintando a tela antes da rede responder.
 final FutureProvider<List<Course>> courseCatalogProvider =
     FutureProvider<List<Course>>((Ref ref) async {
-  final CoursesRepository repository = ref.watch(coursesRepositoryProvider);
-  final AppUser? user = ref.watch(currentUserProvider);
+      final CoursesRepository repository = ref.watch(coursesRepositoryProvider);
+      final AppUser? user = ref.watch(currentUserProvider);
 
-  final Result<List<Course>> result = await repository.catalog(user: user);
+      final Result<List<Course>> result = await repository.catalog(user: user);
 
-  return result.fold(
-    (List<Course> courses) => courses,
-    (Failure failure) {
-      final List<Course> cached = repository.cachedCatalog();
-      if (cached.isNotEmpty) return cached;
-      throw failure;
-    },
-  );
-});
+      return result.fold((List<Course> courses) => courses, (Failure failure) {
+        final List<Course> cached = repository.cachedCatalog();
+        if (cached.isNotEmpty) return cached;
+        throw failure;
+      });
+    });
 
 final FutureProviderFamily<Course, String> courseProvider =
     FutureProvider.family<Course, String>((Ref ref, String courseId) async {
-  final Result<Course> result =
-      await ref.watch(coursesRepositoryProvider).course(courseId);
-  return result.fold(
-    (Course course) => course,
-    (Failure failure) => throw failure,
-  );
-});
+      final Result<Course> result = await ref
+          .watch(coursesRepositoryProvider)
+          .course(courseId);
+      return result.fold(
+        (Course course) => course,
+        (Failure failure) => throw failure,
+      );
+    });
 
 final FutureProviderFamily<List<Lesson>, String> lessonsProvider =
-    FutureProvider.family<List<Lesson>, String>((Ref ref, String courseId) async {
-  final CoursesRepository repository = ref.watch(coursesRepositoryProvider);
-  final Result<List<Lesson>> result = await repository.lessons(courseId);
+    FutureProvider.family<List<Lesson>, String>((
+      Ref ref,
+      String courseId,
+    ) async {
+      final CoursesRepository repository = ref.watch(coursesRepositoryProvider);
+      final Result<List<Lesson>> result = await repository.lessons(courseId);
 
-  return result.fold(
-    (List<Lesson> lessons) => lessons,
-    (Failure failure) {
-      final List<Lesson> cached = repository.cachedLessons(courseId);
-      if (cached.isNotEmpty) return cached;
-      throw failure;
-    },
-  );
-});
+      return result.fold((List<Lesson> lessons) => lessons, (Failure failure) {
+        final List<Lesson> cached = repository.cachedLessons(courseId);
+        if (cached.isNotEmpty) return cached;
+        throw failure;
+      });
+    });
 
 final StreamProviderFamily<List<LessonProgress>, String>
-    courseProgressProvider =
-    StreamProvider.family<List<LessonProgress>, String>(
-        (Ref ref, String courseId) {
+courseProgressProvider = StreamProvider.family<List<LessonProgress>, String>((
+  Ref ref,
+  String courseId,
+) {
   final String? uid = ref.watch(currentUserProvider)?.uid;
   if (uid == null) {
     return Stream<List<LessonProgress>>.value(const <LessonProgress>[]);
@@ -83,29 +82,30 @@ final StreamProviderFamily<List<LessonProgress>, String>
 /// Resumo do progresso de um curso, já cruzado com o total de aulas.
 final ProviderFamily<CourseProgress, String> courseProgressSummaryProvider =
     Provider.family<CourseProgress, String>((Ref ref, String courseId) {
-  final List<LessonProgress> progress =
-      ref.watch(courseProgressProvider(courseId)).valueOrNull ??
+      final List<LessonProgress> progress =
+          ref.watch(courseProgressProvider(courseId)).valueOrNull ??
           const <LessonProgress>[];
-  final List<Lesson> lessons =
-      ref.watch(lessonsProvider(courseId)).valueOrNull ?? const <Lesson>[];
+      final List<Lesson> lessons =
+          ref.watch(lessonsProvider(courseId)).valueOrNull ?? const <Lesson>[];
 
-  if (lessons.isEmpty) return CourseProgress.empty(courseId);
+      if (lessons.isEmpty) return CourseProgress.empty(courseId);
 
-  final int completed =
-      progress.where((LessonProgress p) => p.completed).length;
+      final int completed = progress
+          .where((LessonProgress p) => p.completed)
+          .length;
 
-  LessonProgress? last;
-  for (final LessonProgress p in progress) {
-    if (last == null || p.updatedAt.isAfter(last.updatedAt)) last = p;
-  }
+      LessonProgress? last;
+      for (final LessonProgress p in progress) {
+        if (last == null || p.updatedAt.isAfter(last.updatedAt)) last = p;
+      }
 
-  return CourseProgress(
-    courseId: courseId,
-    completedLessons: completed,
-    totalLessons: lessons.length,
-    lastLessonId: last?.lessonId,
-  );
-});
+      return CourseProgress(
+        courseId: courseId,
+        completedLessons: completed,
+        totalLessons: lessons.length,
+        lastLessonId: last?.lessonId,
+      );
+    });
 
 /// Motivo pelo qual uma aula está bloqueada, se estiver.
 enum LessonLock {
@@ -114,13 +114,13 @@ enum LessonLock {
   requiresProfessional;
 
   String get message => switch (this) {
-        LessonLock.none => '',
-        LessonLock.requiresPlan =>
-          'Esta aula faz parte do plano Premium. A primeira aula do curso '
-              'está aberta para você conhecer.',
-        LessonLock.requiresProfessional =>
-          'Conteúdo para profissionais de saúde com registro verificado.',
-      };
+    LessonLock.none => '',
+    LessonLock.requiresPlan =>
+      'Esta aula faz parte do plano Premium. A primeira aula do curso '
+          'está aberta para você conhecer.',
+    LessonLock.requiresProfessional =>
+      'Conteúdo para profissionais de saúde com registro verificado.',
+  };
 }
 
 /// Decide se o usuário pode assistir a uma aula.
@@ -183,7 +183,9 @@ class PlaybackController extends Notifier<void> {
     final String? uid = ref.read(currentUserProvider)?.uid;
     if (uid == null) return;
 
-    await ref.read(coursesRepositoryProvider).saveProgress(
+    await ref
+        .read(coursesRepositoryProvider)
+        .saveProgress(
           uid: uid,
           courseId: courseId,
           lessonId: lessonId,
@@ -193,7 +195,10 @@ class PlaybackController extends Notifier<void> {
 
     if (!completed) return;
 
-    await _awardXp(action: 'lessonCompleted', referenceId: '${courseId}_$lessonId');
+    await _awardXp(
+      action: 'lessonCompleted',
+      referenceId: '${courseId}_$lessonId',
+    );
 
     // Curso inteiro concluído: só depois que ESTA aula foi salva como
     // concluída, confere se todas as outras do curso também estão.
@@ -214,7 +219,10 @@ class PlaybackController extends Notifier<void> {
     }
   }
 
-  Future<void> _awardXp({required String action, required String referenceId}) async {
+  Future<void> _awardXp({
+    required String action,
+    required String referenceId,
+  }) async {
     try {
       await ref.read(firebaseFunctionsProvider).httpsCallable('awardXp').call(
         <String, dynamic>{'action': action, 'referenceId': referenceId},

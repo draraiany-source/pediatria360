@@ -16,37 +16,35 @@ sealed class Result<T> {
 
   /// Valor, ou `null` se falhou.
   T? get valueOrNull => switch (this) {
-        Success<T>(:final T value) => value,
-        FailureResult<T>() => null,
-      };
+    Success<T>(:final T value) => value,
+    FailureResult<T>() => null,
+  };
 
   /// Falha, ou `null` se deu certo.
   Failure? get failureOrNull => switch (this) {
-        Success<T>() => null,
-        FailureResult<T>(:final Failure failure) => failure,
-      };
+    Success<T>() => null,
+    FailureResult<T>(:final Failure failure) => failure,
+  };
 
   R fold<R>(
     R Function(T value) onSuccess,
     R Function(Failure failure) onFailure,
-  ) =>
-      switch (this) {
-        Success<T>(:final T value) => onSuccess(value),
-        FailureResult<T>(:final Failure failure) => onFailure(failure),
-      };
+  ) => switch (this) {
+    Success<T>(:final T value) => onSuccess(value),
+    FailureResult<T>(:final Failure failure) => onFailure(failure),
+  };
 
   Result<R> map<R>(R Function(T value) transform) => switch (this) {
-        Success<T>(:final T value) => Result<R>.success(transform(value)),
-        FailureResult<T>(:final Failure failure) => Result<R>.failure(failure),
-      };
+    Success<T>(:final T value) => Result<R>.success(transform(value)),
+    FailureResult<T>(:final Failure failure) => Result<R>.failure(failure),
+  };
 
   Future<Result<R>> flatMap<R>(
     Future<Result<R>> Function(T value) transform,
-  ) async =>
-      switch (this) {
-        Success<T>(:final T value) => await transform(value),
-        FailureResult<T>(:final Failure failure) => Result<R>.failure(failure),
-      };
+  ) async => switch (this) {
+    Success<T>(:final T value) => await transform(value),
+    FailureResult<T>(:final Failure failure) => Result<R>.failure(failure),
+  };
 
   /// Executa [action] apenas em caso de sucesso.
   Result<T> onSuccess(void Function(T value) action) {

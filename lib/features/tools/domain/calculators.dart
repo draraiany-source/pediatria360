@@ -58,11 +58,7 @@ class PediatricCalculators {
   /// profissional espera ver. Então calculamos as duas e mostramos as duas.
   static FluidRequirement maintenanceFluids(double weightKg) {
     if (weightKg <= 0) {
-      return const FluidRequirement(
-        perDayMl: 0,
-        perHourMl: 0,
-        perHourMl421: 0,
-      );
+      return const FluidRequirement(perDayMl: 0, perHourMl: 0, perHourMl421: 0);
     }
 
     final double perDay;
@@ -115,8 +111,7 @@ class PediatricCalculators {
       return chronologicalMonths;
     }
     final int weeksMissing = 40 - gestationalWeeks;
-    final int corrected =
-        chronologicalMonths - (weeksMissing / 4.345).round();
+    final int corrected = chronologicalMonths - (weeksMissing / 4.345).round();
     return corrected < 0 ? 0 : corrected;
   }
 
@@ -321,7 +316,8 @@ class DoseCalculator {
       single = daily / protocol.timesPerDay;
     }
 
-    final double? volumeMl = protocol.concentrationMgPerMl == null ||
+    final double? volumeMl =
+        protocol.concentrationMgPerMl == null ||
             protocol.concentrationMgPerMl! <= 0
         ? null
         : single / protocol.concentrationMgPerMl!;
@@ -334,7 +330,8 @@ class DoseCalculator {
       singleDoseMl: volumeMl,
       cappedBySingleMax: cappedSingle,
       cappedByDailyMax: cappedDaily,
-      belowMinimumAge: protocol.minAgeMonths != null &&
+      belowMinimumAge:
+          protocol.minAgeMonths != null &&
           ageMonths != null &&
           ageMonths < protocol.minAgeMonths!,
     );
@@ -372,11 +369,11 @@ class ApgarScore {
     required this.muscleTone,
     required this.reflexIrritability,
     required this.color,
-  })  : assert(heartRate >= 0 && heartRate <= 2),
-        assert(respiratoryEffort >= 0 && respiratoryEffort <= 2),
-        assert(muscleTone >= 0 && muscleTone <= 2),
-        assert(reflexIrritability >= 0 && reflexIrritability <= 2),
-        assert(color >= 0 && color <= 2);
+  }) : assert(heartRate >= 0 && heartRate <= 2),
+       assert(respiratoryEffort >= 0 && respiratoryEffort <= 2),
+       assert(muscleTone >= 0 && muscleTone <= 2),
+       assert(reflexIrritability >= 0 && reflexIrritability <= 2),
+       assert(color >= 0 && color <= 2);
 
   /// 0 ausente · 1 abaixo de 100 · 2 acima de 100.
   final int heartRate;
@@ -442,8 +439,7 @@ double calculatedSerumOsmolarity({
   required double sodiumMEqL,
   required double glucoseMgDl,
   required double ureaMgDl,
-}) =>
-    2 * sodiumMEqL + glucoseMgDl / 18 + ureaMgDl / 6;
+}) => 2 * sodiumMEqL + glucoseMgDl / 18 + ureaMgDl / 6;
 
 /// Faixa de referência da osmolaridade sérica normal, em mOsm/L.
 const (double, double) normalSerumOsmolarityRange = (275, 295);

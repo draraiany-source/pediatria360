@@ -16,7 +16,8 @@ void main() {
       final Map<String, List<VaccineDoseSchedule>> byVaccine =
           <String, List<VaccineDoseSchedule>>{};
       for (final VaccineDoseSchedule dose in PniCalendar.schedule) {
-        byVaccine.putIfAbsent(dose.vaccineId, () => <VaccineDoseSchedule>[])
+        byVaccine
+            .putIfAbsent(dose.vaccineId, () => <VaccineDoseSchedule>[])
             .add(dose);
       }
 
@@ -50,10 +51,7 @@ void main() {
       final VaccineDoseSchedule penta = PniCalendar.find('penta', 2)!;
 
       expect(penta.ageMonths, 4);
-      expect(
-        PniCalendar.dueDateFor(birth, penta),
-        DateTime(2025, 7, 10),
-      );
+      expect(PniCalendar.dueDateFor(birth, penta), DateTime(2025, 7, 10));
     });
 
     test('vacina ao nascer vence no próprio dia', () {
@@ -81,14 +79,14 @@ void main() {
 
   group('estado da dose', () {
     VaccineDose dose({DateTime? due, DateTime? applied}) => VaccineDose(
-          id: 'd1',
-          childId: 'c1',
-          vaccineId: 'bcg',
-          doseIndex: 1,
-          dueAt: due,
-          appliedAt: applied,
-          updatedAt: DateTime.now(),
-        );
+      id: 'd1',
+      childId: 'c1',
+      vaccineId: 'bcg',
+      doseIndex: 1,
+      dueAt: due,
+      appliedAt: applied,
+      updatedAt: DateTime.now(),
+    );
 
     final DateTime now = DateTime(2026, 1, 15);
 

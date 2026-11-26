@@ -1,12 +1,7 @@
 import '../../../shared/domain/entities/app_user.dart';
 import '../../../shared/domain/entities/clinic_organization.dart';
 
-enum BiAccessLevel {
-  none,
-  clinicalOps,
-  financial,
-  full,
-}
+enum BiAccessLevel { none, clinicalOps, financial, full }
 
 class BiAccess {
   BiAccess._();
@@ -54,7 +49,10 @@ class BiAccess {
     required AppUser? user,
     required ClinicMembership? clinicMembership,
   }) {
-    final BiAccessLevel l = level(user: user, clinicMembership: clinicMembership);
+    final BiAccessLevel l = level(
+      user: user,
+      clinicMembership: clinicMembership,
+    );
     return l == BiAccessLevel.full || l == BiAccessLevel.financial;
   }
 
@@ -62,7 +60,10 @@ class BiAccess {
     required AppUser? user,
     required ClinicMembership? clinicMembership,
   }) {
-    final BiAccessLevel l = level(user: user, clinicMembership: clinicMembership);
+    final BiAccessLevel l = level(
+      user: user,
+      clinicMembership: clinicMembership,
+    );
     return l == BiAccessLevel.full || l == BiAccessLevel.clinicalOps;
   }
 
@@ -70,7 +71,10 @@ class BiAccess {
     required AppUser? user,
     required ClinicMembership? clinicMembership,
   }) {
-    final BiAccessLevel l = level(user: user, clinicMembership: clinicMembership);
+    final BiAccessLevel l = level(
+      user: user,
+      clinicMembership: clinicMembership,
+    );
     return l == BiAccessLevel.full || l == BiAccessLevel.clinicalOps;
   }
 
@@ -78,7 +82,10 @@ class BiAccess {
     required AppUser? user,
     required ClinicMembership? clinicMembership,
   }) {
-    final BiAccessLevel l = level(user: user, clinicMembership: clinicMembership);
+    final BiAccessLevel l = level(
+      user: user,
+      clinicMembership: clinicMembership,
+    );
     return l == BiAccessLevel.full || l == BiAccessLevel.financial;
   }
 
@@ -86,7 +93,10 @@ class BiAccess {
     required AppUser? user,
     required ClinicMembership? clinicMembership,
   }) {
-    final BiAccessLevel l = level(user: user, clinicMembership: clinicMembership);
+    final BiAccessLevel l = level(
+      user: user,
+      clinicMembership: clinicMembership,
+    );
     return l == BiAccessLevel.full || l == BiAccessLevel.financial;
   }
 }

@@ -35,7 +35,8 @@ class AppAssets {
   static const String illustTeddyTip = '$_illustrations/teddy_tip.png';
   static const String illustHeroChild = '$_illustrations/hero_child.png';
   static const String illustLoginToys = '$_illustrations/login_toys.png';
-  static const String illustVaccineShield = '$_illustrations/vaccine_shield.png';
+  static const String illustVaccineShield =
+      '$_illustrations/vaccine_shield.png';
 
   // -------------------------------------------------------------- Icones
   static const String iconLogo = '$_icons/logo.svg';
@@ -54,6 +55,7 @@ class AppAssets {
   // -------------------------------------------------------------- Lottie
   static const String lottieLoading = '$_lottie/loading.json';
   static const String lottieSuccess = '$_lottie/success.json';
+
   /// Ícones dimensionais dos cartões de módulo.
   ///
   /// Usados só na home, onde aparecem grandes. As telas clínicas seguem com

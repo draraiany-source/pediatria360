@@ -32,11 +32,13 @@ class _GrowthScreenState extends ConsumerState<GrowthScreen> {
   Widget build(BuildContext context) {
     final ThemeData theme = Theme.of(context);
     final Child? child = ref.watch(childProvider(widget.childId)).valueOrNull;
-    final AsyncValue<List<GrowthRecord>> records =
-        ref.watch(growthProvider(widget.childId));
+    final AsyncValue<List<GrowthRecord>> records = ref.watch(
+      growthProvider(widget.childId),
+    );
     final AsyncValue<WhoReference> who = ref.watch(whoReferenceProvider);
-    final List<GrowthAssessment> assessments =
-        ref.watch(latestAssessmentsProvider(widget.childId));
+    final List<GrowthAssessment> assessments = ref.watch(
+      latestAssessmentsProvider(widget.childId),
+    );
 
     if (child == null) {
       return const Scaffold(body: LoadingState());
@@ -68,124 +70,130 @@ class _GrowthScreenState extends ConsumerState<GrowthScreen> {
       ),
       body: Column(
         children: <Widget>[
-          if (who.valueOrNull?.warning != null) DataWarningBanner(text: who.valueOrNull!.warning!),
+          if (who.valueOrNull?.warning != null)
+            DataWarningBanner(text: who.valueOrNull!.warning!),
           Expanded(
             child: records.when(
-        loading: () => const SkeletonList(itemCount: 4, itemHeight: 64),
-        error: (Object e, StackTrace s) => EmptyState(
-          icon: Icons.error_outline_rounded,
-          title: 'Não foi possível carregar',
-          message: 'Tente novamente em instantes.',
-          actionLabel: 'Recarregar',
-          onAction: () => ref.invalidate(growthProvider(widget.childId)),
-        ),
-        data: (List<GrowthRecord> list) {
-          if (list.isEmpty) {
-            return EmptyState(
-              icon: Icons.show_chart_rounded,
-              title: 'Sem medições ainda',
-              message: 'Registre peso e altura para ver a curva de '
-                  '${child.firstName} comparada à referência da OMS.',
-              actionLabel: 'Registrar medição',
-              onAction: () => _openForm(context, child),
-            );
-          }
+              loading: () => const SkeletonList(itemCount: 4, itemHeight: 64),
+              error: (Object e, StackTrace s) => EmptyState(
+                icon: Icons.error_outline_rounded,
+                title: 'Não foi possível carregar',
+                message: 'Tente novamente em instantes.',
+                actionLabel: 'Recarregar',
+                onAction: () => ref.invalidate(growthProvider(widget.childId)),
+              ),
+              data: (List<GrowthRecord> list) {
+                if (list.isEmpty) {
+                  return EmptyState(
+                    icon: Icons.show_chart_rounded,
+                    title: 'Sem medições ainda',
+                    message:
+                        'Registre peso e altura para ver a curva de '
+                        '${child.firstName} comparada à referência da OMS.',
+                    actionLabel: 'Registrar medição',
+                    onAction: () => _openForm(context, child),
+                  );
+                }
 
-          return ListView(
-            padding: const EdgeInsets.fromLTRB(
-              AppSpacing.lg,
-              AppSpacing.lg,
-              AppSpacing.lg,
-              96,
-            ),
-            children: <Widget>[
-              ContentBounds(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                return ListView(
+                  padding: const EdgeInsets.fromLTRB(
+                    AppSpacing.lg,
+                    AppSpacing.lg,
+                    AppSpacing.lg,
+                    96,
+                  ),
                   children: <Widget>[
-                    if (assessments.isNotEmpty) ...<Widget>[
-                      _AssessmentRow(assessments: assessments),
-                      const SizedBox(height: AppSpacing.lg),
-                    ],
-                    SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
-                      child: Row(
+                    ContentBounds(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: <Widget>[
-                          for (final GrowthIndicator i in available)
-                            Padding(
-                              padding:
-                                  const EdgeInsets.only(right: AppSpacing.sm),
-                              child: ChoiceChip(
-                                label: Text(i.shortLabel),
-                                selected: _indicator == i,
-                                onSelected: (_) =>
-                                    setState(() => _indicator = i),
+                          if (assessments.isNotEmpty) ...<Widget>[
+                            _AssessmentRow(assessments: assessments),
+                            const SizedBox(height: AppSpacing.lg),
+                          ],
+                          SingleChildScrollView(
+                            scrollDirection: Axis.horizontal,
+                            child: Row(
+                              children: <Widget>[
+                                for (final GrowthIndicator i in available)
+                                  Padding(
+                                    padding: const EdgeInsets.only(
+                                      right: AppSpacing.sm,
+                                    ),
+                                    child: ChoiceChip(
+                                      label: Text(i.shortLabel),
+                                      selected: _indicator == i,
+                                      onSelected: (_) =>
+                                          setState(() => _indicator = i),
+                                    ),
+                                  ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: AppSpacing.lg),
+                          SurfaceCard(
+                            padding: const EdgeInsets.all(AppSpacing.md),
+                            child: who.when(
+                              loading: () => const AspectRatio(
+                                aspectRatio: 1.35,
+                                child: LoadingState(),
+                              ),
+                              error: (Object e, StackTrace s) =>
+                                  const AspectRatio(
+                                    aspectRatio: 1.35,
+                                    child: EmptyState(
+                                      icon: Icons.insert_chart_outlined,
+                                      title: 'Referência indisponível',
+                                      message:
+                                          'Não foi possível carregar a tabela '
+                                          'da OMS.',
+                                    ),
+                                  ),
+                              data: (WhoReference reference) => Column(
+                                children: <Widget>[
+                                  GrowthChart(
+                                    indicator: _indicator,
+                                    child: child,
+                                    records: list,
+                                    reference: reference,
+                                  ),
+                                  const SizedBox(height: AppSpacing.md),
+                                  const GrowthChartLegend(),
+                                ],
                               ),
                             ),
+                          ),
+                          const SectionHeader(
+                            title: 'Histórico',
+                            eyebrow: 'Medições',
+                          ),
                         ],
                       ),
                     ),
-                    const SizedBox(height: AppSpacing.lg),
-                    SurfaceCard(
-                      padding: const EdgeInsets.all(AppSpacing.md),
-                      child: who.when(
-                          loading: () => const AspectRatio(
-                            aspectRatio: 1.35,
-                            child: LoadingState(),
-                          ),
-                          error: (Object e, StackTrace s) => const AspectRatio(
-                            aspectRatio: 1.35,
-                            child: EmptyState(
-                              icon: Icons.insert_chart_outlined,
-                              title: 'Referência indisponível',
-                              message: 'Não foi possível carregar a tabela '
-                                  'da OMS.',
-                            ),
-                          ),
-                          data: (WhoReference reference) => Column(
-                            children: <Widget>[
-                              GrowthChart(
-                                indicator: _indicator,
-                                child: child,
-                                records: list,
-                                reference: reference,
-                              ),
-                              const SizedBox(height: AppSpacing.md),
-                              const GrowthChartLegend(),
-                            ],
-                          ),
+                    for (final GrowthRecord record in list.reversed)
+                      ContentBounds(
+                        child: _RecordTile(
+                          record: record,
+                          child: child,
+                          onEdit: () =>
+                              _openForm(context, child, record: record),
+                          onDelete: () => _confirmDelete(context, record),
                         ),
-                    ),
-                    const SectionHeader(
-                      title: 'Histórico',
-                      eyebrow: 'Medições',
+                      ),
+                    const SizedBox(height: AppSpacing.xl),
+                    ContentBounds(
+                      child: Text(
+                        'A avaliação segue os padrões de crescimento da OMS. Um '
+                        'ponto fora da faixa não é diagnóstico: o que o pediatra '
+                        'observa é a trajetória ao longo do tempo.',
+                        style: theme.textTheme.bodySmall,
+                        textAlign: TextAlign.center,
+                      ),
                     ),
                   ],
-                ),
-              ),
-              for (final GrowthRecord record in list.reversed)
-                ContentBounds(
-                  child: _RecordTile(
-                    record: record,
-                    child: child,
-                    onEdit: () => _openForm(context, child, record: record),
-                    onDelete: () => _confirmDelete(context, record),
-                  ),
-                ),
-              const SizedBox(height: AppSpacing.xl),
-              ContentBounds(
-                child: Text(
-                  'A avaliação segue os padrões de crescimento da OMS. Um '
-                  'ponto fora da faixa não é diagnóstico: o que o pediatra '
-                  'observa é a trajetória ao longo do tempo.',
-                  style: theme.textTheme.bodySmall,
-                  textAlign: TextAlign.center,
-                ),
-              ),
-            ],
-          );
-        },
-      ),
+                );
+              },
+            ),
           ),
         ],
       ),
@@ -196,17 +204,14 @@ class _GrowthScreenState extends ConsumerState<GrowthScreen> {
     BuildContext context,
     Child child, {
     GrowthRecord? record,
-  }) =>
-      showModalBottomSheet<void>(
-        context: context,
-        isScrollControlled: true,
-        builder: (BuildContext context) => Padding(
-          padding: EdgeInsets.only(
-            bottom: MediaQuery.viewInsetsOf(context).bottom,
-          ),
-          child: GrowthFormSheet(childId: child.id, record: record),
-        ),
-      );
+  }) => showModalBottomSheet<void>(
+    context: context,
+    isScrollControlled: true,
+    builder: (BuildContext context) => Padding(
+      padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(context).bottom),
+      child: GrowthFormSheet(childId: child.id, record: record),
+    ),
+  );
 
   Future<void> _confirmDelete(BuildContext context, GrowthRecord record) async {
     final bool? ok = await showDialog<bool>(
@@ -222,9 +227,7 @@ class _GrowthScreenState extends ConsumerState<GrowthScreen> {
             child: const Text('Cancelar'),
           ),
           FilledButton(
-            style: FilledButton.styleFrom(
-              backgroundColor: AppColors.danger,
-            ),
+            style: FilledButton.styleFrom(backgroundColor: AppColors.danger),
             onPressed: () => Navigator.of(context).pop(true),
             child: const Text('Excluir'),
           ),
@@ -233,10 +236,9 @@ class _GrowthScreenState extends ConsumerState<GrowthScreen> {
     );
 
     if (ok ?? false) {
-      await ref.read(childrenControllerProvider.notifier).deleteGrowth(
-            childId: widget.childId,
-            recordId: record.id,
-          );
+      await ref
+          .read(childrenControllerProvider.notifier)
+          .deleteGrowth(childId: widget.childId, recordId: record.id);
     }
   }
 }
@@ -248,14 +250,12 @@ class _AssessmentRow extends StatelessWidget {
   final List<GrowthAssessment> assessments;
 
   Color _colorFor(GrowthClassification c) => switch (c) {
-        GrowthClassification.severelyLow ||
-        GrowthClassification.severelyHigh =>
-          AppColors.danger,
-        GrowthClassification.low || GrowthClassification.high =>
-          AppColors.warning,
-        GrowthClassification.attention => AppColors.honey,
-        GrowthClassification.adequate => AppColors.success,
-      };
+    GrowthClassification.severelyLow ||
+    GrowthClassification.severelyHigh => AppColors.danger,
+    GrowthClassification.low || GrowthClassification.high => AppColors.warning,
+    GrowthClassification.attention => AppColors.honey,
+    GrowthClassification.adequate => AppColors.success,
+  };
 
   @override
   Widget build(BuildContext context) {
@@ -330,8 +330,7 @@ class _RecordTile extends StatelessWidget {
     final List<String> parts = <String>[
       if (record.weightKg != null)
         '${Formatters.decimal(record.weightKg!, digits: 2)} kg',
-      if (record.heightCm != null)
-        '${Formatters.decimal(record.heightCm!)} cm',
+      if (record.heightCm != null) '${Formatters.decimal(record.heightCm!)} cm',
       if (record.headCircumferenceCm != null)
         'PC ${Formatters.decimal(record.headCircumferenceCm!)} cm',
     ];
@@ -524,8 +523,9 @@ class _GrowthFormSheetState extends ConsumerState<GrowthFormSheet> {
                   padding: EdgeInsets.all(AppSpacing.fieldSuffix),
                   child: Text('kg'),
                 ),
-                keyboardType:
-                    const TextInputType.numberWithOptions(decimal: true),
+                keyboardType: const TextInputType.numberWithOptions(
+                  decimal: true,
+                ),
                 inputFormatters: Masks.decimal,
                 validator: (String? v) =>
                     (v == null || v.isEmpty) ? null : Validators.weightKg(v),
@@ -539,8 +539,9 @@ class _GrowthFormSheetState extends ConsumerState<GrowthFormSheet> {
                   padding: EdgeInsets.all(AppSpacing.fieldSuffix),
                   child: Text('cm'),
                 ),
-                keyboardType:
-                    const TextInputType.numberWithOptions(decimal: true),
+                keyboardType: const TextInputType.numberWithOptions(
+                  decimal: true,
+                ),
                 inputFormatters: Masks.decimal,
                 validator: (String? v) =>
                     (v == null || v.isEmpty) ? null : Validators.heightCm(v),
@@ -555,8 +556,9 @@ class _GrowthFormSheetState extends ConsumerState<GrowthFormSheet> {
                   padding: EdgeInsets.all(AppSpacing.fieldSuffix),
                   child: Text('cm'),
                 ),
-                keyboardType:
-                    const TextInputType.numberWithOptions(decimal: true),
+                keyboardType: const TextInputType.numberWithOptions(
+                  decimal: true,
+                ),
                 inputFormatters: Masks.decimal,
                 validator: Validators.headCircumferenceCm,
               ),

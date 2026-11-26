@@ -72,8 +72,11 @@ void main() {
     });
 
     test('peso acima da mediana gera escore-Z positivo', () {
-      final LmsPoint point =
-          who.pointAt(GrowthIndicator.weightForAge, ChildSex.male, 6)!;
+      final LmsPoint point = who.pointAt(
+        GrowthIndicator.weightForAge,
+        ChildSex.male,
+        6,
+      )!;
       final double? z = who.zScore(
         indicator: GrowthIndicator.weightForAge,
         sex: ChildSex.male,

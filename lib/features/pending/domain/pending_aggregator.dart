@@ -100,8 +100,8 @@ class PendingAggregator {
     final DateTime now = input.now;
     final Map<String, PendingPatientSnapshot> patientsById =
         <String, PendingPatientSnapshot>{
-      for (final PendingPatientSnapshot p in input.patients) p.patientId: p,
-    };
+          for (final PendingPatientSnapshot p in input.patients) p.patientId: p,
+        };
 
     String? childIdFor(String patientId) =>
         patientsById[patientId]?.childId ?? patientId;
@@ -336,10 +336,7 @@ class PendingAggregator {
 
     return raw
         .map(
-          (PendingItem item) => _applyTracking(
-            item,
-            input.trackingBySourceKey,
-          ),
+          (PendingItem item) => _applyTracking(item, input.trackingBySourceKey),
         )
         .toList(growable: false);
   }
@@ -352,11 +349,8 @@ class PendingAggregator {
   }
 
   static PendingAttentionCounts attentionCounts(List<PendingItem> items) {
-    int countKind(PendingKind kind) => items
-        .where(
-          (PendingItem i) => i.isActive && i.kind == kind,
-        )
-        .length;
+    int countKind(PendingKind kind) =>
+        items.where((PendingItem i) => i.isActive && i.kind == kind).length;
 
     final int drafts = countKind(PendingKind.draftEncounter);
     final int returns = items
@@ -385,64 +379,66 @@ class PendingAggregator {
         d.year == now.year && d.month == now.month && d.day == now.day;
 
     bool isThisWeek(DateTime d) {
-      final DateTime start = DateTime(now.year, now.month, now.day)
-          .subtract(Duration(days: now.weekday - 1));
+      final DateTime start = DateTime(
+        now.year,
+        now.month,
+        now.day,
+      ).subtract(Duration(days: now.weekday - 1));
       final DateTime end = start.add(const Duration(days: 7));
       return !d.isBefore(start) && d.isBefore(end);
     }
 
-    return items.where((PendingItem item) {
-      switch (filter) {
-        case PendingCenterFilter.resolved:
-          return !item.isActive ||
-              item.workflowStatus == PendingWorkflowStatus.resolved ||
-              item.workflowStatus == PendingWorkflowStatus.ignored;
-        case PendingCenterFilter.clinical:
-          return item.category == PendingCategory.clinical && item.isActive;
-        case PendingCenterFilter.administrative:
-          return item.category == PendingCategory.administrative &&
-              item.isActive;
-        case PendingCenterFilter.financial:
-          return item.category == PendingCategory.financial && item.isActive;
-        case PendingCenterFilter.urgent:
-          return item.isActive &&
-              (item.urgent ||
-                  item.displayStatus(now) == PendingDisplayStatus.overdue);
-        case PendingCenterFilter.today:
-          if (!item.isActive) return false;
-          final DateTime anchor = item.dueAt ?? item.createdAt;
-          return isToday(anchor);
-        case PendingCenterFilter.thisWeek:
-          if (!item.isActive) return false;
-          final DateTime anchor = item.dueAt ?? item.createdAt;
-          return isThisWeek(anchor);
-      }
-    }).toList(growable: false);
+    return items
+        .where((PendingItem item) {
+          switch (filter) {
+            case PendingCenterFilter.resolved:
+              return !item.isActive ||
+                  item.workflowStatus == PendingWorkflowStatus.resolved ||
+                  item.workflowStatus == PendingWorkflowStatus.ignored;
+            case PendingCenterFilter.clinical:
+              return item.category == PendingCategory.clinical && item.isActive;
+            case PendingCenterFilter.administrative:
+              return item.category == PendingCategory.administrative &&
+                  item.isActive;
+            case PendingCenterFilter.financial:
+              return item.category == PendingCategory.financial &&
+                  item.isActive;
+            case PendingCenterFilter.urgent:
+              return item.isActive &&
+                  (item.urgent ||
+                      item.displayStatus(now) == PendingDisplayStatus.overdue);
+            case PendingCenterFilter.today:
+              if (!item.isActive) return false;
+              final DateTime anchor = item.dueAt ?? item.createdAt;
+              return isToday(anchor);
+            case PendingCenterFilter.thisWeek:
+              if (!item.isActive) return false;
+              final DateTime anchor = item.dueAt ?? item.createdAt;
+              return isThisWeek(anchor);
+          }
+        })
+        .toList(growable: false);
   }
 
   static List<PendingItem> forPatient(List<PendingItem> items, String id) =>
       items
-          .where(
-            (PendingItem i) => i.childId == id || i.patientId == id,
-          )
+          .where((PendingItem i) => i.childId == id || i.patientId == id)
           .toList(growable: false);
 
   static List<PendingItem> forCrmSegment(
     List<PendingItem> items,
     CrmSegment segment,
-  ) =>
-      items
-          .where(
-            (PendingItem i) => i.isActive && segment.matches(i),
-          )
-          .toList(growable: false);
+  ) => items
+      .where((PendingItem i) => i.isActive && segment.matches(i))
+      .toList(growable: false);
 
   static PendingItem? recommendedNextAction(
     List<PendingItem> items,
     DateTime now,
   ) {
-    final List<PendingItem> active =
-        items.where((PendingItem i) => i.isActive).toList(growable: false);
+    final List<PendingItem> active = items
+        .where((PendingItem i) => i.isActive)
+        .toList(growable: false);
     if (active.isEmpty) return null;
 
     int priority(PendingItem item) {
@@ -624,8 +620,8 @@ class PendingAggregator {
 
   static bool _encounterSuggestsReturn(Encounter encounter) {
     if (encounter.type == EncounterType.followUp) return true;
-    final String blob =
-        '${encounter.plan}\n${encounter.assessment}'.toLowerCase();
+    final String blob = '${encounter.plan}\n${encounter.assessment}'
+        .toLowerCase();
     return blob.contains('retorno') ||
         blob.contains('retornar') ||
         blob.contains('reavali') ||
@@ -651,8 +647,10 @@ class PendingAggregator {
       return DateTime(year, month, day);
     }
 
-    final RegExp daysLater =
-        RegExp(r'(?:em|ap[oó]s)\s+(\d+)\s+dias?', caseSensitive: false);
+    final RegExp daysLater = RegExp(
+      r'(?:em|ap[oó]s)\s+(\d+)\s+dias?',
+      caseSensitive: false,
+    );
     final RegExpMatch? daysMatch = daysLater.firstMatch(text);
     if (daysMatch != null) {
       final int days = int.parse(daysMatch.group(1)!);
@@ -765,8 +763,7 @@ class PendingAggregator {
 
     for (final BillingBatch b in input.billingBatches) {
       if (b.status == BillingBatchStatus.closed &&
-          (b.sentAt == null ||
-              b.sentAt!.isBefore(now.subtract(batchStale)))) {
+          (b.sentAt == null || b.sentAt!.isBefore(now.subtract(batchStale)))) {
         out.add(
           PendingItem(
             sourceKey: 'billing:batchNotSent:${b.id}',

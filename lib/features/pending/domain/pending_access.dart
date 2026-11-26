@@ -55,14 +55,13 @@ class PendingAccess {
     required List<PendingItem> items,
     required AppUser? user,
     required ClinicMembership? clinicMembership,
-  }) =>
-      items
-          .where(
-            (PendingItem i) => canViewCategory(
-              user: user,
-              clinicMembership: clinicMembership,
-              category: i.category,
-            ),
-          )
-          .toList(growable: false);
+  }) => items
+      .where(
+        (PendingItem i) => canViewCategory(
+          user: user,
+          clinicMembership: clinicMembership,
+          category: i.category,
+        ),
+      )
+      .toList(growable: false);
 }

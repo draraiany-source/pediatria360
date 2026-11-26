@@ -11,32 +11,33 @@ import '../../domain/security_audit_models.dart';
 
 final Provider<SecurityAuditRepository> securityAuditRepositoryProvider =
     Provider<SecurityAuditRepository>(
-  (Ref ref) => SecurityAuditRepository(firestore: ref.watch(firestoreProvider)),
-);
+      (Ref ref) =>
+          SecurityAuditRepository(firestore: ref.watch(firestoreProvider)),
+    );
 
-final Provider<AuditLogService> auditLogServiceProvider = Provider<AuditLogService>(
-  (Ref ref) => AuditLogService(
-    repository: ref.watch(securityAuditRepositoryProvider),
-  ),
-);
+final Provider<AuditLogService> auditLogServiceProvider =
+    Provider<AuditLogService>(
+      (Ref ref) => AuditLogService(
+        repository: ref.watch(securityAuditRepositoryProvider),
+      ),
+    );
 
 final Provider<ConsentHistoryRepository> consentHistoryRepositoryProvider =
     Provider<ConsentHistoryRepository>(
-  (Ref ref) => ConsentHistoryRepository(
-    firestore: ref.watch(firestoreProvider),
-  ),
-);
+      (Ref ref) =>
+          ConsentHistoryRepository(firestore: ref.watch(firestoreProvider)),
+    );
 
 final StreamProvider<List<ConsentHistoryEntry>> consentHistoryProvider =
     StreamProvider<List<ConsentHistoryEntry>>((Ref ref) {
-  final String? uid = ref.watch(currentUserProvider)?.uid;
-  if (uid == null) {
-    return Stream<List<ConsentHistoryEntry>>.value(
-      const <ConsentHistoryEntry>[],
-    );
-  }
-  return ref.watch(consentHistoryRepositoryProvider).watchForUser(uid);
-});
+      final String? uid = ref.watch(currentUserProvider)?.uid;
+      if (uid == null) {
+        return Stream<List<ConsentHistoryEntry>>.value(
+          const <ConsentHistoryEntry>[],
+        );
+      }
+      return ref.watch(consentHistoryRepositoryProvider).watchForUser(uid);
+    });
 
 class AuditLogFilterState {
   const AuditLogFilterState({
@@ -65,35 +66,36 @@ class AuditLogFilterState {
     bool clearModule = false,
     bool clearAction = false,
     bool clearSeverity = false,
-  }) =>
-      AuditLogFilterState(
-        module: clearModule ? null : (module ?? this.module),
-        action: clearAction ? null : (action ?? this.action),
-        severity: clearSeverity ? null : (severity ?? this.severity),
-        entityIdSearch: entityIdSearch ?? this.entityIdSearch,
-        since: since ?? this.since,
-        until: until ?? this.until,
-      );
+  }) => AuditLogFilterState(
+    module: clearModule ? null : (module ?? this.module),
+    action: clearAction ? null : (action ?? this.action),
+    severity: clearSeverity ? null : (severity ?? this.severity),
+    entityIdSearch: entityIdSearch ?? this.entityIdSearch,
+    since: since ?? this.since,
+    until: until ?? this.until,
+  );
 }
 
 final StateProvider<AuditLogFilterState> auditLogFilterProvider =
     StateProvider<AuditLogFilterState>(
-  (Ref ref) => const AuditLogFilterState(),
-);
+      (Ref ref) => const AuditLogFilterState(),
+    );
 
 final StreamProvider<List<SecurityAuditEvent>> securityAuditLogsProvider =
     StreamProvider<List<SecurityAuditEvent>>((Ref ref) {
-  final AuditLogFilterState filter = ref.watch(auditLogFilterProvider);
-  final String? clinicId = ref.watch(activeClinicMembershipProvider)?.clinicId;
-  final query = SecurityAuditQuery(
-    clinicId: clinicId,
-    module: filter.module,
-    action: filter.action,
-    severity: filter.severity,
-    entityIdSearch: filter.entityIdSearch,
-    since: filter.since,
-    until: filter.until,
-    limit: 50,
-  );
-  return ref.watch(securityAuditRepositoryProvider).watchLogs(query);
-});
+      final AuditLogFilterState filter = ref.watch(auditLogFilterProvider);
+      final String? clinicId = ref
+          .watch(activeClinicMembershipProvider)
+          ?.clinicId;
+      final query = SecurityAuditQuery(
+        clinicId: clinicId,
+        module: filter.module,
+        action: filter.action,
+        severity: filter.severity,
+        entityIdSearch: filter.entityIdSearch,
+        since: filter.since,
+        until: filter.until,
+        limit: 50,
+      );
+      return ref.watch(securityAuditRepositoryProvider).watchLogs(query);
+    });

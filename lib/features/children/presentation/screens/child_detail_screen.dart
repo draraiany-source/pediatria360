@@ -27,11 +27,12 @@ class ChildDetailScreen extends ConsumerWidget {
     final ThemeData theme = Theme.of(context);
     final AsyncValue<Child?> childAsync = ref.watch(childProvider(childId));
     final VaccineSummary vaccines = ref.watch(vaccineSummaryProvider(childId));
-    final List<GrowthAssessment> assessments =
-        ref.watch(latestAssessmentsProvider(childId));
+    final List<GrowthAssessment> assessments = ref.watch(
+      latestAssessmentsProvider(childId),
+    );
     final List<VisitSummary> visitSummaries =
         ref.watch(releasedVisitSummariesProvider(childId)).valueOrNull ??
-            const <VisitSummary>[];
+        const <VisitSummary>[];
 
     final Child? child = childAsync.valueOrNull;
 
@@ -40,8 +41,9 @@ class ChildDetailScreen extends ConsumerWidget {
         ? AppColors.darkBackground
         : theme.colorScheme.surfaceContainerLow;
     final Color ink = isDark ? AppColors.darkInk : theme.colorScheme.onSurface;
-    final Color inkMuted =
-        isDark ? AppColors.darkInkMuted : theme.colorScheme.onSurfaceVariant;
+    final Color inkMuted = isDark
+        ? AppColors.darkInkMuted
+        : theme.colorScheme.onSurfaceVariant;
 
     if (child == null) {
       return Scaffold(
@@ -181,7 +183,8 @@ class ChildDetailScreen extends ConsumerWidget {
                         InfoBanner(
                           icon: Icons.info_outline_rounded,
                           color: AppColors.info,
-                          text: 'Nasceu com ${child.gestationalWeeks} '
+                          text:
+                              'Nasceu com ${child.gestationalWeeks} '
                               'semanas. As curvas usam idade corrigida '
                               '(${child.correctedAgeInMonths} meses); as '
                               'vacinas seguem a idade real.',
@@ -221,8 +224,8 @@ class ChildDetailScreen extends ConsumerWidget {
                         label: vaccines.total == 0
                             ? 'Vacinas'
                             : vaccines.overdue > 0
-                                ? 'Vacinas · ${vaccines.overdue} em atraso'
-                                : 'Vacinas · ${vaccines.applied}/${vaccines.total}',
+                            ? 'Vacinas · ${vaccines.overdue} em atraso'
+                            : 'Vacinas · ${vaccines.applied}/${vaccines.total}',
                         icon: Icons.vaccines_outlined,
                         color: vaccines.overdue > 0
                             ? AppColors.danger
@@ -245,7 +248,7 @@ class ChildDetailScreen extends ConsumerWidget {
                         label: visitSummaries.isEmpty
                             ? 'Consultas'
                             : 'Consultas · ${visitSummaries.length} '
-                                '${visitSummaries.length == 1 ? 'resumo' : 'resumos'}',
+                                  '${visitSummaries.length == 1 ? 'resumo' : 'resumos'}',
                         icon: Icons.summarize_outlined,
                         color: AppColors.violet,
                         onTap: () => Navigator.of(context).push(
@@ -268,10 +271,7 @@ class ChildDetailScreen extends ConsumerWidget {
                         padding: EdgeInsets.zero,
                         child: Column(
                           children: <Widget>[
-                            _DataRow(
-                              label: 'Sexo',
-                              value: child.sex.label,
-                            ),
+                            _DataRow(label: 'Sexo', value: child.sex.label),
                             if (child.bloodType != null)
                               _DataRow(
                                 label: 'Tipo sanguíneo',
@@ -348,14 +348,12 @@ class _AssessmentTile extends StatelessWidget {
   final GrowthAssessment assessment;
 
   Color _color() => switch (assessment.classification) {
-        GrowthClassification.severelyLow ||
-        GrowthClassification.severelyHigh =>
-          AppColors.danger,
-        GrowthClassification.low || GrowthClassification.high =>
-          AppColors.warning,
-        GrowthClassification.attention => AppColors.honey,
-        GrowthClassification.adequate => AppColors.success,
-      };
+    GrowthClassification.severelyLow ||
+    GrowthClassification.severelyHigh => AppColors.danger,
+    GrowthClassification.low || GrowthClassification.high => AppColors.warning,
+    GrowthClassification.attention => AppColors.honey,
+    GrowthClassification.adequate => AppColors.success,
+  };
 
   @override
   Widget build(BuildContext context) {
@@ -423,9 +421,7 @@ class _DataRow extends StatelessWidget {
       ),
       child: Row(
         children: <Widget>[
-          Expanded(
-            child: Text(label, style: theme.textTheme.bodyMedium),
-          ),
+          Expanded(child: Text(label, style: theme.textTheme.bodyMedium)),
           Text(
             value,
             style: theme.textTheme.titleSmall,

@@ -92,8 +92,9 @@ class PermissionMatrix {
     if (user == null) return false;
     if (user.role.isAdmin) return true;
 
-    final ClinicRole? role =
-        membership != null && membership.active ? membership.role : null;
+    final ClinicRole? role = membership != null && membership.active
+        ? membership.role
+        : null;
 
     if (role == ClinicRole.patient) {
       return _patientAllows(module: module, action: action);
@@ -121,7 +122,8 @@ class PermissionMatrix {
       case PermissionModule.telemedicine:
         return _agenda(role: role, user: user, action: action);
       case PermissionModule.messages:
-        return user.role == UserRole.professional && action == PermissionAction.view;
+        return user.role == UserRole.professional &&
+            action == PermissionAction.view;
       case PermissionModule.clinicalAi:
         return _chart(role: role, user: user, action: action);
       case PermissionModule.finance:
@@ -154,9 +156,7 @@ class PermissionMatrix {
   static bool _patientAllows({
     required PermissionModule module,
     required PermissionAction action,
-  }) =>
-      module == PermissionModule.messages &&
-      action == PermissionAction.view;
+  }) => module == PermissionModule.messages && action == PermissionAction.view;
 
   static bool _patients({
     required ClinicRole? role,
@@ -167,7 +167,8 @@ class PermissionMatrix {
       if (action == PermissionAction.view) {
         return role.canManageAgenda || role.canAccessClinicalChart;
       }
-      if (action == PermissionAction.create || action == PermissionAction.edit) {
+      if (action == PermissionAction.create ||
+          action == PermissionAction.edit) {
         // Recepcao: cadastro administrativo; evolucao clinica continua em [chart].
         return role.canAccessClinicalChart || role == ClinicRole.receptionist;
       }
@@ -181,14 +182,14 @@ class PermissionMatrix {
     required AppUser user,
     required PermissionAction action,
   }) {
-    final bool clinical = role?.canAccessClinicalChart == true ||
+    final bool clinical =
+        role?.canAccessClinicalChart == true ||
         (role == null && user.role == UserRole.professional);
     return switch (action) {
       PermissionAction.view ||
       PermissionAction.create ||
       PermissionAction.edit ||
-      PermissionAction.sign =>
-        clinical,
+      PermissionAction.sign => clinical,
       PermissionAction.delete => role?.canManageStaff == true,
       PermissionAction.export => clinical || role == ClinicRole.clinicAdmin,
       _ => false,
@@ -200,7 +201,8 @@ class PermissionMatrix {
     required AppUser user,
     required PermissionAction action,
   }) {
-    final bool ok = role?.canManageAgenda == true ||
+    final bool ok =
+        role?.canManageAgenda == true ||
         (role == null && user.role == UserRole.professional);
     return ok &&
         (action == PermissionAction.view ||
@@ -214,7 +216,8 @@ class PermissionMatrix {
     required AppUser user,
     required PermissionAction action,
   }) {
-    final bool ok = role?.canManageAgenda == true ||
+    final bool ok =
+        role?.canManageAgenda == true ||
         role?.canAccessClinicalChart == true ||
         (role == null && user.role == UserRole.professional);
     return ok && action != PermissionAction.refund;
@@ -266,26 +269,21 @@ class PermissionMatrix {
     }
     return switch (action) {
       PermissionAction.view => FinanceAccess.canViewDashboard(
-          user: user,
-          clinicMembership: membership,
-        ),
+        user: user,
+        clinicMembership: membership,
+      ),
       PermissionAction.create ||
       PermissionAction.edit ||
-      PermissionAction.approve =>
-        FinanceAccess.canManageLedger(
-          user: user,
-          clinicMembership: membership,
-        ),
-      PermissionAction.refund ||
-      PermissionAction.cancel =>
-        FinanceAccess.canManageLedger(
-          user: user,
-          clinicMembership: membership,
-        ),
+      PermissionAction.approve => FinanceAccess.canManageLedger(
+        user: user,
+        clinicMembership: membership,
+      ),
+      PermissionAction.refund || PermissionAction.cancel =>
+        FinanceAccess.canManageLedger(user: user, clinicMembership: membership),
       PermissionAction.export => FinanceAccess.canManageLedger(
-          user: user,
-          clinicMembership: membership,
-        ),
+        user: user,
+        clinicMembership: membership,
+      ),
       _ => false,
     };
   }
@@ -293,11 +291,7 @@ class PermissionMatrix {
   static bool _billingManage({
     required AppUser user,
     required ClinicMembership? membership,
-  }) =>
-      BillingAccess.canManagePlans(
-        user: user,
-        clinicMembership: membership,
-      );
+  }) => BillingAccess.canManagePlans(user: user, clinicMembership: membership);
 
   static bool _billing({
     required AppUser user,
@@ -315,9 +309,14 @@ class PermissionMatrix {
       PermissionAction.create ||
       PermissionAction.edit ||
       PermissionAction.approve ||
-      PermissionAction.cancel =>
-        _billingManage(user: user, membership: membership),
-      PermissionAction.export => _billingManage(user: user, membership: membership),
+      PermissionAction.cancel => _billingManage(
+        user: user,
+        membership: membership,
+      ),
+      PermissionAction.export => _billingManage(
+        user: user,
+        membership: membership,
+      ),
       _ => false,
     };
   }
@@ -335,29 +334,24 @@ class PermissionMatrix {
     }
     return switch (action) {
       PermissionAction.view => InventoryAccess.canView(
-          user: user,
-          clinicMembership: membership,
-        ),
-      PermissionAction.create ||
-      PermissionAction.edit =>
-        InventoryAccess.canStockOps(
-              user: user,
-              clinicMembership: membership,
-            ) ||
+        user: user,
+        clinicMembership: membership,
+      ),
+      PermissionAction.create || PermissionAction.edit =>
+        InventoryAccess.canStockOps(user: user, clinicMembership: membership) ||
             InventoryAccess.canManagePurchases(
               user: user,
               clinicMembership: membership,
             ),
       PermissionAction.delete ||
-      PermissionAction.approve =>
-        InventoryAccess.canManagePurchases(
-          user: user,
-          clinicMembership: membership,
-        ),
+      PermissionAction.approve => InventoryAccess.canManagePurchases(
+        user: user,
+        clinicMembership: membership,
+      ),
       PermissionAction.export => InventoryAccess.canViewCosts(
-          user: user,
-          clinicMembership: membership,
-        ),
+        user: user,
+        clinicMembership: membership,
+      ),
       _ => false,
     };
   }
@@ -367,17 +361,11 @@ class PermissionMatrix {
     required ClinicMembership? membership,
     required PermissionAction action,
   }) {
-    if (!BiAccess.canAccessModule(
-      user: user,
-      clinicMembership: membership,
-    )) {
+    if (!BiAccess.canAccessModule(user: user, clinicMembership: membership)) {
       return false;
     }
     if (action == PermissionAction.export) {
-      return BiAccess.canExport(
-        user: user,
-        clinicMembership: membership,
-      );
+      return BiAccess.canExport(user: user, clinicMembership: membership);
     }
     return action == PermissionAction.view;
   }
@@ -402,7 +390,8 @@ class PermissionMatrix {
         clinicMembership: membership,
       );
     }
-    if (action == PermissionAction.view || action == PermissionAction.administer) {
+    if (action == PermissionAction.view ||
+        action == PermissionAction.administer) {
       return SecurityAccess.canAdministerAudit(
         user: user,
         clinicMembership: membership,

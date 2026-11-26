@@ -14,10 +14,9 @@ class AutomationRuleDefinition {
   final String triggerKind;
   final AutomationChannel channel;
 
-  String get integrationPendingLabel =>
-      channel == AutomationChannel.none
-          ? 'Pendência de integração (canal não configurado)'
-          : 'Canal ${channel.label} — aguardando credenciais';
+  String get integrationPendingLabel => channel == AutomationChannel.none
+      ? 'Pendência de integração (canal não configurado)'
+      : 'Canal ${channel.label} — aguardando credenciais';
 }
 
 enum AutomationChannel {
@@ -27,15 +26,15 @@ enum AutomationChannel {
   email;
 
   String get label => switch (this) {
-        AutomationChannel.none => 'Nenhum',
-        AutomationChannel.whatsApp => 'WhatsApp',
-        AutomationChannel.sms => 'SMS',
-        AutomationChannel.email => 'E-mail',
-      };
+    AutomationChannel.none => 'Nenhum',
+    AutomationChannel.whatsApp => 'WhatsApp',
+    AutomationChannel.sms => 'SMS',
+    AutomationChannel.email => 'E-mail',
+  };
 }
 
-const List<AutomationRuleDefinition> automationRuleCatalog =
-    <AutomationRuleDefinition>[
+const List<AutomationRuleDefinition>
+automationRuleCatalog = <AutomationRuleDefinition>[
   AutomationRuleDefinition(
     id: 'return_reminder',
     title: 'Lembrete de retorno',
@@ -61,7 +60,8 @@ const List<AutomationRuleDefinition> automationRuleCatalog =
   AutomationRuleDefinition(
     id: 'exam_pending',
     title: 'Exame pendente',
-    description: 'Alerta profissional sobre resultado fora da faixa ou marcado.',
+    description:
+        'Alerta profissional sobre resultado fora da faixa ou marcado.',
     triggerKind: 'examPending',
     channel: AutomationChannel.none,
   ),

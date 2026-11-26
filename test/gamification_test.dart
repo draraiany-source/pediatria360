@@ -75,14 +75,14 @@ void main() {
 
   group('nível a partir do XP', () {
     AppUser user(int xp) => AppUser(
-          uid: 'u',
-          email: 'a@b.c',
-          name: 'Ana',
-          role: UserRole.parent,
-          plan: UserPlan.free,
-          xp: xp,
-          createdAt: DateTime.now(),
-        );
+      uid: 'u',
+      email: 'a@b.c',
+      name: 'Ana',
+      role: UserRole.parent,
+      plan: UserPlan.free,
+      xp: xp,
+      createdAt: DateTime.now(),
+    );
 
     test('começa no nível 1', () {
       expect(user(0).level, 1);

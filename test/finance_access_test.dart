@@ -39,10 +39,7 @@ void main() {
       FinanceAccessLevel.full,
     );
     expect(
-      FinanceAccess.canManageLedger(
-        user: physician,
-        clinicMembership: finance,
-      ),
+      FinanceAccess.canManageLedger(user: physician, clinicMembership: finance),
       isTrue,
     );
   });

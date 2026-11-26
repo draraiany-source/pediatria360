@@ -19,22 +19,22 @@ class ClinicDashboardStats {
   });
 
   factory ClinicDashboardStats.empty() => const ClinicDashboardStats(
-        todayAppointments: 0,
-        waiting: 0,
-        inService: 0,
-        finished: 0,
-        pendingReturns: 0,
-        pendingVaccines: 0,
-        pendingExams: 0,
-        pendingMessages: 0,
-        newPatients: 0,
-        billingTodayCents: 0,
-        billingMonthCents: 0,
-        noShowRate: 0,
-        upcomingBirthdays: 0,
-        clinicalAlerts: 0,
-        adminPending: 0,
-      );
+    todayAppointments: 0,
+    waiting: 0,
+    inService: 0,
+    finished: 0,
+    pendingReturns: 0,
+    pendingVaccines: 0,
+    pendingExams: 0,
+    pendingMessages: 0,
+    newPatients: 0,
+    billingTodayCents: 0,
+    billingMonthCents: 0,
+    noShowRate: 0,
+    upcomingBirthdays: 0,
+    clinicalAlerts: 0,
+    adminPending: 0,
+  );
 
   final int todayAppointments;
   final int waiting;

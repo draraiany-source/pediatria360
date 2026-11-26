@@ -33,8 +33,9 @@ class BiReceptionScreen extends ConsumerWidget {
       );
     }
 
-    final BiReceptionStats reception =
-        ref.watch(executiveSnapshotProvider).reception;
+    final BiReceptionStats reception = ref
+        .watch(executiveSnapshotProvider)
+        .reception;
 
     final List<BiKpiCardData> cards = <BiKpiCardData>[
       BiKpiCardData(

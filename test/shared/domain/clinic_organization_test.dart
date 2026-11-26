@@ -73,8 +73,10 @@ void main() {
         createdAt: DateTime.utc(2026, 1, 1),
         cnpj: '00.000.000/0001-00',
       );
-      final ClinicOrganization again =
-          ClinicOrganization.fromMap(c.toMap(), id: 'c1');
+      final ClinicOrganization again = ClinicOrganization.fromMap(
+        c.toMap(),
+        id: 'c1',
+      );
       expect(again.name, 'Clinica Teste');
       expect(again.cnpj, '00.000.000/0001-00');
     });
@@ -89,8 +91,10 @@ void main() {
         createdAt: DateTime.utc(2026, 1, 2),
         unitIds: const <String>['u-centro'],
       );
-      final ClinicMembership again =
-          ClinicMembership.fromMap(m.toMap(), id: 'm1');
+      final ClinicMembership again = ClinicMembership.fromMap(
+        m.toMap(),
+        id: 'm1',
+      );
       expect(again.role, ClinicRole.nursing);
       expect(again.clinicName, 'Unidade Centro');
       expect(again.unitIds, <String>['u-centro']);
@@ -104,8 +108,7 @@ void main() {
         role: ClinicRole.physician,
         createdAt: DateTime.utc(2026, 1, 3),
       );
-      final String label =
-          m.clinicName.isNotEmpty ? m.clinicName : m.clinicId;
+      final String label = m.clinicName.isNotEmpty ? m.clinicName : m.clinicId;
       expect(label, 'clinic-xyz');
     });
   });

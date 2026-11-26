@@ -9,14 +9,14 @@ enum SupplementTimelineKind {
   other;
 
   String get label => switch (this) {
-        SupplementTimelineKind.labResult => 'Exame',
-        SupplementTimelineKind.supplementationStarted => 'Suplementacao iniciada',
-        SupplementTimelineKind.followUp => 'Retorno',
-        SupplementTimelineKind.prescription => 'Prescricao',
-        SupplementTimelineKind.clinicalNote => 'Nota clinica',
-        SupplementTimelineKind.parentGuidance => 'Orientacao aos pais',
-        SupplementTimelineKind.other => 'Evento',
-      };
+    SupplementTimelineKind.labResult => 'Exame',
+    SupplementTimelineKind.supplementationStarted => 'Suplementacao iniciada',
+    SupplementTimelineKind.followUp => 'Retorno',
+    SupplementTimelineKind.prescription => 'Prescricao',
+    SupplementTimelineKind.clinicalNote => 'Nota clinica',
+    SupplementTimelineKind.parentGuidance => 'Orientacao aos pais',
+    SupplementTimelineKind.other => 'Evento',
+  };
 
   static SupplementTimelineKind fromName(String? v) =>
       SupplementTimelineKind.values.firstWhere(
@@ -39,13 +39,17 @@ class SupplementTimelineEvent {
     this.numericValue,
   });
 
-  factory SupplementTimelineEvent.fromMap(Map<String, dynamic> map, {String? id}) {
+  factory SupplementTimelineEvent.fromMap(
+    Map<String, dynamic> map, {
+    String? id,
+  }) {
     return SupplementTimelineEvent(
       id: id ?? (map['id'] as String?) ?? '',
       childId: (map['childId'] as String?) ?? '',
       kind: SupplementTimelineKind.fromName(map['kind'] as String?),
       title: (map['title'] as String?) ?? '',
-      occurredAt: DateTime.tryParse((map['occurredAt'] as String?) ?? '') ??
+      occurredAt:
+          DateTime.tryParse((map['occurredAt'] as String?) ?? '') ??
           DateTime.fromMillisecondsSinceEpoch(0),
       createdBy: (map['createdBy'] as String?) ?? '',
       detail: (map['detail'] as String?) ?? '',
@@ -67,15 +71,15 @@ class SupplementTimelineEvent {
   final double? numericValue;
 
   Map<String, dynamic> toMap() => <String, dynamic>{
-        'id': id,
-        'childId': childId,
-        'kind': kind.name,
-        'title': title,
-        'occurredAt': occurredAt.toIso8601String(),
-        'createdBy': createdBy,
-        'detail': detail,
-        'relatedExamId': relatedExamId,
-        'relatedRxId': relatedRxId,
-        'numericValue': numericValue,
-      };
+    'id': id,
+    'childId': childId,
+    'kind': kind.name,
+    'title': title,
+    'occurredAt': occurredAt.toIso8601String(),
+    'createdBy': createdBy,
+    'detail': detail,
+    'relatedExamId': relatedExamId,
+    'relatedRxId': relatedRxId,
+    'numericValue': numericValue,
+  };
 }

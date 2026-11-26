@@ -34,7 +34,8 @@ class AppHeader extends StatelessWidget {
         children: <Widget>[
           if (showMenu)
             IconButton(
-              onPressed: onMenu ?? () => Scaffold.maybeOf(context)?.openDrawer(),
+              onPressed:
+                  onMenu ?? () => Scaffold.maybeOf(context)?.openDrawer(),
               icon: const Icon(Icons.menu_rounded),
               color: AppColors.brand,
               tooltip: 'Menu',
@@ -45,11 +46,7 @@ class AppHeader extends StatelessWidget {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: <Widget>[
-                SvgPicture.asset(
-                  AppAssets.iconLogo,
-                  width: 36,
-                  height: 36,
-                ),
+                SvgPicture.asset(AppAssets.iconLogo, width: 36, height: 36),
                 const SizedBox(width: AppSpacing.sm),
                 Flexible(
                   child: Column(
@@ -60,16 +57,9 @@ class AppHeader extends StatelessWidget {
                         TextSpan(
                           children: <TextSpan>[
                             TextSpan(
-                              text: 'Pediatria',
+                              text: 'Crisdepaula Pediatria',
                               style: theme.textTheme.titleMedium?.copyWith(
                                 color: AppColors.navy,
-                                fontWeight: FontWeight.w800,
-                              ),
-                            ),
-                            TextSpan(
-                              text: '360',
-                              style: theme.textTheme.titleMedium?.copyWith(
-                                color: AppColors.teal,
                                 fontWeight: FontWeight.w800,
                               ),
                             ),
@@ -79,7 +69,7 @@ class AppHeader extends StatelessWidget {
                         overflow: TextOverflow.ellipsis,
                       ),
                       Text(
-                        'Cuidado integral, cada fase importa',
+                        'Gestão Clínica em Pediatria',
                         style: theme.textTheme.labelSmall?.copyWith(
                           color: AppColors.inkMuted,
                           fontWeight: FontWeight.w500,
@@ -102,8 +92,8 @@ class AppHeader extends StatelessWidget {
             ),
             backgroundColor: AppColors.brand,
             child: IconButton(
-              onPressed: onNotifications ??
-                  () => context.go(Routes.notificationsPath),
+              onPressed:
+                  onNotifications ?? () => context.go(Routes.notificationsPath),
               icon: const Icon(Icons.notifications_none_rounded),
               color: AppColors.navy,
               tooltip: 'Notificações',
@@ -343,26 +333,18 @@ class StatusChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final (Color bg, Color fg) = switch (tone) {
-      StatusChipTone.confirmed || StatusChipTone.done => (
-          AppColors.softTeal,
-          AppColors.tealDeep,
-        ),
+      StatusChipTone.confirmed ||
+      StatusChipTone.done => (AppColors.softTeal, AppColors.tealDeep),
       StatusChipTone.pending => (AppColors.softPink, const Color(0xFFD94A7A)),
       StatusChipTone.next => (AppColors.softBlue, AppColors.brand),
       StatusChipTone.followUp => (AppColors.softLilac, const Color(0xFF7C6CF0)),
       StatusChipTone.info => (AppColors.softBlue, AppColors.brand),
-      StatusChipTone.danger => (
-          const Color(0xFFFFE8EA),
-          AppColors.danger,
-        ),
+      StatusChipTone.danger => (const Color(0xFFFFE8EA), AppColors.danger),
     };
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-      decoration: BoxDecoration(
-        color: bg,
-        borderRadius: AppRadius.pillAll,
-      ),
+      decoration: BoxDecoration(color: bg, borderRadius: AppRadius.pillAll),
       child: Text(
         label,
         style: TextStyle(
@@ -466,7 +448,14 @@ class QuickAccessCard extends StatelessWidget {
                 color: color.withValues(alpha: 0.12),
                 borderRadius: AppRadius.mdAll,
               ),
-              child: asset != null ? AppIcon(asset: asset!, size: 28, fallback: icon, color: color) : Icon(icon, color: color, size: 22),
+              child: asset != null
+                  ? AppIcon(
+                      asset: asset!,
+                      size: 28,
+                      fallback: icon,
+                      color: color,
+                    )
+                  : Icon(icon, color: color, size: 22),
             ),
             const SizedBox(width: AppSpacing.md),
             Expanded(
@@ -526,12 +515,7 @@ class QuickAccessCard extends StatelessWidget {
               borderRadius: AppRadius.mdAll,
             ),
             child: asset != null
-                ? AppIcon(
-                    asset: asset!,
-                    size: 28,
-                    fallback: icon,
-                    color: color,
-                  )
+                ? AppIcon(asset: asset!, size: 28, fallback: icon, color: color)
                 : Icon(icon, color: color, size: 20),
           ),
           const SizedBox(height: AppSpacing.xs),
@@ -541,10 +525,10 @@ class QuickAccessCard extends StatelessWidget {
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
             style: theme.textTheme.labelSmall?.copyWith(
-                  color: AppColors.navy,
-                  fontWeight: FontWeight.w700,
-                  height: 1.15,
-                ),
+              color: AppColors.navy,
+              fontWeight: FontWeight.w700,
+              height: 1.15,
+            ),
           ),
         ],
       ),
@@ -577,9 +561,7 @@ class FilterChipPill extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final Color sel = selectedColor ?? AppColors.brand;
-    final Color bg = selected
-        ? sel
-        : (unselectedBg ?? AppColors.softBlue);
+    final Color bg = selected ? sel : (unselectedBg ?? AppColors.softBlue);
     final Color fg = selected
         ? Colors.white
         : (unselectedFg ?? AppColors.brand);
@@ -591,10 +573,7 @@ class FilterChipPill extends StatelessWidget {
         borderRadius: AppRadius.pillAll,
         child: Ink(
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-          decoration: BoxDecoration(
-            color: bg,
-            borderRadius: AppRadius.pillAll,
-          ),
+          decoration: BoxDecoration(color: bg, borderRadius: AppRadius.pillAll),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: <Widget>[

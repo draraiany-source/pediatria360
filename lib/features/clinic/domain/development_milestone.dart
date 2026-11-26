@@ -9,12 +9,12 @@ enum MilestoneCategory {
   cognitive;
 
   String get label => switch (this) {
-        MilestoneCategory.grossMotor => 'Motor grosso',
-        MilestoneCategory.fineMotor => 'Motor fino',
-        MilestoneCategory.language => 'Linguagem',
-        MilestoneCategory.social => 'Social / afetivo',
-        MilestoneCategory.cognitive => 'Cognitivo',
-      };
+    MilestoneCategory.grossMotor => 'Motor grosso',
+    MilestoneCategory.fineMotor => 'Motor fino',
+    MilestoneCategory.language => 'Linguagem',
+    MilestoneCategory.social => 'Social / afetivo',
+    MilestoneCategory.cognitive => 'Cognitivo',
+  };
 
   static MilestoneCategory fromName(String? value) =>
       MilestoneCategory.values.firstWhere(
@@ -31,11 +31,11 @@ enum MilestoneStatus {
   needsFollowUp;
 
   String get label => switch (this) {
-        MilestoneStatus.acquired => 'Adquirido',
-        MilestoneStatus.acquiring => 'Em aquisicao',
-        MilestoneStatus.notObserved => 'Nao observado',
-        MilestoneStatus.needsFollowUp => 'Requer seguimento',
-      };
+    MilestoneStatus.acquired => 'Adquirido',
+    MilestoneStatus.acquiring => 'Em aquisicao',
+    MilestoneStatus.notObserved => 'Nao observado',
+    MilestoneStatus.needsFollowUp => 'Requer seguimento',
+  };
 
   static MilestoneStatus fromName(String? value) =>
       MilestoneStatus.values.firstWhere(
@@ -74,7 +74,8 @@ class DevelopmentMilestoneRecord extends Equatable {
       code: (map['code'] as String?) ?? '',
       title: (map['title'] as String?) ?? '',
       status: MilestoneStatus.fromName(map['status'] as String?),
-      observedAt: DateTime.tryParse((map['observedAt'] as String?) ?? '') ??
+      observedAt:
+          DateTime.tryParse((map['observedAt'] as String?) ?? '') ??
           DateTime.now(),
       appointmentId: map['appointmentId'] as String?,
       encounterId: map['encounterId'] as String?,
@@ -102,35 +103,35 @@ class DevelopmentMilestoneRecord extends Equatable {
   final String notes;
 
   Map<String, dynamic> toMap() => <String, dynamic>{
-        'id': id,
-        'childId': childId,
-        'professionalId': professionalId,
-        'category': category.name,
-        'code': code,
-        'title': title,
-        'status': status.name,
-        'observedAt': observedAt.toIso8601String(),
-        'appointmentId': appointmentId,
-        'encounterId': encounterId,
-        'expectedAgeMonths': expectedAgeMonths,
-        'observedAgeMonths': observedAgeMonths,
-        'notes': notes,
-      };
+    'id': id,
+    'childId': childId,
+    'professionalId': professionalId,
+    'category': category.name,
+    'code': code,
+    'title': title,
+    'status': status.name,
+    'observedAt': observedAt.toIso8601String(),
+    'appointmentId': appointmentId,
+    'encounterId': encounterId,
+    'expectedAgeMonths': expectedAgeMonths,
+    'observedAgeMonths': observedAgeMonths,
+    'notes': notes,
+  };
 
   @override
   List<Object?> get props => <Object?>[
-        id,
-        childId,
-        professionalId,
-        category,
-        code,
-        title,
-        status,
-        observedAt,
-        appointmentId,
-        encounterId,
-        expectedAgeMonths,
-        observedAgeMonths,
-        notes,
-      ];
+    id,
+    childId,
+    professionalId,
+    category,
+    code,
+    title,
+    status,
+    observedAt,
+    appointmentId,
+    encounterId,
+    expectedAgeMonths,
+    observedAgeMonths,
+    notes,
+  ];
 }

@@ -20,7 +20,8 @@ class ConsentHistoryEntry extends Equatable {
   factory ConsentHistoryEntry.fromMap(Map<String, dynamic> map, {String? id}) {
     return ConsentHistoryEntry(
       id: id ?? (map['id'] as String?) ?? '',
-      purposeKey: (map['purposeKey'] as String?) ??
+      purposeKey:
+          (map['purposeKey'] as String?) ??
           (map['purpose'] as String?) ??
           (map['revoked'] as String?) ??
           '',
@@ -42,8 +43,7 @@ class ConsentHistoryEntry extends Equatable {
     final dynamic raw = map['recordedAt'] ?? map['grantedAt'];
     if (raw is Timestamp) return raw.toDate();
     if (raw is String) {
-      return DateTime.tryParse(raw) ??
-          DateTime.fromMillisecondsSinceEpoch(0);
+      return DateTime.tryParse(raw) ?? DateTime.fromMillisecondsSinceEpoch(0);
     }
     return DateTime.fromMillisecondsSinceEpoch(0);
   }

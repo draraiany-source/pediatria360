@@ -248,11 +248,7 @@ class _PreVisitQuestionnaireFormScreenState
               maxLines: 2,
             ),
             const SizedBox(height: AppSpacing.md),
-            AppTextField(
-              label: 'Sono',
-              controller: _sleepNotes,
-              maxLines: 2,
-            ),
+            AppTextField(label: 'Sono', controller: _sleepNotes, maxLines: 2),
             const SizedBox(height: AppSpacing.md),
             AppTextField(
               label: 'Eliminações (urina/fezes) — se for relevante',

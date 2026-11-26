@@ -16,13 +16,13 @@ enum EncounterType {
       );
 
   String get label => switch (this) {
-        EncounterType.routine => 'Consulta de rotina',
-        EncounterType.acute => 'Intercorrência',
-        EncounterType.followUp => 'Retorno',
-        EncounterType.emergency => 'Urgência',
-        EncounterType.telemedicine => 'Teleconsulta',
-        EncounterType.procedure => 'Procedimento',
-      };
+    EncounterType.routine => 'Consulta de rotina',
+    EncounterType.acute => 'Intercorrência',
+    EncounterType.followUp => 'Retorno',
+    EncounterType.emergency => 'Urgência',
+    EncounterType.telemedicine => 'Teleconsulta',
+    EncounterType.procedure => 'Procedimento',
+  };
 }
 
 /// Situação do atendimento no fluxo de trabalho.
@@ -38,10 +38,10 @@ enum EncounterStatus {
       );
 
   String get label => switch (this) {
-        EncounterStatus.draft => 'Rascunho',
-        EncounterStatus.signed => 'Assinado',
-        EncounterStatus.amended => 'Retificado',
-      };
+    EncounterStatus.draft => 'Rascunho',
+    EncounterStatus.signed => 'Assinado',
+    EncounterStatus.amended => 'Retificado',
+  };
 }
 
 /// Anamnese estruturada.
@@ -75,29 +75,28 @@ class Anamnesis extends Equatable {
   });
 
   factory Anamnesis.fromMap(Map<String, dynamic> map) => Anamnesis(
-        chiefComplaint: (map['chiefComplaint'] as String?) ?? '',
-        historyOfPresentIllness:
-            (map['historyOfPresentIllness'] as String?) ?? '',
-        pastMedicalHistory: (map['pastMedicalHistory'] as String?) ?? '',
-        gestationalHistory: (map['gestationalHistory'] as String?) ?? '',
-        birthHistory: (map['birthHistory'] as String?) ?? '',
-        developmentHistory: (map['developmentHistory'] as String?) ?? '',
-        feedingHistory: (map['feedingHistory'] as String?) ?? '',
-        sleepHistory: (map['sleepHistory'] as String?) ?? '',
-        eliminationHistory: (map['eliminationHistory'] as String?) ?? '',
-        immunizationStatus: (map['immunizationStatus'] as String?) ?? '',
-        allergies: _strings(map['allergies']),
-        currentMedications: _strings(map['currentMedications']),
-        familyHistory: (map['familyHistory'] as String?) ?? '',
-        socialHistory: (map['socialHistory'] as String?) ?? '',
-        reviewOfSystems:
-            ((map['reviewOfSystems'] as Map<dynamic, dynamic>?) ??
-                    const <dynamic, dynamic>{})
-                .map(
-          (dynamic k, dynamic v) =>
-              MapEntry<String, String>(k.toString(), v.toString()),
-        ),
-      );
+    chiefComplaint: (map['chiefComplaint'] as String?) ?? '',
+    historyOfPresentIllness: (map['historyOfPresentIllness'] as String?) ?? '',
+    pastMedicalHistory: (map['pastMedicalHistory'] as String?) ?? '',
+    gestationalHistory: (map['gestationalHistory'] as String?) ?? '',
+    birthHistory: (map['birthHistory'] as String?) ?? '',
+    developmentHistory: (map['developmentHistory'] as String?) ?? '',
+    feedingHistory: (map['feedingHistory'] as String?) ?? '',
+    sleepHistory: (map['sleepHistory'] as String?) ?? '',
+    eliminationHistory: (map['eliminationHistory'] as String?) ?? '',
+    immunizationStatus: (map['immunizationStatus'] as String?) ?? '',
+    allergies: _strings(map['allergies']),
+    currentMedications: _strings(map['currentMedications']),
+    familyHistory: (map['familyHistory'] as String?) ?? '',
+    socialHistory: (map['socialHistory'] as String?) ?? '',
+    reviewOfSystems:
+        ((map['reviewOfSystems'] as Map<dynamic, dynamic>?) ??
+                const <dynamic, dynamic>{})
+            .map(
+              (dynamic k, dynamic v) =>
+                  MapEntry<String, String>(k.toString(), v.toString()),
+            ),
+  );
 
   /// Queixa principal, nas palavras de quem trouxe a criança.
   final String chiefComplaint;
@@ -142,22 +141,22 @@ class Anamnesis extends Equatable {
       pastMedicalHistory.isEmpty;
 
   Map<String, dynamic> toMap() => <String, dynamic>{
-        'chiefComplaint': chiefComplaint,
-        'historyOfPresentIllness': historyOfPresentIllness,
-        'pastMedicalHistory': pastMedicalHistory,
-        'gestationalHistory': gestationalHistory,
-        'birthHistory': birthHistory,
-        'developmentHistory': developmentHistory,
-        'feedingHistory': feedingHistory,
-        'sleepHistory': sleepHistory,
-        'eliminationHistory': eliminationHistory,
-        'immunizationStatus': immunizationStatus,
-        'allergies': allergies,
-        'currentMedications': currentMedications,
-        'familyHistory': familyHistory,
-        'socialHistory': socialHistory,
-        'reviewOfSystems': reviewOfSystems,
-      };
+    'chiefComplaint': chiefComplaint,
+    'historyOfPresentIllness': historyOfPresentIllness,
+    'pastMedicalHistory': pastMedicalHistory,
+    'gestationalHistory': gestationalHistory,
+    'birthHistory': birthHistory,
+    'developmentHistory': developmentHistory,
+    'feedingHistory': feedingHistory,
+    'sleepHistory': sleepHistory,
+    'eliminationHistory': eliminationHistory,
+    'immunizationStatus': immunizationStatus,
+    'allergies': allergies,
+    'currentMedications': currentMedications,
+    'familyHistory': familyHistory,
+    'socialHistory': socialHistory,
+    'reviewOfSystems': reviewOfSystems,
+  };
 
   static List<String> _strings(Object? value) =>
       (value as List<dynamic>?)?.whereType<String>().toList(growable: false) ??
@@ -165,22 +164,22 @@ class Anamnesis extends Equatable {
 
   @override
   List<Object?> get props => <Object?>[
-        chiefComplaint,
-        historyOfPresentIllness,
-        pastMedicalHistory,
-        gestationalHistory,
-        birthHistory,
-        developmentHistory,
-        feedingHistory,
-        sleepHistory,
-        eliminationHistory,
-        immunizationStatus,
-        allergies,
-        currentMedications,
-        familyHistory,
-        socialHistory,
-        reviewOfSystems,
-      ];
+    chiefComplaint,
+    historyOfPresentIllness,
+    pastMedicalHistory,
+    gestationalHistory,
+    birthHistory,
+    developmentHistory,
+    feedingHistory,
+    sleepHistory,
+    eliminationHistory,
+    immunizationStatus,
+    allergies,
+    currentMedications,
+    familyHistory,
+    socialHistory,
+    reviewOfSystems,
+  ];
 }
 
 /// Sinais vitais aferidos no atendimento.
@@ -204,19 +203,18 @@ class VitalSigns extends Equatable {
   });
 
   factory VitalSigns.fromMap(Map<String, dynamic> map) => VitalSigns(
-        temperatureC: (map['temperatureC'] as num?)?.toDouble(),
-        heartRate: (map['heartRate'] as num?)?.toInt(),
-        respiratoryRate: (map['respiratoryRate'] as num?)?.toInt(),
-        systolicBp: (map['systolicBp'] as num?)?.toInt(),
-        diastolicBp: (map['diastolicBp'] as num?)?.toInt(),
-        oxygenSaturation: (map['oxygenSaturation'] as num?)?.toInt(),
-        weightKg: (map['weightKg'] as num?)?.toDouble(),
-        heightCm: (map['heightCm'] as num?)?.toDouble(),
-        headCircumferenceCm: (map['headCircumferenceCm'] as num?)?.toDouble(),
-        painScore: (map['painScore'] as num?)?.toInt(),
-        capillaryRefillSeconds:
-            (map['capillaryRefillSeconds'] as num?)?.toDouble(),
-      );
+    temperatureC: (map['temperatureC'] as num?)?.toDouble(),
+    heartRate: (map['heartRate'] as num?)?.toInt(),
+    respiratoryRate: (map['respiratoryRate'] as num?)?.toInt(),
+    systolicBp: (map['systolicBp'] as num?)?.toInt(),
+    diastolicBp: (map['diastolicBp'] as num?)?.toInt(),
+    oxygenSaturation: (map['oxygenSaturation'] as num?)?.toInt(),
+    weightKg: (map['weightKg'] as num?)?.toDouble(),
+    heightCm: (map['heightCm'] as num?)?.toDouble(),
+    headCircumferenceCm: (map['headCircumferenceCm'] as num?)?.toDouble(),
+    painScore: (map['painScore'] as num?)?.toInt(),
+    capillaryRefillSeconds: (map['capillaryRefillSeconds'] as num?)?.toDouble(),
+  );
 
   final double? temperatureC;
   final int? heartRate;
@@ -247,33 +245,33 @@ class VitalSigns extends Equatable {
   bool get hasFever => temperatureC != null && temperatureC! >= 37.8;
 
   Map<String, dynamic> toMap() => <String, dynamic>{
-        'temperatureC': temperatureC,
-        'heartRate': heartRate,
-        'respiratoryRate': respiratoryRate,
-        'systolicBp': systolicBp,
-        'diastolicBp': diastolicBp,
-        'oxygenSaturation': oxygenSaturation,
-        'weightKg': weightKg,
-        'heightCm': heightCm,
-        'headCircumferenceCm': headCircumferenceCm,
-        'painScore': painScore,
-        'capillaryRefillSeconds': capillaryRefillSeconds,
-      };
+    'temperatureC': temperatureC,
+    'heartRate': heartRate,
+    'respiratoryRate': respiratoryRate,
+    'systolicBp': systolicBp,
+    'diastolicBp': diastolicBp,
+    'oxygenSaturation': oxygenSaturation,
+    'weightKg': weightKg,
+    'heightCm': heightCm,
+    'headCircumferenceCm': headCircumferenceCm,
+    'painScore': painScore,
+    'capillaryRefillSeconds': capillaryRefillSeconds,
+  };
 
   @override
   List<Object?> get props => <Object?>[
-        temperatureC,
-        heartRate,
-        respiratoryRate,
-        systolicBp,
-        diastolicBp,
-        oxygenSaturation,
-        weightKg,
-        heightCm,
-        headCircumferenceCm,
-        painScore,
-        capillaryRefillSeconds,
-      ];
+    temperatureC,
+    heartRate,
+    respiratoryRate,
+    systolicBp,
+    diastolicBp,
+    oxygenSaturation,
+    weightKg,
+    heightCm,
+    headCircumferenceCm,
+    painScore,
+    capillaryRefillSeconds,
+  ];
 }
 
 /// Aparelhos avaliados no exame físico.
@@ -296,19 +294,19 @@ enum ExamSystem {
   lymphNodes;
 
   String get label => switch (this) {
-        ExamSystem.generalAppearance => 'Estado geral',
-        ExamSystem.skin => 'Pele e mucosas',
-        ExamSystem.headAndNeck => 'Cabeça e pescoço',
-        ExamSystem.eyes => 'Olhos',
-        ExamSystem.earsNoseThroat => 'Otorrino',
-        ExamSystem.respiratory => 'Aparelho respiratório',
-        ExamSystem.cardiovascular => 'Aparelho cardiovascular',
-        ExamSystem.abdomen => 'Abdome',
-        ExamSystem.genitourinary => 'Geniturinário',
-        ExamSystem.musculoskeletal => 'Osteoarticular',
-        ExamSystem.neurological => 'Neurológico',
-        ExamSystem.lymphNodes => 'Linfonodos',
-      };
+    ExamSystem.generalAppearance => 'Estado geral',
+    ExamSystem.skin => 'Pele e mucosas',
+    ExamSystem.headAndNeck => 'Cabeça e pescoço',
+    ExamSystem.eyes => 'Olhos',
+    ExamSystem.earsNoseThroat => 'Otorrino',
+    ExamSystem.respiratory => 'Aparelho respiratório',
+    ExamSystem.cardiovascular => 'Aparelho cardiovascular',
+    ExamSystem.abdomen => 'Abdome',
+    ExamSystem.genitourinary => 'Geniturinário',
+    ExamSystem.musculoskeletal => 'Osteoarticular',
+    ExamSystem.neurological => 'Neurológico',
+    ExamSystem.lymphNodes => 'Linfonodos',
+  };
 
   /// Texto pré-preenchido de normalidade.
   ///
@@ -316,41 +314,41 @@ enum ExamSystem {
   /// branco não distingue "estava normal" de "não foi examinado" — e essa
   /// distinção é o que se discute quando algo dá errado.
   String get normalFinding => switch (this) {
-        ExamSystem.generalAppearance =>
-          'Bom estado geral, ativo, reativo, hidratado, corado, anictérico, '
-              'acianótico, afebril ao toque.',
-        ExamSystem.skin =>
-          'Pele íntegra, sem lesões, sem exantemas. Mucosas úmidas e coradas. '
-              'Enchimento capilar menor que 2 segundos.',
-        ExamSystem.headAndNeck =>
-          'Crânio normocefálico. Fontanelas normotensas quando presentes. '
-              'Pescoço livre, sem rigidez.',
-        ExamSystem.eyes =>
-          'Pupilas isocóricas e fotorreagentes. Conjuntivas coradas. '
-              'Sem secreção.',
-        ExamSystem.earsNoseThroat =>
-          'Membranas timpânicas translúcidas bilateralmente. Orofaringe sem '
-              'hiperemia ou exsudato. Rinoscopia sem alterações.',
-        ExamSystem.respiratory =>
-          'Murmúrio vesicular presente e simétrico, sem ruídos adventícios. '
-              'Sem sinais de esforço respiratório. Eupneico.',
-        ExamSystem.cardiovascular =>
-          'Ritmo cardíaco regular em dois tempos, bulhas normofonéticas, sem '
-              'sopros. Pulsos periféricos cheios e simétricos.',
-        ExamSystem.abdomen =>
-          'Abdome plano, flácido, indolor à palpação. Ruídos hidroaéreos '
-              'presentes. Sem visceromegalias ou massas.',
-        ExamSystem.genitourinary =>
-          'Genitália externa de aspecto habitual para idade e sexo.',
-        ExamSystem.musculoskeletal =>
-          'Sem deformidades. Mobilidade preservada. Marcha adequada para '
-              'a idade.',
-        ExamSystem.neurological =>
-          'Consciente, orientado, ativo. Tônus e reflexos adequados para a '
-              'idade. Sem sinais meníngeos ou déficits focais.',
-        ExamSystem.lymphNodes =>
-          'Sem linfonodomegalias palpáveis nas cadeias acessíveis.',
-      };
+    ExamSystem.generalAppearance =>
+      'Bom estado geral, ativo, reativo, hidratado, corado, anictérico, '
+          'acianótico, afebril ao toque.',
+    ExamSystem.skin =>
+      'Pele íntegra, sem lesões, sem exantemas. Mucosas úmidas e coradas. '
+          'Enchimento capilar menor que 2 segundos.',
+    ExamSystem.headAndNeck =>
+      'Crânio normocefálico. Fontanelas normotensas quando presentes. '
+          'Pescoço livre, sem rigidez.',
+    ExamSystem.eyes =>
+      'Pupilas isocóricas e fotorreagentes. Conjuntivas coradas. '
+          'Sem secreção.',
+    ExamSystem.earsNoseThroat =>
+      'Membranas timpânicas translúcidas bilateralmente. Orofaringe sem '
+          'hiperemia ou exsudato. Rinoscopia sem alterações.',
+    ExamSystem.respiratory =>
+      'Murmúrio vesicular presente e simétrico, sem ruídos adventícios. '
+          'Sem sinais de esforço respiratório. Eupneico.',
+    ExamSystem.cardiovascular =>
+      'Ritmo cardíaco regular em dois tempos, bulhas normofonéticas, sem '
+          'sopros. Pulsos periféricos cheios e simétricos.',
+    ExamSystem.abdomen =>
+      'Abdome plano, flácido, indolor à palpação. Ruídos hidroaéreos '
+          'presentes. Sem visceromegalias ou massas.',
+    ExamSystem.genitourinary =>
+      'Genitália externa de aspecto habitual para idade e sexo.',
+    ExamSystem.musculoskeletal =>
+      'Sem deformidades. Mobilidade preservada. Marcha adequada para '
+          'a idade.',
+    ExamSystem.neurological =>
+      'Consciente, orientado, ativo. Tônus e reflexos adequados para a '
+          'idade. Sem sinais meníngeos ou déficits focais.',
+    ExamSystem.lymphNodes =>
+      'Sem linfonodomegalias palpáveis nas cadeias acessíveis.',
+  };
 }
 
 /// Exame físico registrado.
@@ -362,18 +360,19 @@ class PhysicalExam extends Equatable {
   });
 
   factory PhysicalExam.fromMap(Map<String, dynamic> map) => PhysicalExam(
-        findings: ((map['findings'] as Map<dynamic, dynamic>?) ??
+    findings:
+        ((map['findings'] as Map<dynamic, dynamic>?) ??
                 const <dynamic, dynamic>{})
             .map(
-          (dynamic k, dynamic v) =>
-              MapEntry<String, String>(k.toString(), v.toString()),
-        ),
-        systemsExamined:
-            ((map['systemsExamined'] as List<dynamic>?) ?? const <dynamic>[])
-                .whereType<String>()
-                .toSet(),
-        notes: (map['notes'] as String?) ?? '',
-      );
+              (dynamic k, dynamic v) =>
+                  MapEntry<String, String>(k.toString(), v.toString()),
+            ),
+    systemsExamined:
+        ((map['systemsExamined'] as List<dynamic>?) ?? const <dynamic>[])
+            .whereType<String>()
+            .toSet(),
+    notes: (map['notes'] as String?) ?? '',
+  );
 
   /// Aparelho → descrição do achado.
   final Map<String, String> findings;
@@ -395,10 +394,10 @@ class PhysicalExam extends Equatable {
       .toList(growable: false);
 
   Map<String, dynamic> toMap() => <String, dynamic>{
-        'findings': findings,
-        'systemsExamined': systemsExamined.toList(growable: false),
-        'notes': notes,
-      };
+    'findings': findings,
+    'systemsExamined': systemsExamined.toList(growable: false),
+    'notes': notes,
+  };
 
   @override
   List<Object?> get props => <Object?>[findings, systemsExamined, notes];
@@ -419,12 +418,12 @@ class Diagnosis extends Equatable {
   });
 
   factory Diagnosis.fromMap(Map<String, dynamic> map) => Diagnosis(
-        code: (map['code'] as String?) ?? '',
-        description: (map['description'] as String?) ?? '',
-        type: DiagnosisType.fromName(map['type'] as String?),
-        certainty: DiagnosisCertainty.fromName(map['certainty'] as String?),
-        note: map['note'] as String?,
-      );
+    code: (map['code'] as String?) ?? '',
+    description: (map['description'] as String?) ?? '',
+    type: DiagnosisType.fromName(map['type'] as String?),
+    certainty: DiagnosisCertainty.fromName(map['certainty'] as String?),
+    note: map['note'] as String?,
+  );
 
   final String code;
   final String description;
@@ -433,12 +432,12 @@ class Diagnosis extends Equatable {
   final String? note;
 
   Map<String, dynamic> toMap() => <String, dynamic>{
-        'code': code,
-        'description': description,
-        'type': type.name,
-        'certainty': certainty.name,
-        'note': note,
-      };
+    'code': code,
+    'description': description,
+    'type': type.name,
+    'certainty': certainty.name,
+    'note': note,
+  };
 
   @override
   List<Object?> get props => <Object?>[code, type, certainty];
@@ -456,10 +455,10 @@ enum DiagnosisType {
       );
 
   String get label => switch (this) {
-        DiagnosisType.primary => 'Principal',
-        DiagnosisType.secondary => 'Secundário',
-        DiagnosisType.differential => 'Diferencial',
-      };
+    DiagnosisType.primary => 'Principal',
+    DiagnosisType.secondary => 'Secundário',
+    DiagnosisType.differential => 'Diferencial',
+  };
 }
 
 /// Grau de certeza. Registrar "suspeita" como se fosse confirmação distorce o
@@ -476,8 +475,8 @@ enum DiagnosisCertainty {
       );
 
   String get label => switch (this) {
-        DiagnosisCertainty.suspected => 'Suspeita',
-        DiagnosisCertainty.confirmed => 'Confirmado',
-        DiagnosisCertainty.ruledOut => 'Afastado',
-      };
+    DiagnosisCertainty.suspected => 'Suspeita',
+    DiagnosisCertainty.confirmed => 'Confirmado',
+    DiagnosisCertainty.ruledOut => 'Afastado',
+  };
 }

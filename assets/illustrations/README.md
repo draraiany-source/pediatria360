@@ -9,5 +9,6 @@ Substitua pelos assets finais das referências Figma:
 | `hero_child.png` | Banner Home | Foto infantil / menina com ursinho |
 | `login_toys.png` | Rodapé Login | Urso + argolas empilhadas |
 | `vaccine_shield.png` | Cabeçalho Vacinas | Frasco vacina + escudo |
+| `tia_cris.svg` | Mascote da sidebar Crismed | Pediatra ruiva de jaleco, tablet e ursinho |
 
 Não apague a pasta — apenas sobrescreva os PNGs mantendo os nomes.

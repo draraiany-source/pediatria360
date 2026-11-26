@@ -16,13 +16,13 @@ void main() {
       );
 
   ClinicMembership financeUnit(String unitId) => ClinicMembership(
-        id: 'm-fin',
-        clinicId: 'clinic-a',
-        userId: 'u2',
-        role: ClinicRole.finance,
-        createdAt: t,
-        unitIds: <String>[unitId],
-      );
+    id: 'm-fin',
+    clinicId: 'clinic-a',
+    userId: 'u2',
+    role: ClinicRole.finance,
+    createdAt: t,
+    unitIds: <String>[unitId],
+  );
 
   group('requireClinicAccess', () {
     test('same clinic ok', () {
@@ -65,10 +65,7 @@ void main() {
 
   group('canAccessUnit', () {
     test('clinicAdmin empty unitIds allows any unit', () {
-      expect(
-        TenantScope.canAccessUnit(adminGlobal(), 'unit-centro'),
-        isTrue,
-      );
+      expect(TenantScope.canAccessUnit(adminGlobal(), 'unit-centro'), isTrue);
     });
 
     test('scoped finance allows assigned unit only', () {

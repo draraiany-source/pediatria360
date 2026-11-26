@@ -14,11 +14,11 @@ enum GuardianRelationship {
       );
 
   String get label => switch (this) {
-        GuardianRelationship.mother => 'Mae',
-        GuardianRelationship.father => 'Pai',
-        GuardianRelationship.legalGuardian => 'Tutor legal',
-        GuardianRelationship.other => 'Outro',
-      };
+    GuardianRelationship.mother => 'Mae',
+    GuardianRelationship.father => 'Pai',
+    GuardianRelationship.legalGuardian => 'Tutor legal',
+    GuardianRelationship.other => 'Outro',
+  };
 }
 
 /// Status da autorizacao de acesso do responsavel vinculado.
@@ -34,10 +34,10 @@ enum GuardianAuthStatus {
       );
 
   String get label => switch (this) {
-        GuardianAuthStatus.pending => 'Pendente de autorizacao',
-        GuardianAuthStatus.active => 'Ativo',
-        GuardianAuthStatus.revoked => 'Revogado',
-      };
+    GuardianAuthStatus.pending => 'Pendente de autorizacao',
+    GuardianAuthStatus.active => 'Ativo',
+    GuardianAuthStatus.revoked => 'Revogado',
+  };
 }
 
 /// Vinculo de um responsavel a uma crianca (cadastro unico existente).
@@ -70,9 +70,12 @@ class ChildGuardianLink extends Equatable {
       guardianUid: guardianUid,
       ownerId: (map['ownerId'] as String?) ?? '',
       childId: (map['childId'] as String?) ?? '',
-      relationship: GuardianRelationship.fromName(map['relationship'] as String?),
+      relationship: GuardianRelationship.fromName(
+        map['relationship'] as String?,
+      ),
       status: GuardianAuthStatus.fromName(map['status'] as String?),
-      createdAt: DateTime.tryParse((map['createdAt'] as String?) ?? '') ??
+      createdAt:
+          DateTime.tryParse((map['createdAt'] as String?) ?? '') ??
           DateTime.fromMillisecondsSinceEpoch(0),
       displayName: (map['displayName'] as String?) ?? '',
       email: (map['email'] as String?) ?? '',
@@ -109,20 +112,20 @@ class ChildGuardianLink extends Equatable {
       status == GuardianAuthStatus.active && canViewData;
 
   Map<String, dynamic> toMap() => <String, dynamic>{
-        'guardianUid': guardianUid,
-        'ownerId': ownerId,
-        'childId': childId,
-        'relationship': relationship.name,
-        'status': status.name,
-        'createdAt': createdAt.toIso8601String(),
-        'displayName': displayName,
-        'email': email,
-        'canViewData': canViewData,
-        'canSendDocuments': canSendDocuments,
-        'canMakeRequests': canMakeRequests,
-        if (updatedAt != null) 'updatedAt': updatedAt!.toIso8601String(),
-        'notes': notes,
-      };
+    'guardianUid': guardianUid,
+    'ownerId': ownerId,
+    'childId': childId,
+    'relationship': relationship.name,
+    'status': status.name,
+    'createdAt': createdAt.toIso8601String(),
+    'displayName': displayName,
+    'email': email,
+    'canViewData': canViewData,
+    'canSendDocuments': canSendDocuments,
+    'canMakeRequests': canMakeRequests,
+    if (updatedAt != null) 'updatedAt': updatedAt!.toIso8601String(),
+    'notes': notes,
+  };
 
   ChildGuardianLink copyWith({
     GuardianAuthStatus? status,
@@ -132,24 +135,28 @@ class ChildGuardianLink extends Equatable {
     String? displayName,
     String? notes,
     DateTime? updatedAt,
-  }) =>
-      ChildGuardianLink(
-        guardianUid: guardianUid,
-        ownerId: ownerId,
-        childId: childId,
-        relationship: relationship,
-        status: status ?? this.status,
-        createdAt: createdAt,
-        displayName: displayName ?? this.displayName,
-        email: email,
-        canViewData: canViewData ?? this.canViewData,
-        canSendDocuments: canSendDocuments ?? this.canSendDocuments,
-        canMakeRequests: canMakeRequests ?? this.canMakeRequests,
-        updatedAt: updatedAt ?? this.updatedAt,
-        notes: notes ?? this.notes,
-      );
+  }) => ChildGuardianLink(
+    guardianUid: guardianUid,
+    ownerId: ownerId,
+    childId: childId,
+    relationship: relationship,
+    status: status ?? this.status,
+    createdAt: createdAt,
+    displayName: displayName ?? this.displayName,
+    email: email,
+    canViewData: canViewData ?? this.canViewData,
+    canSendDocuments: canSendDocuments ?? this.canSendDocuments,
+    canMakeRequests: canMakeRequests ?? this.canMakeRequests,
+    updatedAt: updatedAt ?? this.updatedAt,
+    notes: notes ?? this.notes,
+  );
 
   @override
-  List<Object?> get props =>
-      <Object?>[guardianUid, childId, status, canViewData, canSendDocuments];
+  List<Object?> get props => <Object?>[
+    guardianUid,
+    childId,
+    status,
+    canViewData,
+    canSendDocuments,
+  ];
 }

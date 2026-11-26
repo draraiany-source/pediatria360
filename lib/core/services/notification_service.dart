@@ -35,7 +35,7 @@ class NotificationService {
 
   static const AndroidNotificationChannel _channel = AndroidNotificationChannel(
     'p360_default',
-    'Avisos do Pediatria 360',
+    'Avisos do Crisdepaula Pediatria',
     description: 'Lembretes de vacina, consultas e respostas da IA.',
     importance: Importance.high,
   );
@@ -71,7 +71,8 @@ class NotificationService {
 
       await _local
           .resolvePlatformSpecificImplementation<
-              AndroidFlutterLocalNotificationsPlugin>()
+            AndroidFlutterLocalNotificationsPlugin
+          >()
           ?.createNotificationChannel(_channel);
     }
 

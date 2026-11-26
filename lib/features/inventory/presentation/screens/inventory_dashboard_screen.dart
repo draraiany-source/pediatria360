@@ -41,7 +41,9 @@ class InventoryDashboardScreen extends ConsumerWidget {
         foregroundColor: AppColors.navy,
         elevation: 0,
       ),
-      body: ref.watch(inventoryItemsProvider).when(
+      body: ref
+          .watch(inventoryItemsProvider)
+          .when(
             loading: () => const LoadingState(label: 'Carregando estoque…'),
             error: (Object e, StackTrace _) => ErrorState(
               failure: ServerFailure(e.toString()),
@@ -66,7 +68,10 @@ class InventoryDashboardScreen extends ConsumerWidget {
                     label: 'Lotes perto do vencimento',
                     value: '${kpis.nearExpiryLots}',
                   ),
-                  _KpiRow(label: 'Lotes vencidos', value: '${kpis.expiredLots}'),
+                  _KpiRow(
+                    label: 'Lotes vencidos',
+                    value: '${kpis.expiredLots}',
+                  ),
                   _KpiRow(
                     label: 'Valor em estoque',
                     value: formatCents(kpis.stockValueCents),
@@ -111,7 +116,8 @@ class InventoryDashboardScreen extends ConsumerWidget {
                     title: 'Pedidos de compra',
                     subtitle: 'Solicitacao ate recebimento',
                     icon: Icons.shopping_cart_outlined,
-                    onTap: () => context.push('${Routes.inventoryPath}/compras'),
+                    onTap: () =>
+                        context.push('${Routes.inventoryPath}/compras'),
                   ),
                   _NavTile(
                     title: 'Inventario fisico',
@@ -152,9 +158,9 @@ class _KpiRow extends StatelessWidget {
           Text(
             value,
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.navy,
-                ),
+              fontWeight: FontWeight.w600,
+              color: AppColors.navy,
+            ),
           ),
         ],
       ),

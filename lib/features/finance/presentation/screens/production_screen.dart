@@ -17,7 +17,7 @@ class ProductionScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final List<Appointment> agenda =
         ref.watch(unitScopedMyAgendaProvider).valueOrNull ??
-            const <Appointment>[];
+        const <Appointment>[];
     final FinancePeriod period = ref.watch(financePeriodProvider);
     final ProductionReport report = ProductionReport.fromAppointments(
       appointments: agenda,
@@ -45,7 +45,10 @@ class ProductionScreen extends ConsumerWidget {
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: <Widget>[
                       Text(formatCents(row.revenueCents)),
-                      Text('Ticket ${formatCents(row.ticketCents)}', style: Theme.of(context).textTheme.bodySmall),
+                      Text(
+                        'Ticket ${formatCents(row.ticketCents)}',
+                        style: Theme.of(context).textTheme.bodySmall,
+                      ),
                     ],
                   ),
                 );

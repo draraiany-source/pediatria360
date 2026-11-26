@@ -30,7 +30,8 @@ class PermissionMatrixScreen extends ConsumerWidget {
     }
 
     final ClinicRole previewRole = membership?.role ?? ClinicRole.physician;
-    final AppUser previewUser = user ??
+    final AppUser previewUser =
+        user ??
         AppUser(
           uid: 'preview',
           email: '',
@@ -68,7 +69,8 @@ class PermissionMatrixScreen extends ConsumerWidget {
                 DataColumn(label: Text('Admin')),
               ],
               rows: PermissionModule.values.map((PermissionModule module) {
-                final ClinicMembership m = membership ??
+                final ClinicMembership m =
+                    membership ??
                     ClinicMembership(
                       id: 'p',
                       clinicId: 'c',
@@ -79,46 +81,56 @@ class PermissionMatrixScreen extends ConsumerWidget {
                 return DataRow(
                   cells: <DataCell>[
                     DataCell(Text(module.name)),
-                    DataCell(_cell(
-                      PermissionMatrix.allows(
-                        user: previewUser,
-                        membership: m,
-                        module: module,
-                        action: PermissionAction.view,
+                    DataCell(
+                      _cell(
+                        PermissionMatrix.allows(
+                          user: previewUser,
+                          membership: m,
+                          module: module,
+                          action: PermissionAction.view,
+                        ),
                       ),
-                    )),
-                    DataCell(_cell(
-                      PermissionMatrix.allows(
-                        user: previewUser,
-                        membership: m,
-                        module: module,
-                        action: PermissionAction.create,
+                    ),
+                    DataCell(
+                      _cell(
+                        PermissionMatrix.allows(
+                          user: previewUser,
+                          membership: m,
+                          module: module,
+                          action: PermissionAction.create,
+                        ),
                       ),
-                    )),
-                    DataCell(_cell(
-                      PermissionMatrix.allows(
-                        user: previewUser,
-                        membership: m,
-                        module: module,
-                        action: PermissionAction.edit,
+                    ),
+                    DataCell(
+                      _cell(
+                        PermissionMatrix.allows(
+                          user: previewUser,
+                          membership: m,
+                          module: module,
+                          action: PermissionAction.edit,
+                        ),
                       ),
-                    )),
-                    DataCell(_cell(
-                      PermissionMatrix.allows(
-                        user: previewUser,
-                        membership: m,
-                        module: module,
-                        action: PermissionAction.export,
+                    ),
+                    DataCell(
+                      _cell(
+                        PermissionMatrix.allows(
+                          user: previewUser,
+                          membership: m,
+                          module: module,
+                          action: PermissionAction.export,
+                        ),
                       ),
-                    )),
-                    DataCell(_cell(
-                      PermissionMatrix.allows(
-                        user: previewUser,
-                        membership: m,
-                        module: module,
-                        action: PermissionAction.administer,
+                    ),
+                    DataCell(
+                      _cell(
+                        PermissionMatrix.allows(
+                          user: previewUser,
+                          membership: m,
+                          module: module,
+                          action: PermissionAction.administer,
+                        ),
                       ),
-                    )),
+                    ),
                   ],
                 );
               }).toList(),
@@ -135,8 +147,8 @@ class PermissionMatrixScreen extends ConsumerWidget {
   }
 
   static Widget _cell(bool allowed) => Icon(
-        allowed ? Icons.check_circle_outline : Icons.cancel_outlined,
-        color: allowed ? AppColors.teal : AppColors.danger,
-        size: 20,
-      );
+    allowed ? Icons.check_circle_outline : Icons.cancel_outlined,
+    color: allowed ? AppColors.teal : AppColors.danger,
+    size: 20,
+  );
 }

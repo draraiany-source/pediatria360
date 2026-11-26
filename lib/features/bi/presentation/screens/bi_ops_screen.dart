@@ -108,20 +108,31 @@ class BiOpsScreen extends ConsumerWidget {
               child: BarChart(
                 BarChartData(
                   alignment: BarChartAlignment.spaceAround,
-                  maxY: peaks.values.reduce((int a, int b) => a > b ? a : b).toDouble() + 1,
+                  maxY:
+                      peaks.values
+                          .reduce((int a, int b) => a > b ? a : b)
+                          .toDouble() +
+                      1,
                   titlesData: FlTitlesData(
                     bottomTitles: AxisTitles(
                       sideTitles: SideTitles(
                         showTitles: true,
                         getTitlesWidget: (double value, TitleMeta meta) {
                           final int h = value.toInt();
-                          if (!peaks.containsKey(h)) return const SizedBox.shrink();
-                          return Text('${h}h', style: const TextStyle(fontSize: 10));
+                          if (!peaks.containsKey(h))
+                            return const SizedBox.shrink();
+                          return Text(
+                            '${h}h',
+                            style: const TextStyle(fontSize: 10),
+                          );
                         },
                       ),
                     ),
                     leftTitles: const AxisTitles(
-                      sideTitles: SideTitles(showTitles: true, reservedSize: 28),
+                      sideTitles: SideTitles(
+                        showTitles: true,
+                        reservedSize: 28,
+                      ),
                     ),
                     topTitles: const AxisTitles(
                       sideTitles: SideTitles(showTitles: false),

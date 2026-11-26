@@ -85,7 +85,8 @@ class _LessonPlayerState extends ConsumerState<LessonPlayer> {
     if (!bunny.isConfigured) {
       setState(() {
         _initializing = false;
-        _error = 'O streaming não está configurado neste ambiente. '
+        _error =
+            'O streaming não está configurado neste ambiente. '
             'Informe BUNNY_CDN_HOSTNAME e BUNNY_STREAM_LIBRARY_ID.';
       });
       return;
@@ -96,11 +97,12 @@ class _LessonPlayerState extends ConsumerState<LessonPlayer> {
       // ida ao servidor.
       final String url = widget.course.requiresPlan && !widget.lesson.isFree
           ? (await bunny.signedPlaybackUrl(videoGuid: guid)).valueOrNull ??
-              bunny.hlsUrl(guid)
+                bunny.hlsUrl(guid)
           : bunny.hlsUrl(guid);
 
-      final VideoPlayerController video =
-          VideoPlayerController.networkUrl(Uri.parse(url));
+      final VideoPlayerController video = VideoPlayerController.networkUrl(
+        Uri.parse(url),
+      );
 
       await video.initialize();
 
@@ -167,13 +169,16 @@ class _LessonPlayerState extends ConsumerState<LessonPlayer> {
     final Duration total = video.value.duration;
     if (total == Duration.zero) return;
 
-    final bool completed = _markedComplete ||
+    final bool completed =
+        _markedComplete ||
         position.inMilliseconds / total.inMilliseconds >= _completionRatio;
 
     if (completed) _markedComplete = true;
 
     unawaited(
-      ref.read(playbackControllerProvider.notifier).save(
+      ref
+          .read(playbackControllerProvider.notifier)
+          .save(
             courseId: widget.course.id,
             lessonId: widget.lesson.id,
             positionSeconds: position.inSeconds,
@@ -187,10 +192,7 @@ class _LessonPlayerState extends ConsumerState<LessonPlayer> {
     if (_initializing) {
       return const AspectRatio(
         aspectRatio: 16 / 9,
-        child: ColoredBox(
-          color: Colors.black,
-          child: LoadingState(),
-        ),
+        child: ColoredBox(color: Colors.black, child: LoadingState()),
       );
     }
 

@@ -33,8 +33,10 @@ void main() {
       role: ClinicRole.clinicAdmin,
       createdAt: DateTime(2026),
     );
-    expect(BiAccess.level(user: professional, clinicMembership: m),
-        BiAccessLevel.full);
+    expect(
+      BiAccess.level(user: professional, clinicMembership: m),
+      BiAccessLevel.full,
+    );
     expect(
       BiAccess.canSeeFinance(user: professional, clinicMembership: m),
       isTrue,
@@ -54,8 +56,10 @@ void main() {
       role: ClinicRole.finance,
       createdAt: DateTime(2026),
     );
-    expect(BiAccess.level(user: professional, clinicMembership: m),
-        BiAccessLevel.financial);
+    expect(
+      BiAccess.level(user: professional, clinicMembership: m),
+      BiAccessLevel.financial,
+    );
     expect(
       BiAccess.canSeeFinance(user: professional, clinicMembership: m),
       isTrue,
@@ -78,8 +82,10 @@ void main() {
       role: ClinicRole.physician,
       createdAt: DateTime(2026),
     );
-    expect(BiAccess.level(user: professional, clinicMembership: m),
-        BiAccessLevel.clinicalOps);
+    expect(
+      BiAccess.level(user: professional, clinicMembership: m),
+      BiAccessLevel.clinicalOps,
+    );
     expect(
       BiAccess.canSeeClinical(user: professional, clinicMembership: m),
       isTrue,
@@ -98,10 +104,7 @@ void main() {
       role: ClinicRole.receptionist,
       createdAt: DateTime(2026),
     );
-    expect(
-      BiAccess.canSeeOps(user: professional, clinicMembership: m),
-      isTrue,
-    );
+    expect(BiAccess.canSeeOps(user: professional, clinicMembership: m), isTrue);
     expect(
       BiAccess.canSeeFinance(user: professional, clinicMembership: m),
       isFalse,

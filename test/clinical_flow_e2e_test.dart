@@ -25,26 +25,25 @@ void main() {
     String plan = '',
     DateTime? signedAt,
     String? amends,
-  }) =>
-      Encounter(
-        id: 'e1',
-        patientId: 'p1',
-        professionalId: 'd1',
-        professionalName: 'Dra. Marta',
-        professionalCrm: '123456/SP',
-        patientName: 'Manuela Silva',
-        patientBirthDate: DateTime(2025, 3, 10),
-        type: EncounterType.routine,
-        status: status,
-        startedAt: DateTime(2026, 7, 20, 9, 0),
-        anamnesis: Anamnesis(chiefComplaint: complaint),
-        vitals: vitals,
-        exam: exam,
-        diagnoses: diagnoses,
-        plan: plan,
-        signedAt: signedAt,
-        amendsEncounterId: amends,
-      );
+  }) => Encounter(
+    id: 'e1',
+    patientId: 'p1',
+    professionalId: 'd1',
+    professionalName: 'Dra. Marta',
+    professionalCrm: '123456/SP',
+    patientName: 'Manuela Silva',
+    patientBirthDate: DateTime(2025, 3, 10),
+    type: EncounterType.routine,
+    status: status,
+    startedAt: DateTime(2026, 7, 20, 9, 0),
+    anamnesis: Anamnesis(chiefComplaint: complaint),
+    vitals: vitals,
+    exam: exam,
+    diagnoses: diagnoses,
+    plan: plan,
+    signedAt: signedAt,
+    amendsEncounterId: amends,
+  );
 
   const Diagnosis ivas = Diagnosis(
     code: 'J06',
@@ -222,20 +221,19 @@ void main() {
       List<PrescriptionItem> items = const <PrescriptionItem>[],
       DateTime? validUntil,
       bool cancelled = false,
-    }) =>
-        ClinicalDocument(
-          id: 'd1',
-          encounterId: 'e1',
-          patientId: 'p1',
-          professionalId: 'd1',
-          type: type,
-          issuedAt: DateTime(2026, 7, 20),
-          content: 'Conteúdo do documento.',
-          items: items,
-          validUntil: validUntil,
-          cancelled: cancelled,
-          verificationCode: 'ABCDE-FGHJK',
-        );
+    }) => ClinicalDocument(
+      id: 'd1',
+      encounterId: 'e1',
+      patientId: 'p1',
+      professionalId: 'd1',
+      type: type,
+      issuedAt: DateTime(2026, 7, 20),
+      content: 'Conteúdo do documento.',
+      items: items,
+      validUntil: validUntil,
+      cancelled: cancelled,
+      verificationCode: 'ABCDE-FGHJK',
+    );
 
     test('receita com controlado muda o modelo impresso', () {
       final ClinicalDocument d = doc(
@@ -321,15 +319,15 @@ void main() {
 
   group('8. exames laboratoriais sinalizam sem interpretar', () {
     LabResult lab({double? value, double? low, double? high}) => LabResult(
-          id: 'l1',
-          patientId: 'p1',
-          analyte: 'Hemoglobina',
-          collectedAt: DateTime(2026, 7, 20),
-          value: value,
-          unit: 'g/dL',
-          referenceLow: low,
-          referenceHigh: high,
-        );
+      id: 'l1',
+      patientId: 'p1',
+      analyte: 'Hemoglobina',
+      collectedAt: DateTime(2026, 7, 20),
+      value: value,
+      unit: 'g/dL',
+      referenceLow: low,
+      referenceHigh: high,
+    );
 
     test('dentro da faixa não sinaliza', () {
       expect(lab(value: 12.5, low: 11.5, high: 15.5).isOutOfRange, isFalse);

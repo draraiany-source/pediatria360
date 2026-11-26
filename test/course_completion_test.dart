@@ -50,14 +50,17 @@ void main() {
       );
     });
 
-    test('mais aulas concluídas do que o total (dado inconsistente) ainda conta como completo', () {
-      // completedLessons vem de uma contagem separada de totalLessons —
-      // não são garantidamente a mesma fonte no momento da chamada. `>=`
-      // em vez de `==` absorve essa inconsistência sem quebrar.
-      expect(
-        isCourseFullyCompleted(progress(completed: 6, total: 5), 5),
-        isTrue,
-      );
-    });
+    test(
+      'mais aulas concluídas do que o total (dado inconsistente) ainda conta como completo',
+      () {
+        // completedLessons vem de uma contagem separada de totalLessons —
+        // não são garantidamente a mesma fonte no momento da chamada. `>=`
+        // em vez de `==` absorve essa inconsistência sem quebrar.
+        expect(
+          isCourseFullyCompleted(progress(completed: 6, total: 5), 5),
+          isTrue,
+        );
+      },
+    );
   });
 }

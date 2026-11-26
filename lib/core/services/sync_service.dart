@@ -41,13 +41,12 @@ class SyncStatus {
     DateTime? lastSyncAt,
     String? lastError,
     bool clearError = false,
-  }) =>
-      SyncStatus(
-        isSyncing: isSyncing ?? this.isSyncing,
-        pending: pending ?? this.pending,
-        lastSyncAt: lastSyncAt ?? this.lastSyncAt,
-        lastError: clearError ? null : (lastError ?? this.lastError),
-      );
+  }) => SyncStatus(
+    isSyncing: isSyncing ?? this.isSyncing,
+    pending: pending ?? this.pending,
+    lastSyncAt: lastSyncAt ?? this.lastSyncAt,
+    lastError: clearError ? null : (lastError ?? this.lastError),
+  );
 }
 
 /// Drena a fila de escritas feitas offline.
@@ -67,9 +66,9 @@ class SyncService {
     required LocalDatabase? database,
     required FirebaseFirestore firestore,
     required ConnectivityService connectivity,
-  })  : _db = database,
-        _firestore = firestore,
-        _connectivity = connectivity {
+  }) : _db = database,
+       _firestore = firestore,
+       _connectivity = connectivity {
     _subscription = _connectivity.onStatusChange.listen((bool online) {
       if (online) unawaited(sync());
     });
@@ -122,7 +121,8 @@ class SyncService {
         // Se todos os itens da rodada falharam e continuam na fila com
         // tentativas crescendo, `_process` acabara descartando os envenenados,
         // entao o laco sempre termina.
-        if (batch.isNotEmpty && batch.every((OutboxEntry e) => e.attempts > 0)) {
+        if (batch.isNotEmpty &&
+            batch.every((OutboxEntry e) => e.attempts > 0)) {
           final int stillPending = await _db.pendingOutboxCount();
           if (stillPending == batch.length &&
               batch.first.attempts >= OutboxEntry.poisonThreshold) {
@@ -190,14 +190,15 @@ class SyncService {
 
     try {
       await db.markOutboxAttempted(entry.id);
-      final DocumentReference<Map<String, dynamic>> ref =
-          _referenceFor(entry);
+      final DocumentReference<Map<String, dynamic>> ref = _referenceFor(entry);
 
       switch (entry.operation) {
         case OutboxOperation.create:
         case OutboxOperation.update:
-          final ConflictResolution resolution =
-              await _resolveConflict(ref, entry);
+          final ConflictResolution resolution = await _resolveConflict(
+            ref,
+            entry,
+          );
 
           if (!resolution.shouldWrite) {
             // A versão do servidor prevaleceu inteira. Registra para o
@@ -219,13 +220,10 @@ class SyncService {
             return;
           }
 
-          await ref.set(
-            <String, dynamic>{
-              ...resolution.merged!,
-              'updatedAt': FieldValue.serverTimestamp(),
-            },
-            SetOptions(merge: true),
-          );
+          await ref.set(<String, dynamic>{
+            ...resolution.merged!,
+            'updatedAt': FieldValue.serverTimestamp(),
+          }, SetOptions(merge: true));
 
           await db.recordSyncEvent(
             SyncEvent(
@@ -299,8 +297,8 @@ class SyncService {
     }
 
     final Object? updatedAt = snapshot.data()?['updatedAt'];
-    final bool serverChanged = updatedAt is Timestamp &&
-        updatedAt.toDate().isAfter(entry.createdAt);
+    final bool serverChanged =
+        updatedAt is Timestamp && updatedAt.toDate().isAfter(entry.createdAt);
 
     // Servidor intocado desde a escrita local: sem conflito.
     if (!serverChanged) {
@@ -341,24 +339,33 @@ class SyncService {
     final String childId = entry.payload['childId'] as String? ?? '';
 
     return switch (entry.entity) {
-      SyncEntity.children => _firestore
-          .doc(FirestorePaths.childDoc(ownerId, entry.entityId)),
-      SyncEntity.growth => _firestore
-          .collection(FirestorePaths.childGrowth(ownerId, childId))
-          .doc(entry.entityId),
-      SyncEntity.vaccineDoses => _firestore
-          .collection(FirestorePaths.childVaccines(ownerId, childId))
-          .doc(entry.entityId),
+      SyncEntity.children => _firestore.doc(
+        FirestorePaths.childDoc(ownerId, entry.entityId),
+      ),
+      SyncEntity.growth =>
+        _firestore
+            .collection(FirestorePaths.childGrowth(ownerId, childId))
+            .doc(entry.entityId),
+      SyncEntity.vaccineDoses =>
+        _firestore
+            .collection(FirestorePaths.childVaccines(ownerId, childId))
+            .doc(entry.entityId),
       _ => throw StateError('Entidade desconhecida: ${entry.entity}'),
     };
   }
 
   /// Remove campos de controle e converte datas ISO em `Timestamp`.
   Map<String, dynamic> _firestorePayload(OutboxEntry entry) {
-    final Map<String, dynamic> payload =
-        Map<String, dynamic>.from(entry.payload);
+    final Map<String, dynamic> payload = Map<String, dynamic>.from(
+      entry.payload,
+    );
 
-    for (final String key in <String>['birthDate', 'measuredAt', 'appliedAt', 'dueAt']) {
+    for (final String key in <String>[
+      'birthDate',
+      'measuredAt',
+      'appliedAt',
+      'dueAt',
+    ]) {
       final Object? value = payload[key];
       if (value is String) {
         final DateTime? parsed = DateTime.tryParse(value);

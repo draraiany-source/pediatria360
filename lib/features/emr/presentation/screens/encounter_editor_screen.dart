@@ -25,9 +25,9 @@ import 'visit_summary_editor_screen.dart';
 
 final StreamProviderFamily<Encounter?, String> encounterProvider =
     StreamProvider.family<Encounter?, String>(
-  (Ref ref, String encounterId) =>
-      ref.watch(encounterRepositoryProvider).watchEncounter(encounterId),
-);
+      (Ref ref, String encounterId) =>
+          ref.watch(encounterRepositoryProvider).watchEncounter(encounterId),
+    );
 
 /// Editor de atendimento.
 ///
@@ -49,8 +49,7 @@ class EncounterEditorScreen extends ConsumerStatefulWidget {
       _EncounterEditorScreenState();
 }
 
-class _EncounterEditorScreenState
-    extends ConsumerState<EncounterEditorScreen> {
+class _EncounterEditorScreenState extends ConsumerState<EncounterEditorScreen> {
   // Anamnese
   final TextEditingController _complaint = TextEditingController();
   final TextEditingController _hpi = TextEditingController();
@@ -86,8 +85,9 @@ class _EncounterEditorScreenState
 
   final Map<ExamSystem, TextEditingController> _exam =
       <ExamSystem, TextEditingController>{
-    for (final ExamSystem s in ExamSystem.values) s: TextEditingController(),
-  };
+        for (final ExamSystem s in ExamSystem.values)
+          s: TextEditingController(),
+      };
   final Set<ExamSystem> _examined = <ExamSystem>{};
 
   List<Diagnosis> _diagnoses = <Diagnosis>[];
@@ -109,35 +109,35 @@ class _EncounterEditorScreenState
   }
 
   List<TextEditingController> get _allControllers => <TextEditingController>[
-        _complaint,
-        _hpi,
-        _past,
-        _family,
-        _gestation,
-        _birth,
-        _feeding,
-        _sleep,
-        _elimination,
-        _development,
-        _immunization,
-        _allergies,
-        _medications,
-        _temp,
-        _hr,
-        _rr,
-        _spo2,
-        _weight,
-        _height,
-        _head,
-        _sbp,
-        _dbp,
-        _pain,
-        _assessment,
-        _plan,
-        _guidance,
-        _returnPlan,
-        ..._exam.values,
-      ];
+    _complaint,
+    _hpi,
+    _past,
+    _family,
+    _gestation,
+    _birth,
+    _feeding,
+    _sleep,
+    _elimination,
+    _development,
+    _immunization,
+    _allergies,
+    _medications,
+    _temp,
+    _hr,
+    _rr,
+    _spo2,
+    _weight,
+    _height,
+    _head,
+    _sbp,
+    _dbp,
+    _pain,
+    _assessment,
+    _plan,
+    _guidance,
+    _returnPlan,
+    ..._exam.values,
+  ];
 
   static const String _guidanceMarker = '\n\n--- Orientações ---\n';
   static const String _returnMarker = '\n\n--- Retorno ---\n';
@@ -202,7 +202,9 @@ class _EncounterEditorScreenState
     if (_chartOpenLogged || !e.isSigned) return;
     _chartOpenLogged = true;
     unawaited(
-      ref.read(auditLogServiceProvider).log(
+      ref
+          .read(auditLogServiceProvider)
+          .log(
             user: ref.read(currentUserProvider),
             membership: ref.read(activeClinicMembershipProvider),
             action: 'chartOpened',
@@ -261,56 +263,57 @@ class _EncounterEditorScreenState
   Future<void> _save() async {
     if (_saving || !mounted) return;
 
-    final Encounter? current =
-        ref.read(encounterProvider(widget.encounterId)).valueOrNull;
+    final Encounter? current = ref
+        .read(encounterProvider(widget.encounterId))
+        .valueOrNull;
     if (current == null || !current.isEditable) return;
 
     setState(() => _saving = true);
 
-    final Result<void> result =
-        await ref.read(encounterRepositoryProvider).updateDraft(
-              encounterId: widget.encounterId,
-              anamnesis: Anamnesis(
-                chiefComplaint: _complaint.text.trim(),
-                historyOfPresentIllness: _hpi.text.trim(),
-                pastMedicalHistory: _past.text.trim(),
-                gestationalHistory: _gestation.text.trim(),
-                birthHistory: _birth.text.trim(),
-                developmentHistory: _development.text.trim(),
-                feedingHistory: _feeding.text.trim(),
-                sleepHistory: _sleep.text.trim(),
-                eliminationHistory: _elimination.text.trim(),
-                immunizationStatus: _immunization.text.trim(),
-                allergies: _splitList(_allergies.text),
-                currentMedications: _splitList(_medications.text),
-                familyHistory: _family.text.trim(),
-              ),
-              vitals: VitalSigns(
-                temperatureC: Parsers.decimal(_temp.text),
-                heartRate: int.tryParse(_hr.text.trim()),
-                respiratoryRate: int.tryParse(_rr.text.trim()),
-                oxygenSaturation: int.tryParse(_spo2.text.trim()),
-                weightKg: Parsers.decimal(_weight.text),
-                heightCm: Parsers.decimal(_height.text),
-                headCircumferenceCm: Parsers.decimal(_head.text),
-                systolicBp: int.tryParse(_sbp.text.trim()),
-                diastolicBp: int.tryParse(_dbp.text.trim()),
-                painScore: int.tryParse(_pain.text.trim()),
-              ),
-              exam: PhysicalExam(
-                findings: <String, String>{
-                  for (final MapEntry<ExamSystem, TextEditingController> e
-                      in _exam.entries)
-                    if (e.value.text.trim().isNotEmpty)
-                      e.key.name: e.value.text.trim(),
-                },
-                systemsExamined:
-                    _examined.map((ExamSystem s) => s.name).toSet(),
-              ),
-              diagnoses: _diagnoses,
-              assessment: _assessment.text.trim(),
-              plan: _composePlan(),
-            );
+    final Result<void> result = await ref
+        .read(encounterRepositoryProvider)
+        .updateDraft(
+          encounterId: widget.encounterId,
+          anamnesis: Anamnesis(
+            chiefComplaint: _complaint.text.trim(),
+            historyOfPresentIllness: _hpi.text.trim(),
+            pastMedicalHistory: _past.text.trim(),
+            gestationalHistory: _gestation.text.trim(),
+            birthHistory: _birth.text.trim(),
+            developmentHistory: _development.text.trim(),
+            feedingHistory: _feeding.text.trim(),
+            sleepHistory: _sleep.text.trim(),
+            eliminationHistory: _elimination.text.trim(),
+            immunizationStatus: _immunization.text.trim(),
+            allergies: _splitList(_allergies.text),
+            currentMedications: _splitList(_medications.text),
+            familyHistory: _family.text.trim(),
+          ),
+          vitals: VitalSigns(
+            temperatureC: Parsers.decimal(_temp.text),
+            heartRate: int.tryParse(_hr.text.trim()),
+            respiratoryRate: int.tryParse(_rr.text.trim()),
+            oxygenSaturation: int.tryParse(_spo2.text.trim()),
+            weightKg: Parsers.decimal(_weight.text),
+            heightCm: Parsers.decimal(_height.text),
+            headCircumferenceCm: Parsers.decimal(_head.text),
+            systolicBp: int.tryParse(_sbp.text.trim()),
+            diastolicBp: int.tryParse(_dbp.text.trim()),
+            painScore: int.tryParse(_pain.text.trim()),
+          ),
+          exam: PhysicalExam(
+            findings: <String, String>{
+              for (final MapEntry<ExamSystem, TextEditingController> e
+                  in _exam.entries)
+                if (e.value.text.trim().isNotEmpty)
+                  e.key.name: e.value.text.trim(),
+            },
+            systemsExamined: _examined.map((ExamSystem s) => s.name).toSet(),
+          ),
+          diagnoses: _diagnoses,
+          assessment: _assessment.text.trim(),
+          plan: _composePlan(),
+        );
 
     if (!mounted) return;
 
@@ -348,8 +351,9 @@ class _EncounterEditorScreenState
 
     if (!mounted) return;
 
-    final Encounter? fresh =
-        ref.read(encounterProvider(widget.encounterId)).valueOrNull;
+    final Encounter? fresh = ref
+        .read(encounterProvider(widget.encounterId))
+        .valueOrNull;
     final List<String> missing = fresh?.missingForSignature ?? <String>[];
 
     if (missing.isNotEmpty) {
@@ -380,9 +384,9 @@ class _EncounterEditorScreenState
               Text(
                 '${exam.notExamined.length} aparelhos não foram registrados '
                 'no exame físico.',
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: AppColors.warning,
-                    ),
+                style: Theme.of(
+                  context,
+                ).textTheme.bodySmall?.copyWith(color: AppColors.warning),
               ),
             ],
           ],
@@ -402,15 +406,16 @@ class _EncounterEditorScreenState
 
     if (!(confirmed ?? false) || !mounted) return;
 
-    final Result<String> result =
-        await ref.read(encounterRepositoryProvider).sign(widget.encounterId);
+    final Result<String> result = await ref
+        .read(encounterRepositoryProvider)
+        .sign(widget.encounterId);
 
     if (!mounted) return;
 
     result.fold(
-      (_) => ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Atendimento assinado.')),
-      ),
+      (_) => ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Atendimento assinado.'))),
       (Failure failure) => ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(failure.message),
@@ -423,8 +428,9 @@ class _EncounterEditorScreenState
   @override
   Widget build(BuildContext context) {
     final ThemeData theme = Theme.of(context);
-    final AsyncValue<Encounter?> async =
-        ref.watch(encounterProvider(widget.encounterId));
+    final AsyncValue<Encounter?> async = ref.watch(
+      encounterProvider(widget.encounterId),
+    );
     final Encounter? encounter = async.valueOrNull;
 
     if (encounter == null) {
@@ -459,10 +465,10 @@ class _EncounterEditorScreenState
               locked
                   ? 'Assinado em ${Formatters.dateTime(encounter.signedAt!)}'
                   : _savedAt == null
-                      ? 'Rascunho'
-                      : 'Salvo às '
-                          '${_savedAt!.hour.toString().padLeft(2, '0')}:'
-                          '${_savedAt!.minute.toString().padLeft(2, '0')}',
+                  ? 'Rascunho'
+                  : 'Salvo às '
+                        '${_savedAt!.hour.toString().padLeft(2, '0')}:'
+                        '${_savedAt!.minute.toString().padLeft(2, '0')}',
               style: theme.textTheme.bodySmall,
             ),
           ],
@@ -733,10 +739,7 @@ class _EncounterEditorScreenState
                 ),
 
                 if (locked) ...<Widget>[
-                  const SectionHeader(
-                    title: 'Documentos',
-                    eyebrow: 'Emissão',
-                  ),
+                  const SectionHeader(title: 'Documentos', eyebrow: 'Emissão'),
                   _DocumentActions(encounter: encounter),
                 ],
               ],
@@ -760,7 +763,7 @@ class _EncounterEditorScreenState
 
     final List<Encounter> previous =
         ref.read(patientEncountersProvider(encounter.patientId)).valueOrNull ??
-            const <Encounter>[];
+        const <Encounter>[];
 
     final bool hasHistory = previous
         .where((Encounter e) => e.id != encounter.id && e.isSigned)
@@ -790,8 +793,7 @@ class _EncounterEditorScreenState
   /// Substituir apagaria observação clínica — o assistente soma, não troca.
   void _appendTo(TextEditingController controller, String text) {
     final String existing = controller.text.trimRight();
-    controller.text =
-        existing.isEmpty ? text : '$existing\n\n$text';
+    controller.text = existing.isEmpty ? text : '$existing\n\n$text';
     _scheduleSave();
   }
 
@@ -833,8 +835,11 @@ class _SignedBanner extends StatelessWidget {
       ),
       child: Row(
         children: <Widget>[
-          const Icon(Icons.lock_outline_rounded,
-              size: 18, color: AppColors.success),
+          const Icon(
+            Icons.lock_outline_rounded,
+            size: 18,
+            color: AppColors.success,
+          ),
           const SizedBox(width: AppSpacing.md),
           Expanded(
             child: Column(
@@ -878,8 +883,7 @@ class _AmendmentBanner extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
           Text('Retificação', style: theme.textTheme.titleSmall),
-          if (reason != null)
-            Text(reason!, style: theme.textTheme.bodySmall),
+          if (reason != null) Text(reason!, style: theme.textTheme.bodySmall),
         ],
       ),
     );
@@ -905,16 +909,16 @@ class _Field extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Padding(
-        padding: const EdgeInsets.only(bottom: AppSpacing.lg),
-        child: AppTextField(
-          label: required ? '$label *' : label,
-          controller: controller,
-          enabled: enabled,
-          hint: hint,
-          maxLines: lines,
-          textCapitalization: TextCapitalization.sentences,
-        ),
-      );
+    padding: const EdgeInsets.only(bottom: AppSpacing.lg),
+    child: AppTextField(
+      label: required ? '$label *' : label,
+      controller: controller,
+      enabled: enabled,
+      hint: hint,
+      maxLines: lines,
+      textCapitalization: TextCapitalization.sentences,
+    ),
+  );
 }
 
 /// Sinais vitais com faixa esperada para a idade ao lado.
@@ -967,24 +971,23 @@ class _VitalsGrid extends StatelessWidget {
       String unit, {
       String? helper,
       bool decimal = false,
-    }) =>
-        Expanded(
-          child: Padding(
-            padding: const EdgeInsets.only(bottom: AppSpacing.md),
-            child: AppTextField(
-              label: label,
-              controller: c,
-              enabled: enabled,
-              helper: helper,
-              suffix: Padding(
-                padding: const EdgeInsets.all(AppSpacing.fieldSuffix),
-                child: Text(unit),
-              ),
-              keyboardType: TextInputType.numberWithOptions(decimal: decimal),
-              inputFormatters: decimal ? Masks.decimal : Masks.digitsOnly,
-            ),
+    }) => Expanded(
+      child: Padding(
+        padding: const EdgeInsets.only(bottom: AppSpacing.md),
+        child: AppTextField(
+          label: label,
+          controller: c,
+          enabled: enabled,
+          helper: helper,
+          suffix: Padding(
+            padding: const EdgeInsets.all(AppSpacing.fieldSuffix),
+            child: Text(unit),
           ),
-        );
+          keyboardType: TextInputType.numberWithOptions(decimal: decimal),
+          inputFormatters: decimal ? Masks.decimal : Masks.digitsOnly,
+        ),
+      ),
+    );
 
     return Column(
       children: <Widget>[
@@ -1075,7 +1078,9 @@ class _ExamField extends StatelessWidget {
                 children: <Widget>[
                   Checkbox(
                     value: examined,
-                    onChanged: enabled ? (bool? v) => onToggle(v ?? false) : null,
+                    onChanged: enabled
+                        ? (bool? v) => onToggle(v ?? false)
+                        : null,
                   ),
                   Expanded(
                     child: Text(
@@ -1128,10 +1133,7 @@ class _DiagnosisTile extends StatelessWidget {
       padding: const EdgeInsets.only(bottom: AppSpacing.sm),
       child: Card(
         child: ListTile(
-          title: Text(
-            diagnosis.description,
-            style: theme.textTheme.titleSmall,
-          ),
+          title: Text(diagnosis.description, style: theme.textTheme.titleSmall),
           subtitle: Padding(
             padding: const EdgeInsets.only(top: AppSpacing.xs),
             child: Wrap(
@@ -1212,8 +1214,9 @@ class _DiagnosisSheetState extends State<_DiagnosisSheet> {
             Text(
               'Código digitado manualmente — busca por base oficial de CID-10 '
               'ainda não disponível.',
-              style: theme.textTheme.bodySmall
-                  ?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
             ),
             const SizedBox(height: AppSpacing.lg),
             Row(
@@ -1259,8 +1262,7 @@ class _DiagnosisSheetState extends State<_DiagnosisSheet> {
             SegmentedButton<DiagnosisCertainty>(
               segments: DiagnosisCertainty.values
                   .map(
-                    (DiagnosisCertainty c) =>
-                        ButtonSegment<DiagnosisCertainty>(
+                    (DiagnosisCertainty c) => ButtonSegment<DiagnosisCertainty>(
                       value: c,
                       label: Text(c.label),
                     ),
@@ -1316,10 +1318,8 @@ class _DocumentActions extends ConsumerWidget {
               trailing: const Icon(Icons.chevron_right_rounded),
               onTap: () => Navigator.of(context).push(
                 MaterialPageRoute<void>(
-                  builder: (_) => DocumentEditorScreen(
-                    encounter: encounter,
-                    type: type,
-                  ),
+                  builder: (_) =>
+                      DocumentEditorScreen(encounter: encounter, type: type),
                 ),
               ),
             ),
@@ -1329,12 +1329,12 @@ class _DocumentActions extends ConsumerWidget {
   }
 
   static IconData _iconFor(ClinicalDocumentType type) => switch (type) {
-        ClinicalDocumentType.prescription => Icons.medication_outlined,
-        ClinicalDocumentType.certificate => Icons.description_outlined,
-        ClinicalDocumentType.referral => Icons.send_outlined,
-        ClinicalDocumentType.report => Icons.article_outlined,
-        ClinicalDocumentType.dischargeSummary =>
-          Icons.assignment_turned_in_outlined,
-        ClinicalDocumentType.examRequest => Icons.science_outlined,
-      };
+    ClinicalDocumentType.prescription => Icons.medication_outlined,
+    ClinicalDocumentType.certificate => Icons.description_outlined,
+    ClinicalDocumentType.referral => Icons.send_outlined,
+    ClinicalDocumentType.report => Icons.article_outlined,
+    ClinicalDocumentType.dischargeSummary =>
+      Icons.assignment_turned_in_outlined,
+    ClinicalDocumentType.examRequest => Icons.science_outlined,
+  };
 }

@@ -568,6 +568,24 @@ describe("conversas com a IA", () => {
       })
     );
   });
+
+  test("cota da consulta por voz é legível, mas não editável", async () => {
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      await setDoc(
+        doc(context.firestore(), "users", ANA, "voice_draft_usage", "2026-03-10"),
+        { count: 10, limit: 60 }
+      );
+    });
+
+    await assertSucceeds(
+      getDoc(doc(as(ANA), "users", ANA, "voice_draft_usage", "2026-03-10"))
+    );
+    await assertFails(
+      updateDoc(doc(as(ANA), "users", ANA, "voice_draft_usage", "2026-03-10"), {
+        count: 0,
+      })
+    );
+  });
 });
 
 // ===========================================================================

@@ -58,14 +58,19 @@ class _MicronutrientListScreenState
           Expanded(
             child: ListView.separated(
               padding: const EdgeInsets.fromLTRB(
-                AppSpacing.lg, 0, AppSpacing.lg, AppSpacing.lg,
+                AppSpacing.lg,
+                0,
+                AppSpacing.lg,
+                AppSpacing.lg,
               ),
               itemCount: list.length,
-              separatorBuilder: (_, __) => const SizedBox(height: AppSpacing.sm),
+              separatorBuilder: (_, __) =>
+                  const SizedBox(height: AppSpacing.sm),
               itemBuilder: (BuildContext context, int i) {
                 final MicronutrientProfile m = list[i];
                 return AppCard(
-                  onTap: () => context.push(Routes.supplementMicronutrient(m.id)),
+                  onTap: () =>
+                      context.push(Routes.supplementMicronutrient(m.id)),
                   child: Row(
                     children: <Widget>[
                       CircleAvatar(
@@ -93,9 +98,8 @@ class _MicronutrientListScreenState
                             ),
                             Text(
                               kSupplementContentPending,
-                              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                    color: AppColors.inkMuted,
-                                  ),
+                              style: Theme.of(context).textTheme.bodySmall
+                                  ?.copyWith(color: AppColors.inkMuted),
                             ),
                           ],
                         ),
@@ -134,7 +138,9 @@ class _MicronutrientDetailScreenState
       final MicronutrientProfile? m = micronutrientById(widget.micronutrientId);
       final String? uid = ref.read(currentUserProvider)?.uid;
       if (m != null && uid != null) {
-        ref.read(supplementRepositoryProvider).trackRecent(
+        ref
+            .read(supplementRepositoryProvider)
+            .trackRecent(
               professionalId: uid,
               itemType: 'micronutrient',
               itemId: m.id,
@@ -154,7 +160,9 @@ class _MicronutrientDetailScreenState
   Widget build(BuildContext context) {
     final MicronutrientProfile? m = micronutrientById(widget.micronutrientId);
     if (m == null) {
-      return const Scaffold(body: Center(child: Text('Micronutriente nao encontrado')));
+      return const Scaffold(
+        body: Center(child: Text('Micronutriente nao encontrado')),
+      );
     }
     final String? uid = ref.watch(currentUserProvider)?.uid;
     final List<String> favs =
@@ -175,7 +183,9 @@ class _MicronutrientDetailScreenState
             onPressed: uid == null
                 ? null
                 : () async {
-                    await ref.read(supplementRepositoryProvider).toggleFavorite(
+                    await ref
+                        .read(supplementRepositoryProvider)
+                        .toggleFavorite(
                           professionalId: uid,
                           micronutrientId: m.id,
                         );
@@ -218,13 +228,14 @@ class _MicronutrientDetailScreenState
                         final String text = _note.text.trim().isEmpty
                             ? 'Anotacao sobre ${m.name}'
                             : _note.text.trim();
-                        final Result<String> res =
-                            await ref.read(supplementRepositoryProvider).saveClinicalNote(
-                                  childId: 'pending_patient',
-                                  professionalId: uid,
-                                  title: 'Nota — ${m.name}',
-                                  body: text,
-                                );
+                        final Result<String> res = await ref
+                            .read(supplementRepositoryProvider)
+                            .saveClinicalNote(
+                              childId: 'pending_patient',
+                              professionalId: uid,
+                              title: 'Nota — ${m.name}',
+                              body: text,
+                            );
                         if (!context.mounted) return;
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
@@ -246,9 +257,14 @@ class _MicronutrientDetailScreenState
             (MicronutrientSection s) => Padding(
               padding: const EdgeInsets.only(bottom: AppSpacing.sm),
               child: ExpansionTile(
-                tilePadding: const EdgeInsets.symmetric(horizontal: AppSpacing.md),
+                tilePadding: const EdgeInsets.symmetric(
+                  horizontal: AppSpacing.md,
+                ),
                 childrenPadding: const EdgeInsets.fromLTRB(
-                  AppSpacing.md, 0, AppSpacing.md, AppSpacing.md,
+                  AppSpacing.md,
+                  0,
+                  AppSpacing.md,
+                  AppSpacing.md,
                 ),
                 backgroundColor: Colors.white,
                 collapsedBackgroundColor: Colors.white,
@@ -262,9 +278,7 @@ class _MicronutrientDetailScreenState
                     color: AppColors.navy,
                   ),
                 ),
-                children: <Widget>[
-                  Text(s.body),
-                ],
+                children: <Widget>[Text(s.body)],
               ),
             ),
           ),
@@ -275,7 +289,8 @@ class _MicronutrientDetailScreenState
             controller: _note,
             maxLines: 4,
             decoration: const InputDecoration(
-              hintText: 'Registro livre do pediatra (nao substitui prontuario)...',
+              hintText:
+                  'Registro livre do pediatra (nao substitui prontuario)...',
             ),
           ),
         ],

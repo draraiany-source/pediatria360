@@ -23,13 +23,17 @@ class DevMode {
   static const bool _flag = true;
 
   /// Homologação web: `flutter build web --dart-define=SKIP_AUTH=true`.
-  static const bool _skipAuthDefine =
-      bool.fromEnvironment('SKIP_AUTH', defaultValue: false);
+  static const bool _skipAuthDefine = bool.fromEnvironment(
+    'SKIP_AUTH',
+    defaultValue: false,
+  );
 
   /// Força Auth Firebase real (FASE 10 / staging Emulator).
   /// Ex.: `--dart-define=FORCE_REAL_AUTH=true`
-  static const bool _forceRealAuthDefine =
-      bool.fromEnvironment('FORCE_REAL_AUTH', defaultValue: false);
+  static const bool _forceRealAuthDefine = bool.fromEnvironment(
+    'FORCE_REAL_AUTH',
+    defaultValue: false,
+  );
 
   /// Quando `true`, desliga o convidado nesta sessão e força login real.
   static bool requireRealAuth = false;
@@ -46,18 +50,18 @@ class DevMode {
 
   /// Perfil profissional para testar UI clínica (sem Auth Firebase).
   static AppUser get user => AppUser(
-        uid: userId,
-        email: 'dev@pediatria360.local',
-        name: 'Carolina Souza',
-        role: UserRole.professional,
-        plan: UserPlan.pro,
-        createdAt: DateTime.utc(2018, 1, 1),
-        emailVerified: true,
-        onboardingDone: true,
-        professionalVerified: true,
-        specialty: 'Pediatra',
-        crm: '12345-SP',
-      );
+    uid: userId,
+    email: 'dev@pediatria360.local',
+    name: 'Carolina Souza',
+    role: UserRole.professional,
+    plan: UserPlan.pro,
+    createdAt: DateTime.utc(2018, 1, 1),
+    emailVerified: true,
+    onboardingDone: true,
+    professionalVerified: true,
+    specialty: 'Pediatra',
+    crm: '12345-SP',
+  );
 
   /// Sessão convidada (sem Firebase Auth) — dados clínicos reais não carregam.
   static bool get isGuestSession => isEnabled;

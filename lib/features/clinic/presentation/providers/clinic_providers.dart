@@ -14,15 +14,14 @@ import '../../domain/voice_consultation.dart';
 
 final Provider<ClinicRepository> clinicRepositoryProvider =
     Provider<ClinicRepository>(
-  (Ref ref) => ClinicRepository(
-    firestore: ref.watch(firestoreProvider),
-    functions: ref.watch(firebaseFunctionsProvider),
-  ),
-);
+      (Ref ref) => ClinicRepository(
+        firestore: ref.watch(firestoreProvider),
+        functions: ref.watch(firebaseFunctionsProvider),
+      ),
+    );
 
 final Provider<VoiceConsultationRepository>
-    voiceConsultationRepositoryProvider =
-    Provider<VoiceConsultationRepository>(
+voiceConsultationRepositoryProvider = Provider<VoiceConsultationRepository>(
   (Ref ref) => VoiceConsultationRepository(
     firestore: ref.watch(firestoreProvider),
     functions: ref.watch(firebaseFunctionsProvider),
@@ -32,32 +31,36 @@ final Provider<VoiceConsultationRepository>
 /// Agendamentos de hoje do profissional logado.
 final StreamProvider<List<Appointment>> todayClinicAppointmentsProvider =
     StreamProvider<List<Appointment>>((Ref ref) {
-  final String? uid = ref.watch(currentUserProvider)?.uid;
-  if (uid == null) {
-    return Stream<List<Appointment>>.value(const <Appointment>[]);
-  }
-  return ref.watch(clinicRepositoryProvider).watchTodayAppointments(uid);
-});
+      final String? uid = ref.watch(currentUserProvider)?.uid;
+      if (uid == null) {
+        return Stream<List<Appointment>>.value(const <Appointment>[]);
+      }
+      return ref.watch(clinicRepositoryProvider).watchTodayAppointments(uid);
+    });
 
 /// Agenda do dia filtrada pelas unidades do membership ativo (recepcao).
 /// Nao amplia acesso — apenas restringe a lista ja autorizada.
 final Provider<AsyncValue<List<Appointment>>>
-    unitScopedTodayClinicAppointmentsProvider =
+unitScopedTodayClinicAppointmentsProvider =
     Provider<AsyncValue<List<Appointment>>>((Ref ref) {
-  final AsyncValue<List<Appointment>> agenda =
-      ref.watch(todayClinicAppointmentsProvider);
-  final membership = ref.watch(activeClinicMembershipProvider);
-  return agenda.when(
-    data: (List<Appointment> data) => AsyncData<List<Appointment>>(
-      filterAgendaByMembershipUnits(data, membership),
-    ),
-    loading: () => const AsyncLoading<List<Appointment>>(),
-    error: (Object e, StackTrace st) => AsyncError<List<Appointment>>(e, st),
-  );
-});
+      final AsyncValue<List<Appointment>> agenda = ref.watch(
+        todayClinicAppointmentsProvider,
+      );
+      final membership = ref.watch(activeClinicMembershipProvider);
+      return agenda.when(
+        data: (List<Appointment> data) => AsyncData<List<Appointment>>(
+          filterAgendaByMembershipUnits(data, membership),
+        ),
+        loading: () => const AsyncLoading<List<Appointment>>(),
+        error: (Object e, StackTrace st) =>
+            AsyncError<List<Appointment>>(e, st),
+      );
+    });
 
-final FutureProvider<ClinicDashboardStats> clinicDashboardStatsProvider =
-    FutureProvider<ClinicDashboardStats>((Ref ref) async {
+final FutureProvider<ClinicDashboardStats>
+clinicDashboardStatsProvider = FutureProvider<ClinicDashboardStats>((
+  Ref ref,
+) async {
   final String? uid = ref.watch(currentUserProvider)?.uid;
   if (uid == null) return ClinicDashboardStats.empty();
   // Import circular avoided: unread is read lazily via notifications provider.
@@ -74,13 +77,15 @@ final FutureProvider<ClinicDashboardStats> clinicDashboardStatsProvider =
 });
 
 final StreamProviderFamily<TriageRecord?, String> triageByAppointmentProvider =
-    StreamProvider.family<TriageRecord?, String>((Ref ref, String appointmentId) {
-  return ref.watch(clinicRepositoryProvider).watchTriage(appointmentId);
-});
+    StreamProvider.family<TriageRecord?, String>((
+      Ref ref,
+      String appointmentId,
+    ) {
+      return ref.watch(clinicRepositoryProvider).watchTriage(appointmentId);
+    });
 
 final StreamProviderFamily<VoiceConsultationSession?, String>
-    voiceSessionProvider =
-    StreamProvider.family<VoiceConsultationSession?, String>(
+voiceSessionProvider = StreamProvider.family<VoiceConsultationSession?, String>(
   (Ref ref, String sessionId) {
     return ref
         .watch(voiceConsultationRepositoryProvider)

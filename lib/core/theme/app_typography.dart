@@ -6,32 +6,31 @@ class AppTypography {
   const AppTypography._();
 
   static TextStyle display(Color color) => GoogleFonts.nunito(
-        fontSize: 28,
-        height: 1.15,
-        fontWeight: FontWeight.w800,
-        letterSpacing: -0.3,
-        color: color,
-      );
+    fontSize: 28,
+    height: 1.15,
+    fontWeight: FontWeight.w800,
+    letterSpacing: -0.3,
+    color: color,
+  );
 
   static TextStyle data(
     Color color, {
     double size = 16,
     FontWeight weight = FontWeight.w600,
-  }) =>
-      GoogleFonts.nunito(
-        fontSize: size,
-        fontWeight: weight,
-        height: 1.2,
-        color: color,
-        letterSpacing: -0.1,
-      );
+  }) => GoogleFonts.nunito(
+    fontSize: size,
+    fontWeight: weight,
+    height: 1.2,
+    color: color,
+    letterSpacing: -0.1,
+  );
 
   static TextStyle eyebrow(Color color) => GoogleFonts.nunito(
-        fontSize: 11,
-        fontWeight: FontWeight.w800,
-        letterSpacing: 0.8,
-        color: color,
-      );
+    fontSize: 11,
+    fontWeight: FontWeight.w800,
+    letterSpacing: 0.8,
+    color: color,
+  );
 
   static TextTheme textTheme(Color ink, Color muted) {
     final TextTheme base = GoogleFonts.nunitoTextTheme();

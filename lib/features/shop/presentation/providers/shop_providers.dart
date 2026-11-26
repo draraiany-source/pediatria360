@@ -13,16 +13,15 @@ import '../../data/shop_repository.dart';
 
 final Provider<ShopRepository> shopRepositoryProvider =
     Provider<ShopRepository>(
-  (Ref ref) => ShopRepository(
-    firestore: ref.watch(firestoreProvider),
-    functions: ref.watch(firebaseFunctionsProvider),
-    cache: ref.watch(cacheServiceProvider),
-  ),
-);
+      (Ref ref) => ShopRepository(
+        firestore: ref.watch(firestoreProvider),
+        functions: ref.watch(firebaseFunctionsProvider),
+        cache: ref.watch(cacheServiceProvider),
+      ),
+    );
 
 final NotifierProvider<ShopFilterController, ProductCategory?>
-    shopCategoryProvider =
-    NotifierProvider<ShopFilterController, ProductCategory?>(
+shopCategoryProvider = NotifierProvider<ShopFilterController, ProductCategory?>(
   ShopFilterController.new,
 );
 
@@ -35,38 +34,36 @@ class ShopFilterController extends Notifier<ProductCategory?> {
 
 final FutureProvider<List<Product>> productsProvider =
     FutureProvider<List<Product>>((Ref ref) async {
-  final ShopRepository repository = ref.watch(shopRepositoryProvider);
-  final ProductCategory? category = ref.watch(shopCategoryProvider);
+      final ShopRepository repository = ref.watch(shopRepositoryProvider);
+      final ProductCategory? category = ref.watch(shopCategoryProvider);
 
-  final Result<List<Product>> result =
-      await repository.catalog(category: category);
+      final Result<List<Product>> result = await repository.catalog(
+        category: category,
+      );
 
-  return result.fold(
-    (List<Product> products) => products,
-    (Failure failure) {
-      final List<Product> cached = repository.cachedCatalog();
-      if (cached.isNotEmpty && category == null) return cached;
-      throw failure;
-    },
-  );
-});
+      return result.fold((List<Product> products) => products, (
+        Failure failure,
+      ) {
+        final List<Product> cached = repository.cachedCatalog();
+        if (cached.isNotEmpty && category == null) return cached;
+        throw failure;
+      });
+    });
 
 final FutureProviderFamily<Product, String> productProvider =
     FutureProvider.family<Product, String>((Ref ref, String id) async {
-  final Result<Product> result =
-      await ref.watch(shopRepositoryProvider).product(id);
+      final Result<Product> result = await ref
+          .watch(shopRepositoryProvider)
+          .product(id);
 
-  return result.fold(
-    (Product p) {
-      ref.read(analyticsProvider).logEvent(
-        AnalyticsEvent.productViewed,
-        <String, Object>{'item_id': p.id, 'value': p.priceCents / 100},
-      );
-      return p;
-    },
-    (Failure failure) => throw failure,
-  );
-});
+      return result.fold((Product p) {
+        ref.read(analyticsProvider).logEvent(
+          AnalyticsEvent.productViewed,
+          <String, Object>{'item_id': p.id, 'value': p.priceCents / 100},
+        );
+        return p;
+      }, (Failure failure) => throw failure);
+    });
 
 /// Carrinho, persistido localmente.
 ///
@@ -89,8 +86,10 @@ class CartController extends Notifier<Cart> {
       return Cart(
         items: items
             .whereType<Map<dynamic, dynamic>>()
-            .map((Map<dynamic, dynamic> m) =>
-                CartItem.fromMap(Map<String, dynamic>.from(m)))
+            .map(
+              (Map<dynamic, dynamic> m) =>
+                  CartItem.fromMap(Map<String, dynamic>.from(m)),
+            )
             .toList(growable: false),
         couponCode: saved['couponCode'] as String?,
       );
@@ -102,8 +101,9 @@ class CartController extends Notifier<Cart> {
   Future<void> _persist(Cart cart) async {
     state = cart;
     await ref.read(cacheServiceProvider).write(_key, <String, dynamic>{
-      'items':
-          cart.items.map((CartItem i) => i.toMap()).toList(growable: false),
+      'items': cart.items
+          .map((CartItem i) => i.toMap())
+          .toList(growable: false),
       'couponCode': cart.couponCode,
     });
   }
@@ -124,14 +124,13 @@ class CartController extends Notifier<Cart> {
   Future<void> setQuantity(String productId, int quantity) =>
       _persist(state.setQuantity(productId, quantity));
 
-  Future<void> remove(String productId) =>
-      _persist(state.remove(productId));
+  Future<void> remove(String productId) => _persist(state.remove(productId));
 
   Future<void> applyCoupon(String? code) => _persist(
-        state.withCoupon(
-          code == null || code.trim().isEmpty ? null : code.trim().toUpperCase(),
-        ),
-      );
+    state.withCoupon(
+      code == null || code.trim().isEmpty ? null : code.trim().toUpperCase(),
+    ),
+  );
 
   Future<void> clear() => _persist(state.clear());
 }
@@ -145,27 +144,29 @@ final NotifierProvider<CartController, Cart> cartProvider =
 /// hora depois precisa recalcular, não reaproveitar.
 final AutoDisposeFutureProvider<OrderQuote> orderQuoteProvider =
     FutureProvider.autoDispose<OrderQuote>((Ref ref) async {
-  final Cart cart = ref.watch(cartProvider);
-  if (cart.isEmpty) {
-    return const OrderQuote(
-      subtotalCents: 0,
-      shippingCents: 0,
-      discountCents: 0,
-      totalCents: 0,
-    );
-  }
+      final Cart cart = ref.watch(cartProvider);
+      if (cart.isEmpty) {
+        return const OrderQuote(
+          subtotalCents: 0,
+          shippingCents: 0,
+          discountCents: 0,
+          totalCents: 0,
+        );
+      }
 
-  final Result<OrderQuote> result =
-      await ref.watch(shopRepositoryProvider).quote(cart: cart);
+      final Result<OrderQuote> result = await ref
+          .watch(shopRepositoryProvider)
+          .quote(cart: cart);
 
-  return result.fold(
-    (OrderQuote quote) => quote,
-    (Failure failure) => throw failure,
-  );
-});
+      return result.fold(
+        (OrderQuote quote) => quote,
+        (Failure failure) => throw failure,
+      );
+    });
 
-final StreamProvider<List<Order>> ordersProvider =
-    StreamProvider<List<Order>>((Ref ref) {
+final StreamProvider<List<Order>> ordersProvider = StreamProvider<List<Order>>((
+  Ref ref,
+) {
   final String? uid = ref.watch(currentUserProvider)?.uid;
   if (uid == null) return Stream<List<Order>>.value(const <Order>[]);
   return ref.watch(shopRepositoryProvider).watchOrders(uid);
@@ -201,12 +202,13 @@ class CheckoutController extends Notifier<CheckoutState> {
       <String, Object>{'value': cart.subtotalCents / 100},
     );
 
-    final Result<OrderCreated> result =
-        await ref.read(shopRepositoryProvider).createOrder(
-              cart: cart,
-              address: address,
-              paymentMethod: paymentMethod,
-            );
+    final Result<OrderCreated> result = await ref
+        .read(shopRepositoryProvider)
+        .createOrder(
+          cart: cart,
+          address: address,
+          paymentMethod: paymentMethod,
+        );
 
     return result.fold(
       (OrderCreated created) {
@@ -214,7 +216,9 @@ class CheckoutController extends Notifier<CheckoutState> {
         // perderia o pedido inteiro se a chamada falhasse.
         ref.read(cartProvider.notifier).clear();
 
-        ref.read(analyticsProvider).logPurchase(
+        ref
+            .read(analyticsProvider)
+            .logPurchase(
               orderId: created.orderId,
               value: created.totalCents / 100,
             );
@@ -233,21 +237,21 @@ class CheckoutController extends Notifier<CheckoutState> {
 }
 
 final NotifierProvider<CheckoutController, CheckoutState>
-    checkoutControllerProvider =
-    NotifierProvider<CheckoutController, CheckoutState>(
-  CheckoutController.new,
-);
+checkoutControllerProvider =
+    NotifierProvider<CheckoutController, CheckoutState>(CheckoutController.new);
 
 /// Endereço salvo do usuário, para não redigitar a cada compra.
 final Provider<ShippingAddress?> savedAddressProvider =
     Provider<ShippingAddress?>((Ref ref) {
-  final Map<String, dynamic>? saved =
-      ref.watch(cacheServiceProvider).readMap('shop:address');
-  return saved == null ? null : ShippingAddress.fromMap(saved);
-});
+      final Map<String, dynamic>? saved = ref
+          .watch(cacheServiceProvider)
+          .readMap('shop:address');
+      return saved == null ? null : ShippingAddress.fromMap(saved);
+    });
 
-Future<void> saveAddress(WidgetRef ref, ShippingAddress address) =>
-    ref.read(cacheServiceProvider).write(
-          'shop:address',
-          jsonDecode(jsonEncode(address.toMap())) as Map<String, dynamic>,
-        );
+Future<void> saveAddress(WidgetRef ref, ShippingAddress address) => ref
+    .read(cacheServiceProvider)
+    .write(
+      'shop:address',
+      jsonDecode(jsonEncode(address.toMap())) as Map<String, dynamic>,
+    );

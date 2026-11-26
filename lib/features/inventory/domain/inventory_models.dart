@@ -20,14 +20,14 @@ enum InventoryCategory {
       );
 
   String get label => switch (this) {
-        InventoryCategory.vaccines => 'Vacinas',
-        InventoryCategory.medicines => 'Medicamentos',
-        InventoryCategory.materials => 'Materiais',
-        InventoryCategory.supplies => 'Insumos',
-        InventoryCategory.disposables => 'Descartaveis',
-        InventoryCategory.equipment => 'Equipamentos',
-        InventoryCategory.other => 'Outros',
-      };
+    InventoryCategory.vaccines => 'Vacinas',
+    InventoryCategory.medicines => 'Medicamentos',
+    InventoryCategory.materials => 'Materiais',
+    InventoryCategory.supplies => 'Insumos',
+    InventoryCategory.disposables => 'Descartaveis',
+    InventoryCategory.equipment => 'Equipamentos',
+    InventoryCategory.other => 'Outros',
+  };
 }
 
 enum InventoryUnit {
@@ -42,23 +42,24 @@ enum InventoryUnit {
   pack,
   other;
 
-  static InventoryUnit fromName(String? value) => InventoryUnit.values.firstWhere(
+  static InventoryUnit fromName(String? value) =>
+      InventoryUnit.values.firstWhere(
         (InventoryUnit u) => u.name == value,
         orElse: () => InventoryUnit.unit,
       );
 
   String get label => switch (this) {
-        InventoryUnit.ml => 'ml',
-        InventoryUnit.ampule => 'Ampola',
-        InventoryUnit.vial => 'Frasco',
-        InventoryUnit.unit => 'Unidade',
-        InventoryUnit.box => 'Caixa',
-        InventoryUnit.kg => 'kg',
-        InventoryUnit.g => 'g',
-        InventoryUnit.l => 'L',
-        InventoryUnit.pack => 'Pacote',
-        InventoryUnit.other => 'Outro',
-      };
+    InventoryUnit.ml => 'ml',
+    InventoryUnit.ampule => 'Ampola',
+    InventoryUnit.vial => 'Frasco',
+    InventoryUnit.unit => 'Unidade',
+    InventoryUnit.box => 'Caixa',
+    InventoryUnit.kg => 'kg',
+    InventoryUnit.g => 'g',
+    InventoryUnit.l => 'L',
+    InventoryUnit.pack => 'Pacote',
+    InventoryUnit.other => 'Outro',
+  };
 }
 
 enum LotExpiryStatus {
@@ -67,10 +68,10 @@ enum LotExpiryStatus {
   expired;
 
   String get label => switch (this) {
-        LotExpiryStatus.valid => 'Valido',
-        LotExpiryStatus.nearExpiry => 'Vencimento proximo',
-        LotExpiryStatus.expired => 'Vencido',
-      };
+    LotExpiryStatus.valid => 'Valido',
+    LotExpiryStatus.nearExpiry => 'Vencimento proximo',
+    LotExpiryStatus.expired => 'Vencido',
+  };
 }
 
 class InventoryExpiryConfig extends Equatable {
@@ -85,8 +86,11 @@ class InventoryExpiryConfig extends Equatable {
   final int criticalDays;
 
   @override
-  List<Object?> get props =>
-      <Object?>[nearExpiryDays, warningDays, criticalDays];
+  List<Object?> get props => <Object?>[
+    nearExpiryDays,
+    warningDays,
+    criticalDays,
+  ];
 }
 
 LotExpiryStatus lotExpiryStatus({
@@ -95,8 +99,7 @@ LotExpiryStatus lotExpiryStatus({
   InventoryExpiryConfig config = const InventoryExpiryConfig(),
 }) {
   final DateTime day = DateTime(now.year, now.month, now.day);
-  final DateTime exp =
-      DateTime(expiresAt.year, expiresAt.month, expiresAt.day);
+  final DateTime exp = DateTime(expiresAt.year, expiresAt.month, expiresAt.day);
   if (!exp.isAfter(day)) return LotExpiryStatus.expired;
   final int days = exp.difference(day).inDays;
   if (days <= config.criticalDays) return LotExpiryStatus.nearExpiry;
@@ -116,20 +119,20 @@ enum MovementType {
   return_;
 
   static MovementType fromName(String? value) => MovementType.values.firstWhere(
-        (MovementType t) => t.name == value,
-        orElse: () => MovementType.exit,
-      );
+    (MovementType t) => t.name == value,
+    orElse: () => MovementType.exit,
+  );
 
   String get label => switch (this) {
-        MovementType.entry => 'Entrada',
-        MovementType.exit => 'Saida',
-        MovementType.adjustment => 'Ajuste',
-        MovementType.loss => 'Perda',
-        MovementType.expiry => 'Vencimento',
-        MovementType.clinicalUse => 'Uso clinico',
-        MovementType.transfer => 'Transferencia',
-        MovementType.return_ => 'Devolucao',
-      };
+    MovementType.entry => 'Entrada',
+    MovementType.exit => 'Saida',
+    MovementType.adjustment => 'Ajuste',
+    MovementType.loss => 'Perda',
+    MovementType.expiry => 'Vencimento',
+    MovementType.clinicalUse => 'Uso clinico',
+    MovementType.transfer => 'Transferencia',
+    MovementType.return_ => 'Devolucao',
+  };
 
   bool get subtractsStock =>
       this == MovementType.exit ||
@@ -137,7 +140,8 @@ enum MovementType {
       this == MovementType.expiry ||
       this == MovementType.clinicalUse;
 
-  bool get addsStock => this == MovementType.entry || this == MovementType.return_;
+  bool get addsStock =>
+      this == MovementType.entry || this == MovementType.return_;
 }
 
 enum PurchaseOrderStatus {
@@ -155,13 +159,13 @@ enum PurchaseOrderStatus {
       );
 
   String get label => switch (this) {
-        PurchaseOrderStatus.requested => 'Solicitado',
-        PurchaseOrderStatus.quotation => 'Cotacao',
-        PurchaseOrderStatus.approved => 'Aprovado',
-        PurchaseOrderStatus.ordered => 'Pedido',
-        PurchaseOrderStatus.received => 'Recebido',
-        PurchaseOrderStatus.cancelled => 'Cancelado',
-      };
+    PurchaseOrderStatus.requested => 'Solicitado',
+    PurchaseOrderStatus.quotation => 'Cotacao',
+    PurchaseOrderStatus.approved => 'Aprovado',
+    PurchaseOrderStatus.ordered => 'Pedido',
+    PurchaseOrderStatus.received => 'Recebido',
+    PurchaseOrderStatus.cancelled => 'Cancelado',
+  };
 }
 
 enum InventoryItemStatus {
@@ -188,17 +192,17 @@ enum InventoryAuditAction {
   transfer;
 
   String get label => switch (this) {
-        InventoryAuditAction.itemCreated => 'Item criado',
-        InventoryAuditAction.itemUpdated => 'Item atualizado',
-        InventoryAuditAction.lotCreated => 'Lote criado',
-        InventoryAuditAction.lotUpdated => 'Lote atualizado',
-        InventoryAuditAction.movementRecorded => 'Movimentacao',
-        InventoryAuditAction.purchaseOrderCreated => 'Pedido de compra',
-        InventoryAuditAction.purchaseReceived => 'Compra recebida',
-        InventoryAuditAction.countStarted => 'Inventario iniciado',
-        InventoryAuditAction.countFinalized => 'Inventario finalizado',
-        InventoryAuditAction.transfer => 'Transferencia',
-      };
+    InventoryAuditAction.itemCreated => 'Item criado',
+    InventoryAuditAction.itemUpdated => 'Item atualizado',
+    InventoryAuditAction.lotCreated => 'Lote criado',
+    InventoryAuditAction.lotUpdated => 'Lote atualizado',
+    InventoryAuditAction.movementRecorded => 'Movimentacao',
+    InventoryAuditAction.purchaseOrderCreated => 'Pedido de compra',
+    InventoryAuditAction.purchaseReceived => 'Compra recebida',
+    InventoryAuditAction.countStarted => 'Inventario iniciado',
+    InventoryAuditAction.countFinalized => 'Inventario finalizado',
+    InventoryAuditAction.transfer => 'Transferencia',
+  };
 }
 
 /// Regras puras de quantidade (testadas sem Firestore).
@@ -220,8 +224,7 @@ class InventoryQtyRules {
       MovementType.exit ||
       MovementType.loss ||
       MovementType.expiry ||
-      MovementType.clinicalUse =>
-        currentQty - qty,
+      MovementType.clinicalUse => currentQty - qty,
       MovementType.adjustment => currentQty + qty,
       MovementType.transfer => currentQty - qty,
     };
@@ -334,25 +337,25 @@ class InventoryItem extends Equatable {
       active ? InventoryItemStatus.active : InventoryItemStatus.inactive;
 
   Map<String, dynamic> toMap() => <String, dynamic>{
-        'name': name,
-        'code': code,
-        'category': category.name,
-        'unit': unit.name,
-        'manufacturer': manufacturer,
-        if (supplierId != null) 'supplierId': supplierId,
-        'minQty': minQty,
-        'idealQty': idealQty,
-        'location': location,
-        'notes': notes,
-        'active': active,
-        'ownerId': ownerId,
-        if (clinicId != null) 'clinicId': clinicId,
-        if (defaultUnitId != null) 'defaultUnitId': defaultUnitId,
-        if (presentation != null) 'presentation': presentation,
-        if (concentration != null) 'concentration': concentration,
-        if (createdAt != null) 'createdAt': Timestamp.fromDate(createdAt!),
-        if (updatedAt != null) 'updatedAt': Timestamp.fromDate(updatedAt!),
-      };
+    'name': name,
+    'code': code,
+    'category': category.name,
+    'unit': unit.name,
+    'manufacturer': manufacturer,
+    if (supplierId != null) 'supplierId': supplierId,
+    'minQty': minQty,
+    'idealQty': idealQty,
+    'location': location,
+    'notes': notes,
+    'active': active,
+    'ownerId': ownerId,
+    if (clinicId != null) 'clinicId': clinicId,
+    if (defaultUnitId != null) 'defaultUnitId': defaultUnitId,
+    if (presentation != null) 'presentation': presentation,
+    if (concentration != null) 'concentration': concentration,
+    if (createdAt != null) 'createdAt': Timestamp.fromDate(createdAt!),
+    if (updatedAt != null) 'updatedAt': Timestamp.fromDate(updatedAt!),
+  };
 
   InventoryItem copyWith({
     String? name,
@@ -370,28 +373,27 @@ class InventoryItem extends Equatable {
     String? presentation,
     String? concentration,
     DateTime? updatedAt,
-  }) =>
-      InventoryItem(
-        id: id,
-        name: name ?? this.name,
-        code: code ?? this.code,
-        category: category ?? this.category,
-        unit: unit ?? this.unit,
-        manufacturer: manufacturer ?? this.manufacturer,
-        supplierId: supplierId ?? this.supplierId,
-        minQty: minQty ?? this.minQty,
-        idealQty: idealQty ?? this.idealQty,
-        location: location ?? this.location,
-        notes: notes ?? this.notes,
-        active: active ?? this.active,
-        ownerId: ownerId,
-        clinicId: clinicId,
-        defaultUnitId: defaultUnitId ?? this.defaultUnitId,
-        presentation: presentation ?? this.presentation,
-        concentration: concentration ?? this.concentration,
-        createdAt: createdAt,
-        updatedAt: updatedAt ?? this.updatedAt,
-      );
+  }) => InventoryItem(
+    id: id,
+    name: name ?? this.name,
+    code: code ?? this.code,
+    category: category ?? this.category,
+    unit: unit ?? this.unit,
+    manufacturer: manufacturer ?? this.manufacturer,
+    supplierId: supplierId ?? this.supplierId,
+    minQty: minQty ?? this.minQty,
+    idealQty: idealQty ?? this.idealQty,
+    location: location ?? this.location,
+    notes: notes ?? this.notes,
+    active: active ?? this.active,
+    ownerId: ownerId,
+    clinicId: clinicId,
+    defaultUnitId: defaultUnitId ?? this.defaultUnitId,
+    presentation: presentation ?? this.presentation,
+    concentration: concentration ?? this.concentration,
+    createdAt: createdAt,
+    updatedAt: updatedAt ?? this.updatedAt,
+  );
 
   @override
   List<Object?> get props => <Object?>[id, ownerId, name, category, active];
@@ -431,7 +433,8 @@ class InventoryLot extends Equatable {
       expiresAt: _readDate(data['expiresAt']),
       qty: qty,
       unitCostCents: unitCost,
-      totalCostCents: (data['totalCostCents'] as num?)?.toInt() ?? qty * unitCost,
+      totalCostCents:
+          (data['totalCostCents'] as num?)?.toInt() ?? qty * unitCost,
       supplierId: data['supplierId'] as String?,
       documentRef: data['documentRef'] as String?,
       receivedAt: _readDate(data['receivedAt']),
@@ -458,22 +461,22 @@ class InventoryLot extends Equatable {
   final String? location;
 
   Map<String, dynamic> toMap() => <String, dynamic>{
-        'itemId': itemId,
-        'lotCode': lotCode,
-        'manufacturer': manufacturer,
-        if (manufacturedAt != null)
-          'manufacturedAt': Timestamp.fromDate(manufacturedAt!),
-        'expiresAt': Timestamp.fromDate(expiresAt),
-        'qty': qty,
-        'unitCostCents': unitCostCents,
-        'totalCostCents': totalCostCents,
-        if (supplierId != null) 'supplierId': supplierId,
-        if (documentRef != null) 'documentRef': documentRef,
-        'receivedAt': Timestamp.fromDate(receivedAt),
-        'ownerId': ownerId,
-        if (unitId != null) 'unitId': unitId,
-        if (location != null) 'location': location,
-      };
+    'itemId': itemId,
+    'lotCode': lotCode,
+    'manufacturer': manufacturer,
+    if (manufacturedAt != null)
+      'manufacturedAt': Timestamp.fromDate(manufacturedAt!),
+    'expiresAt': Timestamp.fromDate(expiresAt),
+    'qty': qty,
+    'unitCostCents': unitCostCents,
+    'totalCostCents': totalCostCents,
+    if (supplierId != null) 'supplierId': supplierId,
+    if (documentRef != null) 'documentRef': documentRef,
+    'receivedAt': Timestamp.fromDate(receivedAt),
+    'ownerId': ownerId,
+    if (unitId != null) 'unitId': unitId,
+    if (location != null) 'location': location,
+  };
 
   InventoryLot copyWith({int? qty, int? totalCostCents, String? unitId}) =>
       InventoryLot(
@@ -563,23 +566,23 @@ class InventoryMovement extends Equatable {
   final String? notes;
 
   Map<String, dynamic> toMap() => <String, dynamic>{
-        'itemId': itemId,
-        if (lotId != null) 'lotId': lotId,
-        'qty': qty,
-        'type': type.name,
-        'reason': reason,
-        'at': Timestamp.fromDate(at),
-        'userId': userId,
-        'ownerId': ownerId,
-        if (patientId != null) 'patientId': patientId,
-        if (childId != null) 'childId': childId,
-        if (appointmentId != null) 'appointmentId': appointmentId,
-        if (encounterId != null) 'encounterId': encounterId,
-        if (vaccineDoseId != null) 'vaccineDoseId': vaccineDoseId,
-        if (fromUnitId != null) 'fromUnitId': fromUnitId,
-        if (toUnitId != null) 'toUnitId': toUnitId,
-        if (notes != null) 'notes': notes,
-      };
+    'itemId': itemId,
+    if (lotId != null) 'lotId': lotId,
+    'qty': qty,
+    'type': type.name,
+    'reason': reason,
+    'at': Timestamp.fromDate(at),
+    'userId': userId,
+    'ownerId': ownerId,
+    if (patientId != null) 'patientId': patientId,
+    if (childId != null) 'childId': childId,
+    if (appointmentId != null) 'appointmentId': appointmentId,
+    if (encounterId != null) 'encounterId': encounterId,
+    if (vaccineDoseId != null) 'vaccineDoseId': vaccineDoseId,
+    if (fromUnitId != null) 'fromUnitId': fromUnitId,
+    if (toUnitId != null) 'toUnitId': toUnitId,
+    if (notes != null) 'notes': notes,
+  };
 
   @override
   List<Object?> get props => <Object?>[id, itemId, lotId, type, qty, at];
@@ -629,16 +632,16 @@ class InventorySupplier extends Equatable {
   final String ownerId;
 
   Map<String, dynamic> toMap() => <String, dynamic>{
-        'name': name,
-        'documentId': documentId,
-        'contact': contact,
-        'phone': phone,
-        'email': email,
-        'address': address,
-        'productNotes': productNotes,
-        'active': active,
-        'ownerId': ownerId,
-      };
+    'name': name,
+    'documentId': documentId,
+    'contact': contact,
+    'phone': phone,
+    'email': email,
+    'address': address,
+    'productNotes': productNotes,
+    'active': active,
+    'ownerId': ownerId,
+  };
 
   @override
   List<Object?> get props => <Object?>[id, name, ownerId, active];
@@ -668,11 +671,11 @@ class PurchaseOrderLine extends Equatable {
   int get lineTotalCents => qty * unitCostCents;
 
   Map<String, dynamic> toMap() => <String, dynamic>{
-        'itemId': itemId,
-        'qty': qty,
-        'unitCostCents': unitCostCents,
-        if (itemName.isNotEmpty) 'itemName': itemName,
-      };
+    'itemId': itemId,
+    'qty': qty,
+    'unitCostCents': unitCostCents,
+    if (itemName.isNotEmpty) 'itemName': itemName,
+  };
 
   @override
   List<Object?> get props => <Object?>[itemId, qty, unitCostCents];
@@ -696,10 +699,12 @@ class PurchaseOrder extends Equatable {
     DocumentSnapshot<Map<String, dynamic>> doc,
   ) {
     final Map<String, dynamic> data = doc.data() ?? const <String, dynamic>{};
-    final List<PurchaseOrderLine> lines = (data['lines'] as List<dynamic>?)
+    final List<PurchaseOrderLine> lines =
+        (data['lines'] as List<dynamic>?)
             ?.map(
-              (dynamic e) =>
-                  PurchaseOrderLine.fromMap(Map<String, dynamic>.from(e as Map)),
+              (dynamic e) => PurchaseOrderLine.fromMap(
+                Map<String, dynamic>.from(e as Map),
+              ),
             )
             .toList(growable: false) ??
         const <PurchaseOrderLine>[];
@@ -732,34 +737,33 @@ class PurchaseOrder extends Equatable {
       lines.fold(0, (int s, PurchaseOrderLine l) => s + l.lineTotalCents);
 
   Map<String, dynamic> toMap() => <String, dynamic>{
-        'supplierId': supplierId,
-        'lines': lines.map((PurchaseOrderLine l) => l.toMap()).toList(),
-        'status': status.name,
-        if (expectedAt != null) 'expectedAt': Timestamp.fromDate(expectedAt!),
-        if (receivedAt != null) 'receivedAt': Timestamp.fromDate(receivedAt!),
-        if (payableId != null) 'payableId': payableId,
-        'documentRef': documentRef,
-        'ownerId': ownerId,
-        if (createdAt != null) 'createdAt': Timestamp.fromDate(createdAt!),
-      };
+    'supplierId': supplierId,
+    'lines': lines.map((PurchaseOrderLine l) => l.toMap()).toList(),
+    'status': status.name,
+    if (expectedAt != null) 'expectedAt': Timestamp.fromDate(expectedAt!),
+    if (receivedAt != null) 'receivedAt': Timestamp.fromDate(receivedAt!),
+    if (payableId != null) 'payableId': payableId,
+    'documentRef': documentRef,
+    'ownerId': ownerId,
+    if (createdAt != null) 'createdAt': Timestamp.fromDate(createdAt!),
+  };
 
   PurchaseOrder copyWith({
     PurchaseOrderStatus? status,
     DateTime? receivedAt,
     String? payableId,
-  }) =>
-      PurchaseOrder(
-        id: id,
-        supplierId: supplierId,
-        lines: lines,
-        status: status ?? this.status,
-        expectedAt: expectedAt,
-        receivedAt: receivedAt ?? this.receivedAt,
-        payableId: payableId ?? this.payableId,
-        documentRef: documentRef,
-        ownerId: ownerId,
-        createdAt: createdAt,
-      );
+  }) => PurchaseOrder(
+    id: id,
+    supplierId: supplierId,
+    lines: lines,
+    status: status ?? this.status,
+    expectedAt: expectedAt,
+    receivedAt: receivedAt ?? this.receivedAt,
+    payableId: payableId ?? this.payableId,
+    documentRef: documentRef,
+    ownerId: ownerId,
+    createdAt: createdAt,
+  );
 
   @override
   List<Object?> get props => <Object?>[id, supplierId, status, ownerId];
@@ -792,13 +796,13 @@ class InventoryCountLine extends Equatable {
   int get divergence => physicalQty - systemQty;
 
   Map<String, dynamic> toMap() => <String, dynamic>{
-        'itemId': itemId,
-        'lotId': lotId,
-        'systemQty': systemQty,
-        'physicalQty': physicalQty,
-        if (adjustmentMovementId != null)
-          'adjustmentMovementId': adjustmentMovementId,
-      };
+    'itemId': itemId,
+    'lotId': lotId,
+    'systemQty': systemQty,
+    'physicalQty': physicalQty,
+    if (adjustmentMovementId != null)
+      'adjustmentMovementId': adjustmentMovementId,
+  };
 
   @override
   List<Object?> get props => <Object?>[itemId, lotId, systemQty, physicalQty];
@@ -819,7 +823,8 @@ class InventoryCount extends Equatable {
     DocumentSnapshot<Map<String, dynamic>> doc,
   ) {
     final Map<String, dynamic> data = doc.data() ?? const <String, dynamic>{};
-    final List<InventoryCountLine> lines = (data['lines'] as List<dynamic>?)
+    final List<InventoryCountLine> lines =
+        (data['lines'] as List<dynamic>?)
             ?.map(
               (dynamic e) => InventoryCountLine.fromMap(
                 Map<String, dynamic>.from(e as Map),
@@ -847,13 +852,13 @@ class InventoryCount extends Equatable {
   final String status;
 
   Map<String, dynamic> toMap() => <String, dynamic>{
-        'ownerId': ownerId,
-        'lines': lines.map((InventoryCountLine l) => l.toMap()).toList(),
-        'startedAt': Timestamp.fromDate(startedAt),
-        if (finalizedAt != null) 'finalizedAt': Timestamp.fromDate(finalizedAt!),
-        'byUserId': byUserId,
-        'status': status,
-      };
+    'ownerId': ownerId,
+    'lines': lines.map((InventoryCountLine l) => l.toMap()).toList(),
+    'startedAt': Timestamp.fromDate(startedAt),
+    if (finalizedAt != null) 'finalizedAt': Timestamp.fromDate(finalizedAt!),
+    'byUserId': byUserId,
+    'status': status,
+  };
 
   @override
   List<Object?> get props => <Object?>[id, ownerId, status];
@@ -887,7 +892,8 @@ class InventoryAuditEntry extends Equatable {
       at: _readDate(data['at']),
       byUserId: (data['byUserId'] as String?) ?? '',
       metadata: Map<String, dynamic>.from(
-        (data['metadata'] as Map<String, dynamic>?) ?? const <String, dynamic>{},
+        (data['metadata'] as Map<String, dynamic>?) ??
+            const <String, dynamic>{},
       ),
     );
   }
@@ -902,14 +908,14 @@ class InventoryAuditEntry extends Equatable {
   final Map<String, dynamic> metadata;
 
   Map<String, dynamic> toMap() => <String, dynamic>{
-        'ownerId': ownerId,
-        'action': action.name,
-        'entityType': entityType,
-        'entityId': entityId,
-        'at': Timestamp.fromDate(at),
-        'byUserId': byUserId,
-        'metadata': metadata,
-      };
+    'ownerId': ownerId,
+    'action': action.name,
+    'entityType': entityType,
+    'entityId': entityId,
+    'at': Timestamp.fromDate(at),
+    'byUserId': byUserId,
+    'metadata': metadata,
+  };
 
   @override
   List<Object?> get props => <Object?>[id, action, entityId, at];
@@ -950,7 +956,9 @@ class InventoryDashboardKpis extends Equatable {
     }
 
     int belowMin = 0;
-    for (final InventoryItem item in items.where((InventoryItem i) => i.active)) {
+    for (final InventoryItem item in items.where(
+      (InventoryItem i) => i.active,
+    )) {
       final int stock = stockByItem[item.id] ?? 0;
       if (item.minQty > 0 && stock < item.minQty) belowMin += 1;
     }
@@ -1003,6 +1011,10 @@ class InventoryDashboardKpis extends Equatable {
   }
 
   @override
-  List<Object?> get props =>
-      <Object?>[totalItems, belowMin, nearExpiryLots, expiredLots];
+  List<Object?> get props => <Object?>[
+    totalItems,
+    belowMin,
+    nearExpiryLots,
+    expiredLots,
+  ];
 }

@@ -31,9 +31,7 @@ class BillingDashboardKpisComputer {
           b.status == BillingBatchStatus.withGlosa) {
         received += b.totalCents;
         if (b.sentAt != null && b.returnAt != null) {
-          daysToReceive.add(
-            b.returnAt!.difference(b.sentAt!).inHours / 24.0,
-          );
+          daysToReceive.add(b.returnAt!.difference(b.sentAt!).inHours / 24.0);
         }
       } else if (b.status == BillingBatchStatus.sent ||
           b.status == BillingBatchStatus.processing ||
@@ -50,13 +48,12 @@ class BillingDashboardKpisComputer {
       }
     }
 
-    final double glosaRate =
-        billedMonth > 0 ? glosed / billedMonth : 0.0;
+    final double glosaRate = billedMonth > 0 ? glosed / billedMonth : 0.0;
 
     final double avgDays = daysToReceive.isEmpty
         ? 0.0
         : daysToReceive.reduce((double a, double b) => a + b) /
-            daysToReceive.length;
+              daysToReceive.length;
 
     final String? topRevenue = _topPlanByAmount(
       guides,

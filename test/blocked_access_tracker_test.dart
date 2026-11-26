@@ -10,10 +10,14 @@ void main() {
       );
       final DateTime t0 = DateTime.utc(2026, 1, 1, 12, 0);
       expect(tracker.record('uid-a', t0), isFalse);
-      expect(tracker.record('uid-a', t0.add(const Duration(seconds: 30))),
-          isFalse);
-      expect(tracker.record('uid-a', t0.add(const Duration(minutes: 1))),
-          isTrue);
+      expect(
+        tracker.record('uid-a', t0.add(const Duration(seconds: 30))),
+        isFalse,
+      );
+      expect(
+        tracker.record('uid-a', t0.add(const Duration(minutes: 1))),
+        isTrue,
+      );
     });
 
     test('does not count events outside window', () {

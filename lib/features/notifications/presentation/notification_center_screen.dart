@@ -57,56 +57,56 @@ class AppNotification {
 
   /// Ícone por tipo, para a lista ser escaneável sem ler.
   IconData get icon => switch (type) {
-        'vaccineDue' => Icons.vaccines_outlined,
-        'appointmentReminder' => Icons.event_outlined,
-        'growthReminder' => Icons.show_chart_rounded,
-        'labResult' => Icons.science_outlined,
-        'openDraft' => Icons.edit_note_rounded,
-        'content' => Icons.menu_book_outlined,
-        _ => Icons.notifications_outlined,
-      };
+    'vaccineDue' => Icons.vaccines_outlined,
+    'appointmentReminder' => Icons.event_outlined,
+    'growthReminder' => Icons.show_chart_rounded,
+    'labResult' => Icons.science_outlined,
+    'openDraft' => Icons.edit_note_rounded,
+    'content' => Icons.menu_book_outlined,
+    _ => Icons.notifications_outlined,
+  };
 
   /// Asset premium por tipo (fallback via [icon]).
   String? get asset => switch (type) {
-        'vaccineDue' => AppIcons.vaccines,
-        'appointmentReminder' => AppIcons.schedule,
-        'growthReminder' => AppIcons.growth,
-        'labResult' => AppIcons.exams,
-        'openDraft' => AppIcons.evolution,
-        'content' => AppIcons.library,
-        _ => AppIcons.notification,
-      };
+    'vaccineDue' => AppIcons.vaccines,
+    'appointmentReminder' => AppIcons.schedule,
+    'growthReminder' => AppIcons.growth,
+    'labResult' => AppIcons.exams,
+    'openDraft' => AppIcons.evolution,
+    'content' => AppIcons.library,
+    _ => AppIcons.notification,
+  };
 
   Color get color => switch (type) {
-        'vaccineDue' => AppColors.moduleVaccines,
-        'appointmentReminder' => AppColors.vital,
-        'labResult' => AppColors.raspberry,
-        'openDraft' => AppColors.warning,
-        _ => AppColors.petrol,
-      };
+    'vaccineDue' => AppColors.moduleVaccines,
+    'appointmentReminder' => AppColors.vital,
+    'labResult' => AppColors.raspberry,
+    'openDraft' => AppColors.warning,
+    _ => AppColors.petrol,
+  };
 }
 
 final StreamProvider<List<AppNotification>> notificationsProvider =
     StreamProvider<List<AppNotification>>((Ref ref) {
-  final String? uid = ref.watch(currentUserProvider)?.uid;
-  if (uid == null) {
-    return Stream<List<AppNotification>>.value(const <AppNotification>[]);
-  }
+      final String? uid = ref.watch(currentUserProvider)?.uid;
+      if (uid == null) {
+        return Stream<List<AppNotification>>.value(const <AppNotification>[]);
+      }
 
-  return ref
-      .watch(firestoreProvider)
-      .collection(FirestorePaths.users)
-      .doc(uid)
-      .collection('notifications')
-      .orderBy('createdAt', descending: true)
-      .limit(100)
-      .snapshots()
-      .map(
-        (QuerySnapshot<Map<String, dynamic>> s) => s.docs
-            .map(AppNotification.fromFirestore)
-            .toList(growable: false),
-      );
-});
+      return ref
+          .watch(firestoreProvider)
+          .collection(FirestorePaths.users)
+          .doc(uid)
+          .collection('notifications')
+          .orderBy('createdAt', descending: true)
+          .limit(100)
+          .snapshots()
+          .map(
+            (QuerySnapshot<Map<String, dynamic>> s) => s.docs
+                .map(AppNotification.fromFirestore)
+                .toList(growable: false),
+          );
+    });
 
 /// Quantos avisos não lidos — alimenta o marcador na barra.
 final Provider<int> unreadCountProvider = Provider<int>(
@@ -120,13 +120,13 @@ final Provider<int> unreadCountProvider = Provider<int>(
 /// Tipos disponíveis e o estado de cada um.
 final FutureProvider<Map<String, dynamic>> notificationSettingsProvider =
     FutureProvider<Map<String, dynamic>>((Ref ref) async {
-  final HttpsCallableResult<dynamic> response = await ref
-      .watch(firebaseFunctionsProvider)
-      .httpsCallable('getNotificationSettings')
-      .call();
+      final HttpsCallableResult<dynamic> response = await ref
+          .watch(firebaseFunctionsProvider)
+          .httpsCallable('getNotificationSettings')
+          .call();
 
-  return Map<String, dynamic>.from(response.data as Map<dynamic, dynamic>);
-});
+      return Map<String, dynamic>.from(response.data as Map<dynamic, dynamic>);
+    });
 
 /// Central de avisos.
 ///
@@ -140,25 +140,26 @@ class NotificationCenterScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final AsyncValue<List<AppNotification>> async =
-        ref.watch(notificationsProvider);
+    final AsyncValue<List<AppNotification>> async = ref.watch(
+      notificationsProvider,
+    );
 
     return Scaffold(
       backgroundColor: AppColors.lightBackground,
       appBar: AppBar(
         title: const Text(
           'Mensagens',
-          style: TextStyle(
-            color: AppColors.navy,
-            fontWeight: FontWeight.w800,
-          ),
+          style: TextStyle(color: AppColors.navy, fontWeight: FontWeight.w800),
         ),
         backgroundColor: AppColors.lightBackground,
         automaticallyImplyLeading: false,
         leading: context.canPop()
             ? IconButton(
                 onPressed: () => context.pop(),
-                icon: const Icon(Icons.arrow_back_rounded, color: AppColors.brand),
+                icon: const Icon(
+                  Icons.arrow_back_rounded,
+                  color: AppColors.brand,
+                ),
                 tooltip: 'Voltar',
               )
             : null,
@@ -227,9 +228,9 @@ class _NotificationTile extends ConsumerWidget {
           .collection('notifications')
           .doc(notification.id)
           .update(<String, dynamic>{
-        'read': true,
-        'readAt': FieldValue.serverTimestamp(),
-      });
+            'read': true,
+            'readAt': FieldValue.serverTimestamp(),
+          });
     }
 
     if (context.mounted && notification.route != null) {
@@ -391,21 +392,22 @@ class _NotificationSettingsScreenState
       (_) {
         ref.invalidate(notificationSettingsProvider);
         _pending.clear();
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Preferências salvas.')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Preferências salvas.')));
       },
-      (Failure failure) => ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(failure.message)),
-      ),
+      (Failure failure) => ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(failure.message))),
     );
   }
 
   @override
   Widget build(BuildContext context) {
     final ThemeData theme = Theme.of(context);
-    final AsyncValue<Map<String, dynamic>> async =
-        ref.watch(notificationSettingsProvider);
+    final AsyncValue<Map<String, dynamic>> async = ref.watch(
+      notificationSettingsProvider,
+    );
 
     return Scaffold(
       appBar: AppBar(
@@ -442,7 +444,7 @@ class _NotificationSettingsScreenState
               (settings['types'] as List<dynamic>?) ?? const <dynamic>[];
           final Map<dynamic, dynamic> quiet =
               (settings['quietHours'] as Map<dynamic, dynamic>?) ??
-                  const <dynamic, dynamic>{};
+              const <dynamic, dynamic>{};
           final int devices = (settings['deviceCount'] as num?)?.toInt() ?? 0;
 
           return ListView(
@@ -524,10 +526,10 @@ class _NotificationSettingsScreenState
                     Text(
                       devices == 0
                           ? 'Nenhum aparelho registrado. Autorize as '
-                              'notificações para receber os avisos.'
+                                'notificações para receber os avisos.'
                           : devices == 1
-                              ? '1 aparelho recebendo avisos.'
-                              : '$devices aparelhos recebendo avisos.',
+                          ? '1 aparelho recebendo avisos.'
+                          : '$devices aparelhos recebendo avisos.',
                       style: theme.textTheme.bodySmall,
                       textAlign: TextAlign.center,
                     ),

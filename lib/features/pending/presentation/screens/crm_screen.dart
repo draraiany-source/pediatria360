@@ -28,8 +28,9 @@ class _ClinicCrmScreenState extends ConsumerState<ClinicCrmScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final AsyncValue<List<PendingItem>> async =
-        ref.watch(professionalPendingItemsProvider);
+    final AsyncValue<List<PendingItem>> async = ref.watch(
+      professionalPendingItemsProvider,
+    );
     final ThemeData theme = Theme.of(context);
 
     return Scaffold(
@@ -112,15 +113,15 @@ class _ClinicCrmScreenState extends ConsumerState<ClinicCrmScreen> {
                           item,
                           item.primaryAction,
                         ),
-                        onSecondary: item.secondaryAction ==
-                                PendingActionKind.none
+                        onSecondary:
+                            item.secondaryAction == PendingActionKind.none
                             ? null
                             : () => runPendingAction(
-                                  context,
-                                  ref,
-                                  item,
-                                  item.secondaryAction,
-                                ),
+                                context,
+                                ref,
+                                item,
+                                item.secondaryAction,
+                              ),
                         onStatus: (PendingWorkflowStatus status) =>
                             updatePendingStatus(ref, item, status),
                         canUpdateStatus: true,

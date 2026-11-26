@@ -16,8 +16,9 @@ class PayablesScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final AsyncValue<List<FinancePayable>> async =
-        ref.watch(financePayablesProvider);
+    final AsyncValue<List<FinancePayable>> async = ref.watch(
+      financePayablesProvider,
+    );
 
     return Scaffold(
       appBar: AppBar(
@@ -67,11 +68,16 @@ class PayablesScreen extends ConsumerWidget {
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: <Widget>[
-            TextField(controller: desc, decoration: const InputDecoration(labelText: 'Descricao')),
+            TextField(
+              controller: desc,
+              decoration: const InputDecoration(labelText: 'Descricao'),
+            ),
             TextField(
               controller: cents,
               keyboardType: TextInputType.number,
-              inputFormatters: <TextInputFormatter>[FilteringTextInputFormatter.digitsOnly],
+              inputFormatters: <TextInputFormatter>[
+                FilteringTextInputFormatter.digitsOnly,
+              ],
               decoration: const InputDecoration(labelText: 'Valor (centavos)'),
             ),
             DropdownButton<ExpenseCategory>(
@@ -92,8 +98,14 @@ class PayablesScreen extends ConsumerWidget {
           ],
         ),
         actions: <Widget>[
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancelar')),
-          FilledButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Salvar')),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancelar'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Salvar'),
+          ),
         ],
       ),
     );
@@ -111,10 +123,9 @@ class PayablesScreen extends ConsumerWidget {
       dueAt: DateTime.now().add(const Duration(days: 30)),
       createdAt: DateTime.now(),
     );
-    await ref.read(financeRepositoryProvider).createPayable(
-          p,
-          membership: ref.read(activeClinicMembershipProvider),
-        );
+    await ref
+        .read(financeRepositoryProvider)
+        .createPayable(p, membership: ref.read(activeClinicMembershipProvider));
     ref.invalidate(financePayablesProvider);
     desc.dispose();
     cents.dispose();
@@ -127,11 +138,9 @@ class PayablesScreen extends ConsumerWidget {
   ) async {
     final String? uid = ref.read(currentUserProvider)?.uid;
     if (uid == null) return;
-    await ref.read(financeRepositoryProvider).markPayablePaid(
-          payable: p,
-          amountCents: p.openCents,
-          byUserId: uid,
-        );
+    await ref
+        .read(financeRepositoryProvider)
+        .markPayablePaid(payable: p, amountCents: p.openCents, byUserId: uid);
     ref.invalidate(financePayablesProvider);
   }
 }

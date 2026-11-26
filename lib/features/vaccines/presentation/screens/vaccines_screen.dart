@@ -42,10 +42,12 @@ class _VaccinesScreenState extends ConsumerState<VaccinesScreen> {
   Widget build(BuildContext context) {
     final ThemeData theme = Theme.of(context);
     final Child? child = ref.watch(childProvider(widget.childId)).valueOrNull;
-    final AsyncValue<List<VaccineDose>> doses =
-        ref.watch(vaccineDosesProvider(widget.childId));
-    final VaccineSummary summary =
-        ref.watch(vaccineSummaryProvider(widget.childId));
+    final AsyncValue<List<VaccineDose>> doses = ref.watch(
+      vaccineDosesProvider(widget.childId),
+    );
+    final VaccineSummary summary = ref.watch(
+      vaccineSummaryProvider(widget.childId),
+    );
 
     if (child == null) return const Scaffold(body: LoadingState());
 
@@ -91,9 +93,7 @@ class _VaccinesScreenState extends ConsumerState<VaccinesScreen> {
                   : Icons.filter_list_off_rounded,
               color: AppColors.brand,
             ),
-            tooltip: _showApplied
-                ? 'Ocultar aplicadas'
-                : 'Mostrar aplicadas',
+            tooltip: _showApplied ? 'Ocultar aplicadas' : 'Mostrar aplicadas',
           ),
         ],
       ),
@@ -175,96 +175,102 @@ class _VaccinesScreenState extends ConsumerState<VaccinesScreen> {
           ),
           Expanded(
             child: doses.when(
-        loading: () => const SkeletonList(itemCount: 6, itemHeight: 64),
-        error: (Object e, StackTrace s) => EmptyState(
-          icon: Icons.error_outline_rounded,
-          asset: AppIcons.alert,
-          title: 'Não conseguimos carregar essas informações',
-          message: 'Tente novamente em alguns instantes.',
-          actionLabel: 'Recarregar',
-          onAction: () => ref.invalidate(vaccineDosesProvider(widget.childId)),
-        ),
-        data: (List<VaccineDose> list) {
-          if (list.isEmpty) {
-            return EmptyState(
-              icon: Icons.vaccines_outlined,
-              asset: AppIcons.vaccineCard,
-              title: 'Calendário não gerado',
-              message: 'Vamos montar o calendário do PNI a partir da data '
-                  'de nascimento de ${child.firstName}.',
-              actionLabel: 'Gerar calendário',
-              onAction: () => ref
-                  .read(childrenControllerProvider.notifier)
-                  .ensureSchedule(child),
-            );
-          }
-
-          final List<VaccineDose> visible = _showApplied
-              ? list
-              : list.where((VaccineDose d) => !d.isApplied).toList();
-
-          // Agrupa por idade prevista — é assim que a caderneta é lida, e o
-          // responsável costuma pensar "o que falta dos 4 meses?".
-          final Map<int, List<VaccineDose>> byAge = <int, List<VaccineDose>>{};
-          for (final VaccineDose dose in visible) {
-            final VaccineDoseSchedule? schedule =
-                PniCalendar.find(dose.vaccineId, dose.doseIndex);
-            if (schedule == null) continue;
-            byAge
-                .putIfAbsent(schedule.ageMonths, () => <VaccineDose>[])
-                .add(dose);
-          }
-
-          final List<int> ages = byAge.keys.toList()..sort();
-
-          return ListView(
-            padding: const EdgeInsets.fromLTRB(
-              AppSpacing.lg,
-              AppSpacing.lg,
-              AppSpacing.lg,
-              AppSpacing.xxxl,
-            ),
-            children: <Widget>[
-              ContentBounds(child: _SummaryCard(summary: summary)),
-              for (final int age in ages)
-                ContentBounds(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: <Widget>[
-                      SectionHeader(
-                        title: PniCalendar.schedule
-                            .firstWhere(
-                              (VaccineDoseSchedule s) => s.ageMonths == age,
-                            )
-                            .ageLabel,
-                      ),
-                      for (final VaccineDose dose in byAge[age]!)
-                        _DoseTile(
-                          dose: dose,
-                          schedule: PniCalendar.find(
-                            dose.vaccineId,
-                            dose.doseIndex,
-                          )!,
-                          onToggle: (bool applied) =>
-                              _toggle(context, dose, applied),
-                        ),
-                    ],
-                  ),
-                ),
-              const SizedBox(height: AppSpacing.xl),
-              ContentBounds(
-                child: Text(
-                  'Calendário Nacional de Vacinação (PNI). Confirme sempre '
-                  'na unidade de saúde: o esquema pode mudar e há situações '
-                  'que exigem avaliação individual.',
-                  style: theme.textTheme.bodySmall,
-                  textAlign: TextAlign.center,
-                ),
+              loading: () => const SkeletonList(itemCount: 6, itemHeight: 64),
+              error: (Object e, StackTrace s) => EmptyState(
+                icon: Icons.error_outline_rounded,
+                asset: AppIcons.alert,
+                title: 'Não conseguimos carregar essas informações',
+                message: 'Tente novamente em alguns instantes.',
+                actionLabel: 'Recarregar',
+                onAction: () =>
+                    ref.invalidate(vaccineDosesProvider(widget.childId)),
               ),
-            ],
-          );
-        },
-      ),
+              data: (List<VaccineDose> list) {
+                if (list.isEmpty) {
+                  return EmptyState(
+                    icon: Icons.vaccines_outlined,
+                    asset: AppIcons.vaccineCard,
+                    title: 'Calendário não gerado',
+                    message:
+                        'Vamos montar o calendário do PNI a partir da data '
+                        'de nascimento de ${child.firstName}.',
+                    actionLabel: 'Gerar calendário',
+                    onAction: () => ref
+                        .read(childrenControllerProvider.notifier)
+                        .ensureSchedule(child),
+                  );
+                }
+
+                final List<VaccineDose> visible = _showApplied
+                    ? list
+                    : list.where((VaccineDose d) => !d.isApplied).toList();
+
+                // Agrupa por idade prevista — é assim que a caderneta é lida, e o
+                // responsável costuma pensar "o que falta dos 4 meses?".
+                final Map<int, List<VaccineDose>> byAge =
+                    <int, List<VaccineDose>>{};
+                for (final VaccineDose dose in visible) {
+                  final VaccineDoseSchedule? schedule = PniCalendar.find(
+                    dose.vaccineId,
+                    dose.doseIndex,
+                  );
+                  if (schedule == null) continue;
+                  byAge
+                      .putIfAbsent(schedule.ageMonths, () => <VaccineDose>[])
+                      .add(dose);
+                }
+
+                final List<int> ages = byAge.keys.toList()..sort();
+
+                return ListView(
+                  padding: const EdgeInsets.fromLTRB(
+                    AppSpacing.lg,
+                    AppSpacing.lg,
+                    AppSpacing.lg,
+                    AppSpacing.xxxl,
+                  ),
+                  children: <Widget>[
+                    ContentBounds(child: _SummaryCard(summary: summary)),
+                    for (final int age in ages)
+                      ContentBounds(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: <Widget>[
+                            SectionHeader(
+                              title: PniCalendar.schedule
+                                  .firstWhere(
+                                    (VaccineDoseSchedule s) =>
+                                        s.ageMonths == age,
+                                  )
+                                  .ageLabel,
+                            ),
+                            for (final VaccineDose dose in byAge[age]!)
+                              _DoseTile(
+                                dose: dose,
+                                schedule: PniCalendar.find(
+                                  dose.vaccineId,
+                                  dose.doseIndex,
+                                )!,
+                                onToggle: (bool applied) =>
+                                    _toggle(context, dose, applied),
+                              ),
+                          ],
+                        ),
+                      ),
+                    const SizedBox(height: AppSpacing.xl),
+                    ContentBounds(
+                      child: Text(
+                        'Calendário Nacional de Vacinação (PNI). Confirme sempre '
+                        'na unidade de saúde: o esquema pode mudar e há situações '
+                        'que exigem avaliação individual.',
+                        style: theme.textTheme.bodySmall,
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                  ],
+                );
+              },
+            ),
           ),
         ],
       ),
@@ -277,10 +283,9 @@ class _VaccinesScreenState extends ConsumerState<VaccinesScreen> {
     bool applied,
   ) async {
     if (!applied) {
-      await ref.read(childrenControllerProvider.notifier).toggleDose(
-            dose: dose,
-            applied: false,
-          );
+      await ref
+          .read(childrenControllerProvider.notifier)
+          .toggleDose(dose: dose, applied: false);
       return;
     }
 
@@ -349,10 +354,7 @@ class _SummaryCard extends StatelessWidget {
           Row(
             children: <Widget>[
               Expanded(
-                child: Text(
-                  'Caderneta',
-                  style: theme.textTheme.titleMedium,
-                ),
+                child: Text('Caderneta', style: theme.textTheme.titleMedium),
               ),
               DataValue(
                 value: '${summary.applied}',
@@ -420,11 +422,11 @@ class _DoseTile extends StatelessWidget {
   }
 
   Color _color(ThemeData theme) => switch (_status) {
-        DoseStatus.applied => AppColors.success,
-        DoseStatus.overdue => AppColors.danger,
-        DoseStatus.upcoming => AppColors.warning,
-        DoseStatus.scheduled => theme.colorScheme.onSurfaceVariant,
-      };
+    DoseStatus.applied => AppColors.success,
+    DoseStatus.overdue => AppColors.danger,
+    DoseStatus.upcoming => AppColors.warning,
+    DoseStatus.scheduled => theme.colorScheme.onSurfaceVariant,
+  };
 
   @override
   Widget build(BuildContext context) {
@@ -448,9 +450,7 @@ class _DoseTile extends StatelessWidget {
             ),
             Expanded(
               child: Padding(
-                padding: const EdgeInsets.symmetric(
-                  vertical: AppSpacing.sm,
-                ),
+                padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
@@ -500,27 +500,27 @@ class _DoseTile extends StatelessWidget {
                           asset: dose.isApplied
                               ? AppIcons.vaccineApplied
                               : dose.isOverdue()
-                                  ? AppIcons.vaccineOverdue
-                                  : dose.isUpcoming()
-                                      ? AppIcons.vaccineNext
-                                      : AppIcons.vaccinePending,
+                              ? AppIcons.vaccineOverdue
+                              : dose.isUpcoming()
+                              ? AppIcons.vaccineNext
+                              : AppIcons.vaccinePending,
                           size: 16,
                           fallback: dose.isApplied
                               ? Icons.check_circle_outline_rounded
                               : dose.isUpcoming()
-                                  ? Icons.schedule_rounded
-                                  : Icons.event_outlined,
+                              ? Icons.schedule_rounded
+                              : Icons.event_outlined,
                           color: color,
                         ),
                         const SizedBox(width: AppSpacing.xs),
                         Text(
                           dose.isApplied
                               ? 'Aplicada em '
-                                  '${Formatters.date(dose.appliedAt!)}'
+                                    '${Formatters.date(dose.appliedAt!)}'
                               : dose.dueAt == null
-                                  ? _status.label
-                                  : '${_status.label} · '
-                                      '${Formatters.date(dose.dueAt!)}',
+                              ? _status.label
+                              : '${_status.label} · '
+                                    '${Formatters.date(dose.dueAt!)}',
                           style: theme.textTheme.bodySmall?.copyWith(
                             color: color,
                             fontWeight: FontWeight.w600,
@@ -595,22 +595,25 @@ class _ApplyDoseSheetState extends ConsumerState<_ApplyDoseSheet> {
         }
       }
     }
-    final String? lotLabel = pickedLot?.lotCode ??
+    final String? lotLabel =
+        pickedLot?.lotCode ??
         (_lot.text.trim().isEmpty ? null : _lot.text.trim());
 
-    final bool ok =
-        await ref.read(childrenControllerProvider.notifier).toggleDose(
-              dose: widget.dose,
-              applied: true,
-              appliedAt: _appliedAt,
-              lot: lotLabel,
-              clinic:
-                  _clinic.text.trim().isEmpty ? null : _clinic.text.trim(),
-            );
+    final bool ok = await ref
+        .read(childrenControllerProvider.notifier)
+        .toggleDose(
+          dose: widget.dose,
+          applied: true,
+          appliedAt: _appliedAt,
+          lot: lotLabel,
+          clinic: _clinic.text.trim().isEmpty ? null : _clinic.text.trim(),
+        );
     if (ok && pickedLot != null) {
       final String? uid = ref.read(currentUserProvider)?.uid;
       if (uid != null) {
-        await ref.read(inventoryRepositoryProvider).confirmClinicalUse(
+        await ref
+            .read(inventoryRepositoryProvider)
+            .confirmClinicalUse(
               ownerId: uid,
               lotId: pickedLot.id,
               itemId: pickedLot.itemId,
@@ -638,7 +641,8 @@ class _ApplyDoseSheetState extends ConsumerState<_ApplyDoseSheet> {
     final List<InventoryLot> allLots =
         ref.watch(inventoryLotsProvider).valueOrNull ?? const <InventoryLot>[];
     final List<InventoryItem> invItems =
-        ref.watch(inventoryItemsProvider).valueOrNull ?? const <InventoryItem>[];
+        ref.watch(inventoryItemsProvider).valueOrNull ??
+        const <InventoryItem>[];
     final Set<String> vaccineItemIds = invItems
         .where((InventoryItem i) => i.category == InventoryCategory.vaccines)
         .map((InventoryItem i) => i.id)

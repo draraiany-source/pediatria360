@@ -7,16 +7,15 @@ Product product({
   int priceCents = 1990,
   int stock = 10,
   int? compareAt,
-}) =>
-    Product(
-      id: id,
-      name: 'Produto $id',
-      description: '',
-      priceCents: priceCents,
-      category: ProductCategory.supplement,
-      stock: stock,
-      compareAtPriceCents: compareAt,
-    );
+}) => Product(
+  id: id,
+  name: 'Produto $id',
+  description: '',
+  priceCents: priceCents,
+  category: ProductCategory.supplement,
+  stock: stock,
+  compareAtPriceCents: compareAt,
+);
 
 void main() {
   group('formatação de moeda', () {
@@ -90,8 +89,9 @@ void main() {
     });
 
     test('somar além do teto não ultrapassa 20', () {
-      final Cart cart =
-          const Cart().add(product(), quantity: 15).add(product(), quantity: 15);
+      final Cart cart = const Cart()
+          .add(product(), quantity: 15)
+          .add(product(), quantity: 15);
       expect(cart.items.first.quantity, 20);
     });
 
@@ -152,27 +152,28 @@ void main() {
     Appointment build({
       required DateTime startsAt,
       AppointmentStatus status = AppointmentStatus.confirmed,
-    }) =>
-        Appointment(
-          id: 'a1',
-          patientId: 'u1',
-          professionalId: 'd1',
-          professionalName: 'Dra. Ana',
-          startsAt: startsAt,
-          durationMinutes: 30,
-          status: status,
-          createdAt: DateTime.now(),
-        );
+    }) => Appointment(
+      id: 'a1',
+      patientId: 'u1',
+      professionalId: 'd1',
+      professionalName: 'Dra. Ana',
+      startsAt: startsAt,
+      durationMinutes: 30,
+      status: status,
+      createdAt: DateTime.now(),
+    );
 
     test('sala fechada muito antes do horário', () {
-      final Appointment a =
-          build(startsAt: DateTime.now().add(const Duration(hours: 2)));
+      final Appointment a = build(
+        startsAt: DateTime.now().add(const Duration(hours: 2)),
+      );
       expect(a.canEnterRoom, isFalse);
     });
 
     test('sala abre 10 minutos antes', () {
-      final Appointment a =
-          build(startsAt: DateTime.now().add(const Duration(minutes: 5)));
+      final Appointment a = build(
+        startsAt: DateTime.now().add(const Duration(minutes: 5)),
+      );
       expect(a.canEnterRoom, isTrue);
     });
 
@@ -193,13 +194,15 @@ void main() {
 
     test('cancelamento gratuito até 24 h antes', () {
       expect(
-        build(startsAt: DateTime.now().add(const Duration(hours: 30)))
-            .canCancelFree,
+        build(
+          startsAt: DateTime.now().add(const Duration(hours: 30)),
+        ).canCancelFree,
         isTrue,
       );
       expect(
-        build(startsAt: DateTime.now().add(const Duration(hours: 5)))
-            .canCancelFree,
+        build(
+          startsAt: DateTime.now().add(const Duration(hours: 5)),
+        ).canCancelFree,
         isFalse,
       );
     });

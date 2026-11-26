@@ -22,8 +22,8 @@ class DefaultFirebaseOptions {
       TargetPlatform.windows => web,
       TargetPlatform.linux => web,
       TargetPlatform.fuchsia => throw UnsupportedError(
-          'Pediatria 360 nao tem build para Fuchsia.',
-        ),
+        'Pediatria 360 nao tem build para Fuchsia.',
+      ),
     };
   }
 

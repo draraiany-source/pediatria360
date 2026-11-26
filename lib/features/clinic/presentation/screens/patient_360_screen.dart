@@ -35,12 +35,13 @@ import '../../../clinic_org/presentation/providers/clinic_org_providers.dart';
 import '../../../../shared/domain/entities/commerce.dart';
 
 final StreamProviderFamily<List<Appointment>, String>
-    childAppointments360Provider =
-    StreamProvider.family<List<Appointment>, String>((Ref ref, String childId) {
-  return ref
-      .watch(telemedicineRepositoryProvider)
-      .watchChildAppointments(childId);
-});
+childAppointments360Provider = StreamProvider.family<List<Appointment>, String>(
+  (Ref ref, String childId) {
+    return ref
+        .watch(telemedicineRepositoryProvider)
+        .watchChildAppointments(childId);
+  },
+);
 
 /// Hub Paciente 360 — resume dados reais e aponta para módulos existentes.
 class Patient360Screen extends ConsumerStatefulWidget {
@@ -71,8 +72,7 @@ class _Patient360ScreenState extends ConsumerState<Patient360Screen>
   String _ageLabel(DateTime? birth) {
     if (birth == null) return '';
     final DateTime now = DateTime.now();
-    int months =
-        (now.year - birth.year) * 12 + (now.month - birth.month);
+    int months = (now.year - birth.year) * 12 + (now.month - birth.month);
     if (now.day < birth.day) months -= 1;
     if (months < 0) months = 0;
     if (months < 24) return '$months ${months == 1 ? 'mês' : 'meses'}';
@@ -83,14 +83,18 @@ class _Patient360ScreenState extends ConsumerState<Patient360Screen>
   @override
   Widget build(BuildContext context) {
     final String id = widget.childId;
-    final AsyncValue<List<Encounter>> encountersAsync =
-        ref.watch(patientEncountersProvider(id));
-    final AsyncValue<List<ClinicalDocument>> docsAsync =
-        ref.watch(patientDocumentsProvider(id));
-    final AsyncValue<List<LabResult>> labsAsync =
-        ref.watch(patientLabsProvider(id));
-    final AsyncValue<List<Appointment>> apptsAsync =
-        ref.watch(childAppointments360Provider(id));
+    final AsyncValue<List<Encounter>> encountersAsync = ref.watch(
+      patientEncountersProvider(id),
+    );
+    final AsyncValue<List<ClinicalDocument>> docsAsync = ref.watch(
+      patientDocumentsProvider(id),
+    );
+    final AsyncValue<List<LabResult>> labsAsync = ref.watch(
+      patientLabsProvider(id),
+    );
+    final AsyncValue<List<Appointment>> apptsAsync = ref.watch(
+      childAppointments360Provider(id),
+    );
 
     return Scaffold(
       backgroundColor: AppColors.lightBackground,
@@ -129,10 +133,13 @@ class _Patient360ScreenState extends ConsumerState<Patient360Screen>
           final List<Appointment> appts =
               apptsAsync.valueOrNull ?? const <Appointment>[];
 
-          final Encounter? latest =
-              encounters.isEmpty ? null : (List<Encounter>.from(encounters)
-                ..sort((Encounter a, Encounter b) =>
-                    b.startedAt.compareTo(a.startedAt))).first;
+          final Encounter? latest = encounters.isEmpty
+              ? null
+              : (List<Encounter>.from(encounters)..sort(
+                      (Encounter a, Encounter b) =>
+                          b.startedAt.compareTo(a.startedAt),
+                    ))
+                    .first;
 
           final String name = latest?.patientName?.isNotEmpty == true
               ? latest!.patientName!
@@ -141,8 +148,9 @@ class _Patient360ScreenState extends ConsumerState<Patient360Screen>
               latest?.anamnesis.allergies ?? const <String>[];
           final List<String> meds =
               latest?.anamnesis.currentMedications ?? const <String>[];
-          final bool hasDraft = encounters
-              .any((Encounter e) => e.status == EncounterStatus.draft);
+          final bool hasDraft = encounters.any(
+            (Encounter e) => e.status == EncounterStatus.draft,
+          );
           final Appointment? nextAppt = appts
               .where(
                 (Appointment a) =>
@@ -154,8 +162,8 @@ class _Patient360ScreenState extends ConsumerState<Patient360Screen>
                 null,
                 (Appointment? best, Appointment a) =>
                     best == null || a.startsAt.isBefore(best.startsAt)
-                        ? a
-                        : best,
+                    ? a
+                    : best,
               );
 
           final List<Patient360Event> timeline = buildPatient360Timeline(
@@ -317,13 +325,19 @@ class _Header extends StatelessWidget {
                       labelStyle: theme.textTheme.labelSmall,
                       visualDensity: VisualDensity.compact,
                     ),
-                  ...allergies.take(4).map(
+                  ...allergies
+                      .take(4)
+                      .map(
                         (String a) => Chip(
-                          avatar: const Icon(Icons.warning_amber_rounded,
-                              size: 14, color: AppColors.danger),
+                          avatar: const Icon(
+                            Icons.warning_amber_rounded,
+                            size: 14,
+                            color: AppColors.danger,
+                          ),
                           label: Text(a),
-                          backgroundColor:
-                              AppColors.danger.withValues(alpha: 0.08),
+                          backgroundColor: AppColors.danger.withValues(
+                            alpha: 0.08,
+                          ),
                           labelStyle: theme.textTheme.labelSmall,
                           visualDensity: VisualDensity.compact,
                         ),
@@ -367,9 +381,10 @@ class _SummaryTab extends ConsumerWidget {
     final ThemeData theme = Theme.of(context);
     final List<PendingItem> pending =
         ref.watch(patientPendingItemsProvider(childId)).valueOrNull ??
-            const <PendingItem>[];
-    final PendingItem? recommended =
-        ref.watch(patientRecommendedActionProvider(childId)).valueOrNull;
+        const <PendingItem>[];
+    final PendingItem? recommended = ref
+        .watch(patientRecommendedActionProvider(childId))
+        .valueOrNull;
     final List<PendingItem> clinical = pending
         .where(
           (PendingItem i) =>
@@ -478,7 +493,7 @@ class _SummaryTab extends ConsumerWidget {
                 nextAppt == null
                     ? 'Nenhum agendamento futuro.'
                     : '${fmt.format(nextAppt!.startsAt)} · '
-                        '${nextAppt!.type.label} · ${nextAppt!.professionalName}',
+                          '${nextAppt!.type.label} · ${nextAppt!.professionalName}',
                 style: theme.textTheme.bodySmall,
               ),
             ],
@@ -502,8 +517,7 @@ class _SummaryTab extends ConsumerWidget {
                 ),
                 if (allergies.isNotEmpty)
                   Text('Alergias: ${allergies.join(', ')}'),
-                if (meds.isNotEmpty)
-                  Text('Medicações: ${meds.join(', ')}'),
+                if (meds.isNotEmpty) Text('Medicações: ${meds.join(', ')}'),
               ],
             ),
           ),
@@ -537,10 +551,7 @@ class _SummaryTab extends ConsumerWidget {
                   ),
                 ),
                 Text(recommended.title),
-                Text(
-                  recommended.subtitle,
-                  style: theme.textTheme.bodySmall,
-                ),
+                Text(recommended.subtitle, style: theme.textTheme.bodySmall),
                 const SizedBox(height: AppSpacing.sm),
                 FilledButton.tonal(
                   onPressed: () => runPendingAction(
@@ -599,15 +610,15 @@ class _MiniKpi extends StatelessWidget {
           Text(
             value,
             style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                  color: color,
-                  fontWeight: FontWeight.w800,
-                ),
+              color: color,
+              fontWeight: FontWeight.w800,
+            ),
           ),
           Text(
             label,
-            style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                  color: AppColors.inkMuted,
-                ),
+            style: Theme.of(
+              context,
+            ).textTheme.labelSmall?.copyWith(color: AppColors.inkMuted),
           ),
         ],
       ),
@@ -633,11 +644,11 @@ class _TimelineTab extends StatelessWidget {
   final void Function(String encounterId) onOpenEncounter;
 
   IconData _icon(Patient360EventKind k) => switch (k) {
-        Patient360EventKind.encounter => Icons.medical_services_outlined,
-        Patient360EventKind.appointment => Icons.event_outlined,
-        Patient360EventKind.document => Icons.description_outlined,
-        Patient360EventKind.lab => Icons.science_outlined,
-      };
+    Patient360EventKind.encounter => Icons.medical_services_outlined,
+    Patient360EventKind.appointment => Icons.event_outlined,
+    Patient360EventKind.document => Icons.description_outlined,
+    Patient360EventKind.lab => Icons.science_outlined,
+  };
 
   @override
   Widget build(BuildContext context) {
@@ -692,9 +703,9 @@ class _TimelineTab extends StatelessWidget {
                     Text(
                       e.title,
                       style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                            fontWeight: FontWeight.w800,
-                            color: AppColors.navy,
-                          ),
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.navy,
+                      ),
                     ),
                     Text(
                       e.subtitle,
@@ -703,8 +714,8 @@ class _TimelineTab extends StatelessWidget {
                     Text(
                       fmt.format(e.at),
                       style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                            color: AppColors.inkMuted,
-                          ),
+                        color: AppColors.inkMuted,
+                      ),
                     ),
                   ],
                 ),
@@ -765,9 +776,8 @@ class _ModulesTab extends StatelessWidget {
           asset: AppIcons.microphone,
           color: AppColors.navy,
           wide: true,
-          onTap: () => context.push(
-            '${Routes.clinicVoicePath}?childId=$childId',
-          ),
+          onTap: () =>
+              context.push('${Routes.clinicVoicePath}?childId=$childId'),
         ),
         const SizedBox(height: AppSpacing.sm),
         QuickAccessCard(
@@ -808,10 +818,12 @@ class _PatientFinanceSummary extends ConsumerWidget {
     );
     if (!canSee) return const SizedBox.shrink();
 
-    final AsyncValue<List<FinanceReceivable>> recvAsync =
-        ref.watch(patientFinanceReceivablesProvider(childId));
-    final AsyncValue<List<FinanceReceipt>> receiptsAsync =
-        ref.watch(financeReceiptsProvider);
+    final AsyncValue<List<FinanceReceivable>> recvAsync = ref.watch(
+      patientFinanceReceivablesProvider(childId),
+    );
+    final AsyncValue<List<FinanceReceipt>> receiptsAsync = ref.watch(
+      financeReceiptsProvider,
+    );
 
     return recvAsync.when(
       loading: () => const SizedBox.shrink(),
@@ -847,9 +859,9 @@ class _PatientFinanceSummary extends ConsumerWidget {
                     Text(
                       'Financeiro',
                       style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                            fontWeight: FontWeight.w800,
-                            color: AppColors.navy,
-                          ),
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.navy,
+                      ),
                     ),
                     TextButton(
                       onPressed: () => context.push(Routes.financePath),
@@ -864,7 +876,9 @@ class _PatientFinanceSummary extends ConsumerWidget {
                     'Ultimas cobrancas',
                     style: Theme.of(context).textTheme.labelLarge,
                   ),
-                  ...recent.take(3).map(
+                  ...recent
+                      .take(3)
+                      .map(
                         (FinanceReceivable r) => Text(
                           '${r.description} · ${formatCents(r.totalCents)} · '
                           '${r.effectiveStatus(now).label}',
@@ -907,11 +921,12 @@ class _PatientBillingSummary extends ConsumerWidget {
     );
     if (!canSee) return const SizedBox.shrink();
 
-    final AsyncValue<List<PatientInsurance>> insAsync =
-        ref.watch(childBillingInsuranceProvider(childId));
+    final AsyncValue<List<PatientInsurance>> insAsync = ref.watch(
+      childBillingInsuranceProvider(childId),
+    );
     final List<InsuranceAuthorization> auths =
         ref.watch(billingAuthorizationsProvider).valueOrNull ??
-            const <InsuranceAuthorization>[];
+        const <InsuranceAuthorization>[];
     final List<BillingGuide> guides =
         ref.watch(billingGuidesProvider).valueOrNull ?? const <BillingGuide>[];
     final List<BillingGlosa> glosas =
@@ -953,9 +968,9 @@ class _PatientBillingSummary extends ConsumerWidget {
                     Text(
                       'Convenio / faturamento',
                       style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                            fontWeight: FontWeight.w800,
-                            color: AppColors.navy,
-                          ),
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.navy,
+                      ),
                     ),
                     TextButton(
                       onPressed: () => context.push(

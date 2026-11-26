@@ -33,10 +33,12 @@ class GlassCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final bool isDark = Theme.of(context).brightness == Brightness.dark;
-    final Color fill =
-        isDark ? AppColors.glassDarkFill : AppColors.glassLightFill;
-    final Color border =
-        isDark ? AppColors.glassDarkBorder : AppColors.glassLightBorder;
+    final Color fill = isDark
+        ? AppColors.glassDarkFill
+        : AppColors.glassLightFill;
+    final Color border = isDark
+        ? AppColors.glassDarkBorder
+        : AppColors.glassLightBorder;
 
     return ClipRRect(
       borderRadius: borderRadius,
@@ -84,7 +86,9 @@ class AmbientBackground extends StatelessWidget {
             top: -120,
             right: -80,
             child: _Halo(
-              color: AppColors.petrolSoft.withValues(alpha: isDark ? 0.28 : 0.35),
+              color: AppColors.petrolSoft.withValues(
+                alpha: isDark ? 0.28 : 0.35,
+              ),
               size: 320,
             ),
           ),
@@ -92,7 +96,9 @@ class AmbientBackground extends StatelessWidget {
             bottom: -140,
             left: -100,
             child: _Halo(
-              color: AppColors.raspberry.withValues(alpha: isDark ? 0.18 : 0.22),
+              color: AppColors.raspberry.withValues(
+                alpha: isDark ? 0.18 : 0.22,
+              ),
               size: 360,
             ),
           ),

@@ -15,13 +15,12 @@ class BiPeriod {
     required DateTime now,
     DateTime? customStart,
     DateTime? customEnd,
-  }) =>
-      FinancePeriod.resolve(
-        filter: filter,
-        now: now,
-        customStart: customStart,
-        customEnd: customEnd,
-      );
+  }) => FinancePeriod.resolve(
+    filter: filter,
+    now: now,
+    customStart: customStart,
+    customEnd: customEnd,
+  );
 }
 
 enum BiKpiCategory {
@@ -83,16 +82,16 @@ class BiAgendaStats {
   });
 
   factory BiAgendaStats.empty({String? rescheduleNote}) => BiAgendaStats(
-        totalInPeriod: 0,
-        completed: 0,
-        noShow: 0,
-        cancelled: 0,
-        rescheduled: 0,
-        attendanceRate: 0,
-        occupancyRate: 0,
-        peakHoursHistogram: const <int, int>{},
-        rescheduleNote: rescheduleNote,
-      );
+    totalInPeriod: 0,
+    completed: 0,
+    noShow: 0,
+    cancelled: 0,
+    rescheduled: 0,
+    attendanceRate: 0,
+    occupancyRate: 0,
+    peakHoursHistogram: const <int, int>{},
+    rescheduleNote: rescheduleNote,
+  );
 
   final int totalInPeriod;
   final int completed;
@@ -115,12 +114,12 @@ class BiReceptionStats {
   });
 
   factory BiReceptionStats.empty() => const BiReceptionStats(
-        waitingNow: 0,
-        inTriage: 0,
-        avgWaitMinutes: 0,
-        delayedArrivals: 0,
-        arrivedToday: 0,
-      );
+    waitingNow: 0,
+    inTriage: 0,
+    avgWaitMinutes: 0,
+    delayedArrivals: 0,
+    arrivedToday: 0,
+  );
 
   final int waitingNow;
   final int inTriage;
@@ -138,11 +137,11 @@ class BiAssistentialStats {
   });
 
   factory BiAssistentialStats.empty() => const BiAssistentialStats(
-        byEncounterType: <String, int>{},
-        signedEncounters: 0,
-        draftEncounters: 0,
-        returnsOverdue: 0,
-      );
+    byEncounterType: <String, int>{},
+    signedEncounters: 0,
+    draftEncounters: 0,
+    returnsOverdue: 0,
+  );
 
   final Map<String, int> byEncounterType;
   final int signedEncounters;
@@ -159,11 +158,11 @@ class BiClinicalLite {
   });
 
   factory BiClinicalLite.empty() => const BiClinicalLite(
-        openDrafts: 0,
-        pendingExams: 0,
-        vaccinesOverdue: 0,
-        openPendingsTotal: 0,
-      );
+    openDrafts: 0,
+    pendingExams: 0,
+    vaccinesOverdue: 0,
+    openPendingsTotal: 0,
+  );
 
   final int openDrafts;
   final int pendingExams;
@@ -183,10 +182,10 @@ class BiGrowthCohort {
   });
 
   factory BiGrowthCohort.empty() => const BiGrowthCohort(
-        assessmentCount: 0,
-        byClassification: <String, int>{},
-        distinctChildren: 0,
-      );
+    assessmentCount: 0,
+    byClassification: <String, int>{},
+    distinctChildren: 0,
+  );
 
   final int assessmentCount;
   final Map<String, int> byClassification;
@@ -208,13 +207,13 @@ class BiDevelopmentCohort {
   });
 
   factory BiDevelopmentCohort.empty() => const BiDevelopmentCohort(
-        recordCount: 0,
-        motor: 0,
-        language: 0,
-        social: 0,
-        cognitive: 0,
-        needsFollowUp: 0,
-      );
+    recordCount: 0,
+    motor: 0,
+    language: 0,
+    social: 0,
+    cognitive: 0,
+    needsFollowUp: 0,
+  );
 
   final int recordCount;
   final int motor;
@@ -253,14 +252,14 @@ class BiExecutiveSnapshot {
   });
 
   factory BiExecutiveSnapshot.empty() => BiExecutiveSnapshot(
-        agenda: BiAgendaStats.empty(),
-        reception: BiReceptionStats.empty(),
-        assistential: BiAssistentialStats.empty(),
-        clinical: BiClinicalLite.empty(),
-        growth: BiGrowthCohort.empty(),
-        development: BiDevelopmentCohort.empty(),
-        neuroped: const BiNeuropedStub(),
-      );
+    agenda: BiAgendaStats.empty(),
+    reception: BiReceptionStats.empty(),
+    assistential: BiAssistentialStats.empty(),
+    clinical: BiClinicalLite.empty(),
+    growth: BiGrowthCohort.empty(),
+    development: BiDevelopmentCohort.empty(),
+    neuroped: const BiNeuropedStub(),
+  );
 
   final BiAgendaStats agenda;
   final BiReceptionStats reception;

@@ -10,14 +10,25 @@ const String kSupplementClinicalDisclaimer =
     'final sao de responsabilidade do profissional assistente.';
 
 class MicronutrientSection {
-  const MicronutrientSection({required this.id, required this.title, this.body = kSupplementContentPending});
+  const MicronutrientSection({
+    required this.id,
+    required this.title,
+    this.body = kSupplementContentPending,
+  });
   final String id;
   final String title;
   final String body;
 }
 
 class MicronutrientProfile {
-  const MicronutrientProfile({required this.id, required this.name, required this.shortCode, required this.sections, this.relatedExamIds = const <String>[], this.favoriteDefault = false});
+  const MicronutrientProfile({
+    required this.id,
+    required this.name,
+    required this.shortCode,
+    required this.sections,
+    this.relatedExamIds = const <String>[],
+    this.favoriteDefault = false,
+  });
   final String id;
   final String name;
   final String shortCode;
@@ -27,7 +38,12 @@ class MicronutrientProfile {
 }
 
 class LabExamDefinition {
-  const LabExamDefinition({required this.id, required this.name, this.defaultUnit = '', this.relatedMicronutrientIds = const <String>[]});
+  const LabExamDefinition({
+    required this.id,
+    required this.name,
+    this.defaultUnit = '',
+    this.relatedMicronutrientIds = const <String>[],
+  });
   final String id;
   final String name;
   final String defaultUnit;
@@ -35,7 +51,12 @@ class LabExamDefinition {
 }
 
 class SupplementProtocolCard {
-  const SupplementProtocolCard({required this.id, required this.title, this.nutrientsToConsider = const <String>[], this.summary = kSupplementContentPending});
+  const SupplementProtocolCard({
+    required this.id,
+    required this.title,
+    this.nutrientsToConsider = const <String>[],
+    this.summary = kSupplementContentPending,
+  });
   final String id;
   final String title;
   final List<String> nutrientsToConsider;
@@ -43,7 +64,15 @@ class SupplementProtocolCard {
 }
 
 class FoodSourceCard {
-  const FoodSourceCard({required this.id, required this.foodName, required this.nutrientId, this.portion = kSupplementContentPending, this.notes = kSupplementContentPending, this.group = 'Geral', this.tags = const <String>[]});
+  const FoodSourceCard({
+    required this.id,
+    required this.foodName,
+    required this.nutrientId,
+    this.portion = kSupplementContentPending,
+    this.notes = kSupplementContentPending,
+    this.group = 'Geral',
+    this.tags = const <String>[],
+  });
   final String id;
   final String foodName;
   final String nutrientId;
@@ -73,22 +102,102 @@ const List<MicronutrientSection> _defaultSections = <MicronutrientSection>[
 ];
 
 const List<MicronutrientProfile> kMicronutrientCatalog = <MicronutrientProfile>[
-  MicronutrientProfile(id: 'iron', name: 'Ferro', shortCode: 'Fe', sections: _defaultSections),
-  MicronutrientProfile(id: 'b12', name: 'Vitamina B12', shortCode: 'B12', sections: _defaultSections),
-  MicronutrientProfile(id: 'folate', name: 'Acido folico / B9', shortCode: 'B9', sections: _defaultSections),
-  MicronutrientProfile(id: 'zinc', name: 'Zinco', shortCode: 'Zn', sections: _defaultSections),
-  MicronutrientProfile(id: 'b6', name: 'Vitamina B6', shortCode: 'B6', sections: _defaultSections),
-  MicronutrientProfile(id: 'vit_a', name: 'Vitamina A', shortCode: 'A', sections: _defaultSections),
-  MicronutrientProfile(id: 'vit_d', name: 'Vitamina D', shortCode: 'D', sections: _defaultSections),
-  MicronutrientProfile(id: 'vit_e', name: 'Vitamina E', shortCode: 'E', sections: _defaultSections),
-  MicronutrientProfile(id: 'vit_k', name: 'Vitamina K', shortCode: 'K', sections: _defaultSections),
-  MicronutrientProfile(id: 'vit_c', name: 'Vitamina C', shortCode: 'C', sections: _defaultSections),
-  MicronutrientProfile(id: 'magnesium', name: 'Magnesio', shortCode: 'Mg', sections: _defaultSections),
-  MicronutrientProfile(id: 'omega3', name: 'Omega 3', shortCode: 'n-3', sections: _defaultSections),
-  MicronutrientProfile(id: 'calcium', name: 'Calcio', shortCode: 'Ca', sections: _defaultSections),
-  MicronutrientProfile(id: 'complex_b', name: 'Complexo B', shortCode: 'B', sections: _defaultSections),
-  MicronutrientProfile(id: 'selenium', name: 'Selenio', shortCode: 'Se', sections: _defaultSections),
-  MicronutrientProfile(id: 'copper', name: 'Cobre', shortCode: 'Cu', sections: _defaultSections),
+  MicronutrientProfile(
+    id: 'iron',
+    name: 'Ferro',
+    shortCode: 'Fe',
+    sections: _defaultSections,
+  ),
+  MicronutrientProfile(
+    id: 'b12',
+    name: 'Vitamina B12',
+    shortCode: 'B12',
+    sections: _defaultSections,
+  ),
+  MicronutrientProfile(
+    id: 'folate',
+    name: 'Acido folico / B9',
+    shortCode: 'B9',
+    sections: _defaultSections,
+  ),
+  MicronutrientProfile(
+    id: 'zinc',
+    name: 'Zinco',
+    shortCode: 'Zn',
+    sections: _defaultSections,
+  ),
+  MicronutrientProfile(
+    id: 'b6',
+    name: 'Vitamina B6',
+    shortCode: 'B6',
+    sections: _defaultSections,
+  ),
+  MicronutrientProfile(
+    id: 'vit_a',
+    name: 'Vitamina A',
+    shortCode: 'A',
+    sections: _defaultSections,
+  ),
+  MicronutrientProfile(
+    id: 'vit_d',
+    name: 'Vitamina D',
+    shortCode: 'D',
+    sections: _defaultSections,
+  ),
+  MicronutrientProfile(
+    id: 'vit_e',
+    name: 'Vitamina E',
+    shortCode: 'E',
+    sections: _defaultSections,
+  ),
+  MicronutrientProfile(
+    id: 'vit_k',
+    name: 'Vitamina K',
+    shortCode: 'K',
+    sections: _defaultSections,
+  ),
+  MicronutrientProfile(
+    id: 'vit_c',
+    name: 'Vitamina C',
+    shortCode: 'C',
+    sections: _defaultSections,
+  ),
+  MicronutrientProfile(
+    id: 'magnesium',
+    name: 'Magnesio',
+    shortCode: 'Mg',
+    sections: _defaultSections,
+  ),
+  MicronutrientProfile(
+    id: 'omega3',
+    name: 'Omega 3',
+    shortCode: 'n-3',
+    sections: _defaultSections,
+  ),
+  MicronutrientProfile(
+    id: 'calcium',
+    name: 'Calcio',
+    shortCode: 'Ca',
+    sections: _defaultSections,
+  ),
+  MicronutrientProfile(
+    id: 'complex_b',
+    name: 'Complexo B',
+    shortCode: 'B',
+    sections: _defaultSections,
+  ),
+  MicronutrientProfile(
+    id: 'selenium',
+    name: 'Selenio',
+    shortCode: 'Se',
+    sections: _defaultSections,
+  ),
+  MicronutrientProfile(
+    id: 'copper',
+    name: 'Cobre',
+    shortCode: 'Cu',
+    sections: _defaultSections,
+  ),
 ];
 
 const List<LabExamDefinition> kLabExamCatalog = <LabExamDefinition>[
@@ -121,32 +230,58 @@ const List<LabExamDefinition> kLabExamCatalog = <LabExamDefinition>[
   LabExamDefinition(id: 'ft4', name: 'T4 livre'),
 ];
 
-const List<SupplementProtocolCard> kSupplementProtocols = <SupplementProtocolCard>[
-  SupplementProtocolCard(id: 'nb', title: 'Recem-nascido'),
-  SupplementProtocolCard(id: 'preterm', title: 'Prematuro'),
-  SupplementProtocolCard(id: 'infant', title: 'Lactente'),
-  SupplementProtocolCard(id: 'child', title: 'Crianca'),
-  SupplementProtocolCard(id: 'teen', title: 'Adolescente'),
-  SupplementProtocolCard(id: 'anemia', title: 'Anemia'),
-  SupplementProtocolCard(id: 'selective', title: 'Seletividade alimentar'),
-  SupplementProtocolCard(id: 'faltering', title: 'Baixo ganho ponderal'),
-  SupplementProtocolCard(id: 'restrictive', title: 'Dietas restritivas'),
-  SupplementProtocolCard(id: 'vegan', title: 'Vegetarianismo/veganismo'),
-  SupplementProtocolCard(id: 'malabsorb', title: 'Ma absorcao'),
-  SupplementProtocolCard(id: 'diarrhea', title: 'Diarreia cronica'),
-  SupplementProtocolCard(id: 'sun', title: 'Baixa exposicao solar'),
-  SupplementProtocolCard(id: 'obesity', title: 'Obesidade'),
-  SupplementProtocolCard(id: 'asd', title: 'TEA'),
-  SupplementProtocolCard(id: 'adhd', title: 'TDAH'),
-  SupplementProtocolCard(id: 'chronic', title: 'Doencas cronicas'),
-];
+const List<SupplementProtocolCard> kSupplementProtocols =
+    <SupplementProtocolCard>[
+      SupplementProtocolCard(id: 'nb', title: 'Recem-nascido'),
+      SupplementProtocolCard(id: 'preterm', title: 'Prematuro'),
+      SupplementProtocolCard(id: 'infant', title: 'Lactente'),
+      SupplementProtocolCard(id: 'child', title: 'Crianca'),
+      SupplementProtocolCard(id: 'teen', title: 'Adolescente'),
+      SupplementProtocolCard(id: 'anemia', title: 'Anemia'),
+      SupplementProtocolCard(id: 'selective', title: 'Seletividade alimentar'),
+      SupplementProtocolCard(id: 'faltering', title: 'Baixo ganho ponderal'),
+      SupplementProtocolCard(id: 'restrictive', title: 'Dietas restritivas'),
+      SupplementProtocolCard(id: 'vegan', title: 'Vegetarianismo/veganismo'),
+      SupplementProtocolCard(id: 'malabsorb', title: 'Ma absorcao'),
+      SupplementProtocolCard(id: 'diarrhea', title: 'Diarreia cronica'),
+      SupplementProtocolCard(id: 'sun', title: 'Baixa exposicao solar'),
+      SupplementProtocolCard(id: 'obesity', title: 'Obesidade'),
+      SupplementProtocolCard(id: 'asd', title: 'TEA'),
+      SupplementProtocolCard(id: 'adhd', title: 'TDAH'),
+      SupplementProtocolCard(id: 'chronic', title: 'Doencas cronicas'),
+    ];
 
 const List<FoodSourceCard> kFoodSourceCatalog = <FoodSourceCard>[
-  FoodSourceCard(id: 'f_iron_1', foodName: 'Alimentos fonte de ferro (revisao medica)', nutrientId: 'iron', tags: <String>['geral']),
-  FoodSourceCard(id: 'f_b12_1', foodName: 'Alimentos fonte de B12 (revisao medica)', nutrientId: 'b12', tags: <String>['geral']),
-  FoodSourceCard(id: 'f_ca_1', foodName: 'Alimentos fonte de calcio (revisao medica)', nutrientId: 'calcium', tags: <String>['geral']),
-  FoodSourceCard(id: 'f_zn_1', foodName: 'Alimentos fonte de zinco (revisao medica)', nutrientId: 'zinc', tags: <String>['geral']),
-  FoodSourceCard(id: 'f_d_1', foodName: 'Fontes dieteticas relacionadas a vitamina D (revisao)', nutrientId: 'vit_d', tags: <String>['geral']),
+  FoodSourceCard(
+    id: 'f_iron_1',
+    foodName: 'Alimentos fonte de ferro (revisao medica)',
+    nutrientId: 'iron',
+    tags: <String>['geral'],
+  ),
+  FoodSourceCard(
+    id: 'f_b12_1',
+    foodName: 'Alimentos fonte de B12 (revisao medica)',
+    nutrientId: 'b12',
+    tags: <String>['geral'],
+  ),
+  FoodSourceCard(
+    id: 'f_ca_1',
+    foodName: 'Alimentos fonte de calcio (revisao medica)',
+    nutrientId: 'calcium',
+    tags: <String>['geral'],
+  ),
+  FoodSourceCard(
+    id: 'f_zn_1',
+    foodName: 'Alimentos fonte de zinco (revisao medica)',
+    nutrientId: 'zinc',
+    tags: <String>['geral'],
+  ),
+  FoodSourceCard(
+    id: 'f_d_1',
+    foodName: 'Fontes dieteticas relacionadas a vitamina D (revisao)',
+    nutrientId: 'vit_d',
+    tags: <String>['geral'],
+  ),
 ];
 
 MicronutrientProfile? micronutrientById(String id) {

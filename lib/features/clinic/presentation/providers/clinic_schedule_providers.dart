@@ -18,8 +18,9 @@ final clinicRoomsProvider = StreamProvider<List<ClinicRoom>>((Ref ref) {
   return ref.watch(clinicScheduleRepositoryProvider).watchRooms(clinicId);
 });
 
-final clinicScheduleBlocksProvider =
-    StreamProvider<List<ScheduleBlock>>((Ref ref) {
+final clinicScheduleBlocksProvider = StreamProvider<List<ScheduleBlock>>((
+  Ref ref,
+) {
   final String? clinicId = ref.watch(activeClinicIdProvider).valueOrNull;
   if (clinicId == null || clinicId.isEmpty) {
     return Stream<List<ScheduleBlock>>.value(const <ScheduleBlock>[]);

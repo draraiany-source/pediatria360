@@ -3,17 +3,17 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../services/sync_service.dart';
 import 'core_providers.dart';
 
-final Provider<SyncService> syncServiceProvider = Provider<SyncService>(
-  (Ref ref) {
-    final SyncService service = SyncService(
-      database: ref.watch(localDatabaseProvider),
-      firestore: ref.watch(firestoreProvider),
-      connectivity: ref.watch(connectivityServiceProvider),
-    );
-    ref.onDispose(service.dispose);
-    return service;
-  },
-);
+final Provider<SyncService> syncServiceProvider = Provider<SyncService>((
+  Ref ref,
+) {
+  final SyncService service = SyncService(
+    database: ref.watch(localDatabaseProvider),
+    firestore: ref.watch(firestoreProvider),
+    connectivity: ref.watch(connectivityServiceProvider),
+  );
+  ref.onDispose(service.dispose);
+  return service;
+});
 
 /// Estado da sincronização, como fluxo.
 ///
@@ -21,8 +21,8 @@ final Provider<SyncService> syncServiceProvider = Provider<SyncService>(
 /// dado de saúde, "achei que tinha salvado" é um resultado ruim.
 final StreamProvider<SyncStatus> syncStatusProvider =
     StreamProvider<SyncStatus>(
-  (Ref ref) => ref.watch(syncServiceProvider).onStatusChange,
-);
+      (Ref ref) => ref.watch(syncServiceProvider).onStatusChange,
+    );
 
 /// Quantas alterações aguardam envio.
 ///

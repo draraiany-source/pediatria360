@@ -35,9 +35,9 @@ class SupplementProtocolsScreen extends StatelessWidget {
           const SizedBox(height: AppSpacing.md),
           Text(
             'Protocolos nao prescrevem automaticamente. Use como checklist clinico.',
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: AppColors.inkMuted,
-                ),
+            style: Theme.of(
+              context,
+            ).textTheme.bodySmall?.copyWith(color: AppColors.inkMuted),
           ),
           const SizedBox(height: AppSpacing.md),
           ...kSupplementProtocols.map((SupplementProtocolCard p) {
@@ -96,8 +96,10 @@ class SupplementProtocolsScreen extends StatelessWidget {
                 },
                 child: Row(
                   children: <Widget>[
-                    const Icon(Icons.playlist_add_check_rounded,
-                        color: AppColors.moduleLibrary),
+                    const Icon(
+                      Icons.playlist_add_check_rounded,
+                      color: AppColors.moduleLibrary,
+                    ),
                     const SizedBox(width: AppSpacing.md),
                     Expanded(
                       child: Text(
@@ -133,8 +135,11 @@ class _FoodLibraryScreenState extends State<FoodLibraryScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final List<FoodSourceCard> foods = kFoodSourceCatalog.where((FoodSourceCard f) {
-      final bool qOk = _q.isEmpty ||
+    final List<FoodSourceCard> foods = kFoodSourceCatalog.where((
+      FoodSourceCard f,
+    ) {
+      final bool qOk =
+          _q.isEmpty ||
           f.foodName.toLowerCase().contains(_q.toLowerCase()) ||
           f.nutrientId.toLowerCase().contains(_q.toLowerCase());
       final bool tagOk = _tag == null || f.tags.contains(_tag);
@@ -165,22 +170,23 @@ class _FoodLibraryScreenState extends State<FoodLibraryScreen> {
                 const SizedBox(height: AppSpacing.sm),
                 Wrap(
                   spacing: 6,
-                  children: <String?>[
-                    null,
-                    'geral',
-                    'leite',
-                    'ovo',
-                    'vegetariano',
-                    'vegano',
-                  ]
-                      .map(
-                        (String? t) => FilterChip(
-                          label: Text(t ?? 'Todos'),
-                          selected: _tag == t,
-                          onSelected: (_) => setState(() => _tag = t),
-                        ),
-                      )
-                      .toList(),
+                  children:
+                      <String?>[
+                            null,
+                            'geral',
+                            'leite',
+                            'ovo',
+                            'vegetariano',
+                            'vegano',
+                          ]
+                          .map(
+                            (String? t) => FilterChip(
+                              label: Text(t ?? 'Todos'),
+                              selected: _tag == t,
+                              onSelected: (_) => setState(() => _tag = t),
+                            ),
+                          )
+                          .toList(),
                 ),
               ],
             ),
@@ -193,7 +199,10 @@ class _FoodLibraryScreenState extends State<FoodLibraryScreen> {
                   )
                 : ListView.separated(
                     padding: const EdgeInsets.fromLTRB(
-                      AppSpacing.lg, 0, AppSpacing.lg, AppSpacing.lg,
+                      AppSpacing.lg,
+                      0,
+                      AppSpacing.lg,
+                      AppSpacing.lg,
                     ),
                     itemCount: foods.length,
                     separatorBuilder: (_, __) =>
@@ -212,7 +221,9 @@ class _FoodLibraryScreenState extends State<FoodLibraryScreen> {
                               ),
                             ),
                             const SizedBox(height: 4),
-                            Text('Nutriente: ${f.nutrientId} · Grupo: ${f.group}'),
+                            Text(
+                              'Nutriente: ${f.nutrientId} · Grupo: ${f.group}',
+                            ),
                             Text('Porcao: ${f.portion}'),
                             Text(f.notes),
                           ],
@@ -237,8 +248,8 @@ class ParentGuidanceScreen extends StatelessWidget {
     final List<MicronutrientProfile> list = micronutrientId == null
         ? kMicronutrientCatalog
         : kMicronutrientCatalog
-            .where((MicronutrientProfile m) => m.id == micronutrientId)
-            .toList();
+              .where((MicronutrientProfile m) => m.id == micronutrientId)
+              .toList();
 
     return Scaffold(
       backgroundColor: AppColors.lightBackground,
@@ -262,7 +273,9 @@ class ParentGuidanceScreen extends StatelessWidget {
             icon: const Icon(Icons.share_outlined),
             onPressed: () {
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Compartilhar — estrutura pronta.')),
+                const SnackBar(
+                  content: Text('Compartilhar — estrutura pronta.'),
+                ),
               );
             },
           ),
@@ -337,9 +350,9 @@ class _SupplementAiScreenState extends ConsumerState<SupplementAiScreen> {
 
   void _run() {
     setState(() {
-      _draft = ref.read(supplementAiOrganizerProvider).organizeFromFreeText(
-            _input.text,
-          );
+      _draft = ref
+          .read(supplementAiOrganizerProvider)
+          .organizeFromFreeText(_input.text);
     });
   }
 
@@ -356,14 +369,17 @@ class _SupplementAiScreenState extends ConsumerState<SupplementAiScreen> {
       return;
     }
     setState(() => _saving = true);
-    final Result<String> res =
-        await ref.read(supplementRepositoryProvider).saveClinicalNote(
-              childId: childId,
-              professionalId: uid,
-              title: 'Nota IA — suplementacao (rascunho)',
-              body: draft.clinicalSummary,
-            );
-    await ref.read(supplementRepositoryProvider).saveAiDraft(
+    final Result<String> res = await ref
+        .read(supplementRepositoryProvider)
+        .saveClinicalNote(
+          childId: childId,
+          professionalId: uid,
+          title: 'Nota IA — suplementacao (rascunho)',
+          body: draft.clinicalSummary,
+        );
+    await ref
+        .read(supplementRepositoryProvider)
+        .saveAiDraft(
           childId: childId,
           professionalId: uid,
           kind: 'micronutrient_assistant',
@@ -421,7 +437,9 @@ class _SupplementAiScreenState extends ConsumerState<SupplementAiScreen> {
                 onPressed: () {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
-                      content: Text('Ditacao por voz — integrar STT no proximo ciclo.'),
+                      content: Text(
+                        'Ditacao por voz — integrar STT no proximo ciclo.',
+                      ),
                     ),
                   );
                 },
@@ -434,7 +452,10 @@ class _SupplementAiScreenState extends ConsumerState<SupplementAiScreen> {
             _AiBlock(title: 'DADOS DO PACIENTE', map: _draft!.patientBlock),
             _AiBlock(title: 'EXAMES', map: _draft!.examsBlock),
             _AiList(title: 'PONTOS DE ATENCAO', items: _draft!.attentionPoints),
-            _AiList(title: 'POSSIVEIS PROXIMOS PASSOS', items: _draft!.nextSteps),
+            _AiList(
+              title: 'POSSIVEIS PROXIMOS PASSOS',
+              items: _draft!.nextSteps,
+            ),
             const BrandSectionHeader(title: 'ATALHOS'),
             const SizedBox(height: AppSpacing.sm),
             Wrap(
@@ -442,7 +463,8 @@ class _SupplementAiScreenState extends ConsumerState<SupplementAiScreen> {
               children: <Widget>[
                 ActionChip(
                   label: const Text('abrir ferro'),
-                  onPressed: () => context.push(Routes.supplementMicronutrient('iron')),
+                  onPressed: () =>
+                      context.push(Routes.supplementMicronutrient('iron')),
                 ),
                 ActionChip(
                   label: const Text('abrir exames'),
@@ -450,7 +472,8 @@ class _SupplementAiScreenState extends ConsumerState<SupplementAiScreen> {
                 ),
                 ActionChip(
                   label: const Text('abrir calculadora'),
-                  onPressed: () => context.push(Routes.supplementCalculatorPath),
+                  onPressed: () =>
+                      context.push(Routes.supplementCalculatorPath),
                 ),
                 ActionChip(
                   label: const Text('gerar nota clinica'),
@@ -461,9 +484,9 @@ class _SupplementAiScreenState extends ConsumerState<SupplementAiScreen> {
             const SizedBox(height: AppSpacing.md),
             Text(
               _draft!.disclaimer,
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: AppColors.inkMuted,
-                  ),
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(color: AppColors.inkMuted),
             ),
           ],
         ],
@@ -518,9 +541,9 @@ class _LabAiInterpretScreenState extends ConsumerState<LabAiInterpretScreen> {
           const SizedBox(height: AppSpacing.sm),
           Text(
             'Anexar PDF/imagem: estrutura reservada para ciclo futuro.',
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: AppColors.inkMuted,
-                ),
+            style: Theme.of(
+              context,
+            ).textTheme.bodySmall?.copyWith(color: AppColors.inkMuted),
           ),
           const SizedBox(height: AppSpacing.md),
           PrimaryButton(
@@ -536,7 +559,10 @@ class _LabAiInterpretScreenState extends ConsumerState<LabAiInterpretScreen> {
           if (_draft != null) ...<Widget>[
             const SizedBox(height: AppSpacing.xl),
             _AiBlock(title: 'Resultados organizados', map: _draft!.examsBlock),
-            _AiList(title: 'Alteracoes / atencao', items: _draft!.attentionPoints),
+            _AiList(
+              title: 'Alteracoes / atencao',
+              items: _draft!.attentionPoints,
+            ),
             _AiList(
               title: 'Exames complementares para CONSIDERACAO',
               items: _draft!.nextSteps,
@@ -564,7 +590,9 @@ class _LabAiInterpretScreenState extends ConsumerState<LabAiInterpretScreen> {
                         );
                         return;
                       }
-                      await ref.read(supplementRepositoryProvider).saveClinicalNote(
+                      await ref
+                          .read(supplementRepositoryProvider)
+                          .saveClinicalNote(
                             childId: childId,
                             professionalId: uid,
                             title: 'Resumo IA — exames (rascunho)',
@@ -572,7 +600,9 @@ class _LabAiInterpretScreenState extends ConsumerState<LabAiInterpretScreen> {
                           );
                       if (!context.mounted) return;
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Resumo salvo como rascunho.')),
+                        const SnackBar(
+                          content: Text('Resumo salvo como rascunho.'),
+                        ),
                       );
                     },
                     child: const Text('Adicionar resumo ao prontuario'),
@@ -605,69 +635,76 @@ class SupplementHistoryScreen extends ConsumerWidget {
       ),
       body: cid == null || cid.isEmpty
           ? const SupplementEmptyState(
-              message: 'Selecione um paciente no Consultorio 360 para ver a timeline.',
+              message:
+                  'Selecione um paciente no Consultorio 360 para ver a timeline.',
             )
-          : ref.watch(childSupplementTimelineProvider(cid)).when(
-                loading: () => const Padding(
-                  padding: EdgeInsets.all(AppSpacing.lg),
-                  child: SupplementSkeletonList(),
-                ),
-                error: (Object e, StackTrace _) => Center(child: Text('$e')),
-                data: (List<SupplementTimelineEvent> events) {
-                  if (events.isEmpty) {
-                    return const SupplementEmptyState(
-                      message: 'Nenhum evento de suplementacao ainda.',
-                      icon: Icons.timeline_outlined,
-                    );
-                  }
-                  return ListView.separated(
-                    padding: const EdgeInsets.all(AppSpacing.lg),
-                    itemCount: events.length,
-                    separatorBuilder: (_, __) =>
-                        const SizedBox(height: AppSpacing.sm),
-                    itemBuilder: (BuildContext context, int i) {
-                      final SupplementTimelineEvent e = events[i];
-                      return AppCard(
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: <Widget>[
-                            Column(
-                              children: <Widget>[
-                                Text(
-                                  '${e.occurredAt.day.toString().padLeft(2, '0')}/'
-                                  '${e.occurredAt.month.toString().padLeft(2, '0')}/'
-                                  '${e.occurredAt.year}',
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.w700,
-                                    color: AppColors.navy,
-                                  ),
-                                ),
-                                Text(
-                                  e.kind.label,
-                                  style: Theme.of(context).textTheme.bodySmall,
-                                ),
-                              ],
-                            ),
-                            const SizedBox(width: AppSpacing.md),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
+          : ref
+                .watch(childSupplementTimelineProvider(cid))
+                .when(
+                  loading: () => const Padding(
+                    padding: EdgeInsets.all(AppSpacing.lg),
+                    child: SupplementSkeletonList(),
+                  ),
+                  error: (Object e, StackTrace _) => Center(child: Text('$e')),
+                  data: (List<SupplementTimelineEvent> events) {
+                    if (events.isEmpty) {
+                      return const SupplementEmptyState(
+                        message: 'Nenhum evento de suplementacao ainda.',
+                        icon: Icons.timeline_outlined,
+                      );
+                    }
+                    return ListView.separated(
+                      padding: const EdgeInsets.all(AppSpacing.lg),
+                      itemCount: events.length,
+                      separatorBuilder: (_, __) =>
+                          const SizedBox(height: AppSpacing.sm),
+                      itemBuilder: (BuildContext context, int i) {
+                        final SupplementTimelineEvent e = events[i];
+                        return AppCard(
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: <Widget>[
+                              Column(
                                 children: <Widget>[
                                   Text(
-                                    e.title,
-                                    style: const TextStyle(fontWeight: FontWeight.w600),
+                                    '${e.occurredAt.day.toString().padLeft(2, '0')}/'
+                                    '${e.occurredAt.month.toString().padLeft(2, '0')}/'
+                                    '${e.occurredAt.year}',
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.w700,
+                                      color: AppColors.navy,
+                                    ),
                                   ),
-                                  if (e.detail.isNotEmpty) Text(e.detail),
+                                  Text(
+                                    e.kind.label,
+                                    style: Theme.of(
+                                      context,
+                                    ).textTheme.bodySmall,
+                                  ),
                                 ],
                               ),
-                            ),
-                          ],
-                        ),
-                      );
-                    },
-                  );
-                },
-              ),
+                              const SizedBox(width: AppSpacing.md),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: <Widget>[
+                                    Text(
+                                      e.title,
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                    if (e.detail.isNotEmpty) Text(e.detail),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                    );
+                  },
+                ),
     );
   }
 }
@@ -702,84 +739,91 @@ class SupplementChartsScreen extends ConsumerWidget {
           ? const SupplementEmptyState(
               message: 'Vincule um paciente para ver evolucao laboratorial.',
             )
-          : ref.watch(childLabResultsProvider(cid)).when(
-                loading: () => const Padding(
-                  padding: EdgeInsets.all(AppSpacing.lg),
-                  child: SupplementSkeletonList(),
-                ),
-                error: (Object e, StackTrace _) => Center(child: Text('$e')),
-                data: (List<PatientLabResult> all) {
-                  return ListView(
-                    padding: const EdgeInsets.all(AppSpacing.lg),
-                    children: _tracked.map((String examId) {
-                      final LabExamDefinition? def = labExamById(examId);
-                      final List<PatientLabResult> series = all
-                          .where((PatientLabResult r) => r.examId == examId)
-                          .toList()
-                        ..sort(
-                          (PatientLabResult a, PatientLabResult b) =>
-                              a.recordedAt.compareTo(b.recordedAt),
-                        );
-                      return Padding(
-                        padding: const EdgeInsets.only(bottom: AppSpacing.md),
-                        child: AppCard(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: <Widget>[
-                              Text(
-                                def?.name ?? examId,
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.w800,
-                                  color: AppColors.navy,
+          : ref
+                .watch(childLabResultsProvider(cid))
+                .when(
+                  loading: () => const Padding(
+                    padding: EdgeInsets.all(AppSpacing.lg),
+                    child: SupplementSkeletonList(),
+                  ),
+                  error: (Object e, StackTrace _) => Center(child: Text('$e')),
+                  data: (List<PatientLabResult> all) {
+                    return ListView(
+                      padding: const EdgeInsets.all(AppSpacing.lg),
+                      children: _tracked.map((String examId) {
+                        final LabExamDefinition? def = labExamById(examId);
+                        final List<PatientLabResult> series =
+                            all
+                                .where(
+                                  (PatientLabResult r) => r.examId == examId,
+                                )
+                                .toList()
+                              ..sort(
+                                (PatientLabResult a, PatientLabResult b) =>
+                                    a.recordedAt.compareTo(b.recordedAt),
+                              );
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: AppSpacing.md),
+                          child: AppCard(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: <Widget>[
+                                Text(
+                                  def?.name ?? examId,
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.w800,
+                                    color: AppColors.navy,
+                                  ),
                                 ),
-                              ),
-                              const SizedBox(height: AppSpacing.sm),
-                              if (series.isEmpty)
-                                const Text('Sem pontos registrados.')
-                              else
-                                SizedBox(
-                                  height: 88,
-                                  child: Row(
-                                    crossAxisAlignment: CrossAxisAlignment.end,
-                                    children: series.map((PatientLabResult r) {
-                                      final double? n =
-                                          double.tryParse(
-                                        r.valueText.replaceAll(',', '.'),
-                                      );
-                                      final double h = n == null
-                                          ? 24
-                                          : (20 + (n % 50)).clamp(20, 72);
-                                      return Expanded(
-                                        child: Padding(
-                                          padding: const EdgeInsets.symmetric(
-                                            horizontal: 2,
-                                          ),
-                                          child: Tooltip(
-                                            message:
-                                                '${r.valueText} (${r.recordedAt.toIso8601String().split('T').first})',
-                                            child: Container(
-                                              height: h,
-                                              decoration: BoxDecoration(
-                                                color: AppColors.brand
-                                                    .withValues(alpha: 0.7),
-                                                borderRadius:
-                                                    BorderRadius.circular(6),
+                                const SizedBox(height: AppSpacing.sm),
+                                if (series.isEmpty)
+                                  const Text('Sem pontos registrados.')
+                                else
+                                  SizedBox(
+                                    height: 88,
+                                    child: Row(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.end,
+                                      children: series.map((
+                                        PatientLabResult r,
+                                      ) {
+                                        final double? n = double.tryParse(
+                                          r.valueText.replaceAll(',', '.'),
+                                        );
+                                        final double h = n == null
+                                            ? 24
+                                            : (20 + (n % 50)).clamp(20, 72);
+                                        return Expanded(
+                                          child: Padding(
+                                            padding: const EdgeInsets.symmetric(
+                                              horizontal: 2,
+                                            ),
+                                            child: Tooltip(
+                                              message:
+                                                  '${r.valueText} (${r.recordedAt.toIso8601String().split('T').first})',
+                                              child: Container(
+                                                height: h,
+                                                decoration: BoxDecoration(
+                                                  color: AppColors.brand
+                                                      .withValues(alpha: 0.7),
+                                                  borderRadius:
+                                                      BorderRadius.circular(6),
+                                                ),
                                               ),
                                             ),
                                           ),
-                                        ),
-                                      );
-                                    }).toList(),
+                                        );
+                                      }).toList(),
+                                    ),
                                   ),
-                                ),
-                            ],
+                              ],
+                            ),
                           ),
-                        ),
-                      );
-                    }).toList(),
-                  );
-                },
-              ),
+                        );
+                      }).toList(),
+                    );
+                  },
+                ),
     );
   }
 }
@@ -797,7 +841,9 @@ class SupplementFavoritesScreen extends ConsumerWidget {
         foregroundColor: AppColors.navy,
         elevation: 0,
       ),
-      body: ref.watch(supplementFavoritesProvider).when(
+      body: ref
+          .watch(supplementFavoritesProvider)
+          .when(
             loading: () => const Padding(
               padding: EdgeInsets.all(AppSpacing.lg),
               child: SupplementSkeletonList(),
@@ -818,9 +864,8 @@ class SupplementFavoritesScreen extends ConsumerWidget {
                 itemBuilder: (BuildContext context, int i) {
                   final MicronutrientProfile? m = micronutrientById(ids[i]);
                   return AppCard(
-                    onTap: () => context.push(
-                      Routes.supplementMicronutrient(ids[i]),
-                    ),
+                    onTap: () =>
+                        context.push(Routes.supplementMicronutrient(ids[i])),
                     child: Text(m?.name ?? ids[i]),
                   );
                 },

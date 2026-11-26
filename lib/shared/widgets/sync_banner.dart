@@ -18,12 +18,12 @@ import '../../core/widgets/app_widgets.dart';
 /// problema.
 final FutureProvider<List<OutboxEntry>> stuckEntriesProvider =
     FutureProvider<List<OutboxEntry>>((Ref ref) async {
-  final LocalDatabase? db = ref.watch(localDatabaseProvider);
-  if (db == null) return const <OutboxEntry>[];
+      final LocalDatabase? db = ref.watch(localDatabaseProvider);
+      if (db == null) return const <OutboxEntry>[];
 
-  final List<OutboxEntry> all = await db.pendingOutbox(limit: 100);
-  return all.where((OutboxEntry e) => e.isPoisoned).toList(growable: false);
-});
+      final List<OutboxEntry> all = await db.pendingOutbox(limit: 100);
+      return all.where((OutboxEntry e) => e.isPoisoned).toList(growable: false);
+    });
 
 /// Faixa de status da sincronização.
 ///
@@ -131,19 +131,19 @@ class _FullBanner extends ConsumerWidget {
     final Color color = failed
         ? AppColors.danger
         : status.isSyncing
-            ? AppColors.vital
-            : AppColors.warning;
+        ? AppColors.vital
+        : AppColors.warning;
 
     return Material(
       color: color.withValues(alpha: 0.10),
       child: InkWell(
         onTap: failed
             ? () => showModalBottomSheet<void>(
-                  context: context,
-                  isScrollControlled: true,
-                  useSafeArea: true,
-                  builder: (BuildContext context) => const SyncRecoverySheet(),
-                )
+                context: context,
+                isScrollControlled: true,
+                useSafeArea: true,
+                builder: (BuildContext context) => const SyncRecoverySheet(),
+              )
             : null,
         child: Padding(
           padding: const EdgeInsets.symmetric(
@@ -175,16 +175,16 @@ class _FullBanner extends ConsumerWidget {
                       status.isSyncing
                           ? 'Enviando alterações...'
                           : failed
-                              ? 'Algumas alterações não foram enviadas'
-                              : '${status.pending} '
-                                  '${status.pending == 1 ? 'alteração aguarda' : 'alterações aguardam'} envio',
+                          ? 'Algumas alterações não foram enviadas'
+                          : '${status.pending} '
+                                '${status.pending == 1 ? 'alteração aguarda' : 'alterações aguardam'} envio',
                       style: theme.textTheme.titleSmall,
                     ),
                     Text(
                       failed
                           ? 'Toque para ver o que travou.'
                           : 'Seus dados estão salvos no aparelho e serão '
-                              'enviados assim que houver conexão.',
+                                'enviados assim que houver conexão.',
                       style: theme.textTheme.bodySmall,
                     ),
                   ],
@@ -219,11 +219,11 @@ class SyncRecoverySheet extends ConsumerWidget {
   const SyncRecoverySheet({super.key});
 
   static String _entityLabel(String entity) => switch (entity) {
-        SyncEntity.children => 'Cadastro de criança',
-        SyncEntity.growth => 'Medição de crescimento',
-        SyncEntity.vaccineDoses => 'Registro de vacina',
-        _ => entity,
-      };
+    SyncEntity.children => 'Cadastro de criança',
+    SyncEntity.growth => 'Medição de crescimento',
+    SyncEntity.vaccineDoses => 'Registro de vacina',
+    _ => entity,
+  };
 
   static String _describe(OutboxEntry entry) {
     final Map<String, dynamic> p = entry.payload;
@@ -231,9 +231,9 @@ class SyncRecoverySheet extends ConsumerWidget {
     return switch (entry.entity) {
       SyncEntity.children => p['name']?.toString() ?? 'Sem nome',
       SyncEntity.growth => <String>[
-          if (p['weightKg'] != null) '${p['weightKg']} kg',
-          if (p['heightCm'] != null) '${p['heightCm']} cm',
-        ].join(', '),
+        if (p['weightKg'] != null) '${p['weightKg']} kg',
+        if (p['heightCm'] != null) '${p['heightCm']} cm',
+      ].join(', '),
       SyncEntity.vaccineDoses =>
         '${p['vaccineId'] ?? ''} · dose ${p['doseIndex'] ?? ''}',
       _ => entry.entityId,
@@ -243,8 +243,7 @@ class SyncRecoverySheet extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final ThemeData theme = Theme.of(context);
-    final AsyncValue<List<OutboxEntry>> async =
-        ref.watch(stuckEntriesProvider);
+    final AsyncValue<List<OutboxEntry>> async = ref.watch(stuckEntriesProvider);
 
     return Padding(
       padding: const EdgeInsets.all(AppSpacing.xl),
@@ -310,8 +309,7 @@ class SyncRecoverySheet extends ConsumerWidget {
                   label: 'Tentar todas de novo',
                   variant: AppButtonVariant.outline,
                   onPressed: () async {
-                    final LocalDatabase? db =
-                        ref.read(localDatabaseProvider);
+                    final LocalDatabase? db = ref.read(localDatabaseProvider);
                     if (db == null) return;
 
                     // Zera o contador para os itens saírem do estado
@@ -412,10 +410,7 @@ class _StuckTile extends ConsumerWidget {
                   color: AppColors.danger.withValues(alpha: 0.07),
                   borderRadius: AppRadius.mdAll,
                 ),
-                child: Text(
-                  entry.lastError!,
-                  style: theme.textTheme.bodySmall,
-                ),
+                child: Text(entry.lastError!, style: theme.textTheme.bodySmall),
               ),
             ],
             const SizedBox(height: AppSpacing.md),
@@ -425,9 +420,7 @@ class _StuckTile extends ConsumerWidget {
                 onPressed: () => _discard(context, ref),
                 icon: const Icon(Icons.delete_outline_rounded, size: 16),
                 label: const Text('Descartar'),
-                style: TextButton.styleFrom(
-                  foregroundColor: AppColors.danger,
-                ),
+                style: TextButton.styleFrom(foregroundColor: AppColors.danger),
               ),
             ),
           ],

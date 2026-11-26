@@ -33,14 +33,14 @@ class _ClinicReceptionScreenState extends ConsumerState<ClinicReceptionScreen>
 
   static const List<ClinicWorkflowStatus> _boardColumns =
       <ClinicWorkflowStatus>[
-    ClinicWorkflowStatus.scheduled,
-    ClinicWorkflowStatus.confirmed,
-    ClinicWorkflowStatus.arrived,
-    ClinicWorkflowStatus.triage,
-    ClinicWorkflowStatus.waitingDoctor,
-    ClinicWorkflowStatus.called,
-    ClinicWorkflowStatus.inService,
-  ];
+        ClinicWorkflowStatus.scheduled,
+        ClinicWorkflowStatus.confirmed,
+        ClinicWorkflowStatus.arrived,
+        ClinicWorkflowStatus.triage,
+        ClinicWorkflowStatus.waitingDoctor,
+        ClinicWorkflowStatus.called,
+        ClinicWorkflowStatus.inService,
+      ];
 
   @override
   void initState() {
@@ -54,7 +54,8 @@ class _ClinicReceptionScreenState extends ConsumerState<ClinicReceptionScreen>
     super.dispose();
   }
 
-  ClinicWorkflowStatus _workflowOf(Appointment a) => ClinicWorkflowStatus.resolve(
+  ClinicWorkflowStatus _workflowOf(Appointment a) =>
+      ClinicWorkflowStatus.resolve(
         workflowStatus: a.workflowStatus,
         appointmentStatus: a.status.name,
       );
@@ -66,9 +67,9 @@ class _ClinicReceptionScreenState extends ConsumerState<ClinicReceptionScreen>
     if (!mounted) return;
     result.fold(
       (_) => ref.invalidate(todayClinicAppointmentsProvider),
-      (Failure f) => ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(f.message)),
-      ),
+      (Failure f) => ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(f.message))),
     );
   }
 
@@ -99,17 +100,16 @@ class _ClinicReceptionScreenState extends ConsumerState<ClinicReceptionScreen>
       ),
     );
     if (ok != true || !mounted) return;
-    final result = await ref.read(clinicRepositoryProvider).checkIn(
-          a.id,
-          notes: notes.text,
-        );
+    final result = await ref
+        .read(clinicRepositoryProvider)
+        .checkIn(a.id, notes: notes.text);
     notes.dispose();
     if (!mounted) return;
     result.fold(
       (_) => ref.invalidate(todayClinicAppointmentsProvider),
-      (Failure f) => ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(f.message)),
-      ),
+      (Failure f) => ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(f.message))),
     );
   }
 
@@ -127,8 +127,9 @@ class _ClinicReceptionScreenState extends ConsumerState<ClinicReceptionScreen>
 
   @override
   Widget build(BuildContext context) {
-    final AsyncValue<List<Appointment>> async =
-        ref.watch(unitScopedTodayClinicAppointmentsProvider);
+    final AsyncValue<List<Appointment>> async = ref.watch(
+      unitScopedTodayClinicAppointmentsProvider,
+    );
 
     return Scaffold(
       backgroundColor: AppColors.lightBackground,
@@ -246,9 +247,9 @@ class _BoardTab extends StatelessWidget {
                       child: Text(
                         '${col.label} (${items.length})',
                         style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                              color: AppColors.navy,
-                              fontWeight: FontWeight.w800,
-                            ),
+                          color: AppColors.navy,
+                          fontWeight: FontWeight.w800,
+                        ),
                       ),
                     ),
                     const SizedBox(height: AppSpacing.sm),
@@ -294,22 +295,22 @@ class _QueueTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final DateFormat fmt = DateFormat('HH:mm');
-    final List<Appointment> queue = list.where((Appointment a) {
-      final ClinicWorkflowStatus w = workflowOf(a);
-      return w == ClinicWorkflowStatus.arrived ||
-          w == ClinicWorkflowStatus.triage ||
-          w == ClinicWorkflowStatus.waitingDoctor ||
-          w == ClinicWorkflowStatus.called ||
-          w == ClinicWorkflowStatus.inService;
-    }).toList()
-      ..sort((Appointment a, Appointment b) {
-        final int oa = workflowOf(a).queueOrder;
-        final int ob = workflowOf(b).queueOrder;
-        if (oa != ob) return oa.compareTo(ob);
-        final DateTime aa = a.arrivedAt ?? a.startsAt;
-        final DateTime bb = b.arrivedAt ?? b.startsAt;
-        return aa.compareTo(bb);
-      });
+    final List<Appointment> queue =
+        list.where((Appointment a) {
+          final ClinicWorkflowStatus w = workflowOf(a);
+          return w == ClinicWorkflowStatus.arrived ||
+              w == ClinicWorkflowStatus.triage ||
+              w == ClinicWorkflowStatus.waitingDoctor ||
+              w == ClinicWorkflowStatus.called ||
+              w == ClinicWorkflowStatus.inService;
+        }).toList()..sort((Appointment a, Appointment b) {
+          final int oa = workflowOf(a).queueOrder;
+          final int ob = workflowOf(b).queueOrder;
+          if (oa != ob) return oa.compareTo(ob);
+          final DateTime aa = a.arrivedAt ?? a.startsAt;
+          final DateTime bb = b.arrivedAt ?? b.startsAt;
+          return aa.compareTo(bb);
+        });
 
     if (queue.isEmpty) {
       return const EmptyState(
@@ -347,16 +348,16 @@ class _QueueTab extends StatelessWidget {
                           a.childName?.isNotEmpty == true
                               ? a.childName!
                               : 'Paciente',
-                          style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                          style: Theme.of(context).textTheme.titleSmall
+                              ?.copyWith(
                                 fontWeight: FontWeight.w800,
                                 color: AppColors.navy,
                               ),
                         ),
                         Text(
                           '${fmt.format(a.startsAt)} · ${a.professionalName} · ${w.label}',
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                color: AppColors.inkMuted,
-                              ),
+                          style: Theme.of(context).textTheme.bodySmall
+                              ?.copyWith(color: AppColors.inkMuted),
                         ),
                       ],
                     ),
@@ -364,9 +365,9 @@ class _QueueTab extends StatelessWidget {
                   Text(
                     waitLabel(a),
                     style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                          color: AppColors.raspberry,
-                          fontWeight: FontWeight.w700,
-                        ),
+                      color: AppColors.raspberry,
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
                 ],
               ),
@@ -381,16 +382,14 @@ class _QueueTab extends StatelessWidget {
                 children: <Widget>[
                   if (w == ClinicWorkflowStatus.arrived)
                     TextButton(
-                      onPressed: () =>
-                          onStatus(a, ClinicWorkflowStatus.triage),
+                      onPressed: () => onStatus(a, ClinicWorkflowStatus.triage),
                       child: const Text('Triagem'),
                     ),
                   if (w == ClinicWorkflowStatus.waitingDoctor ||
                       w == ClinicWorkflowStatus.arrived ||
                       w == ClinicWorkflowStatus.triage)
                     TextButton(
-                      onPressed: () =>
-                          onStatus(a, ClinicWorkflowStatus.called),
+                      onPressed: () => onStatus(a, ClinicWorkflowStatus.called),
                       child: const Text('Chamar'),
                     ),
                   if (w == ClinicWorkflowStatus.called ||
@@ -428,12 +427,14 @@ class _CheckInTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final DateFormat fmt = DateFormat('HH:mm');
-    final List<Appointment> pending = list.where((Appointment a) {
-      final ClinicWorkflowStatus w = workflowOf(a);
-      return w == ClinicWorkflowStatus.scheduled ||
-          w == ClinicWorkflowStatus.confirmed;
-    }).toList()
-      ..sort((Appointment a, Appointment b) => a.startsAt.compareTo(b.startsAt));
+    final List<Appointment> pending =
+        list.where((Appointment a) {
+          final ClinicWorkflowStatus w = workflowOf(a);
+          return w == ClinicWorkflowStatus.scheduled ||
+              w == ClinicWorkflowStatus.confirmed;
+        }).toList()..sort(
+          (Appointment a, Appointment b) => a.startsAt.compareTo(b.startsAt),
+        );
 
     return ListView(
       padding: const EdgeInsets.all(AppSpacing.lg),
@@ -446,18 +447,18 @@ class _CheckInTab extends StatelessWidget {
               Text(
                 'Check-in digital',
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      color: AppColors.navy,
-                      fontWeight: FontWeight.w800,
-                    ),
+                  color: AppColors.navy,
+                  fontWeight: FontWeight.w800,
+                ),
               ),
               const SizedBox(height: AppSpacing.xs),
               Text(
                 'Confirme a presença pela recepção. O link abaixo identifica '
                 'o agendamento (QR/portal da família entram nas próximas fases '
                 'com autenticação). Não envia mensagem automática.',
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: AppColors.inkMuted,
-                    ),
+                style: Theme.of(
+                  context,
+                ).textTheme.bodySmall?.copyWith(color: AppColors.inkMuted),
               ),
             ],
           ),
@@ -471,8 +472,7 @@ class _CheckInTab extends StatelessWidget {
           )
         else
           ...pending.map((Appointment a) {
-            final String deepLink =
-                'pediatria360://checkin/${a.id}';
+            final String deepLink = 'pediatria360://checkin/${a.id}';
             return Padding(
               padding: const EdgeInsets.only(bottom: AppSpacing.sm),
               child: AppCard(
@@ -485,9 +485,9 @@ class _CheckInTab extends StatelessWidget {
                           ? a.childName!
                           : 'Paciente',
                       style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                            fontWeight: FontWeight.w800,
-                            color: AppColors.navy,
-                          ),
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.navy,
+                      ),
                     ),
                     Text(
                       '${fmt.format(a.startsAt)} · ${a.type.label} · '
@@ -502,9 +502,7 @@ class _CheckInTab extends StatelessWidget {
                             deepLink,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
-                            style: Theme.of(context)
-                                .textTheme
-                                .labelSmall
+                            style: Theme.of(context).textTheme.labelSmall
                                 ?.copyWith(color: AppColors.inkMuted),
                           ),
                         ),
@@ -574,15 +572,15 @@ class _ReceptionCard extends StatelessWidget {
                 ? appointment.childName!
                 : 'Paciente',
             style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                  color: AppColors.navy,
-                  fontWeight: FontWeight.w800,
-                ),
+              color: AppColors.navy,
+              fontWeight: FontWeight.w800,
+            ),
           ),
           Text(
             '$timeLabel · ${appointment.type.label}',
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: AppColors.inkMuted,
-                ),
+            style: Theme.of(
+              context,
+            ).textTheme.bodySmall?.copyWith(color: AppColors.inkMuted),
           ),
           Text(
             appointment.professionalName,
@@ -591,9 +589,9 @@ class _ReceptionCard extends StatelessWidget {
           Text(
             waitLabel,
             style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                  color: AppColors.raspberry,
-                  fontWeight: FontWeight.w700,
-                ),
+              color: AppColors.raspberry,
+              fontWeight: FontWeight.w700,
+            ),
           ),
           if (appointment.checkInNotes != null &&
               appointment.checkInNotes!.isNotEmpty)
@@ -617,14 +615,10 @@ class _ReceptionCard extends StatelessWidget {
             children: <Widget>[
               if (workflow == ClinicWorkflowStatus.scheduled ||
                   workflow == ClinicWorkflowStatus.confirmed)
-                TextButton(
-                  onPressed: onCheckIn,
-                  child: const Text('Check-in'),
-                ),
+                TextButton(onPressed: onCheckIn, child: const Text('Check-in')),
               TextButton(
-                onPressed: () => context.push(
-                  Routes.clinicTriage(appointment.id),
-                ),
+                onPressed: () =>
+                    context.push(Routes.clinicTriage(appointment.id)),
                 child: const Text('Triagem'),
               ),
               if (workflow == ClinicWorkflowStatus.arrived ||

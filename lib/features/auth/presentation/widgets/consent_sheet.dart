@@ -34,13 +34,15 @@ const List<_OptionalPurpose> _optionalPurposes = <_OptionalPurpose>[
   _OptionalPurpose(
     key: 'aiAssistance',
     label: 'Assistente com inteligência artificial',
-    description: 'Enviar o conteúdo das perguntas e do prontuário a um '
+    description:
+        'Enviar o conteúdo das perguntas e do prontuário a um '
         'provedor de IA para gerar respostas e resumos.',
   ),
   _OptionalPurpose(
     key: 'professionalSharing',
     label: 'Compartilhamento com profissional de saúde',
-    description: 'Permitir que o pediatra que atende a criança acesse o '
+    description:
+        'Permitir que o pediatra que atende a criança acesse o '
         'prontuário dela.',
   ),
   _OptionalPurpose(
@@ -116,16 +118,16 @@ class _ConsentSheetState extends ConsumerState<_ConsentSheet> {
           .read(firebaseFunctionsProvider)
           .httpsCallable('recordConsent')
           .call(<String, dynamic>{
-        'purposes': <String, dynamic>{
-          // Obrigatória: o app não funciona sem registrar dado de saúde.
-          // Não é uma escolha oferecida, por isso não tem toggle acima —
-          // mas o servidor a exige explicitamente mesmo assim.
-          'healthRecord': true,
-          ..._optional,
-        },
-        'termsAccepted': _acceptedTerms,
-        'privacyPolicyAccepted': _acceptedPrivacy,
-      });
+            'purposes': <String, dynamic>{
+              // Obrigatória: o app não funciona sem registrar dado de saúde.
+              // Não é uma escolha oferecida, por isso não tem toggle acima —
+              // mas o servidor a exige explicitamente mesmo assim.
+              'healthRecord': true,
+              ..._optional,
+            },
+            'termsAccepted': _acceptedTerms,
+            'privacyPolicyAccepted': _acceptedPrivacy,
+          });
     });
 
     if (!mounted) return;
@@ -160,10 +162,13 @@ class _ConsentSheetState extends ConsumerState<_ConsentSheet> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
-                Text('Antes de continuar', style: theme.textTheme.headlineSmall),
+                Text(
+                  'Antes de continuar',
+                  style: theme.textTheme.headlineSmall,
+                ),
                 const SizedBox(height: AppSpacing.xs),
                 Text(
-                  'O Pediatria 360 trata dado de saúde de crianças. A lei '
+                  'O Crisdepaula Pediatria trata dado de saúde de crianças. A lei '
                   'exige que você saiba exatamente o que autoriza, e possa '
                   'escolher o que é opcional.',
                   style: theme.textTheme.bodyMedium?.copyWith(
@@ -243,7 +248,10 @@ class _ConsentSheetState extends ConsumerState<_ConsentSheet> {
                     value: _optional[purpose.key] ?? false,
                     onChanged: (bool v) =>
                         setState(() => _optional[purpose.key] = v),
-                    title: Text(purpose.label, style: theme.textTheme.titleSmall),
+                    title: Text(
+                      purpose.label,
+                      style: theme.textTheme.titleSmall,
+                    ),
                     subtitle: Text(
                       purpose.description,
                       style: theme.textTheme.bodySmall,

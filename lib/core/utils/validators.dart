@@ -7,9 +7,7 @@ import 'package:intl/intl.dart';
 class Validators {
   const Validators._();
 
-  static final RegExp _email = RegExp(
-    r'^[\w.\-+]+@([\w\-]+\.)+[a-zA-Z]{2,}$',
-  );
+  static final RegExp _email = RegExp(r'^[\w.\-+]+@([\w\-]+\.)+[a-zA-Z]{2,}$');
 
   static String? required(String? value, {String field = 'Este campo'}) {
     if (value == null || value.trim().isEmpty) {
@@ -227,6 +225,7 @@ class Formatters {
     final String base = '${value.day} de ${_monthsPt[value.month - 1]}';
     return value.year == now.year ? base : '$base de ${value.year}';
   }
+
   static String dateTime(DateTime value) => _dateTime.format(value);
 
   static final DateFormat _time = DateFormat('HH:mm');
@@ -301,24 +300,24 @@ class Masks {
   const Masks._();
 
   static List<TextInputFormatter> get digitsOnly => <TextInputFormatter>[
-        FilteringTextInputFormatter.digitsOnly,
-      ];
+    FilteringTextInputFormatter.digitsOnly,
+  ];
 
   static List<TextInputFormatter> get decimal => <TextInputFormatter>[
-        FilteringTextInputFormatter.allow(RegExp(r'[\d,.]')),
-      ];
+    FilteringTextInputFormatter.allow(RegExp(r'[\d,.]')),
+  ];
 
   static List<TextInputFormatter> get cpf => <TextInputFormatter>[
-        FilteringTextInputFormatter.digitsOnly,
-        LengthLimitingTextInputFormatter(11),
-        _CpfFormatter(),
-      ];
+    FilteringTextInputFormatter.digitsOnly,
+    LengthLimitingTextInputFormatter(11),
+    _CpfFormatter(),
+  ];
 
   static List<TextInputFormatter> get phone => <TextInputFormatter>[
-        FilteringTextInputFormatter.digitsOnly,
-        LengthLimitingTextInputFormatter(11),
-        _PhoneFormatter(),
-      ];
+    FilteringTextInputFormatter.digitsOnly,
+    LengthLimitingTextInputFormatter(11),
+    _PhoneFormatter(),
+  ];
 }
 
 class _CpfFormatter extends TextInputFormatter {

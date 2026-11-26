@@ -35,10 +35,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
     FocusScope.of(context).unfocus();
-    await ref.read(authControllerProvider.notifier).signIn(
-          email: _email.text,
-          password: _password.text,
-        );
+    await ref
+        .read(authControllerProvider.notifier)
+        .signIn(email: _email.text, password: _password.text);
   }
 
   Future<void> _google() =>
@@ -49,14 +48,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     final ThemeData theme = Theme.of(context);
     final AuthActionState state = ref.watch(authControllerProvider);
 
-    ref.listen<AuthActionState>(authControllerProvider,
-        (AuthActionState? previous, AuthActionState next) {
+    ref.listen<AuthActionState>(authControllerProvider, (
+      AuthActionState? previous,
+      AuthActionState next,
+    ) {
       if (next.failure != null && context.mounted) {
         ScaffoldMessenger.of(context)
           ..hideCurrentSnackBar()
-          ..showSnackBar(
-            SnackBar(content: Text(next.failure!.message)),
-          );
+          ..showSnackBar(SnackBar(content: Text(next.failure!.message)));
       }
     });
 
@@ -114,26 +113,18 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                     TextSpan(
                                       children: <TextSpan>[
                                         TextSpan(
-                                          text: 'Pediatria',
+                                          text: 'Crisdepaula Pediatria',
                                           style: theme.textTheme.titleLarge
                                               ?.copyWith(
-                                            color: AppColors.navy,
-                                            fontWeight: FontWeight.w800,
-                                          ),
-                                        ),
-                                        TextSpan(
-                                          text: '360',
-                                          style: theme.textTheme.titleLarge
-                                              ?.copyWith(
-                                            color: AppColors.teal,
-                                            fontWeight: FontWeight.w800,
-                                          ),
+                                                color: AppColors.navy,
+                                                fontWeight: FontWeight.w800,
+                                              ),
                                         ),
                                       ],
                                     ),
                                   ),
                                   Text(
-                                    'Cuidado integral, cada fase importa',
+                                    'Gestão Clínica em Pediatria',
                                     style: theme.textTheme.bodySmall?.copyWith(
                                       color: AppColors.inkMuted,
                                     ),
@@ -176,13 +167,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           prefixIcon: Icons.lock_outline_rounded,
                           obscure: true,
                           textInputAction: TextInputAction.done,
-                          autofillHints: const <String>[
-                            AutofillHints.password,
-                          ],
-                          validator: (String? v) =>
-                              (v == null || v.isEmpty)
-                                  ? 'Informe sua senha.'
-                                  : null,
+                          autofillHints: const <String>[AutofillHints.password],
+                          validator: (String? v) => (v == null || v.isEmpty)
+                              ? 'Informe sua senha.'
+                              : null,
                           onSubmitted: (_) => _submit(),
                         ),
                         Align(
@@ -229,9 +217,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         OutlinedButton.icon(
                           style: OutlinedButton.styleFrom(
                             foregroundColor: AppColors.navy,
-                            side: BorderSide(
-                              color: AppColors.line,
-                            ),
+                            side: BorderSide(color: AppColors.line),
                             minimumSize: const Size(64, 48),
                             shape: const RoundedRectangleBorder(
                               borderRadius: AppRadius.pillAll,

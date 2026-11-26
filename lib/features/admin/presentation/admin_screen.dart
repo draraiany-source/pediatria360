@@ -35,16 +35,15 @@ class AdminStats {
   });
 
   factory AdminStats.fromMap(Map<String, dynamic> map) => AdminStats(
-        totalUsers: (map['totalUsers'] as num?)?.toInt() ?? 0,
-        newUsers: (map['newUsersLast30Days'] as num?)?.toInt() ?? 0,
-        pendingVerifications:
-            (map['pendingVerifications'] as num?)?.toInt() ?? 0,
-        orders: (map['ordersLast30Days'] as num?)?.toInt() ?? 0,
-        paidOrders: (map['paidOrdersLast30Days'] as num?)?.toInt() ?? 0,
-        revenueCents: (map['revenueLast30DaysCents'] as num?)?.toInt() ?? 0,
-        publishedArticles: (map['publishedArticles'] as num?)?.toInt() ?? 0,
-        publishedCourses: (map['publishedCourses'] as num?)?.toInt() ?? 0,
-      );
+    totalUsers: (map['totalUsers'] as num?)?.toInt() ?? 0,
+    newUsers: (map['newUsersLast30Days'] as num?)?.toInt() ?? 0,
+    pendingVerifications: (map['pendingVerifications'] as num?)?.toInt() ?? 0,
+    orders: (map['ordersLast30Days'] as num?)?.toInt() ?? 0,
+    paidOrders: (map['paidOrdersLast30Days'] as num?)?.toInt() ?? 0,
+    revenueCents: (map['revenueLast30DaysCents'] as num?)?.toInt() ?? 0,
+    publishedArticles: (map['publishedArticles'] as num?)?.toInt() ?? 0,
+    publishedCourses: (map['publishedCourses'] as num?)?.toInt() ?? 0,
+  );
 
   final int totalUsers;
   final int newUsers;
@@ -61,31 +60,31 @@ class AdminStats {
 
 final FutureProvider<AdminStats> adminStatsProvider =
     FutureProvider<AdminStats>((Ref ref) async {
-  final HttpsCallableResult<dynamic> response = await ref
-      .watch(firebaseFunctionsProvider)
-      .httpsCallable('adminDashboard')
-      .call();
+      final HttpsCallableResult<dynamic> response = await ref
+          .watch(firebaseFunctionsProvider)
+          .httpsCallable('adminDashboard')
+          .call();
 
-  return AdminStats.fromMap(
-    Map<String, dynamic>.from(response.data as Map<dynamic, dynamic>),
-  );
-});
+      return AdminStats.fromMap(
+        Map<String, dynamic>.from(response.data as Map<dynamic, dynamic>),
+      );
+    });
 
 /// Profissionais aguardando conferência do registro.
 final StreamProvider<List<AppUser>> pendingProfessionalsProvider =
     StreamProvider<List<AppUser>>((Ref ref) {
-  return ref
-      .watch(firestoreProvider)
-      .collection(FirestorePaths.users)
-      .where('role', isEqualTo: 'professional')
-      .where('professionalVerified', isEqualTo: false)
-      .limit(50)
-      .snapshots()
-      .map(
-        (QuerySnapshot<Map<String, dynamic>> s) =>
-            s.docs.map(AppUserMapper.fromFirestore).toList(growable: false),
-      );
-});
+      return ref
+          .watch(firestoreProvider)
+          .collection(FirestorePaths.users)
+          .where('role', isEqualTo: 'professional')
+          .where('professionalVerified', isEqualTo: false)
+          .limit(50)
+          .snapshots()
+          .map(
+            (QuerySnapshot<Map<String, dynamic>> s) =>
+                s.docs.map(AppUserMapper.fromFirestore).toList(growable: false),
+          );
+    });
 
 /// Painel administrativo.
 ///
@@ -100,16 +99,16 @@ class AdminScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final ThemeData theme = Theme.of(context);
     final AsyncValue<AdminStats> stats = ref.watch(adminStatsProvider);
-    final AsyncValue<List<AppUser>> pending =
-        ref.watch(pendingProfessionalsProvider);
+    final AsyncValue<List<AppUser>> pending = ref.watch(
+      pendingProfessionalsProvider,
+    );
 
     return Scaffold(
       appBar: AppBar(
         title: const Text('Administração'),
         leading: IconButton(
-          onPressed: () => context.canPop()
-              ? context.pop()
-              : context.go(Routes.homePath),
+          onPressed: () =>
+              context.canPop() ? context.pop() : context.go(Routes.homePath),
           icon: const Icon(Icons.arrow_back_rounded),
           tooltip: 'Voltar',
         ),
@@ -140,7 +139,8 @@ class AdminScreen extends ConsumerWidget {
                   error: (Object e, StackTrace s) => EmptyState(
                     icon: Icons.query_stats_rounded,
                     title: 'Métricas indisponíveis',
-                    message: 'A função adminDashboard pode não estar '
+                    message:
+                        'A função adminDashboard pode não estar '
                         'publicada ainda.',
                     actionLabel: 'Tentar de novo',
                     onAction: () => ref.invalidate(adminStatsProvider),
@@ -260,7 +260,7 @@ class _StatsGrid extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final List<({String label, String value, IconData icon, Color color})>
-        cards = <({String label, String value, IconData icon, Color color})>[
+    cards = <({String label, String value, IconData icon, Color color})>[
       (
         label: 'Usuários',
         value: '${stats.totalUsers}',
@@ -373,9 +373,9 @@ class _VerificationTileState extends ConsumerState<_VerificationTile> {
           .read(firebaseFunctionsProvider)
           .httpsCallable('verifyProfessional')
           .call(<String, dynamic>{
-        'targetUid': widget.user.uid,
-        'approved': approved,
-      });
+            'targetUid': widget.user.uid,
+            'approved': approved,
+          });
     });
 
     if (!mounted) return;
@@ -391,9 +391,9 @@ class _VerificationTileState extends ConsumerState<_VerificationTile> {
           ),
         ),
       ),
-      (Failure failure) => ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(failure.message)),
-      ),
+      (Failure failure) => ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(failure.message))),
     );
   }
 
@@ -443,14 +443,12 @@ class _VerificationTileState extends ConsumerState<_VerificationTile> {
                 runSpacing: AppSpacing.xs,
                 children: <Widget>[
                   if (widget.user.crm != null)
-                    AppTag(
-                      label: widget.user.crm!,
-                      icon: Icons.badge_outlined,
-                    ),
+                    AppTag(label: widget.user.crm!, icon: Icons.badge_outlined),
                   if (widget.user.specialty != null)
                     AppTag(label: widget.user.specialty!),
                   AppTag(
-                    label: 'Cadastro em '
+                    label:
+                        'Cadastro em '
                         '${Formatters.date(widget.user.createdAt)}',
                   ),
                 ],

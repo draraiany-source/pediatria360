@@ -75,8 +75,10 @@ class _ChildFormScreenState extends ConsumerState<ChildFormScreen> {
     _allergies.text = child.allergies.join(', ');
     _conditions.text = child.conditions.join(', ');
     _medications.text = child.medications.join(', ');
-    _birthWeight.text = child.birthWeightKg?.toString().replaceAll('.', ',') ?? '';
-    _birthHeight.text = child.birthHeightCm?.toString().replaceAll('.', ',') ?? '';
+    _birthWeight.text =
+        child.birthWeightKg?.toString().replaceAll('.', ',') ?? '';
+    _birthHeight.text =
+        child.birthHeightCm?.toString().replaceAll('.', ',') ?? '';
     _guardianName.text = child.guardianName ?? '';
     _guardianPhone.text = child.guardianPhone ?? '';
     _phone.text = child.phone ?? '';
@@ -109,16 +111,16 @@ class _ChildFormScreenState extends ConsumerState<ChildFormScreen> {
 
     final String? dateError = Validators.birthDate(_birthDate);
     if (dateError != null) {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text(dateError)));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(dateError)));
       return;
     }
 
     FocusScope.of(context).unfocus();
 
     final Child existing = _isEditing
-        ? ref.read(childProvider(widget.childId!)).valueOrNull ??
-            _emptyChild()
+        ? ref.read(childProvider(widget.childId!)).valueOrNull ?? _emptyChild()
         : _emptyChild();
 
     final Child toSave = Child(
@@ -144,13 +146,13 @@ class _ChildFormScreenState extends ConsumerState<ChildFormScreen> {
       phone: _phone.text.trim().isEmpty ? null : _phone.text.trim(),
       address: _address.text.trim().isEmpty ? null : _address.text.trim(),
       cpf: _cpf.text.trim().isEmpty ? null : _cpf.text.trim(),
-      insurance:
-          _insurance.text.trim().isEmpty ? null : _insurance.text.trim(),
+      insurance: _insurance.text.trim().isEmpty ? null : _insurance.text.trim(),
       updatedAt: DateTime.now(),
     );
 
-    final Child? saved =
-        await ref.read(childrenControllerProvider.notifier).saveChild(toSave);
+    final Child? saved = await ref
+        .read(childrenControllerProvider.notifier)
+        .saveChild(toSave);
 
     if (!mounted) return;
 
@@ -158,7 +160,9 @@ class _ChildFormScreenState extends ConsumerState<ChildFormScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            _isEditing ? 'Alterações salvas.' : '${saved.firstName} cadastrado.',
+            _isEditing
+                ? 'Alterações salvas.'
+                : '${saved.firstName} cadastrado.',
           ),
         ),
       );
@@ -167,13 +171,13 @@ class _ChildFormScreenState extends ConsumerState<ChildFormScreen> {
   }
 
   Child _emptyChild() => Child(
-        id: '',
-        ownerId: '',
-        name: '',
-        birthDate: DateTime.now(),
-        sex: ChildSex.male,
-        updatedAt: DateTime.now(),
-      );
+    id: '',
+    ownerId: '',
+    name: '',
+    birthDate: DateTime.now(),
+    sex: ChildSex.male,
+    updatedAt: DateTime.now(),
+  );
 
   @override
   Widget build(BuildContext context) {
@@ -181,12 +185,16 @@ class _ChildFormScreenState extends ConsumerState<ChildFormScreen> {
     final ChildActionState action = ref.watch(childrenControllerProvider);
 
     if (_isEditing) {
-      final Child? child = ref.watch(childProvider(widget.childId!)).valueOrNull;
+      final Child? child = ref
+          .watch(childProvider(widget.childId!))
+          .valueOrNull;
       if (child != null) _hydrate(child);
     }
 
-    ref.listen<ChildActionState>(childrenControllerProvider,
-        (ChildActionState? previous, ChildActionState next) {
+    ref.listen<ChildActionState>(childrenControllerProvider, (
+      ChildActionState? previous,
+      ChildActionState next,
+    ) {
       if (next.failure != null && context.mounted) {
         ScaffoldMessenger.of(context)
           ..hideCurrentSnackBar()
@@ -299,8 +307,9 @@ class _ChildFormScreenState extends ConsumerState<ChildFormScreen> {
                   prefixIcon: Icons.badge_outlined,
                   keyboardType: TextInputType.number,
                   inputFormatters: Masks.cpf,
-                  validator: (String? v) =>
-                      (v == null || v.trim().isEmpty) ? null : Validators.cpf(v),
+                  validator: (String? v) => (v == null || v.trim().isEmpty)
+                      ? null
+                      : Validators.cpf(v),
                 ),
                 const SizedBox(height: AppSpacing.lg),
                 AppTextField(
@@ -317,10 +326,7 @@ class _ChildFormScreenState extends ConsumerState<ChildFormScreen> {
                   prefixIcon: Icons.health_and_safety_outlined,
                   hint: 'Particular, Unimed, Bradesco…',
                 ),
-                const SectionHeader(
-                  title: 'Nascimento',
-                  eyebrow: 'Opcional',
-                ),
+                const SectionHeader(title: 'Nascimento', eyebrow: 'Opcional'),
                 Row(
                   children: <Widget>[
                     Expanded(
@@ -368,13 +374,12 @@ class _ChildFormScreenState extends ConsumerState<ChildFormScreen> {
                   decoration: const InputDecoration(
                     labelText: 'Semanas de gestação ao nascer',
                     prefixIcon: Icon(Icons.pregnant_woman_outlined, size: 20),
-                    helperText: 'Abaixo de 37 semanas, o app passa a usar '
+                    helperText:
+                        'Abaixo de 37 semanas, o app passa a usar '
                         'idade corrigida nas curvas.',
                   ),
                   items: <DropdownMenuItem<int?>>[
-                    const DropdownMenuItem<int?>(
-                      child: Text('Não informado'),
-                    ),
+                    const DropdownMenuItem<int?>(child: Text('Não informado')),
                     for (int w = 24; w <= 42; w++)
                       DropdownMenuItem<int?>(
                         value: w,
@@ -385,7 +390,8 @@ class _ChildFormScreenState extends ConsumerState<ChildFormScreen> {
                   ],
                   onChanged: (int? v) => setState(() => _gestationalWeeks = v),
                 ),
-                if (_gestationalWeeks != null && _gestationalWeeks! < 37) ...<Widget>[
+                if (_gestationalWeeks != null &&
+                    _gestationalWeeks! < 37) ...<Widget>[
                   const SizedBox(height: AppSpacing.md),
                   Container(
                     padding: const EdgeInsets.all(AppSpacing.md),
@@ -426,12 +432,16 @@ class _ChildFormScreenState extends ConsumerState<ChildFormScreen> {
                       child: Text('Não informado'),
                     ),
                     for (final String type in <String>[
-                      'A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-',
+                      'A+',
+                      'A-',
+                      'B+',
+                      'B-',
+                      'AB+',
+                      'AB-',
+                      'O+',
+                      'O-',
                     ])
-                      DropdownMenuItem<String?>(
-                        value: type,
-                        child: Text(type),
-                      ),
+                      DropdownMenuItem<String?>(value: type, child: Text(type)),
                   ],
                   onChanged: (String? v) => setState(() => _bloodType = v),
                 ),

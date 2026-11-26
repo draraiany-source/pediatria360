@@ -71,7 +71,7 @@ Future<void> main() async {
   }
 
   AppLogger.info(
-    'Pediatria 360 iniciado (${AppConfig.environment})',
+    '${AppConfig.appName} iniciado (${AppConfig.environment})',
     tag: 'boot',
   );
 
@@ -110,55 +110,57 @@ class _Pediatria360AppState extends ConsumerState<Pediatria360App> {
 
   /// Toque em notificacao leva a tela certa, nao a home.
   void _listenToNotificationRoutes() {
-    final NotificationService notifications =
-        ref.read(notificationServiceProvider);
-
-    _routeSubscription = notifications.onNotificationRoute.listen(
-      (String route) {
-        if (route.isEmpty) return;
-        ref.read(routerProvider).go(route);
-      },
+    final NotificationService notifications = ref.read(
+      notificationServiceProvider,
     );
+
+    _routeSubscription = notifications.onNotificationRoute.listen((
+      String route,
+    ) {
+      if (route.isEmpty) return;
+      ref.read(routerProvider).go(route);
+    });
   }
 
   /// Registra o token de push assim que houver sessao, e o remove ao sair.
   void _listenToAuthForPushToken() {
-    _authSubscription = ref.listenManual(
-      authStateProvider,
-      (AsyncValue<dynamic>? previous, AsyncValue<dynamic> next) async {
-        final Object? user = next.valueOrNull;
-        if (user == null) return;
+    _authSubscription = ref.listenManual(authStateProvider, (
+      AsyncValue<dynamic>? previous,
+      AsyncValue<dynamic> next,
+    ) async {
+      final Object? user = next.valueOrNull;
+      if (user == null) return;
 
-        // Usuário local do DevMode não tem sessão Firebase Auth — FCM e
-        // Cloud Functions falhariam sem benefício no teste de UI.
-        if (DevMode.isEnabled) return;
+      // Usuário local do DevMode não tem sessão Firebase Auth — FCM e
+      // Cloud Functions falhariam sem benefício no teste de UI.
+      if (DevMode.isEnabled) return;
 
-        final NotificationService notifications =
-            ref.read(notificationServiceProvider);
-        final bool granted = await notifications.requestPermission();
-        if (!granted) return;
+      final NotificationService notifications = ref.read(
+        notificationServiceProvider,
+      );
+      final bool granted = await notifications.requestPermission();
+      if (!granted) return;
 
-        final String? token = await notifications.token();
-        if (token == null) return;
+      final String? token = await notifications.token();
+      if (token == null) return;
 
-        await ref.read(authRepositoryProvider).registerDeviceToken(token);
+      await ref.read(authRepositoryProvider).registerDeviceToken(token);
 
-        // Sequência de dias: o único gatilho correto é "há sessão
-        // autenticada", que é exatamente o que este listener já observa.
-        // Sem esta chamada, a Function que calcula a tolerância de um dia
-        // perdido por semana nunca rodava — o streak exibido na tela de
-        // conquistas ficava parado em 0 para sempre, porque nada jamais
-        // avisava o servidor que o app abriu.
-        try {
-          await ref
-              .read(firebaseFunctionsProvider)
-              .httpsCallable('registerDailyActivity')
-              .call();
-        } catch (_) {
-          // Sem streak hoje não pode impedir o uso do app.
-        }
-      },
-    );
+      // Sequência de dias: o único gatilho correto é "há sessão
+      // autenticada", que é exatamente o que este listener já observa.
+      // Sem esta chamada, a Function que calcula a tolerância de um dia
+      // perdido por semana nunca rodava — o streak exibido na tela de
+      // conquistas ficava parado em 0 para sempre, porque nada jamais
+      // avisava o servidor que o app abriu.
+      try {
+        await ref
+            .read(firebaseFunctionsProvider)
+            .httpsCallable('registerDailyActivity')
+            .call();
+      } catch (_) {
+        // Sem streak hoje não pode impedir o uso do app.
+      }
+    });
   }
 
   @override
@@ -218,10 +220,10 @@ class _FirebaseNotConfiguredApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'Pediatria 360',
+      title: 'Crisdepaula Pediatria',
       theme: ThemeData(
         useMaterial3: true,
-        colorSchemeSeed: const Color(0xFF14676B),
+        colorSchemeSeed: const Color(0xFF7A4EBF),
       ),
       home: Scaffold(
         body: SafeArea(
@@ -236,7 +238,7 @@ class _FirebaseNotConfiguredApp extends StatelessWidget {
                     const Icon(
                       Icons.local_hospital_outlined,
                       size: 56,
-                      color: Color(0xFF14676B),
+                      color: Color(0xFF7A4EBF),
                     ),
                     const SizedBox(height: 24),
                     Text(
@@ -247,7 +249,7 @@ class _FirebaseNotConfiguredApp extends StatelessWidget {
                     const SizedBox(height: 12),
                     Text(
                       'Este build ainda tem as chaves de exemplo do '
-                      'Pediatria 360. Configure o projeto antes de abrir '
+                      'Crisdepaula Pediatria. Configure o projeto antes de abrir '
                       'o app.',
                       style: Theme.of(context).textTheme.bodyMedium,
                       textAlign: TextAlign.center,

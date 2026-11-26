@@ -93,7 +93,8 @@ class Encounter extends Equatable {
   /// idade de então, não a de hoje.
   int? get patientAgeMonthsAtEncounter {
     if (patientBirthDate == null) return null;
-    int months = (startedAt.year - patientBirthDate!.year) * 12 +
+    int months =
+        (startedAt.year - patientBirthDate!.year) * 12 +
         (startedAt.month - patientBirthDate!.month);
     if (startedAt.day < patientBirthDate!.day) months -= 1;
     return months < 0 ? 0 : months;
@@ -130,14 +131,14 @@ class ProcedureRecord extends Equatable {
   });
 
   factory ProcedureRecord.fromMap(Map<String, dynamic> map) => ProcedureRecord(
-        name: (map['name'] as String?) ?? '',
-        code: map['code'] as String?,
-        description: map['description'] as String?,
-        performedAt: map['performedAt'] == null
-            ? null
-            : DateTime.tryParse(map['performedAt'] as String),
-        complications: map['complications'] as String?,
-      );
+    name: (map['name'] as String?) ?? '',
+    code: map['code'] as String?,
+    description: map['description'] as String?,
+    performedAt: map['performedAt'] == null
+        ? null
+        : DateTime.tryParse(map['performedAt'] as String),
+    complications: map['complications'] as String?,
+  );
 
   final String name;
 
@@ -152,12 +153,12 @@ class ProcedureRecord extends Equatable {
   final String? complications;
 
   Map<String, dynamic> toMap() => <String, dynamic>{
-        'name': name,
-        'code': code,
-        'description': description,
-        'performedAt': performedAt?.toIso8601String(),
-        'complications': complications,
-      };
+    'name': name,
+    'code': code,
+    'description': description,
+    'performedAt': performedAt?.toIso8601String(),
+    'complications': complications,
+  };
 
   @override
   List<Object?> get props => <Object?>[name, code, performedAt];
@@ -227,23 +228,22 @@ class PrescriptionItem extends Equatable {
   final String? quantity;
 
   Map<String, dynamic> toMap() => <String, dynamic>{
-        'drug': drug,
-        'presentation': presentation,
-        'dose': dose,
-        'route': route,
-        'frequency': frequency,
-        'duration': duration,
-        'instructions': instructions,
-        'mgPerKg': mgPerKg,
-        'calculatedDoseMg': calculatedDoseMg,
-        'isControlled': isControlled,
-        'quantity': quantity,
-      };
+    'drug': drug,
+    'presentation': presentation,
+    'dose': dose,
+    'route': route,
+    'frequency': frequency,
+    'duration': duration,
+    'instructions': instructions,
+    'mgPerKg': mgPerKg,
+    'calculatedDoseMg': calculatedDoseMg,
+    'isControlled': isControlled,
+    'quantity': quantity,
+  };
 
   /// Linha como aparece na receita impressa.
   String get printedLine {
-    final StringBuffer buffer = StringBuffer()
-      ..write(drug);
+    final StringBuffer buffer = StringBuffer()..write(drug);
     if (presentation.isNotEmpty) buffer.write(' — $presentation');
     return buffer.toString();
   }
@@ -278,22 +278,22 @@ enum ClinicalDocumentType {
       );
 
   String get label => switch (this) {
-        ClinicalDocumentType.prescription => 'Receita',
-        ClinicalDocumentType.certificate => 'Atestado',
-        ClinicalDocumentType.referral => 'Encaminhamento',
-        ClinicalDocumentType.report => 'Relatório médico',
-        ClinicalDocumentType.dischargeSummary => 'Sumário de alta',
-        ClinicalDocumentType.examRequest => 'Solicitação de exames',
-      };
+    ClinicalDocumentType.prescription => 'Receita',
+    ClinicalDocumentType.certificate => 'Atestado',
+    ClinicalDocumentType.referral => 'Encaminhamento',
+    ClinicalDocumentType.report => 'Relatório médico',
+    ClinicalDocumentType.dischargeSummary => 'Sumário de alta',
+    ClinicalDocumentType.examRequest => 'Solicitação de exames',
+  };
 
   String get icon => switch (this) {
-        ClinicalDocumentType.prescription => 'medication',
-        ClinicalDocumentType.certificate => 'description',
-        ClinicalDocumentType.referral => 'send',
-        ClinicalDocumentType.report => 'article',
-        ClinicalDocumentType.dischargeSummary => 'assignment_turned_in',
-        ClinicalDocumentType.examRequest => 'science',
-      };
+    ClinicalDocumentType.prescription => 'medication',
+    ClinicalDocumentType.certificate => 'description',
+    ClinicalDocumentType.referral => 'send',
+    ClinicalDocumentType.report => 'article',
+    ClinicalDocumentType.dischargeSummary => 'assignment_turned_in',
+    ClinicalDocumentType.examRequest => 'science',
+  };
 }
 
 /// Documento emitido — receita, atestado, encaminhamento, relatório, alta.
@@ -377,8 +377,7 @@ class ClinicalDocument extends Equatable {
       items.any((PrescriptionItem i) => i.isControlled);
 
   @override
-  List<Object?> get props =>
-      <Object?>[id, type, issuedAt, signedAt, cancelled];
+  List<Object?> get props => <Object?>[id, type, issuedAt, signedAt, cancelled];
 }
 
 /// Resultado de exame registrado.
@@ -467,8 +466,10 @@ class LabResult extends Equatable {
 
   String? get referenceLabel {
     if (referenceLow == null && referenceHigh == null) return null;
-    final String low = referenceLow?.toStringAsFixed(1).replaceAll('.', ',') ?? '';
-    final String high = referenceHigh?.toStringAsFixed(1).replaceAll('.', ',') ?? '';
+    final String low =
+        referenceLow?.toStringAsFixed(1).replaceAll('.', ',') ?? '';
+    final String high =
+        referenceHigh?.toStringAsFixed(1).replaceAll('.', ',') ?? '';
     if (referenceLow != null && referenceHigh != null) return '$low – $high';
     if (referenceLow != null) return '> $low';
     return '< $high';

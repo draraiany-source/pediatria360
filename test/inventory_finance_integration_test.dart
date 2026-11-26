@@ -18,10 +18,10 @@ void main() {
     );
     final FinancePayable? p =
         InventoryFinanceIntegration.suggestPayableOnPurchaseReceived(
-      order: order,
-      supplierName: 'Distribuidora',
-      now: now,
-    );
+          order: order,
+          supplierName: 'Distribuidora',
+          now: now,
+        );
     expect(p, isNotNull);
     expect(p!.id, 'po_po1');
     expect(p.amountCents, 1000);

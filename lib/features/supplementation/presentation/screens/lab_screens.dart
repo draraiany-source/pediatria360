@@ -73,18 +73,19 @@ class _LabExamsScreenState extends ConsumerState<LabExamsScreen> {
           Expanded(
             child: ListView.separated(
               padding: const EdgeInsets.fromLTRB(
-                AppSpacing.lg, 0, AppSpacing.lg, AppSpacing.lg,
+                AppSpacing.lg,
+                0,
+                AppSpacing.lg,
+                AppSpacing.lg,
               ),
               itemCount: exams.length,
-              separatorBuilder: (_, __) => const SizedBox(height: AppSpacing.sm),
+              separatorBuilder: (_, __) =>
+                  const SizedBox(height: AppSpacing.sm),
               itemBuilder: (BuildContext context, int i) {
                 final LabExamDefinition e = exams[i];
                 return AppCard(
                   onTap: () => context.push(
-                    Routes.supplementLabDetail(
-                      e.id,
-                      childId: widget.childId,
-                    ),
+                    Routes.supplementLabDetail(e.id, childId: widget.childId),
                   ),
                   child: Row(
                     children: <Widget>[
@@ -109,9 +110,8 @@ class _LabExamsScreenState extends ConsumerState<LabExamsScreen> {
         ],
       ),
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => context.push(
-          Routes.supplementLabRegister(childId: widget.childId),
-        ),
+        onPressed: () =>
+            context.push(Routes.supplementLabRegister(childId: widget.childId)),
         icon: const Icon(Icons.add),
         label: const Text('Registrar resultado'),
       ),
@@ -120,11 +120,7 @@ class _LabExamsScreenState extends ConsumerState<LabExamsScreen> {
 }
 
 class LabExamDetailScreen extends ConsumerWidget {
-  const LabExamDetailScreen({
-    required this.examId,
-    this.childId,
-    super.key,
-  });
+  const LabExamDetailScreen({required this.examId, this.childId, super.key});
 
   final String examId;
   final String? childId;
@@ -154,9 +150,9 @@ class LabExamDetailScreen extends ConsumerWidget {
           Text(
             'A classificacao Normal / Atencao / Alterado e informada pelo profissional — '
             'o sistema nao diagnostica automaticamente.',
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: AppColors.inkMuted,
-                ),
+            style: Theme.of(
+              context,
+            ).textTheme.bodySmall?.copyWith(color: AppColors.inkMuted),
           ),
           const SizedBox(height: AppSpacing.lg),
           const BrandSectionHeader(title: 'Resultados do paciente'),
@@ -166,52 +162,60 @@ class LabExamDetailScreen extends ConsumerWidget {
               message: 'Abra a partir de um paciente para ver resultados.',
             )
           else
-            ref.watch(childLabResultsProvider(cid)).when(
-              loading: () => const SupplementSkeletonList(),
-              error: (Object e, StackTrace _) => Text('$e'),
-              data: (List<PatientLabResult> all) {
-                final List<PatientLabResult> filtered = all
-                    .where((PatientLabResult r) => r.examId == examId)
-                    .toList();
-                if (filtered.isEmpty) {
-                  return const SupplementEmptyState(
-                    message: 'Nenhum resultado registrado para este exame.',
-                  );
-                }
-                return Column(
-                  children: filtered.map((PatientLabResult r) {
-                    return Padding(
-                      padding: const EdgeInsets.only(bottom: AppSpacing.sm),
-                      child: AppCard(
-                        child: Row(
-                          children: <Widget>[
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: <Widget>[
-                                  Text(
-                                    '${r.valueText} ${r.unit}'.trim(),
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.w700,
-                                      color: AppColors.navy,
-                                    ),
+            ref
+                .watch(childLabResultsProvider(cid))
+                .when(
+                  loading: () => const SupplementSkeletonList(),
+                  error: (Object e, StackTrace _) => Text('$e'),
+                  data: (List<PatientLabResult> all) {
+                    final List<PatientLabResult> filtered = all
+                        .where((PatientLabResult r) => r.examId == examId)
+                        .toList();
+                    if (filtered.isEmpty) {
+                      return const SupplementEmptyState(
+                        message: 'Nenhum resultado registrado para este exame.',
+                      );
+                    }
+                    return Column(
+                      children: filtered.map((PatientLabResult r) {
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+                          child: AppCard(
+                            child: Row(
+                              children: <Widget>[
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: <Widget>[
+                                      Text(
+                                        '${r.valueText} ${r.unit}'.trim(),
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.w700,
+                                          color: AppColors.navy,
+                                        ),
+                                      ),
+                                      Text(
+                                        r.recordedAt
+                                            .toIso8601String()
+                                            .split('T')
+                                            .first,
+                                        style: Theme.of(
+                                          context,
+                                        ).textTheme.bodySmall,
+                                      ),
+                                    ],
                                   ),
-                                  Text(
-                                    r.recordedAt.toIso8601String().split('T').first,
-                                    style: Theme.of(context).textTheme.bodySmall,
-                                  ),
-                                ],
-                              ),
+                                ),
+                                LabFlagChip(flag: r.flag),
+                              ],
                             ),
-                            LabFlagChip(flag: r.flag),
-                          ],
-                        ),
-                      ),
+                          ),
+                        );
+                      }).toList(),
                     );
-                  }).toList(),
-                );
-              },
-            ),
+                  },
+                ),
         ],
       ),
       floatingActionButton: FloatingActionButton.extended(
@@ -232,7 +236,8 @@ class LabResultFormScreen extends ConsumerStatefulWidget {
   final String? examId;
 
   @override
-  ConsumerState<LabResultFormScreen> createState() => _LabResultFormScreenState();
+  ConsumerState<LabResultFormScreen> createState() =>
+      _LabResultFormScreenState();
 }
 
 class _LabResultFormScreenState extends ConsumerState<LabResultFormScreen> {
@@ -276,23 +281,24 @@ class _LabResultFormScreenState extends ConsumerState<LabResultFormScreen> {
     }
     setState(() => _saving = true);
     final LabExamDefinition? exam = labExamById(_examId);
-    final Result<PatientLabResult> res =
-        await ref.read(supplementRepositoryProvider).saveLabResult(
-              PatientLabResult(
-                id: '',
-                childId: childId,
-                examId: _examId,
-                examName: exam?.name ?? _examId,
-                recordedBy: uid,
-                recordedAt: DateTime.now(),
-                valueText: _value.text.trim(),
-                unit: _unit.text.trim(),
-                labName: _lab.text.trim(),
-                referenceText: _ref.text.trim(),
-                notes: _notes.text.trim(),
-                flag: _flag,
-              ),
-            );
+    final Result<PatientLabResult> res = await ref
+        .read(supplementRepositoryProvider)
+        .saveLabResult(
+          PatientLabResult(
+            id: '',
+            childId: childId,
+            examId: _examId,
+            examName: exam?.name ?? _examId,
+            recordedBy: uid,
+            recordedAt: DateTime.now(),
+            valueText: _value.text.trim(),
+            unit: _unit.text.trim(),
+            labName: _lab.text.trim(),
+            referenceText: _ref.text.trim(),
+            notes: _notes.text.trim(),
+            flag: _flag,
+          ),
+        );
     if (!mounted) return;
     setState(() => _saving = false);
     ScaffoldMessenger.of(context).showSnackBar(
@@ -372,9 +378,9 @@ class _LabResultFormScreenState extends ConsumerState<LabResultFormScreen> {
           Text(
             'Classificacao visual (profissional)',
             style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                  color: AppColors.navy,
-                  fontWeight: FontWeight.w700,
-                ),
+              color: AppColors.navy,
+              fontWeight: FontWeight.w700,
+            ),
           ),
           const SizedBox(height: AppSpacing.sm),
           Wrap(

@@ -17,9 +17,9 @@ class AuthRepositoryImpl implements AuthRepository {
     required AuthRemoteDataSource remote,
     required AnalyticsService analytics,
     required Future<void> Function() onSignOut,
-  })  : _remote = remote,
-        _analytics = analytics,
-        _onSignOut = onSignOut;
+  }) : _remote = remote,
+       _analytics = analytics,
+       _onSignOut = onSignOut;
 
   final AuthRemoteDataSource _remote;
   final AnalyticsService _analytics;
@@ -55,60 +55,55 @@ class AuthRepositoryImpl implements AuthRepository {
   Future<Result<AppUser>> signInWithEmail({
     required String email,
     required String password,
-  }) =>
-      guard(() async {
-        final AppUser user = await _remote.signInWithEmail(
-          email: email,
-          password: password,
-        );
-        _cached = user;
-        await _analytics.logEvent(
-          AnalyticsEvent.login,
-          <String, Object>{'method': 'email'},
-        );
-        return user;
-      });
+  }) => guard(() async {
+    final AppUser user = await _remote.signInWithEmail(
+      email: email,
+      password: password,
+    );
+    _cached = user;
+    await _analytics.logEvent(AnalyticsEvent.login, <String, Object>{
+      'method': 'email',
+    });
+    return user;
+  });
 
   @override
   Future<Result<AppUser>> signUpWithEmail({
     required String email,
     required String password,
     required String name,
-  }) =>
-      guard(() async {
-        final AppUser user = await _remote.signUpWithEmail(
-          email: email,
-          password: password,
-          name: name,
-        );
-        _cached = user;
-        await _analytics.logEvent(
-          AnalyticsEvent.signUp,
-          <String, Object>{'method': 'email'},
-        );
-        return user;
-      });
+  }) => guard(() async {
+    final AppUser user = await _remote.signUpWithEmail(
+      email: email,
+      password: password,
+      name: name,
+    );
+    _cached = user;
+    await _analytics.logEvent(AnalyticsEvent.signUp, <String, Object>{
+      'method': 'email',
+    });
+    return user;
+  });
 
   @override
   Future<Result<AppUser>> signInWithGoogle() => guard(() async {
-        final AppUser user = await _remote.signInWithGoogle();
-        _cached = user;
-        await _analytics.logEvent(
-          AnalyticsEvent.login,
-          <String, Object>{'method': 'google'},
-        );
-        return user;
-      });
+    final AppUser user = await _remote.signInWithGoogle();
+    _cached = user;
+    await _analytics.logEvent(AnalyticsEvent.login, <String, Object>{
+      'method': 'google',
+    });
+    return user;
+  });
 
   @override
   Future<Result<void>> signOut() => guard(() async {
-        await _analytics.logEvent(AnalyticsEvent.logout);
-        await _remote.signOut();
-        _cached = null;
-        // Dado clinico de uma familia nao pode sobrar no aparelho depois que a
-        // sessao acaba — especialmente em celular compartilhado.
-        await _onSignOut();
-      });
+    await _analytics.logEvent(AnalyticsEvent.logout);
+    await _remote.signOut();
+    _cached = null;
+    // Dado clinico de uma familia nao pode sobrar no aparelho depois que a
+    // sessao acaba — especialmente em celular compartilhado.
+    await _onSignOut();
+  });
 
   @override
   Future<Result<void>> sendPasswordReset(String email) =>
@@ -120,10 +115,10 @@ class AuthRepositoryImpl implements AuthRepository {
 
   @override
   Future<Result<AppUser>> reload() => guard(() async {
-        final AppUser user = await _remote.reload();
-        _cached = user;
-        return user;
-      });
+    final AppUser user = await _remote.reload();
+    _cached = user;
+    return user;
+  });
 
   @override
   Future<Result<AppUser>> updateProfile({
@@ -131,34 +126,32 @@ class AuthRepositoryImpl implements AuthRepository {
     String? phone,
     String? photoUrl,
     String? specialty,
-  }) =>
-      guard(() async {
-        final AppUser user = await _remote.updateProfile(
-          name: name,
-          phone: phone,
-          photoUrl: photoUrl,
-          specialty: specialty,
-        );
-        _cached = user;
-        return user;
-      });
+  }) => guard(() async {
+    final AppUser user = await _remote.updateProfile(
+      name: name,
+      phone: phone,
+      photoUrl: photoUrl,
+      specialty: specialty,
+    );
+    _cached = user;
+    return user;
+  });
 
   @override
   Future<Result<AppUser>> completeOnboarding({
     required UserRole role,
     String? crm,
     String? specialty,
-  }) =>
-      guard(() async {
-        final AppUser user = await _remote.completeOnboarding(
-          role: role,
-          crm: crm,
-          specialty: specialty,
-        );
-        _cached = user;
-        await _analytics.setUser(uid: user.uid, role: role.name);
-        return user;
-      });
+  }) => guard(() async {
+    final AppUser user = await _remote.completeOnboarding(
+      role: role,
+      crm: crm,
+      specialty: specialty,
+    );
+    _cached = user;
+    await _analytics.setUser(uid: user.uid, role: role.name);
+    return user;
+  });
 
   @override
   Future<Result<void>> registerDeviceToken(String token) =>

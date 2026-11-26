@@ -12,11 +12,11 @@ import '../../data/library_repository.dart';
 
 final Provider<LibraryRepository> libraryRepositoryProvider =
     Provider<LibraryRepository>(
-  (Ref ref) => LibraryRepository(
-    firestore: ref.watch(firestoreProvider),
-    cache: ref.watch(cacheServiceProvider),
-  ),
-);
+      (Ref ref) => LibraryRepository(
+        firestore: ref.watch(firestoreProvider),
+        cache: ref.watch(cacheServiceProvider),
+      ),
+    );
 
 /// Filtro ativo da biblioteca.
 class LibraryFilter {
@@ -30,11 +30,10 @@ class LibraryFilter {
     ContentType? type,
     bool clearCategory = false,
     bool clearType = false,
-  }) =>
-      LibraryFilter(
-        category: clearCategory ? null : (category ?? this.category),
-        type: clearType ? null : (type ?? this.type),
-      );
+  }) => LibraryFilter(
+    category: clearCategory ? null : (category ?? this.category),
+    type: clearType ? null : (type ?? this.type),
+  );
 
   @override
   bool operator ==(Object other) =>
@@ -47,10 +46,10 @@ class LibraryFilter {
 }
 
 final NotifierProvider<LibraryFilterController, LibraryFilter>
-    libraryFilterProvider =
+libraryFilterProvider =
     NotifierProvider<LibraryFilterController, LibraryFilter>(
-  LibraryFilterController.new,
-);
+      LibraryFilterController.new,
+    );
 
 class LibraryFilterController extends Notifier<LibraryFilter> {
   @override
@@ -101,16 +100,15 @@ class LibraryState {
     Failure? failure,
     bool? fromCache,
     bool clearFailure = false,
-  }) =>
-      LibraryState(
-        items: items ?? this.items,
-        isLoading: isLoading ?? this.isLoading,
-        isLoadingMore: isLoadingMore ?? this.isLoadingMore,
-        hasMore: hasMore ?? this.hasMore,
-        cursor: cursor ?? this.cursor,
-        failure: clearFailure ? null : (failure ?? this.failure),
-        fromCache: fromCache ?? this.fromCache,
-      );
+  }) => LibraryState(
+    items: items ?? this.items,
+    isLoading: isLoading ?? this.isLoading,
+    isLoadingMore: isLoadingMore ?? this.isLoadingMore,
+    hasMore: hasMore ?? this.hasMore,
+    cursor: cursor ?? this.cursor,
+    failure: clearFailure ? null : (failure ?? this.failure),
+    fromCache: fromCache ?? this.fromCache,
+  );
 }
 
 /// Lista da biblioteca, com scroll infinito.
@@ -173,13 +171,14 @@ class LibraryController extends Notifier<LibraryState> {
     state = state.copyWith(isLoadingMore: true);
 
     final LibraryFilter filter = ref.read(libraryFilterProvider);
-    final Result<Paginated<Content>> result =
-        await ref.read(libraryRepositoryProvider).list(
-              user: ref.read(currentUserProvider),
-              category: filter.category,
-              type: filter.type,
-              cursor: state.cursor,
-            );
+    final Result<Paginated<Content>> result = await ref
+        .read(libraryRepositoryProvider)
+        .list(
+          user: ref.read(currentUserProvider),
+          category: filter.category,
+          type: filter.type,
+          cursor: state.cursor,
+        );
 
     state = result.fold(
       (Paginated<Content> page) => state.copyWith(
@@ -203,41 +202,39 @@ final NotifierProvider<LibraryController, LibraryState> libraryProvider =
 /// Busca textual. `family` sobre o termo para o Riverpod cachear por consulta.
 final FutureProviderFamily<List<Content>, String> librarySearchProvider =
     FutureProvider.family<List<Content>, String>((Ref ref, String query) async {
-  if (query.trim().length < 3) return const <Content>[];
+      if (query.trim().length < 3) return const <Content>[];
 
-  ref.read(analyticsProvider).logSearch(query, area: 'biblioteca');
+      ref.read(analyticsProvider).logSearch(query, area: 'biblioteca');
 
-  final Result<List<Content>> result =
-      await ref.read(libraryRepositoryProvider).search(
-            user: ref.read(currentUserProvider),
-            query: query,
-          );
+      final Result<List<Content>> result = await ref
+          .read(libraryRepositoryProvider)
+          .search(user: ref.read(currentUserProvider), query: query);
 
-  return result.fold(
-    (List<Content> items) => items,
-    (Failure failure) => throw failure,
-  );
-});
+      return result.fold(
+        (List<Content> items) => items,
+        (Failure failure) => throw failure,
+      );
+    });
 
 /// Documento único, com queda para o cache quando offline.
 final FutureProviderFamily<Content, String> contentProvider =
     FutureProvider.family<Content, String>((Ref ref, String id) async {
-  final LibraryRepository repository = ref.read(libraryRepositoryProvider);
+      final LibraryRepository repository = ref.read(libraryRepositoryProvider);
 
-  final Result<Content> result = await repository.byId(id);
+      final Result<Content> result = await repository.byId(id);
 
-  return result.fold(
-    (Content content) {
-      ref.read(analyticsProvider).logEvent(
-        AnalyticsEvent.protocolOpened,
-        <String, Object>{'content_id': id, 'type': content.type.name},
+      return result.fold(
+        (Content content) {
+          ref.read(analyticsProvider).logEvent(
+            AnalyticsEvent.protocolOpened,
+            <String, Object>{'content_id': id, 'type': content.type.name},
+          );
+          return content;
+        },
+        (Failure failure) {
+          final Content? cached = repository.cachedById(id);
+          if (cached != null) return cached;
+          throw failure;
+        },
       );
-      return content;
-    },
-    (Failure failure) {
-      final Content? cached = repository.cachedById(id);
-      if (cached != null) return cached;
-      throw failure;
-    },
-  );
-});
+    });

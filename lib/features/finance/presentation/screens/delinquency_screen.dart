@@ -16,8 +16,9 @@ class DelinquencyScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final DateTime now = DateTime.now();
     final DateFormat fmt = DateFormat('dd/MM/yyyy');
-    final AsyncValue<List<FinanceReceivable>> async =
-        ref.watch(financeReceivablesProvider);
+    final AsyncValue<List<FinanceReceivable>> async = ref.watch(
+      financeReceivablesProvider,
+    );
 
     return Scaffold(
       appBar: AppBar(title: const Text('Inadimplencia')),
@@ -25,14 +26,17 @@ class DelinquencyScreen extends ConsumerWidget {
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (Object e, _) => Center(child: Text('$e')),
         data: (List<FinanceReceivable> list) {
-          final List<FinanceReceivable> overdue = list
-              .where(
-                (FinanceReceivable r) =>
-                    r.effectiveStatus(now) == ReceivableStatus.overdue,
-              )
-              .toList(growable: false)
-            ..sort((FinanceReceivable a, FinanceReceivable b) =>
-                a.dueAt.compareTo(b.dueAt));
+          final List<FinanceReceivable> overdue =
+              list
+                  .where(
+                    (FinanceReceivable r) =>
+                        r.effectiveStatus(now) == ReceivableStatus.overdue,
+                  )
+                  .toList(growable: false)
+                ..sort(
+                  (FinanceReceivable a, FinanceReceivable b) =>
+                      a.dueAt.compareTo(b.dueAt),
+                );
           if (overdue.isEmpty) {
             return const Center(child: Text('Nenhum titulo em atraso.'));
           }

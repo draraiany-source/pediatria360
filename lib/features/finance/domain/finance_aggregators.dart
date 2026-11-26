@@ -34,7 +34,6 @@ class FinanceDashboardKpis {
   }) {
     int revenueInPeriod = 0;
     int paidCount = 0;
-    int totalBilled = 0;
     int arOpen = 0;
     int overdue = 0;
     int arTotalOpen = 0;
@@ -60,7 +59,6 @@ class FinanceDashboardKpis {
           r.professionalName ?? r.professionalId ?? 'Sem profissional';
       byProf[profKey] = (byProf[profKey] ?? 0) + r.paidCents;
       byOrigin[r.origin] = (byOrigin[r.origin] ?? 0) + r.paidCents;
-      totalBilled += r.totalCents;
     }
 
     int expensesInPeriod = 0;
@@ -133,9 +131,7 @@ class CashFlowSeries {
 
     for (int i = 0; i < starts.length; i++) {
       final DateTime start = starts[i];
-      final DateTime end = i + 1 < starts.length
-          ? starts[i + 1]
-          : period.end;
+      final DateTime end = i + 1 < starts.length ? starts[i + 1] : period.end;
       int inflows = 0;
       int outflows = 0;
 
@@ -399,8 +395,7 @@ class OriginBreakdown {
             origin: e.key,
             valueCents: e.value.value,
             count: e.value.count,
-            ticketCents:
-                e.value.count > 0 ? e.value.value ~/ e.value.count : 0,
+            ticketCents: e.value.count > 0 ? e.value.value ~/ e.value.count : 0,
             percent: total > 0 ? e.value.value / total : 0.0,
           ),
         )

@@ -8,7 +8,6 @@ import '../error/exceptions.dart';
 import '../utils/result.dart';
 import 'app_logger.dart';
 
-
 /// Referência a um vídeo hospedado no Bunny Stream.
 class BunnyVideo {
   const BunnyVideo({
@@ -20,14 +19,12 @@ class BunnyVideo {
   });
 
   factory BunnyVideo.fromMap(Map<String, dynamic> map) => BunnyVideo(
-        guid: (map['guid'] as String?) ?? '',
-        title: (map['title'] as String?) ?? '',
-        durationSeconds: (map['length'] as num?)?.toInt() ?? 0,
-        thumbnailUrl: map['thumbnailUrl'] as String?,
-        status: BunnyVideoStatus.fromCode(
-          (map['status'] as num?)?.toInt() ?? 4,
-        ),
-      );
+    guid: (map['guid'] as String?) ?? '',
+    title: (map['title'] as String?) ?? '',
+    durationSeconds: (map['length'] as num?)?.toInt() ?? 0,
+    thumbnailUrl: map['thumbnailUrl'] as String?,
+    status: BunnyVideoStatus.fromCode((map['status'] as num?)?.toInt() ?? 4),
+  );
 
   final String guid;
   final String title;
@@ -51,22 +48,22 @@ enum BunnyVideoStatus {
   failed;
 
   static BunnyVideoStatus fromCode(int code) => switch (code) {
-        0 || 1 => BunnyVideoStatus.queued,
-        2 => BunnyVideoStatus.processing,
-        3 => BunnyVideoStatus.encoding,
-        4 => BunnyVideoStatus.ready,
-        _ => BunnyVideoStatus.failed,
-      };
+    0 || 1 => BunnyVideoStatus.queued,
+    2 => BunnyVideoStatus.processing,
+    3 => BunnyVideoStatus.encoding,
+    4 => BunnyVideoStatus.ready,
+    _ => BunnyVideoStatus.failed,
+  };
 
   bool get isPlayable => this == BunnyVideoStatus.ready;
 
   String get label => switch (this) {
-        BunnyVideoStatus.queued => 'Na fila',
-        BunnyVideoStatus.processing => 'Processando',
-        BunnyVideoStatus.encoding => 'Convertendo',
-        BunnyVideoStatus.ready => 'Disponível',
-        BunnyVideoStatus.failed => 'Falhou',
-      };
+    BunnyVideoStatus.queued => 'Na fila',
+    BunnyVideoStatus.processing => 'Processando',
+    BunnyVideoStatus.encoding => 'Convertendo',
+    BunnyVideoStatus.ready => 'Disponível',
+    BunnyVideoStatus.failed => 'Falhou',
+  };
 }
 
 /// Acesso ao Bunny Stream e ao Bunny Storage.
@@ -83,11 +80,9 @@ enum BunnyVideoStatus {
 /// O que passa por Cloud Function: criar o vídeo, obter a URL assinada de
 /// upload, e gerar token de acesso para conteúdo pago.
 class BunnyService {
-  BunnyService({
-    required Dio dio,
-    required FirebaseFunctions functions,
-  })  : _dio = dio,
-        _functions = functions;
+  BunnyService({required Dio dio, required FirebaseFunctions functions})
+    : _dio = dio,
+      _functions = functions;
 
   final Dio _dio;
   final FirebaseFunctions _functions;
@@ -129,24 +124,24 @@ class BunnyService {
   Future<Result<String>> signedPlaybackUrl({
     required String videoGuid,
     Duration validity = const Duration(hours: 4),
-  }) =>
-      guard(() async {
-        final HttpsCallableResult<dynamic> response = await _functions
-            .httpsCallable('signBunnyPlayback')
-            .call(<String, dynamic>{
+  }) => guard(() async {
+    final HttpsCallableResult<dynamic> response = await _functions
+        .httpsCallable('signBunnyPlayback')
+        .call(<String, dynamic>{
           'videoGuid': videoGuid,
           'expiresInSeconds': validity.inSeconds,
         });
 
-        final Map<String, dynamic> data =
-            Map<String, dynamic>.from(response.data as Map<dynamic, dynamic>);
+    final Map<String, dynamic> data = Map<String, dynamic>.from(
+      response.data as Map<dynamic, dynamic>,
+    );
 
-        final String? url = data['url'] as String?;
-        if (url == null || url.isEmpty) {
-          throw const ServerException('URL de reprodução não recebida.');
-        }
-        return url;
-      });
+    final String? url = data['url'] as String?;
+    if (url == null || url.isEmpty) {
+      throw const ServerException('URL de reprodução não recebida.');
+    }
+    return url;
+  });
 
   // ----------------------------------------------------------------- Upload
 
@@ -164,66 +159,64 @@ class BunnyService {
     String? collectionId,
     void Function(int sent, int total)? onProgress,
     CancelToken? cancelToken,
-  }) =>
-      guard(() async {
-        final HttpsCallableResult<dynamic> created = await _functions
-            .httpsCallable('createBunnyVideo')
-            .call(<String, dynamic>{
+  }) => guard(() async {
+    final HttpsCallableResult<dynamic> created = await _functions
+        .httpsCallable('createBunnyVideo')
+        .call(<String, dynamic>{
           'title': title,
           if (collectionId != null) 'collectionId': collectionId,
         });
 
-        final Map<String, dynamic> info =
-            Map<String, dynamic>.from(created.data as Map<dynamic, dynamic>);
+    final Map<String, dynamic> info = Map<String, dynamic>.from(
+      created.data as Map<dynamic, dynamic>,
+    );
 
-        final String guid = (info['guid'] as String?) ?? '';
-        final String uploadUrl = (info['uploadUrl'] as String?) ?? '';
-        final String signature = (info['signature'] as String?) ?? '';
-        final int expires = (info['expires'] as num?)?.toInt() ?? 0;
+    final String guid = (info['guid'] as String?) ?? '';
+    final String uploadUrl = (info['uploadUrl'] as String?) ?? '';
+    final String signature = (info['signature'] as String?) ?? '';
+    final int expires = (info['expires'] as num?)?.toInt() ?? 0;
 
-        if (guid.isEmpty || uploadUrl.isEmpty) {
-          throw const ServerException('Não foi possível preparar o envio.');
-        }
+    if (guid.isEmpty || uploadUrl.isEmpty) {
+      throw const ServerException('Não foi possível preparar o envio.');
+    }
 
-        await _dio.put<void>(
-          uploadUrl,
-          data: data,
-          options: Options(
-            headers: <String, dynamic>{
-              'Content-Type': 'application/octet-stream',
-              Headers.contentLengthHeader: contentLength,
-              if (signature.isNotEmpty) 'AuthorizationSignature': signature,
-              if (expires > 0) 'AuthorizationExpire': expires,
-              if (signature.isNotEmpty) 'VideoId': guid,
-              if (signature.isNotEmpty)
-                'LibraryId': AppConfig.bunnyStreamLibraryId,
-            },
-            // Upload longo: o timeout global de 30s do Dio mataria o envio.
-            sendTimeout: const Duration(minutes: 30),
-            receiveTimeout: const Duration(minutes: 5),
-          ),
-          onSendProgress: onProgress,
-          cancelToken: cancelToken,
-        );
+    await _dio.put<void>(
+      uploadUrl,
+      data: data,
+      options: Options(
+        headers: <String, dynamic>{
+          'Content-Type': 'application/octet-stream',
+          Headers.contentLengthHeader: contentLength,
+          if (signature.isNotEmpty) 'AuthorizationSignature': signature,
+          if (expires > 0) 'AuthorizationExpire': expires,
+          if (signature.isNotEmpty) 'VideoId': guid,
+          if (signature.isNotEmpty) 'LibraryId': AppConfig.bunnyStreamLibraryId,
+        },
+        // Upload longo: o timeout global de 30s do Dio mataria o envio.
+        sendTimeout: const Duration(minutes: 30),
+        receiveTimeout: const Duration(minutes: 5),
+      ),
+      onSendProgress: onProgress,
+      cancelToken: cancelToken,
+    );
 
-        return BunnyVideo(
-          guid: guid,
-          title: title,
-          status: BunnyVideoStatus.queued,
-        );
-      });
+    return BunnyVideo(
+      guid: guid,
+      title: title,
+      status: BunnyVideoStatus.queued,
+    );
+  });
 
   /// Consulta o estágio de processamento.
-  Future<Result<BunnyVideo>> videoStatus(String videoGuid) =>
-      guard(() async {
-        final HttpsCallableResult<dynamic> response = await _functions
-            .httpsCallable('getBunnyVideo')
-            .call(<String, dynamic>{'videoGuid': videoGuid});
+  Future<Result<BunnyVideo>> videoStatus(String videoGuid) => guard(() async {
+    final HttpsCallableResult<dynamic> response = await _functions
+        .httpsCallable('getBunnyVideo')
+        .call(<String, dynamic>{'videoGuid': videoGuid});
 
-        return BunnyVideo.fromMap(
-          Map<String, dynamic>.from(response.data as Map<dynamic, dynamic>),
-        );
-      });
+    return BunnyVideo.fromMap(
+      Map<String, dynamic>.from(response.data as Map<dynamic, dynamic>),
+    );
+  });
 
   /// Aguarda o processamento terminar, com intervalo fixo.
   ///
@@ -260,8 +253,8 @@ class BunnyService {
   }
 
   Future<Result<void>> deleteVideo(String videoGuid) => guard(() async {
-        await _functions
-            .httpsCallable('deleteBunnyVideo')
-            .call(<String, dynamic>{'videoGuid': videoGuid});
-      });
+    await _functions.httpsCallable('deleteBunnyVideo').call(<String, dynamic>{
+      'videoGuid': videoGuid,
+    });
+  });
 }

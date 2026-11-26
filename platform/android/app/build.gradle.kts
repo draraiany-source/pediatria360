@@ -7,9 +7,13 @@ plugins {
     id("com.android.application")
     id("kotlin-android")
     id("dev.flutter.flutter-gradle-plugin")
-    // Sem estes dois, o Firebase não é configurado no build.
-    id("com.google.gms.google-services")
-    id("com.google.firebase.crashlytics")
+}
+
+// google-services.json não vai para o git. Com o arquivo, Firebase e
+// Crashlytics entram no build. Sem ele, o CI ainda gera o APK de debug.
+if (file("google-services.json").exists()) {
+    apply(plugin = "com.google.gms.google-services")
+    apply(plugin = "com.google.firebase.crashlytics")
 }
 
 android {

@@ -15,17 +15,13 @@ enum MessageRole { user, assistant }
 /// oráculo — e o responsável não tem como levar a informação ao pediatra para
 /// conferir.
 class MessageSource extends Equatable {
-  const MessageSource({
-    required this.title,
-    this.contentId,
-    this.excerpt,
-  });
+  const MessageSource({required this.title, this.contentId, this.excerpt});
 
   factory MessageSource.fromMap(Map<String, dynamic> map) => MessageSource(
-        title: (map['title'] as String?) ?? '',
-        contentId: map['contentId'] as String?,
-        excerpt: map['excerpt'] as String?,
-      );
+    title: (map['title'] as String?) ?? '',
+    contentId: map['contentId'] as String?,
+    excerpt: map['excerpt'] as String?,
+  );
 
   final String title;
 
@@ -51,9 +47,7 @@ class AiMessage extends Equatable {
     this.failed = false,
   });
 
-  factory AiMessage.fromFirestore(
-    DocumentSnapshot<Map<String, dynamic>> doc,
-  ) {
+  factory AiMessage.fromFirestore(DocumentSnapshot<Map<String, dynamic>> doc) {
     final Map<String, dynamic> data = doc.data() ?? const <String, dynamic>{};
     return AiMessage(
       id: doc.id,
@@ -90,20 +84,25 @@ class AiMessage extends Equatable {
     List<MessageSource>? sources,
     bool? isStreaming,
     bool? failed,
-  }) =>
-      AiMessage(
-        id: id,
-        role: role,
-        text: text ?? this.text,
-        createdAt: createdAt,
-        sources: sources ?? this.sources,
-        isStreaming: isStreaming ?? this.isStreaming,
-        failed: failed ?? this.failed,
-      );
+  }) => AiMessage(
+    id: id,
+    role: role,
+    text: text ?? this.text,
+    createdAt: createdAt,
+    sources: sources ?? this.sources,
+    isStreaming: isStreaming ?? this.isStreaming,
+    failed: failed ?? this.failed,
+  );
 
   @override
-  List<Object?> get props =>
-      <Object?>[id, role, text, createdAt, isStreaming, failed];
+  List<Object?> get props => <Object?>[
+    id,
+    role,
+    text,
+    createdAt,
+    isStreaming,
+    failed,
+  ];
 }
 
 /// Uma conversa.
@@ -176,8 +175,8 @@ class AiRepository {
   const AiRepository({
     required FirebaseFunctions functions,
     required FirebaseFirestore firestore,
-  })  : _functions = functions,
-        _firestore = firestore;
+  }) : _functions = functions,
+       _firestore = firestore;
 
   final FirebaseFunctions _functions;
   final FirebaseFirestore _firestore;
@@ -192,9 +191,8 @@ class AiRepository {
       .limit(50)
       .snapshots()
       .map(
-        (QuerySnapshot<Map<String, dynamic>> s) => s.docs
-            .map(AiConversation.fromFirestore)
-            .toList(growable: false),
+        (QuerySnapshot<Map<String, dynamic>> s) =>
+            s.docs.map(AiConversation.fromFirestore).toList(growable: false),
       );
 
   /// Mensagens de uma conversa, em tempo real.
@@ -223,68 +221,64 @@ class AiRepository {
     required String question,
     String? conversationId,
     String? childId,
-  }) =>
-      guard(() async {
-        final HttpsCallable callable = _functions.httpsCallable(
-          'aiChat',
-          options: HttpsCallableOptions(
-            timeout: const Duration(seconds: 90),
-          ),
-        );
+  }) => guard(() async {
+    final HttpsCallable callable = _functions.httpsCallable(
+      'aiChat',
+      options: HttpsCallableOptions(timeout: const Duration(seconds: 90)),
+    );
 
-        final HttpsCallableResult<dynamic> response = await callable.call(
-          <String, dynamic>{
-            'question': question,
-            if (conversationId != null) 'conversationId': conversationId,
-            if (childId != null) 'childId': childId,
-          },
-        );
+    final HttpsCallableResult<dynamic> response = await callable
+        .call(<String, dynamic>{
+          'question': question,
+          if (conversationId != null) 'conversationId': conversationId,
+          if (childId != null) 'childId': childId,
+        });
 
-        final Map<String, dynamic> data =
-            Map<String, dynamic>.from(response.data as Map<dynamic, dynamic>);
+    final Map<String, dynamic> data = Map<String, dynamic>.from(
+      response.data as Map<dynamic, dynamic>,
+    );
 
-        if (data['error'] != null) {
-          throw ServerException(data['error'] as String);
-        }
+    if (data['error'] != null) {
+      throw ServerException(data['error'] as String);
+    }
 
-        return AiAnswer(
-          conversationId: (data['conversationId'] as String?) ?? '',
-          messageId: (data['messageId'] as String?) ?? '',
-          text: (data['answer'] as String?) ?? '',
-          sources: ((data['sources'] as List<dynamic>?) ?? const <dynamic>[])
-              .whereType<Map<dynamic, dynamic>>()
-              .map(
-                (Map<dynamic, dynamic> m) =>
-                    MessageSource.fromMap(Map<String, dynamic>.from(m)),
-              )
-              .toList(growable: false),
-          quota: AiQuota(
-            used: (data['quotaUsed'] as num?)?.toInt() ?? 0,
-            limit: (data['quotaLimit'] as num?)?.toInt() ?? 0,
-            unlimited: (data['quotaUnlimited'] as bool?) ?? false,
-          ),
-          escalate: (data['escalate'] as bool?) ?? false,
-        );
-      });
+    return AiAnswer(
+      conversationId: (data['conversationId'] as String?) ?? '',
+      messageId: (data['messageId'] as String?) ?? '',
+      text: (data['answer'] as String?) ?? '',
+      sources: ((data['sources'] as List<dynamic>?) ?? const <dynamic>[])
+          .whereType<Map<dynamic, dynamic>>()
+          .map(
+            (Map<dynamic, dynamic> m) =>
+                MessageSource.fromMap(Map<String, dynamic>.from(m)),
+          )
+          .toList(growable: false),
+      quota: AiQuota(
+        used: (data['quotaUsed'] as num?)?.toInt() ?? 0,
+        limit: (data['quotaLimit'] as num?)?.toInt() ?? 0,
+        unlimited: (data['quotaUnlimited'] as bool?) ?? false,
+      ),
+      escalate: (data['escalate'] as bool?) ?? false,
+    );
+  });
 
   /// Cota do dia. Lida do documento que a função mantém.
   Future<Result<AiQuota>> quota(String uid) => guard(() async {
-        final DocumentSnapshot<Map<String, dynamic>> doc = await _firestore
-            .collection(FirestorePaths.users)
-            .doc(uid)
-            .collection('ai_usage')
-            .doc(_todayKey())
-            .get();
+    final DocumentSnapshot<Map<String, dynamic>> doc = await _firestore
+        .collection(FirestorePaths.users)
+        .doc(uid)
+        .collection('ai_usage')
+        .doc(_todayKey())
+        .get();
 
-        final Map<String, dynamic> data =
-            doc.data() ?? const <String, dynamic>{};
+    final Map<String, dynamic> data = doc.data() ?? const <String, dynamic>{};
 
-        return AiQuota(
-          used: (data['count'] as num?)?.toInt() ?? 0,
-          limit: (data['limit'] as num?)?.toInt() ?? 10,
-          unlimited: (data['unlimited'] as bool?) ?? false,
-        );
-      });
+    return AiQuota(
+      used: (data['count'] as num?)?.toInt() ?? 0,
+      limit: (data['limit'] as num?)?.toInt() ?? 10,
+      unlimited: (data['unlimited'] as bool?) ?? false,
+    );
+  });
 
   static String _todayKey() {
     final DateTime now = DateTime.now();
@@ -295,9 +289,9 @@ class AiRepository {
   Future<Result<void>> deleteConversation(String conversationId) =>
       guard(() async {
         // Apagar subcollection exige privilégio de admin; a função cuida disso.
-        await _functions
-            .httpsCallable('deleteConversation')
-            .call(<String, dynamic>{'conversationId': conversationId});
+        await _functions.httpsCallable('deleteConversation').call(
+          <String, dynamic>{'conversationId': conversationId},
+        );
       });
 }
 

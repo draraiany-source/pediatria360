@@ -38,13 +38,13 @@ class ConsentPurpose {
 
 final FutureProvider<Map<String, dynamic>> privacyManifestProvider =
     FutureProvider<Map<String, dynamic>>((Ref ref) async {
-  final HttpsCallableResult<dynamic> response = await ref
-      .watch(firebaseFunctionsProvider)
-      .httpsCallable('dataProcessingManifest')
-      .call();
+      final HttpsCallableResult<dynamic> response = await ref
+          .watch(firebaseFunctionsProvider)
+          .httpsCallable('dataProcessingManifest')
+          .call();
 
-  return Map<String, dynamic>.from(response.data as Map<dynamic, dynamic>);
-});
+      return Map<String, dynamic>.from(response.data as Map<dynamic, dynamic>);
+    });
 
 /// Privacidade e dados pessoais.
 ///
@@ -63,10 +63,7 @@ class PrivacyScreen extends ConsumerStatefulWidget {
 class _PrivacyScreenState extends ConsumerState<PrivacyScreen> {
   bool _busy = false;
 
-  Future<T?> _call<T>(
-    String name, {
-    Map<String, dynamic>? data,
-  }) async {
+  Future<T?> _call<T>(String name, {Map<String, dynamic>? data}) async {
     setState(() => _busy = true);
 
     final Result<T> result = await guard(() async {
@@ -74,9 +71,7 @@ class _PrivacyScreenState extends ConsumerState<PrivacyScreen> {
           .read(firebaseFunctionsProvider)
           .httpsCallable(
             name,
-            options: HttpsCallableOptions(
-              timeout: const Duration(minutes: 5),
-            ),
+            options: HttpsCallableOptions(timeout: const Duration(minutes: 5)),
           )
           .call(data ?? <String, dynamic>{});
       return response.data as T;
@@ -85,20 +80,17 @@ class _PrivacyScreenState extends ConsumerState<PrivacyScreen> {
     if (!mounted) return null;
     setState(() => _busy = false);
 
-    return result.fold(
-      (T value) => value,
-      (Failure failure) {
-        ScaffoldMessenger.of(context)
-          ..hideCurrentSnackBar()
-          ..showSnackBar(
-            SnackBar(
-              content: Text(failure.message),
-              backgroundColor: AppColors.danger,
-            ),
-          );
-        return null;
-      },
-    );
+    return result.fold((T value) => value, (Failure failure) {
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(
+          SnackBar(
+            content: Text(failure.message),
+            backgroundColor: AppColors.danger,
+          ),
+        );
+      return null;
+    });
   }
 
   Future<void> _export() async {
@@ -108,7 +100,9 @@ class _PrivacyScreenState extends ConsumerState<PrivacyScreen> {
       ),
     );
 
-    await ref.read(auditLogServiceProvider).logExport(
+    await ref
+        .read(auditLogServiceProvider)
+        .logExport(
           user: ref.read(currentUserProvider),
           membership: ref.read(activeClinicMembershipProvider),
           module: PermissionModule.settings,
@@ -116,8 +110,9 @@ class _PrivacyScreenState extends ConsumerState<PrivacyScreen> {
           exportKind: 'json',
         );
 
-    final Map<dynamic, dynamic>? result =
-        await _call<Map<dynamic, dynamic>>('exportUserData');
+    final Map<dynamic, dynamic>? result = await _call<Map<dynamic, dynamic>>(
+      'exportUserData',
+    );
 
     if (result == null || !mounted) return;
 
@@ -237,8 +232,7 @@ class _PrivacyScreenState extends ConsumerState<PrivacyScreen> {
 
     if (!(confirmed ?? false) || !mounted) return;
 
-    final Map<dynamic, dynamic>? result =
-        await _call<Map<dynamic, dynamic>>(
+    final Map<dynamic, dynamic>? result = await _call<Map<dynamic, dynamic>>(
       'requestDataDeletion',
       data: <String, dynamic>{'reason': reasonText},
     );
@@ -279,8 +273,9 @@ class _PrivacyScreenState extends ConsumerState<PrivacyScreen> {
 
     if (!(confirmed ?? false) || !mounted) return;
 
-    final Map<dynamic, dynamic>? result =
-        await _call<Map<dynamic, dynamic>>('cancelDataDeletion');
+    final Map<dynamic, dynamic>? result = await _call<Map<dynamic, dynamic>>(
+      'cancelDataDeletion',
+    );
 
     if (result == null || !mounted) return;
 
@@ -288,9 +283,9 @@ class _PrivacyScreenState extends ConsumerState<PrivacyScreen> {
     // listener ao vivo do documento do usuário — assim que a Function
     // apaga `deletionScheduledFor`, esta tela recebe o snapshot novo
     // sozinha e o card de exclusão pendente desaparece.
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Exclusão cancelada.')),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(const SnackBar(content: Text('Exclusão cancelada.')));
   }
 
   Future<void> _revoke(String purpose, String label) async {
@@ -328,16 +323,15 @@ class _PrivacyScreenState extends ConsumerState<PrivacyScreen> {
   @override
   Widget build(BuildContext context) {
     final ThemeData theme = Theme.of(context);
-    final AsyncValue<Map<String, dynamic>> manifest =
-        ref.watch(privacyManifestProvider);
+    final AsyncValue<Map<String, dynamic>> manifest = ref.watch(
+      privacyManifestProvider,
+    );
 
     return Scaffold(
       appBar: AppBar(
         title: const Text('Privacidade e dados'),
         leading: IconButton(
-          onPressed: () => context.canPop()
-              ? context.pop()
-              : context.go('/'),
+          onPressed: () => context.canPop() ? context.pop() : context.go('/'),
           icon: const Icon(Icons.arrow_back_rounded),
           tooltip: 'Voltar',
         ),
@@ -407,8 +401,9 @@ class _PrivacyScreenState extends ConsumerState<PrivacyScreen> {
                                 subtitle: const Text(
                                   'Com 15 dias para voltar atrás',
                                 ),
-                                trailing:
-                                    const Icon(Icons.chevron_right_rounded),
+                                trailing: const Icon(
+                                  Icons.chevron_right_rounded,
+                                ),
                                 onTap: _busy ? null : _requestDeletion,
                               );
                             }
@@ -422,12 +417,14 @@ class _PrivacyScreenState extends ConsumerState<PrivacyScreen> {
                               child: Container(
                                 padding: const EdgeInsets.all(AppSpacing.lg),
                                 decoration: BoxDecoration(
-                                  color: AppColors.danger
-                                      .withValues(alpha: 0.08),
+                                  color: AppColors.danger.withValues(
+                                    alpha: 0.08,
+                                  ),
                                   borderRadius: AppRadius.lgAll,
                                   border: Border.all(
-                                    color: AppColors.danger
-                                        .withValues(alpha: 0.3),
+                                    color: AppColors.danger.withValues(
+                                      alpha: 0.3,
+                                    ),
                                   ),
                                 ),
                                 child: Column(
@@ -451,9 +448,9 @@ class _PrivacyScreenState extends ConsumerState<PrivacyScreen> {
                                             children: <Widget>[
                                               Text(
                                                 'Exclusão da conta agendada',
-                                                style: Theme.of(context)
-                                                    .textTheme
-                                                    .titleSmall,
+                                                style: Theme.of(
+                                                  context,
+                                                ).textTheme.titleSmall,
                                               ),
                                               const SizedBox(
                                                 height: AppSpacing.xs,
@@ -465,9 +462,9 @@ class _PrivacyScreenState extends ConsumerState<PrivacyScreen> {
                                                 'dados continuam intactos e '
                                                 'você pode desistir a '
                                                 'qualquer momento.',
-                                                style: Theme.of(context)
-                                                    .textTheme
-                                                    .bodySmall,
+                                                style: Theme.of(
+                                                  context,
+                                                ).textTheme.bodySmall,
                                               ),
                                             ],
                                           ),
@@ -479,8 +476,7 @@ class _PrivacyScreenState extends ConsumerState<PrivacyScreen> {
                                       label: 'Cancelar exclusão',
                                       variant: AppButtonVariant.outline,
                                       isLoading: _busy,
-                                      onPressed:
-                                          _busy ? null : _cancelDeletion,
+                                      onPressed: _busy ? null : _cancelDeletion,
                                     ),
                                   ],
                                 ),
@@ -496,10 +492,7 @@ class _PrivacyScreenState extends ConsumerState<PrivacyScreen> {
                     title: 'Autorizações',
                     eyebrow: 'O que você consentiu',
                   ),
-                  _ConsentList(
-                    manifest: data,
-                    onRevoke: _revoke,
-                  ),
+                  _ConsentList(manifest: data, onRevoke: _revoke),
 
                   const SectionHeader(
                     title: 'Historico de autorizacoes',
@@ -587,8 +580,9 @@ class _ConsentHistorySection extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final ThemeData theme = Theme.of(context);
-    final AsyncValue<List<ConsentHistoryEntry>> history =
-        ref.watch(consentHistoryProvider);
+    final AsyncValue<List<ConsentHistoryEntry>> history = ref.watch(
+      consentHistoryProvider,
+    );
 
     return Card(
       child: history.when(
@@ -664,10 +658,9 @@ class _ConsentList extends ConsumerWidget {
 
     final Map<dynamic, dynamic> purposes =
         (manifest['finalidades'] as Map<dynamic, dynamic>?) ??
-            const <dynamic, dynamic>{};
+        const <dynamic, dynamic>{};
 
-    final Map<String, dynamic> granted =
-        Map<String, dynamic>.from(
+    final Map<String, dynamic> granted = Map<String, dynamic>.from(
       (ref.watch(currentUserProvider)?.consentPurposes) ??
           const <String, dynamic>{},
     );
@@ -681,8 +674,7 @@ class _ConsentList extends ConsumerWidget {
                 final Map<dynamic, dynamic> config =
                     entry.value as Map<dynamic, dynamic>;
                 final bool isRequired = config['required'] == true;
-                final bool isGranted =
-                    isRequired || granted[entry.key] == true;
+                final bool isGranted = isRequired || granted[entry.key] == true;
 
                 return ListTile(
                   title: Text(
@@ -703,13 +695,13 @@ class _ConsentList extends ConsumerWidget {
                           label: isRequired
                               ? 'Indispensável'
                               : isGranted
-                                  ? 'Autorizado'
-                                  : 'Não autorizado',
+                              ? 'Autorizado'
+                              : 'Não autorizado',
                           color: isRequired
                               ? AppColors.inkMuted
                               : isGranted
-                                  ? AppColors.success
-                                  : AppColors.warning,
+                              ? AppColors.success
+                              : AppColors.warning,
                         ),
                       ],
                     ),
@@ -797,7 +789,7 @@ class _RetentionCard extends StatelessWidget {
     final ThemeData theme = Theme.of(context);
     final Map<dynamic, dynamic> retention =
         (manifest['retencao'] as Map<dynamic, dynamic>?) ??
-            const <dynamic, dynamic>{};
+        const <dynamic, dynamic>{};
 
     const Map<String, String> labels = <String, String>{
       'contaAtiva': 'Enquanto a conta existir',

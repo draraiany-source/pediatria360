@@ -9,14 +9,16 @@ import 'telemedicine_screen.dart' show myAgendaProvider;
 /// Agenda profissional com filtro soft por unidade (recepcao / BI / financeiro).
 final Provider<AsyncValue<List<Appointment>>> unitScopedMyAgendaProvider =
     Provider<AsyncValue<List<Appointment>>>((Ref ref) {
-  final AsyncValue<List<Appointment>> agenda = ref.watch(myAgendaProvider);
-  final ClinicMembership? membership =
-      ref.watch(activeClinicMembershipProvider);
-  return agenda.when(
-    data: (List<Appointment> data) => AsyncData<List<Appointment>>(
-      filterAgendaByMembershipUnits(data, membership),
-    ),
-    loading: () => const AsyncLoading<List<Appointment>>(),
-    error: (Object e, StackTrace st) => AsyncError<List<Appointment>>(e, st),
-  );
-});
+      final AsyncValue<List<Appointment>> agenda = ref.watch(myAgendaProvider);
+      final ClinicMembership? membership = ref.watch(
+        activeClinicMembershipProvider,
+      );
+      return agenda.when(
+        data: (List<Appointment> data) => AsyncData<List<Appointment>>(
+          filterAgendaByMembershipUnits(data, membership),
+        ),
+        loading: () => const AsyncLoading<List<Appointment>>(),
+        error: (Object e, StackTrace st) =>
+            AsyncError<List<Appointment>>(e, st),
+      );
+    });

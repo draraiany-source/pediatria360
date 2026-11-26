@@ -64,33 +64,33 @@ class AppButton extends StatelessWidget {
 
     final Widget button = switch (variant) {
       AppButtonVariant.primary => FilledButton(
-          onPressed: effectiveOnPressed,
-          child: content,
-        ),
+        onPressed: effectiveOnPressed,
+        child: content,
+      ),
       AppButtonVariant.secondary => FilledButton(
-          onPressed: effectiveOnPressed,
-          style: FilledButton.styleFrom(
-            backgroundColor: scheme.secondary,
-            foregroundColor: scheme.onSecondary,
-          ),
-          child: content,
+        onPressed: effectiveOnPressed,
+        style: FilledButton.styleFrom(
+          backgroundColor: scheme.secondary,
+          foregroundColor: scheme.onSecondary,
         ),
+        child: content,
+      ),
       AppButtonVariant.outline => OutlinedButton(
-          onPressed: effectiveOnPressed,
-          child: content,
-        ),
+        onPressed: effectiveOnPressed,
+        child: content,
+      ),
       AppButtonVariant.text => TextButton(
-          onPressed: effectiveOnPressed,
-          child: content,
-        ),
+        onPressed: effectiveOnPressed,
+        child: content,
+      ),
       AppButtonVariant.danger => FilledButton(
-          onPressed: effectiveOnPressed,
-          style: FilledButton.styleFrom(
-            backgroundColor: AppColors.danger,
-            foregroundColor: Colors.white,
-          ),
-          child: content,
+        onPressed: effectiveOnPressed,
+        style: FilledButton.styleFrom(
+          backgroundColor: AppColors.danger,
+          foregroundColor: Colors.white,
         ),
+        child: content,
+      ),
     };
 
     return expanded ? SizedBox(width: double.infinity, child: button) : button;
@@ -215,10 +215,7 @@ class SectionHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     final ThemeData theme = Theme.of(context);
     return Padding(
-      padding: const EdgeInsets.only(
-        top: AppSpacing.xl,
-        bottom: AppSpacing.md,
-      ),
+      padding: const EdgeInsets.only(top: AppSpacing.xl, bottom: AppSpacing.md),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.end,
         children: <Widget>[
@@ -277,12 +274,7 @@ class AppTag extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: <Widget>[
           if (asset != null) ...<Widget>[
-            AppIcon(
-              asset: asset!,
-              size: 16,
-              fallback: icon,
-              color: effective,
-            ),
+            AppIcon(asset: asset!, size: 16, fallback: icon, color: effective),
             const SizedBox(width: AppSpacing.xs),
           ] else if (icon != null) ...<Widget>[
             Icon(icon, size: 13, color: effective),
@@ -524,10 +516,7 @@ class InfoBanner extends StatelessWidget {
             Icon(icon, size: 18, color: color),
           const SizedBox(width: AppSpacing.sm),
           Expanded(
-            child: Text(
-              text,
-              style: Theme.of(context).textTheme.bodySmall,
-            ),
+            child: Text(text, style: Theme.of(context).textTheme.bodySmall),
           ),
         ],
       ),

@@ -17,11 +17,11 @@ class LmsPoint {
   });
 
   factory LmsPoint.fromJson(Map<String, dynamic> json) => LmsPoint(
-        month: (json['mes'] as num).toInt(),
-        l: (json['L'] as num).toDouble(),
-        m: (json['M'] as num).toDouble(),
-        s: (json['S'] as num).toDouble(),
-      );
+    month: (json['mes'] as num).toInt(),
+    l: (json['L'] as num).toDouble(),
+    m: (json['M'] as num).toDouble(),
+    s: (json['S'] as num).toDouble(),
+  );
 
   final int month;
   final double l;
@@ -97,11 +97,9 @@ enum GrowthClassification {
     if (indicator == GrowthIndicator.headForAge) {
       return switch (this) {
         GrowthClassification.severelyLow ||
-        GrowthClassification.low =>
-          'Abaixo do esperado',
+        GrowthClassification.low => 'Abaixo do esperado',
         GrowthClassification.high ||
-        GrowthClassification.severelyHigh =>
-          'Acima do esperado',
+        GrowthClassification.severelyHigh => 'Acima do esperado',
         _ => 'Dentro do esperado',
       };
     }
@@ -175,8 +173,7 @@ class WhoReference {
     if (_instance != null) return _instance!;
 
     final String raw = await rootBundle.loadString(assetPath);
-    final Map<String, dynamic> json =
-        jsonDecode(raw) as Map<String, dynamic>;
+    final Map<String, dynamic> json = jsonDecode(raw) as Map<String, dynamic>;
     final Map<String, dynamic> indicators =
         json['indicadores'] as Map<String, dynamic>;
 
@@ -188,10 +185,7 @@ class WhoReference {
       tables[entry.key] = <String, List<LmsPoint>>{
         for (final MapEntry<String, dynamic> sexEntry in bySex.entries)
           sexEntry.key: (sexEntry.value as List<dynamic>)
-              .map(
-                (dynamic e) =>
-                    LmsPoint.fromJson(e as Map<String, dynamic>),
-              )
+              .map((dynamic e) => LmsPoint.fromJson(e as Map<String, dynamic>))
               .toList(growable: false),
       };
     }
@@ -204,11 +198,11 @@ class WhoReference {
   }
 
   static String _key(GrowthIndicator indicator) => switch (indicator) {
-        GrowthIndicator.weightForAge => 'weight_for_age',
-        GrowthIndicator.heightForAge => 'height_for_age',
-        GrowthIndicator.bmiForAge => 'bmi_for_age',
-        GrowthIndicator.headForAge => 'head_for_age',
-      };
+    GrowthIndicator.weightForAge => 'weight_for_age',
+    GrowthIndicator.heightForAge => 'height_for_age',
+    GrowthIndicator.bmiForAge => 'bmi_for_age',
+    GrowthIndicator.headForAge => 'head_for_age',
+  };
 
   List<LmsPoint>? _table(GrowthIndicator indicator, ChildSex sex) =>
       _tables[_key(indicator)]?[sex.name];
@@ -316,7 +310,8 @@ class WhoReference {
     final double absX = x.abs();
 
     final double t = 1 / (1 + p * absX);
-    final double y = 1 -
+    final double y =
+        1 -
         (((((a5 * t + a4) * t) + a3) * t + a2) * t + a1) *
             t *
             math.exp(-absX * absX);

@@ -26,15 +26,14 @@ class RemoteFlag {
     aiFreeMessagesPerDay: AppConfig.aiFreeMessagesPerDay,
     aiDisclaimer:
         'As respostas da IA sao orientacao educativa e nao substituem a '
-            'avaliacao de um pediatra. Em emergencia, procure atendimento.',
+        'avaliacao de um pediatra. Em emergencia, procure atendimento.',
     marketplaceEnabled: true,
     telemedicineEnabled: true,
     gamificationEnabled: true,
     liveEnabled: true,
     minSupportedBuild: 1,
     maintenanceMode: false,
-    maintenanceMessage:
-        'Estamos em manutencao. Voltamos em alguns minutos.',
+    maintenanceMessage: 'Estamos em manutencao. Voltamos em alguns minutos.',
     featuredCourseId: '',
     vaccineCalendarVersion: 1,
   };

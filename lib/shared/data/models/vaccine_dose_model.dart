@@ -28,35 +28,34 @@ class VaccineDoseMapper {
   static Map<String, dynamic> toOutboxPayload(
     VaccineDose dose,
     String ownerId,
-  ) =>
-      <String, dynamic>{
-        'ownerId': ownerId,
-        'childId': dose.childId,
-        'vaccineId': dose.vaccineId,
-        'doseIndex': dose.doseIndex,
-        'dueAt': dose.dueAt?.toUtc().toIso8601String(),
-        'appliedAt': dose.appliedAt?.toUtc().toIso8601String(),
-        'lot': dose.lot,
-        'clinic': dose.clinic,
-        'proofUrl': dose.proofUrl,
-      };
+  ) => <String, dynamic>{
+    'ownerId': ownerId,
+    'childId': dose.childId,
+    'vaccineId': dose.vaccineId,
+    'doseIndex': dose.doseIndex,
+    'dueAt': dose.dueAt?.toUtc().toIso8601String(),
+    'appliedAt': dose.appliedAt?.toUtc().toIso8601String(),
+    'lot': dose.lot,
+    'clinic': dose.clinic,
+    'proofUrl': dose.proofUrl,
+  };
 
   static VaccineDose fromRow(Map<String, Object?> row) => VaccineDose(
-        id: row['id']! as String,
-        childId: row['child_id']! as String,
-        vaccineId: row['vaccine_id']! as String,
-        doseIndex: row['dose_index']! as int,
-        dueAt: _fromMillis(row['due_at'] as int?),
-        appliedAt: _fromMillis(row['applied_at'] as int?),
-        lot: row['lot'] as String?,
-        clinic: row['clinic'] as String?,
-        proofUrl: row['proof_url'] as String?,
-        updatedAt: DateTime.fromMillisecondsSinceEpoch(
-          row['updated_at']! as int,
-          isUtc: true,
-        ).toLocal(),
-        pendingSync: (row['dirty'] as int? ?? 0) == 1,
-      );
+    id: row['id']! as String,
+    childId: row['child_id']! as String,
+    vaccineId: row['vaccine_id']! as String,
+    doseIndex: row['dose_index']! as int,
+    dueAt: _fromMillis(row['due_at'] as int?),
+    appliedAt: _fromMillis(row['applied_at'] as int?),
+    lot: row['lot'] as String?,
+    clinic: row['clinic'] as String?,
+    proofUrl: row['proof_url'] as String?,
+    updatedAt: DateTime.fromMillisecondsSinceEpoch(
+      row['updated_at']! as int,
+      isUtc: true,
+    ).toLocal(),
+    pendingSync: (row['dirty'] as int? ?? 0) == 1,
+  );
 
   static Map<String, Object?> toRow(VaccineDose dose, {bool dirty = false}) =>
       <String, Object?>{
@@ -79,10 +78,10 @@ class VaccineDoseMapper {
       : DateTime.fromMillisecondsSinceEpoch(ms, isUtc: true).toLocal();
 
   static DateTime? _date(Object? value) => switch (value) {
-        Timestamp t => t.toDate(),
-        DateTime d => d,
-        int ms => DateTime.fromMillisecondsSinceEpoch(ms),
-        String s => DateTime.tryParse(s),
-        _ => null,
-      };
+    Timestamp t => t.toDate(),
+    DateTime d => d,
+    int ms => DateTime.fromMillisecondsSinceEpoch(ms),
+    String s => DateTime.tryParse(s),
+    _ => null,
+  };
 }

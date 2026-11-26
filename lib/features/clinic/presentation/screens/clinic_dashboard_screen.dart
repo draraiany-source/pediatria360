@@ -22,8 +22,9 @@ class ClinicDashboardScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final AsyncValue<ClinicDashboardStats> statsAsync =
-        ref.watch(clinicDashboardStatsProvider);
+    final AsyncValue<ClinicDashboardStats> statsAsync = ref.watch(
+      clinicDashboardStatsProvider,
+    );
     final ThemeData theme = Theme.of(context);
     final bool showAudit = SecurityAccess.canAdministerAudit(
       user: ref.watch(currentUserProvider),
@@ -260,9 +261,9 @@ class _KpiGrid extends StatelessWidget {
                         k.value,
                         style: Theme.of(context).textTheme.headlineSmall
                             ?.copyWith(
-                          color: k.color,
-                          fontWeight: FontWeight.w800,
-                        ),
+                              color: k.color,
+                              fontWeight: FontWeight.w800,
+                            ),
                       ),
                       Text(
                         k.label,

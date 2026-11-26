@@ -33,7 +33,7 @@ class SecurityAuditQuery {
 
 class SecurityAuditRepository {
   SecurityAuditRepository({required FirebaseFirestore firestore})
-      : _firestore = firestore;
+    : _firestore = firestore;
 
   final FirebaseFirestore _firestore;
 
@@ -54,8 +54,9 @@ class SecurityAuditRepository {
       if (!SecurityAccess.canAppendOwnAuditEvent(user: actor)) {
         throw StateError('Not allowed to append audit log');
       }
-      final DocumentReference<Map<String, dynamic>> ref =
-          event.id.isNotEmpty ? _collection.doc(event.id) : _collection.doc();
+      final DocumentReference<Map<String, dynamic>> ref = event.id.isNotEmpty
+          ? _collection.doc(event.id)
+          : _collection.doc();
       final SecurityAuditEvent stored = SecurityAuditEvent(
         id: ref.id,
         actorUid: event.actorUid,
@@ -110,12 +111,17 @@ class SecurityAuditRepository {
             SecurityAuditEvent.fromMap(d.data(), id: d.id),
       );
       if (query.since != null) {
-        events = events.where((SecurityAuditEvent e) => !e.at.isBefore(query.since!));
+        events = events.where(
+          (SecurityAuditEvent e) => !e.at.isBefore(query.since!),
+        );
       }
       if (query.until != null) {
-        events = events.where((SecurityAuditEvent e) => !e.at.isAfter(query.until!));
+        events = events.where(
+          (SecurityAuditEvent e) => !e.at.isAfter(query.until!),
+        );
       }
-      if (query.entityIdSearch != null && query.entityIdSearch!.trim().isNotEmpty) {
+      if (query.entityIdSearch != null &&
+          query.entityIdSearch!.trim().isNotEmpty) {
         final String needle = query.entityIdSearch!.trim().toLowerCase();
         events = events.where(
           (SecurityAuditEvent e) => e.entityId.toLowerCase().contains(needle),
@@ -132,12 +138,17 @@ class SecurityAuditRepository {
   ) {
     Iterable<SecurityAuditEvent> events = source;
     if (query.since != null) {
-      events = events.where((SecurityAuditEvent e) => !e.at.isBefore(query.since!));
+      events = events.where(
+        (SecurityAuditEvent e) => !e.at.isBefore(query.since!),
+      );
     }
     if (query.until != null) {
-      events = events.where((SecurityAuditEvent e) => !e.at.isAfter(query.until!));
+      events = events.where(
+        (SecurityAuditEvent e) => !e.at.isAfter(query.until!),
+      );
     }
-    if (query.entityIdSearch != null && query.entityIdSearch!.trim().isNotEmpty) {
+    if (query.entityIdSearch != null &&
+        query.entityIdSearch!.trim().isNotEmpty) {
       final String needle = query.entityIdSearch!.trim().toLowerCase();
       events = events.where(
         (SecurityAuditEvent e) => e.entityId.toLowerCase().contains(needle),

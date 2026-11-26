@@ -117,11 +117,13 @@ class BiAggregators {
 
     final int total = inPeriod.length;
     final int attendedDenom = completed + noShow;
-    final double attendance =
-        attendedDenom > 0 ? completed / attendedDenom : 0.0;
+    final double attendance = attendedDenom > 0
+        ? completed / attendedDenom
+        : 0.0;
     final int occupancyDenom = completed + noShow + cancelled;
-    final double occupancy =
-        occupancyDenom > 0 ? completed / occupancyDenom : 0.0;
+    final double occupancy = occupancyDenom > 0
+        ? completed / occupancyDenom
+        : 0.0;
 
     return BiAgendaStats(
       totalInPeriod: total,
@@ -451,9 +453,7 @@ class BiAggregators {
     for (final BiKpiCardData c in cards) {
       final String title = c.title.replaceAll(',', ';');
       final String unit = c.unit ?? '';
-      sb.writeln(
-        '${c.id},$title,${c.valueLabel},$unit,${c.category.name}',
-      );
+      sb.writeln('${c.id},$title,${c.valueLabel},$unit,${c.category.name}');
     }
     return sb.toString();
   }

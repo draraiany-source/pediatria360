@@ -31,12 +31,13 @@ import '../../domain/pending_item.dart';
 
 final Provider<PendingRepository> pendingRepositoryProvider =
     Provider<PendingRepository>(
-  (Ref ref) => PendingRepository(firestore: ref.watch(firestoreProvider)),
-);
+      (Ref ref) => PendingRepository(firestore: ref.watch(firestoreProvider)),
+    );
 
 /// Invalida o agregador quando streams principais mudam.
-final Provider<void> pendingItemsRefreshCoordinatorProvider =
-    Provider<void>((Ref ref) {
+final Provider<void> pendingItemsRefreshCoordinatorProvider = Provider<void>((
+  Ref ref,
+) {
   ref.listen(professionalPatientsProvider, (_, __) {
     ref.invalidate(professionalPendingItemsProvider);
   });
@@ -52,29 +53,31 @@ final Provider<void> pendingItemsRefreshCoordinatorProvider =
 });
 
 final StreamProvider<Map<String, PendingTrackingRecord>>
-    pendingTrackingMapProvider =
-    StreamProvider<Map<String, PendingTrackingRecord>>((Ref ref) {
-  if (DevMode.isEnabled &&
-      ref.watch(firebaseAuthProvider).currentUser == null) {
-    return Stream<Map<String, PendingTrackingRecord>>.value(
-      const <String, PendingTrackingRecord>{},
-    );
-  }
-  final String? uid = ref.watch(currentUserProvider)?.uid;
-  if (uid == null) {
-    return Stream<Map<String, PendingTrackingRecord>>.value(
-      const <String, PendingTrackingRecord>{},
-    );
-  }
-  return ref.watch(pendingRepositoryProvider).watchTrackingBySourceKey(uid);
-});
+pendingTrackingMapProvider = StreamProvider<Map<String, PendingTrackingRecord>>(
+  (Ref ref) {
+    if (DevMode.isEnabled &&
+        ref.watch(firebaseAuthProvider).currentUser == null) {
+      return Stream<Map<String, PendingTrackingRecord>>.value(
+        const <String, PendingTrackingRecord>{},
+      );
+    }
+    final String? uid = ref.watch(currentUserProvider)?.uid;
+    if (uid == null) {
+      return Stream<Map<String, PendingTrackingRecord>>.value(
+        const <String, PendingTrackingRecord>{},
+      );
+    }
+    return ref.watch(pendingRepositoryProvider).watchTrackingBySourceKey(uid);
+  },
+);
 
-final FutureProvider<List<PendingItem>> professionalPendingItemsProvider =
-    FutureProvider<List<PendingItem>>((Ref ref) async {
+final FutureProvider<List<PendingItem>>
+professionalPendingItemsProvider = FutureProvider<List<PendingItem>>((
+  Ref ref,
+) async {
   ref.watch(pendingItemsRefreshCoordinatorProvider);
 
-  if (DevMode.isEnabled &&
-      ref.read(firebaseAuthProvider).currentUser == null) {
+  if (DevMode.isEnabled && ref.read(firebaseAuthProvider).currentUser == null) {
     return const <PendingItem>[];
   }
 
@@ -83,7 +86,7 @@ final FutureProvider<List<PendingItem>> professionalPendingItemsProvider =
 
   final List<PatientSummary> rawPatients =
       ref.read(professionalPatientsProvider).valueOrNull ??
-          const <PatientSummary>[];
+      const <PatientSummary>[];
   final List<PendingPatientSnapshot> patients = rawPatients
       .map(
         (PatientSummary p) => PendingPatientSnapshot(
@@ -106,26 +109,31 @@ final FutureProvider<List<PendingItem>> professionalPendingItemsProvider =
       ref.read(notificationsProvider).valueOrNull ?? const <AppNotification>[];
   final Map<String, PendingTrackingRecord> tracking =
       ref.read(pendingTrackingMapProvider).valueOrNull ??
-          const <String, PendingTrackingRecord>{};
+      const <String, PendingTrackingRecord>{};
 
   final List<ClinicalDocument> unsigned = await ref
       .read(encounterRepositoryProvider)
       .fetchUnsignedDocumentsForProfessional(uid);
 
-  final List<String> patientIds =
-      patients.map((PendingPatientSnapshot p) => p.patientId).toList(growable: false);
+  final List<String> patientIds = patients
+      .map((PendingPatientSnapshot p) => p.patientId)
+      .toList(growable: false);
   final List<LabResult> labs = await ref
       .read(encounterRepositoryProvider)
       .fetchPendingLabsForPatients(patientIds);
 
   final List<VaccineOverdueInput> vaccineOverdue = <VaccineOverdueInput>[];
   for (final PendingPatientSnapshot p in patients.take(30)) {
-    final List<VaccineDose> doses =
-        await ref.read(childrenRepositoryProvider).watchVaccineDoses(p.childId).first;
+    final List<VaccineDose> doses = await ref
+        .read(childrenRepositoryProvider)
+        .watchVaccineDoses(p.childId)
+        .first;
     for (final VaccineDose dose in doses) {
       if (!dose.isOverdue()) continue;
-      final VaccineDoseSchedule? schedule =
-          PniCalendar.find(dose.vaccineId, dose.doseIndex);
+      final VaccineDoseSchedule? schedule = PniCalendar.find(
+        dose.vaccineId,
+        dose.doseIndex,
+      );
       vaccineOverdue.add(
         VaccineOverdueInput(
           childId: p.childId,
@@ -148,24 +156,32 @@ final FutureProvider<List<PendingItem>> professionalPendingItemsProvider =
       .toList(growable: false);
 
   final billingRepo = ref.read(billingRepositoryProvider);
-  final List<InsuranceAuthorization> authorizations =
-      await billingRepo.watchAuthorizations(uid).first;
-  final List<BillingGuide> billingGuides =
-      await billingRepo.watchGuides(uid).first;
-  final List<BillingBatch> billingBatches =
-      await billingRepo.watchBatches(uid).first;
-  final List<BillingGlosa> billingGlosas =
-      await billingRepo.watchGlosas(uid).first;
-  final List<PatientInsurance> patientInsurances =
-      await billingRepo.watchPatientInsurances(uid).first;
+  final List<InsuranceAuthorization> authorizations = await billingRepo
+      .watchAuthorizations(uid)
+      .first;
+  final List<BillingGuide> billingGuides = await billingRepo
+      .watchGuides(uid)
+      .first;
+  final List<BillingBatch> billingBatches = await billingRepo
+      .watchBatches(uid)
+      .first;
+  final List<BillingGlosa> billingGlosas = await billingRepo
+      .watchGlosas(uid)
+      .first;
+  final List<PatientInsurance> patientInsurances = await billingRepo
+      .watchPatientInsurances(uid)
+      .first;
 
   final inventoryRepo = ref.read(inventoryRepositoryProvider);
-  final List<InventoryItem> inventoryItems =
-      await inventoryRepo.watchItems(uid).first;
-  final List<InventoryLot> inventoryLots =
-      await inventoryRepo.watchLots(uid).first;
-  final List<InventoryCount> inventoryCounts =
-      await inventoryRepo.watchCounts(uid).first;
+  final List<InventoryItem> inventoryItems = await inventoryRepo
+      .watchItems(uid)
+      .first;
+  final List<InventoryLot> inventoryLots = await inventoryRepo
+      .watchLots(uid)
+      .first;
+  final List<InventoryCount> inventoryCounts = await inventoryRepo
+      .watchCounts(uid)
+      .first;
 
   final List<PendingItem> built = PendingAggregator.build(
     PendingAggregatorInput(
@@ -191,8 +207,7 @@ final FutureProvider<List<PendingItem>> professionalPendingItemsProvider =
   );
 
   final user = ref.read(currentUserProvider);
-  final ClinicMembership? membership =
-      ref.read(activeClinicMembershipProvider);
+  final ClinicMembership? membership = ref.read(activeClinicMembershipProvider);
   return PendingAccess.filterVisible(
     items: built,
     user: user,
@@ -202,34 +217,38 @@ final FutureProvider<List<PendingItem>> professionalPendingItemsProvider =
 
 final Provider<PendingAttentionCounts> pendingAttentionCountsProvider =
     Provider<PendingAttentionCounts>((Ref ref) {
-  final AsyncValue<List<PendingItem>> async =
-      ref.watch(professionalPendingItemsProvider);
-  return async.maybeWhen(
-    data: PendingAggregator.attentionCounts,
-    orElse: () => const PendingAttentionCounts(
-      vaccineOverdue: 0,
-      unreadMessages: 0,
-      returnsAndDrafts: 0,
-      examsPending: 0,
-    ),
-  );
-});
+      final AsyncValue<List<PendingItem>> async = ref.watch(
+        professionalPendingItemsProvider,
+      );
+      return async.maybeWhen(
+        data: PendingAggregator.attentionCounts,
+        orElse: () => const PendingAttentionCounts(
+          vaccineOverdue: 0,
+          unreadMessages: 0,
+          returnsAndDrafts: 0,
+          examsPending: 0,
+        ),
+      );
+    });
 
 final FutureProviderFamily<List<PendingItem>, String>
-    patientPendingItemsProvider =
-    FutureProvider.family<List<PendingItem>, String>((Ref ref, String id) async {
-  final List<PendingItem> all =
-      await ref.watch(professionalPendingItemsProvider.future);
+patientPendingItemsProvider = FutureProvider.family<List<PendingItem>, String>((
+  Ref ref,
+  String id,
+) async {
+  final List<PendingItem> all = await ref.watch(
+    professionalPendingItemsProvider.future,
+  );
   return PendingAggregator.forPatient(all, id);
 });
 
 final FutureProviderFamily<PendingItem?, String>
-    patientRecommendedActionProvider =
-    FutureProvider.family<PendingItem?, String>((Ref ref, String id) async {
-  final List<PendingItem> patientItems =
-      await ref.watch(patientPendingItemsProvider(id).future);
-  return PendingAggregator.recommendedNextAction(
-    patientItems,
-    DateTime.now(),
+patientRecommendedActionProvider = FutureProvider.family<PendingItem?, String>((
+  Ref ref,
+  String id,
+) async {
+  final List<PendingItem> patientItems = await ref.watch(
+    patientPendingItemsProvider(id).future,
   );
+  return PendingAggregator.recommendedNextAction(patientItems, DateTime.now());
 });

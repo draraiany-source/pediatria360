@@ -17,19 +17,19 @@ import '../data/admin_content_repository.dart';
 
 final Provider<AdminContentRepository> adminContentRepositoryProvider =
     Provider<AdminContentRepository>(
-  (Ref ref) => AdminContentRepository(
-    firestore: ref.watch(firestoreProvider),
-    functions: ref.watch(firebaseFunctionsProvider),
-  ),
-);
+      (Ref ref) => AdminContentRepository(
+        firestore: ref.watch(firestoreProvider),
+        functions: ref.watch(firebaseFunctionsProvider),
+      ),
+    );
 
 final StreamProvider<List<Content>> allContentProvider =
     StreamProvider<List<Content>>(
-  (Ref ref) => ref.watch(adminContentRepositoryProvider).watchAll(),
-);
+      (Ref ref) => ref.watch(adminContentRepositoryProvider).watchAll(),
+    );
 
-final StreamProviderFamily<List<ContentVersion>, String> contentVersionsProvider =
-    StreamProvider.family<List<ContentVersion>, String>(
+final StreamProviderFamily<List<ContentVersion>, String>
+contentVersionsProvider = StreamProvider.family<List<ContentVersion>, String>(
   (Ref ref, String contentId) =>
       ref.watch(adminContentRepositoryProvider).watchVersions(contentId),
 );
@@ -55,9 +55,7 @@ class AdminContentListScreen extends ConsumerWidget {
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => Navigator.of(context).push(
-          MaterialPageRoute<void>(
-            builder: (_) => const ContentEditorScreen(),
-          ),
+          MaterialPageRoute<void>(builder: (_) => const ContentEditorScreen()),
         ),
         icon: const Icon(Icons.add_rounded),
         label: const Text('Novo'),
@@ -264,8 +262,9 @@ class _ContentEditorScreenState extends ConsumerState<ContentEditorScreen> {
       'category': _category,
       'readMinutes': _readMinutes,
       'author': _author.text.trim().isEmpty ? null : _author.text.trim(),
-      'reviewedBy':
-          _reviewedBy.text.trim().isEmpty ? null : _reviewedBy.text.trim(),
+      'reviewedBy': _reviewedBy.text.trim().isEmpty
+          ? null
+          : _reviewedBy.text.trim(),
       'tags': _tags.text
           .split(',')
           .map((String t) => t.trim())
@@ -277,13 +276,14 @@ class _ContentEditorScreenState extends ConsumerState<ContentEditorScreen> {
           .toList(),
     };
 
-    final Result<String> result =
-        await ref.read(adminContentRepositoryProvider).save(
-              contentId: widget.content?.id,
-              data: data,
-              note: note,
-              publish: publish,
-            );
+    final Result<String> result = await ref
+        .read(adminContentRepositoryProvider)
+        .save(
+          contentId: widget.content?.id,
+          data: data,
+          note: note,
+          publish: publish,
+        );
 
     if (!mounted) return;
     setState(() => _saving = false);
@@ -291,9 +291,7 @@ class _ContentEditorScreenState extends ConsumerState<ContentEditorScreen> {
     result.fold(
       (_) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(publish ? 'Publicado.' : 'Rascunho salvo.'),
-          ),
+          SnackBar(content: Text(publish ? 'Publicado.' : 'Rascunho salvo.')),
         );
         Navigator.of(context).pop();
       },
@@ -374,7 +372,8 @@ class _ContentEditorScreenState extends ConsumerState<ContentEditorScreen> {
             IconButton(
               onPressed: () => Navigator.of(context).push(
                 MaterialPageRoute<void>(
-                  builder: (_) => VersionHistoryScreen(content: widget.content!),
+                  builder: (_) =>
+                      VersionHistoryScreen(content: widget.content!),
                 ),
               ),
               icon: const Icon(Icons.history_rounded),
@@ -446,8 +445,10 @@ class _ContentEditorScreenState extends ConsumerState<ContentEditorScreen> {
                             padding: const EdgeInsets.only(
                               bottom: AppSpacing.xs,
                             ),
-                            child: Text('• $w',
-                                style: theme.textTheme.bodySmall),
+                            child: Text(
+                              '• $w',
+                              style: theme.textTheme.bodySmall,
+                            ),
                           ),
                       ],
                     ),
@@ -495,9 +496,9 @@ class _ContentEditorScreenState extends ConsumerState<ContentEditorScreen> {
                             .map(
                               (ContentAudience a) =>
                                   DropdownMenuItem<ContentAudience>(
-                                value: a,
-                                child: Text(a.label),
-                              ),
+                                    value: a,
+                                    child: Text(a.label),
+                                  ),
                             )
                             .toList(),
                         onChanged: (ContentAudience? v) =>
@@ -525,10 +526,7 @@ class _ContentEditorScreenState extends ConsumerState<ContentEditorScreen> {
                 Row(
                   children: <Widget>[
                     Expanded(
-                      child: AppTextField(
-                        label: 'Autor',
-                        controller: _author,
-                      ),
+                      child: AppTextField(label: 'Autor', controller: _author),
                     ),
                     const SizedBox(width: AppSpacing.md),
                     Expanded(
@@ -562,17 +560,18 @@ class _ContentEditorScreenState extends ConsumerState<ContentEditorScreen> {
                             setState(() => _readMinutes = v.round()),
                       ),
                     ),
-                    Text('$_readMinutes min',
-                        style: theme.textTheme.titleSmall),
+                    Text(
+                      '$_readMinutes min',
+                      style: theme.textTheme.titleSmall,
+                    ),
                   ],
                 ),
                 SectionHeader(
                   title: 'Seções',
                   eyebrow: 'Corpo',
                   actionLabel: 'Adicionar',
-                  onAction: () => setState(
-                    () => _sections.add(_SectionDraft.empty()),
-                  ),
+                  onAction: () =>
+                      setState(() => _sections.add(_SectionDraft.empty())),
                 ),
                 for (int i = 0; i < _sections.length; i++)
                   _SectionEditor(
@@ -583,14 +582,14 @@ class _ContentEditorScreenState extends ConsumerState<ContentEditorScreen> {
                     onRemove: _sections.length == 1
                         ? null
                         : () => setState(() {
-                              _sections.removeAt(i).dispose();
-                            }),
+                            _sections.removeAt(i).dispose();
+                          }),
                     onMoveUp: i == 0
                         ? null
                         : () => setState(() {
-                              final _SectionDraft s = _sections.removeAt(i);
-                              _sections.insert(i - 1, s);
-                            }),
+                            final _SectionDraft s = _sections.removeAt(i);
+                            _sections.insert(i - 1, s);
+                          }),
                   ),
                 const SizedBox(height: AppSpacing.xxl),
               ],
@@ -604,23 +603,19 @@ class _ContentEditorScreenState extends ConsumerState<ContentEditorScreen> {
 
 /// Rascunho editável de uma seção.
 class _SectionDraft {
-  _SectionDraft({
-    required this.title,
-    required this.body,
-    required this.kind,
-  });
+  _SectionDraft({required this.title, required this.body, required this.kind});
 
   factory _SectionDraft.from(ContentSection section) => _SectionDraft(
-        title: TextEditingController(text: section.title),
-        body: TextEditingController(text: section.body),
-        kind: section.kind,
-      );
+    title: TextEditingController(text: section.title),
+    body: TextEditingController(text: section.body),
+    kind: section.kind,
+  );
 
   factory _SectionDraft.empty() => _SectionDraft(
-        title: TextEditingController(),
-        body: TextEditingController(),
-        kind: SectionKind.text,
-      );
+    title: TextEditingController(),
+    body: TextEditingController(),
+    kind: SectionKind.text,
+  );
 
   final TextEditingController title;
   final TextEditingController body;
@@ -630,10 +625,10 @@ class _SectionDraft {
       title.text.trim().isNotEmpty || body.text.trim().isNotEmpty;
 
   Map<String, dynamic> toMap() => <String, dynamic>{
-        'title': title.text.trim(),
-        'body': body.text.trim(),
-        'kind': kind.name,
-      };
+    'title': title.text.trim(),
+    'body': body.text.trim(),
+    'kind': kind.name,
+  };
 
   void dispose() {
     title.dispose();
@@ -658,12 +653,12 @@ class _SectionEditor extends StatelessWidget {
   final VoidCallback? onMoveUp;
 
   String _kindLabel(SectionKind kind) => switch (kind) {
-        SectionKind.text => 'Texto',
-        SectionKind.redFlag => 'Sinais de alarme',
-        SectionKind.steps => 'Passo a passo',
-        SectionKind.dosage => 'Posologia',
-        SectionKind.reference => 'Referência',
-      };
+    SectionKind.text => 'Texto',
+    SectionKind.redFlag => 'Sinais de alarme',
+    SectionKind.steps => 'Passo a passo',
+    SectionKind.dosage => 'Posologia',
+    SectionKind.reference => 'Referência',
+  };
 
   @override
   Widget build(BuildContext context) {
@@ -791,12 +786,13 @@ class VersionHistoryScreen extends ConsumerWidget {
 
     if (!(confirmed ?? false) || !context.mounted) return;
 
-    final Result<void> result =
-        await ref.read(adminContentRepositoryProvider).restore(
-              contentId: content.id,
-              versionId: version.id,
-              note: 'Restauração pelo painel',
-            );
+    final Result<void> result = await ref
+        .read(adminContentRepositoryProvider)
+        .restore(
+          contentId: content.id,
+          versionId: version.id,
+          note: 'Restauração pelo painel',
+        );
 
     if (!context.mounted) return;
 
@@ -804,17 +800,18 @@ class VersionHistoryScreen extends ConsumerWidget {
       (_) => ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Versão ${version.version} restaurada.')),
       ),
-      (Failure failure) => ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(failure.message)),
-      ),
+      (Failure failure) => ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(failure.message))),
     );
   }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final ThemeData theme = Theme.of(context);
-    final AsyncValue<List<ContentVersion>> versions =
-        ref.watch(contentVersionsProvider(content.id));
+    final AsyncValue<List<ContentVersion>> versions = ref.watch(
+      contentVersionsProvider(content.id),
+    );
 
     return Scaffold(
       appBar: AppBar(
@@ -919,16 +916,24 @@ class VersionHistoryScreen extends ConsumerWidget {
                                     style: theme.textTheme.bodySmall,
                                   ),
                                 for (final String s in diff.sectionsAdded)
-                                  Text('+ seção "$s"',
-                                      style: theme.textTheme.bodySmall
-                                          ?.copyWith(color: AppColors.success)),
+                                  Text(
+                                    '+ seção "$s"',
+                                    style: theme.textTheme.bodySmall?.copyWith(
+                                      color: AppColors.success,
+                                    ),
+                                  ),
                                 for (final String s in diff.sectionsRemoved)
-                                  Text('− seção "$s"',
-                                      style: theme.textTheme.bodySmall
-                                          ?.copyWith(color: AppColors.danger)),
+                                  Text(
+                                    '− seção "$s"',
+                                    style: theme.textTheme.bodySmall?.copyWith(
+                                      color: AppColors.danger,
+                                    ),
+                                  ),
                                 for (final String s in diff.sectionsChanged)
-                                  Text('~ seção "$s" alterada',
-                                      style: theme.textTheme.bodySmall),
+                                  Text(
+                                    '~ seção "$s" alterada',
+                                    style: theme.textTheme.bodySmall,
+                                  ),
                               ],
                             ),
                           ),

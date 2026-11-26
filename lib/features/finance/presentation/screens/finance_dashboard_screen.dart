@@ -38,8 +38,9 @@ class FinanceDashboardScreen extends ConsumerWidget {
 
     ref.watch(financeSyncFromAgendaProvider);
 
-    final AsyncValue<List<FinanceReceivable>> recvAsync =
-        ref.watch(financeReceivablesProvider);
+    final AsyncValue<List<FinanceReceivable>> recvAsync = ref.watch(
+      financeReceivablesProvider,
+    );
     final kpis = ref.watch(financeDashboardKpisProvider);
     final FinancePeriodFilter filter = ref.watch(financePeriodFilterProvider);
 
@@ -72,20 +73,29 @@ class FinanceDashboardScreen extends ConsumerWidget {
               Wrap(
                 spacing: AppSpacing.sm,
                 children: FinancePeriodFilter.values
-                    .where((FinancePeriodFilter f) => f != FinancePeriodFilter.custom)
+                    .where(
+                      (FinancePeriodFilter f) =>
+                          f != FinancePeriodFilter.custom,
+                    )
                     .map(
                       (FinancePeriodFilter f) => ChoiceChip(
                         label: Text(f.label),
                         selected: filter == f,
                         onSelected: (_) =>
-                            ref.read(financePeriodFilterProvider.notifier).state = f,
+                            ref
+                                    .read(financePeriodFilterProvider.notifier)
+                                    .state =
+                                f,
                       ),
                     )
                     .toList(growable: false),
               ),
               const SizedBox(height: AppSpacing.md),
               _KpiRow(label: 'Receita', value: formatCents(kpis.revenueMonth)),
-              _KpiRow(label: 'Despesas', value: formatCents(kpis.expensesMonth)),
+              _KpiRow(
+                label: 'Despesas',
+                value: formatCents(kpis.expensesMonth),
+              ),
               _KpiRow(label: 'Saldo', value: formatCents(kpis.balance)),
               _KpiRow(
                 label: 'Ticket medio',
@@ -148,7 +158,8 @@ class FinanceDashboardScreen extends ConsumerWidget {
                 icon: Icons.warning_amber_rounded,
                 color: AppColors.warning,
                 wide: true,
-                onTap: () => context.push('${Routes.financePath}/inadimplencia'),
+                onTap: () =>
+                    context.push('${Routes.financePath}/inadimplencia'),
               ),
               const SizedBox(height: AppSpacing.sm),
               QuickAccessCard(
@@ -193,9 +204,9 @@ class _KpiRow extends StatelessWidget {
           Text(
             value,
             style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.navy,
-                ),
+              fontWeight: FontWeight.w700,
+              color: AppColors.navy,
+            ),
           ),
         ],
       ),

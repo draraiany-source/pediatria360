@@ -24,15 +24,19 @@ class SupplementDisclaimerBanner extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: <Widget>[
-          Icon(Icons.shield_outlined, color: AppColors.navy, size: compact ? 18 : 22),
+          Icon(
+            Icons.shield_outlined,
+            color: AppColors.navy,
+            size: compact ? 18 : 22,
+          ),
           const SizedBox(width: AppSpacing.sm),
           Expanded(
             child: Text(
               kSupplementClinicalDisclaimer,
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: AppColors.navy,
-                    height: 1.35,
-                  ),
+                color: AppColors.navy,
+                height: 1.35,
+              ),
             ),
           ),
         ],
@@ -76,11 +80,11 @@ class LabFlagChip extends StatelessWidget {
   final LabResultFlag flag;
 
   Color get _color => switch (flag) {
-        LabResultFlag.normal => AppColors.success,
-        LabResultFlag.attention => AppColors.warning,
-        LabResultFlag.altered => AppColors.danger,
-        LabResultFlag.unset => AppColors.inkMuted,
-      };
+    LabResultFlag.normal => AppColors.success,
+    LabResultFlag.attention => AppColors.warning,
+    LabResultFlag.altered => AppColors.danger,
+    LabResultFlag.unset => AppColors.inkMuted,
+  };
 
   @override
   Widget build(BuildContext context) {
@@ -90,7 +94,11 @@ class LabFlagChip extends StatelessWidget {
       side: BorderSide(color: _color.withValues(alpha: 0.4)),
       label: Text(
         flag.label,
-        style: TextStyle(color: _color, fontWeight: FontWeight.w600, fontSize: 12),
+        style: TextStyle(
+          color: _color,
+          fontWeight: FontWeight.w600,
+          fontSize: 12,
+        ),
       ),
     );
   }
@@ -112,17 +120,17 @@ class PendingContentBox extends StatelessWidget {
             Text(
               title!,
               style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                    color: AppColors.navy,
-                    fontWeight: FontWeight.w700,
-                  ),
+                color: AppColors.navy,
+                fontWeight: FontWeight.w700,
+              ),
             ),
             const SizedBox(height: AppSpacing.sm),
           ],
           Text(
             kSupplementContentPending,
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: AppColors.inkMuted,
-                ),
+            style: Theme.of(
+              context,
+            ).textTheme.bodyMedium?.copyWith(color: AppColors.inkMuted),
           ),
         ],
       ),
@@ -153,9 +161,9 @@ class SupplementEmptyState extends StatelessWidget {
             Text(
               message,
               textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: AppColors.inkMuted,
-                  ),
+              style: Theme.of(
+                context,
+              ).textTheme.bodyMedium?.copyWith(color: AppColors.inkMuted),
             ),
           ],
         ),

@@ -12,8 +12,8 @@ class VoiceConsultationRepository {
   const VoiceConsultationRepository({
     required FirebaseFirestore firestore,
     required FirebaseFunctions functions,
-  })  : _firestore = firestore,
-        _functions = functions;
+  }) : _firestore = firestore,
+       _functions = functions;
 
   final FirebaseFirestore _firestore;
   final FirebaseFunctions _functions;
@@ -27,107 +27,97 @@ class VoiceConsultationRepository {
     required String professionalName,
     String? appointmentId,
     String? encounterId,
-    AudioRetentionPolicy retention =
-        AudioRetentionPolicy.deleteAfterValidation,
-  }) =>
-      guard(() async {
-        final HttpsCallableResult<dynamic> result =
-            await _functions.httpsCallable('startVoiceConsultation').call(
-          <String, dynamic>{
-            'childId': childId,
-            'childName': childName,
-            'professionalName': professionalName,
-            'appointmentId': appointmentId,
-            'encounterId': encounterId,
-            'audioRetentionPolicy': retention.name,
-          },
-        );
-        final Map<String, dynamic> data =
-            Map<String, dynamic>.from(result.data as Map);
-        return VoiceConsultationSession.fromMap(data, id: data['id'] as String?);
-      });
+    AudioRetentionPolicy retention = AudioRetentionPolicy.deleteAfterValidation,
+  }) => guard(() async {
+    final HttpsCallableResult<dynamic> result = await _functions
+        .httpsCallable('startVoiceConsultation')
+        .call(<String, dynamic>{
+          'childId': childId,
+          'childName': childName,
+          'professionalName': professionalName,
+          'appointmentId': appointmentId,
+          'encounterId': encounterId,
+          'audioRetentionPolicy': retention.name,
+        });
+    final Map<String, dynamic> data = Map<String, dynamic>.from(
+      result.data as Map,
+    );
+    return VoiceConsultationSession.fromMap(data, id: data['id'] as String?);
+  });
 
   Future<Result<void>> pauseSession(String sessionId) => guard(() async {
-        await _functions.httpsCallable('updateVoiceSession').call(
-          <String, dynamic>{
-            'sessionId': sessionId,
-            'action': 'pause',
-          },
-        );
-      });
+    await _functions.httpsCallable('updateVoiceSession').call(<String, dynamic>{
+      'sessionId': sessionId,
+      'action': 'pause',
+    });
+  });
 
   Future<Result<void>> resumeSession(String sessionId) => guard(() async {
-        await _functions.httpsCallable('updateVoiceSession').call(
-          <String, dynamic>{
-            'sessionId': sessionId,
-            'action': 'resume',
-          },
-        );
-      });
+    await _functions.httpsCallable('updateVoiceSession').call(<String, dynamic>{
+      'sessionId': sessionId,
+      'action': 'resume',
+    });
+  });
 
   Future<Result<void>> finalizeRecording(
     String sessionId, {
     List<Map<String, dynamic>>? transcript,
     String? evolutionTemplate,
-  }) =>
-      guard(() async {
-        await _functions.httpsCallable('finalizeVoiceRecording').call(
-          <String, dynamic>{
-            'sessionId': sessionId,
-            if (transcript != null) 'transcript': transcript,
-            if (evolutionTemplate != null)
-              'evolutionTemplate': evolutionTemplate,
-          },
-        );
-      });
+  }) => guard(() async {
+    await _functions
+        .httpsCallable('finalizeVoiceRecording')
+        .call(<String, dynamic>{
+          'sessionId': sessionId,
+          if (transcript != null) 'transcript': transcript,
+          if (evolutionTemplate != null) 'evolutionTemplate': evolutionTemplate,
+        });
+  });
 
   Future<Result<VoiceStructuredDraft>> structureDraft(
     String sessionId, {
     String evolutionTemplate = 'SOAP',
-  }) =>
-      guard(() async {
-        final HttpsCallableResult<dynamic> result =
-            await _functions.httpsCallable('structureVoiceDraft').call(
-          <String, dynamic>{
-            'sessionId': sessionId,
-            'evolutionTemplate': evolutionTemplate,
-          },
-        );
-        final Map<String, dynamic> data =
-            Map<String, dynamic>.from(result.data as Map);
-        final Object? draft = data['draft'] ?? data;
-        return VoiceStructuredDraft.fromMap(
-          Map<String, dynamic>.from(draft as Map),
-        );
-      });
+  }) => guard(() async {
+    final HttpsCallableResult<dynamic> result = await _functions
+        .httpsCallable('structureVoiceDraft')
+        .call(<String, dynamic>{
+          'sessionId': sessionId,
+          'evolutionTemplate': evolutionTemplate,
+        });
+    final Map<String, dynamic> data = Map<String, dynamic>.from(
+      result.data as Map,
+    );
+    final Object? draft = data['draft'] ?? data;
+    return VoiceStructuredDraft.fromMap(
+      Map<String, dynamic>.from(draft as Map),
+    );
+  });
 
   Future<Result<String?>> applyDraftToEncounter(String sessionId) =>
       guard(() async {
-        final HttpsCallableResult<dynamic> result =
-            await _functions.httpsCallable('applyVoiceDraftToEncounter').call(
-          <String, dynamic>{'sessionId': sessionId},
+        final HttpsCallableResult<dynamic> result = await _functions
+            .httpsCallable('applyVoiceDraftToEncounter')
+            .call(<String, dynamic>{'sessionId': sessionId});
+        final Map<String, dynamic> data = Map<String, dynamic>.from(
+          result.data as Map,
         );
-        final Map<String, dynamic> data =
-            Map<String, dynamic>.from(result.data as Map);
         return data['encounterId'] as String?;
       });
 
   Future<Result<void>> discardSession(String sessionId) => guard(() async {
-        await _functions.httpsCallable('discardVoiceSession').call(
-          <String, dynamic>{'sessionId': sessionId},
-        );
-      });
+    await _functions.httpsCallable('discardVoiceSession').call(
+      <String, dynamic>{'sessionId': sessionId},
+    );
+  });
 
   Stream<VoiceConsultationSession?> watchSession(String sessionId) {
-    return _sessions.doc(sessionId).snapshots().map(
-      (DocumentSnapshot<Map<String, dynamic>> doc) {
-        if (!doc.exists) return null;
-        final Map<String, dynamic> data =
-            Map<String, dynamic>.from(doc.data()!);
-        _normalizeTimestamps(data);
-        return VoiceConsultationSession.fromMap(data, id: doc.id);
-      },
-    );
+    return _sessions.doc(sessionId).snapshots().map((
+      DocumentSnapshot<Map<String, dynamic>> doc,
+    ) {
+      if (!doc.exists) return null;
+      final Map<String, dynamic> data = Map<String, dynamic>.from(doc.data()!);
+      _normalizeTimestamps(data);
+      return VoiceConsultationSession.fromMap(data, id: doc.id);
+    });
   }
 
   /// Mescla o rascunho da IA em um mapa de atualizacao de encounter.
@@ -139,8 +129,7 @@ class VoiceConsultationRepository {
     VoiceStructuredDraft draft,
   ) {
     final Map<String, dynamic> patch = draft.toEncounterDraftPatch();
-    final Map<String, dynamic> merged =
-        Map<String, dynamic>.from(existing);
+    final Map<String, dynamic> merged = Map<String, dynamic>.from(existing);
     merged['anamnesis'] = <String, dynamic>{
       ...((existing['anamnesis'] as Map<String, dynamic>?) ??
           const <String, dynamic>{}),
@@ -167,11 +156,7 @@ class VoiceConsultationRepository {
   }
 
   static void _normalizeTimestamps(Map<String, dynamic> data) {
-    for (final String key in <String>[
-      'consentAt',
-      'startedAt',
-      'endedAt',
-    ]) {
+    for (final String key in <String>['consentAt', 'startedAt', 'endedAt']) {
       final Object? v = data[key];
       if (v is Timestamp) {
         data[key] = v.toDate().toIso8601String();

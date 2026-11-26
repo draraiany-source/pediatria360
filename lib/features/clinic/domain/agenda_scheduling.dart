@@ -1,9 +1,6 @@
 /// Regras puras de conflito de agenda (FASE 2) — testaveis sem Firebase.
 class AgendaConflict {
-  const AgendaConflict({
-    required this.reason,
-    this.conflictingAppointmentId,
-  });
+  const AgendaConflict({required this.reason, this.conflictingAppointmentId});
 
   final String reason;
   final String? conflictingAppointmentId;
@@ -28,8 +25,7 @@ class AgendaInterval {
 
   DateTime get endsAt => startsAt.add(Duration(minutes: durationMinutes));
 
-  bool get isBlocking =>
-      status != 'cancelled' && status != 'noShow';
+  bool get isBlocking => status != 'cancelled' && status != 'noShow';
 }
 
 class ScheduleBlock {
@@ -50,7 +46,12 @@ class ScheduleBlock {
   final String reason;
 }
 
-bool intervalsOverlap(DateTime aStart, DateTime aEnd, DateTime bStart, DateTime bEnd) {
+bool intervalsOverlap(
+  DateTime aStart,
+  DateTime aEnd,
+  DateTime bStart,
+  DateTime bEnd,
+) {
   return aStart.isBefore(bEnd) && bStart.isBefore(aEnd);
 }
 
@@ -110,9 +111,9 @@ AgendaConflict? findAgendaConflict({
 
 /// Duracoes padrao por tipo de atendimento (minutos).
 int defaultDurationForAppointmentType(String typeName) => switch (typeName) {
-      'retorno' => 20,
-      'procedimento' => 45,
-      'teleconsulta' => 30,
-      'presencial' || 'primeiraConsulta' => 40,
-      _ => 30,
-    };
+  'retorno' => 20,
+  'procedimento' => 45,
+  'teleconsulta' => 30,
+  'presencial' || 'primeiraConsulta' => 40,
+  _ => 30,
+};

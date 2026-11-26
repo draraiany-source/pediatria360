@@ -43,10 +43,7 @@ class AnalyticsService {
   FirebaseAnalyticsObserver get observer =>
       FirebaseAnalyticsObserver(analytics: _analytics);
 
-  Future<void> logEvent(
-    String name, [
-    Map<String, Object>? parameters,
-  ]) async {
+  Future<void> logEvent(String name, [Map<String, Object>? parameters]) async {
     if (kDebugMode) {
       debugPrint('[analytics] $name ${parameters ?? ''}');
       return;
@@ -74,28 +71,21 @@ class AnalyticsService {
   }
 
   Future<void> logSearch(String term, {String? area}) => logEvent(
-        AnalyticsEvent.searchPerformed,
-        <String, Object>{
-          'search_term': term,
-          if (area != null) 'area': area,
-        },
-      );
+    AnalyticsEvent.searchPerformed,
+    <String, Object>{'search_term': term, if (area != null) 'area': area},
+  );
 
   Future<void> logPurchase({
     required String orderId,
     required double value,
     String currency = 'BRL',
     String? coupon,
-  }) =>
-      logEvent(
-        AnalyticsEvent.purchase,
-        <String, Object>{
-          'transaction_id': orderId,
-          'value': value,
-          'currency': currency,
-          if (coupon != null) 'coupon': coupon,
-        },
-      );
+  }) => logEvent(AnalyticsEvent.purchase, <String, Object>{
+    'transaction_id': orderId,
+    'value': value,
+    'currency': currency,
+    if (coupon != null) 'coupon': coupon,
+  });
 
   Future<void> setAnalyticsEnabled({required bool enabled}) =>
       _analytics.setAnalyticsCollectionEnabled(enabled);

@@ -27,7 +27,11 @@ import '../../emr/presentation/screens/patient_timeline_screen.dart'
     show encounterRepositoryProvider;
 import '../../security/domain/permission_matrix.dart';
 import '../data/telemedicine_repository.dart';
-import 'telemedicine_screen.dart' show myAgendaProvider, myAvailabilityProvider, telemedicineRepositoryProvider;
+import 'telemedicine_screen.dart'
+    show
+        myAgendaProvider,
+        myAvailabilityProvider,
+        telemedicineRepositoryProvider;
 
 /// Agenda do profissional.
 ///
@@ -65,13 +69,17 @@ class _ProfessionalAgendaScreenState
         ? todayStart.add(const Duration(days: 1))
         : todayStart.add(const Duration(days: 7));
 
-    final List<Appointment> list = all
-        .where(
-          (Appointment a) =>
-              a.startsAt.isAfter(todayStart) && a.startsAt.isBefore(rangeEnd),
-        )
-        .toList()
-      ..sort((Appointment a, Appointment b) => a.startsAt.compareTo(b.startsAt));
+    final List<Appointment> list =
+        all
+            .where(
+              (Appointment a) =>
+                  a.startsAt.isAfter(todayStart) &&
+                  a.startsAt.isBefore(rangeEnd),
+            )
+            .toList()
+          ..sort(
+            (Appointment a, Appointment b) => a.startsAt.compareTo(b.startsAt),
+          );
     return list;
   }
 
@@ -82,16 +90,16 @@ class _ProfessionalAgendaScreenState
         ? const Result<void>.failure(
             AuthFailure('Sessao expirada. Entre novamente.'),
           )
-        : await ref.read(telemedicineRepositoryProvider).confirmWithAudit(
-              appointmentId: a.id,
-              actorUid: uid,
-            );
+        : await ref
+              .read(telemedicineRepositoryProvider)
+              .confirmWithAudit(appointmentId: a.id, actorUid: uid);
     if (!mounted) return;
     setState(() => _busy = false);
     result.fold(
       (_) {},
-      (Failure f) => ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text(f.message))),
+      (Failure f) => ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(f.message))),
     );
   }
 
@@ -124,16 +132,16 @@ class _ProfessionalAgendaScreenState
         ? const Result<void>.failure(
             AuthFailure('Sessao expirada. Entre novamente.'),
           )
-        : await ref.read(telemedicineRepositoryProvider).cancelWithAudit(
-              appointmentId: a.id,
-              actorUid: uid,
-            );
+        : await ref
+              .read(telemedicineRepositoryProvider)
+              .cancelWithAudit(appointmentId: a.id, actorUid: uid);
     if (!mounted) return;
     setState(() => _busy = false);
     result.fold(
       (_) {},
-      (Failure f) => ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text(f.message))),
+      (Failure f) => ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(f.message))),
     );
   }
 
@@ -162,21 +170,23 @@ class _ProfessionalAgendaScreenState
     final List<Appointment> existing =
         ref.read(myAgendaProvider).valueOrNull ?? const <Appointment>[];
     setState(() => _busy = true);
-    final Result<void> result =
-        await ref.read(telemedicineRepositoryProvider).reschedule(
-              appointmentId: a.id,
-              newStartsAt: next,
-              actorUid: uid,
-              existingInWindow: existing,
-            );
+    final Result<void> result = await ref
+        .read(telemedicineRepositoryProvider)
+        .reschedule(
+          appointmentId: a.id,
+          newStartsAt: next,
+          actorUid: uid,
+          existingInWindow: existing,
+        );
     if (!mounted) return;
     setState(() => _busy = false);
     result.fold(
-      (_) => ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Consulta reagendada.')),
-      ),
-      (Failure f) => ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text(f.message))),
+      (_) => ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Consulta reagendada.'))),
+      (Failure f) => ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(f.message))),
     );
   }
 
@@ -230,10 +240,11 @@ class _ProfessionalAgendaScreenState
 
     // Retoma rascunho aberto em vez de criar um segundo registro para a
     // mesma consulta — mesmo padrão de PatientTimelineScreen._startEncounter.
-    final Encounter? existing = (await ref
-            .read(encounterRepositoryProvider)
-            .openDraft(patientId: a.childId!, professionalId: uid))
-        .valueOrNull;
+    final Encounter? existing =
+        (await ref
+                .read(encounterRepositoryProvider)
+                .openDraft(patientId: a.childId!, professionalId: uid))
+            .valueOrNull;
 
     if (!mounted) return;
 
@@ -246,17 +257,18 @@ class _ProfessionalAgendaScreenState
       return;
     }
 
-    final Result<Encounter> created =
-        await ref.read(encounterRepositoryProvider).create(
-              patientId: a.childId!,
-              professionalId: uid,
-              professionalName: ref.read(currentUserProvider)?.name ?? '',
-              professionalCrm: ref.read(currentUserProvider)?.crm,
-              patientName: a.childName,
-              type: EncounterType.routine,
-              clinicId: ref.read(activeClinicIdProvider).valueOrNull,
-              appointmentId: a.id,
-            );
+    final Result<Encounter> created = await ref
+        .read(encounterRepositoryProvider)
+        .create(
+          patientId: a.childId!,
+          professionalId: uid,
+          professionalName: ref.read(currentUserProvider)?.name ?? '',
+          professionalCrm: ref.read(currentUserProvider)?.crm,
+          patientName: a.childName,
+          type: EncounterType.routine,
+          clinicId: ref.read(activeClinicIdProvider).valueOrNull,
+          appointmentId: a.id,
+        );
 
     if (!mounted) return;
 
@@ -266,8 +278,9 @@ class _ProfessionalAgendaScreenState
           builder: (_) => EncounterEditorScreen(encounterId: e.id),
         ),
       ),
-      (Failure f) => ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text(f.message))),
+      (Failure f) => ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(f.message))),
     );
   }
 
@@ -282,10 +295,7 @@ class _ProfessionalAgendaScreenState
       appBar: AppBar(
         title: const Text(
           'Agenda',
-          style: TextStyle(
-            color: AppColors.navy,
-            fontWeight: FontWeight.w800,
-          ),
+          style: TextStyle(color: AppColors.navy, fontWeight: FontWeight.w800),
         ),
         backgroundColor: AppColors.lightBackground,
         automaticallyImplyLeading: false,
@@ -293,10 +303,10 @@ class _ProfessionalAgendaScreenState
             ? IconButton(
                 onPressed: () => context.pop(),
                 icon: const AppIcon(
-            asset: AppIcons.back,
-            size: 22,
-            fallback: Icons.arrow_back_rounded,
-          ),
+                  asset: AppIcons.back,
+                  size: 22,
+                  fallback: Icons.arrow_back_rounded,
+                ),
                 tooltip: 'Voltar',
               )
             : null,
@@ -331,26 +341,26 @@ class _ProfessionalAgendaScreenState
             ),
             child: SegmentedButton<_AgendaRange>(
               style: ButtonStyle(
-                foregroundColor: WidgetStateProperty.resolveWith(
-                  (Set<WidgetState> states) {
-                    if (states.contains(WidgetState.selected)) {
-                      return Colors.white;
-                    }
-                    return isDark
-                        ? AppColors.darkInkMuted
-                        : theme.colorScheme.onSurfaceVariant;
-                  },
-                ),
-                backgroundColor: WidgetStateProperty.resolveWith(
-                  (Set<WidgetState> states) {
-                    if (states.contains(WidgetState.selected)) {
-                      return AppColors.brand;
-                    }
-                    return isDark
-                        ? AppColors.darkSurfaceAlt
-                        : theme.colorScheme.surfaceContainerHighest;
-                  },
-                ),
+                foregroundColor: WidgetStateProperty.resolveWith((
+                  Set<WidgetState> states,
+                ) {
+                  if (states.contains(WidgetState.selected)) {
+                    return Colors.white;
+                  }
+                  return isDark
+                      ? AppColors.darkInkMuted
+                      : theme.colorScheme.onSurfaceVariant;
+                }),
+                backgroundColor: WidgetStateProperty.resolveWith((
+                  Set<WidgetState> states,
+                ) {
+                  if (states.contains(WidgetState.selected)) {
+                    return AppColors.brand;
+                  }
+                  return isDark
+                      ? AppColors.darkSurfaceAlt
+                      : theme.colorScheme.surfaceContainerHighest;
+                }),
               ),
               segments: const <ButtonSegment<_AgendaRange>>[
                 ButtonSegment<_AgendaRange>(
@@ -375,7 +385,8 @@ class _ProfessionalAgendaScreenState
           icon: Icons.error_outline_rounded,
           title: 'Não conseguimos carregar essas informações',
           message: clinicalLoadErrorMessage(e),
-          actionLabel: DevMode.isEnabled &&
+          actionLabel:
+              DevMode.isEnabled &&
                   ref.read(firebaseAuthProvider).currentUser == null
               ? 'Entrar'
               : 'Recarregar',
@@ -410,10 +421,8 @@ class _ProfessionalAgendaScreenState
           return ListView.separated(
             padding: const EdgeInsets.all(AppSpacing.lg),
             itemCount: list.length,
-            separatorBuilder: (_, __) =>
-                const SizedBox(height: AppSpacing.sm),
-            itemBuilder: (BuildContext context, int i) =>
-                _AppointmentCard(
+            separatorBuilder: (_, __) => const SizedBox(height: AppSpacing.sm),
+            itemBuilder: (BuildContext context, int i) => _AppointmentCard(
               appointment: list[i],
               busy: _busy,
               onConfirm: () => _confirm(list[i]),
@@ -458,36 +467,37 @@ class _AppointmentCard extends StatelessWidget {
   final VoidCallback onStart;
 
   Color _statusColor(ColorScheme scheme) => switch (appointment.status) {
-        AppointmentStatus.requested => AppColors.warning,
-        AppointmentStatus.confirmed => AppColors.success,
-        AppointmentStatus.inProgress => AppColors.brand,
-        AppointmentStatus.completed => scheme.onSurfaceVariant,
-        AppointmentStatus.cancelled => AppColors.danger,
-        AppointmentStatus.noShow => AppColors.danger,
-      };
+    AppointmentStatus.requested => AppColors.warning,
+    AppointmentStatus.confirmed => AppColors.success,
+    AppointmentStatus.inProgress => AppColors.brand,
+    AppointmentStatus.completed => scheme.onSurfaceVariant,
+    AppointmentStatus.cancelled => AppColors.danger,
+    AppointmentStatus.noShow => AppColors.danger,
+  };
 
   IconData _statusIcon(AppointmentStatus status) => switch (status) {
-        AppointmentStatus.requested => Icons.schedule_rounded,
-        AppointmentStatus.confirmed => Icons.check_circle_outline_rounded,
-        AppointmentStatus.inProgress => Icons.play_circle_outline_rounded,
-        AppointmentStatus.completed => Icons.event_available_outlined,
-        AppointmentStatus.cancelled => Icons.event_busy_outlined,
-        AppointmentStatus.noShow => Icons.person_off_outlined,
-      };
+    AppointmentStatus.requested => Icons.schedule_rounded,
+    AppointmentStatus.confirmed => Icons.check_circle_outline_rounded,
+    AppointmentStatus.inProgress => Icons.play_circle_outline_rounded,
+    AppointmentStatus.completed => Icons.event_available_outlined,
+    AppointmentStatus.cancelled => Icons.event_busy_outlined,
+    AppointmentStatus.noShow => Icons.person_off_outlined,
+  };
 
   String _statusAsset(AppointmentStatus status) => switch (status) {
-        AppointmentStatus.requested => AppIcons.followUpPending,
-        AppointmentStatus.confirmed => AppIcons.appointmentConfirmed,
-        AppointmentStatus.inProgress => AppIcons.schedule,
-        AppointmentStatus.completed => AppIcons.followUp,
-        AppointmentStatus.cancelled => AppIcons.appointmentCancelled,
-        AppointmentStatus.noShow => AppIcons.appointmentMissed,
-      };
+    AppointmentStatus.requested => AppIcons.followUpPending,
+    AppointmentStatus.confirmed => AppIcons.appointmentConfirmed,
+    AppointmentStatus.inProgress => AppIcons.schedule,
+    AppointmentStatus.completed => AppIcons.followUp,
+    AppointmentStatus.cancelled => AppIcons.appointmentCancelled,
+    AppointmentStatus.noShow => AppIcons.appointmentMissed,
+  };
 
   @override
   Widget build(BuildContext context) {
     final ThemeData theme = Theme.of(context);
-    final bool isActive = appointment.status == AppointmentStatus.requested ||
+    final bool isActive =
+        appointment.status == AppointmentStatus.requested ||
         appointment.status == AppointmentStatus.confirmed;
 
     return PremiumCard(
@@ -503,8 +513,9 @@ class _AppointmentCard extends StatelessWidget {
               const SizedBox(width: AppSpacing.sm),
               Text(
                 '${appointment.durationMinutes} min',
-                style: theme.textTheme.bodySmall
-                    ?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
               ),
               const Spacer(),
               AppTag(label: appointment.type.label, color: AppColors.brand),
@@ -620,13 +631,16 @@ class _PreVisitIndicator extends ConsumerWidget {
             Expanded(
               child: Text(
                 'Pré-consulta preenchida pelo responsável',
-                style: Theme.of(context)
-                    .textTheme
-                    .bodySmall
-                    ?.copyWith(color: AppColors.brand),
+                style: Theme.of(
+                  context,
+                ).textTheme.bodySmall?.copyWith(color: AppColors.brand),
               ),
             ),
-            const Icon(Icons.chevron_right_rounded, size: 16, color: AppColors.brand),
+            const Icon(
+              Icons.chevron_right_rounded,
+              size: 16,
+              color: AppColors.brand,
+            ),
           ],
         ),
       ),
@@ -635,12 +649,12 @@ class _PreVisitIndicator extends ConsumerWidget {
 }
 
 final StreamProviderFamily<PreVisitQuestionnaire?, String>
-    _preVisitQuestionnaireProvider =
+_preVisitQuestionnaireProvider =
     StreamProvider.family<PreVisitQuestionnaire?, String>(
-  (Ref ref, String appointmentId) => ref
-      .watch(telemedicineRepositoryProvider)
-      .watchPreVisitQuestionnaire(appointmentId),
-);
+      (Ref ref, String appointmentId) => ref
+          .watch(telemedicineRepositoryProvider)
+          .watchPreVisitQuestionnaire(appointmentId),
+    );
 
 /// Conteúdo completo da pré-consulta — rótulo obrigatório no topo, para
 /// nunca ser confundido com anamnese ou qualquer registro clínico.
@@ -688,15 +702,23 @@ class _PreVisitDetailSheet extends StatelessWidget {
                 ),
                 child: Text(
                   'INFORMAÇÕES FORNECIDAS PELO RESPONSÁVEL',
-                  style: theme.textTheme.labelSmall
-                      ?.copyWith(color: AppColors.brand, letterSpacing: 0.4),
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    color: AppColors.brand,
+                    letterSpacing: 0.4,
+                  ),
                 ),
               ),
               const SizedBox(height: AppSpacing.lg),
               row('Motivo da consulta', q.reason),
-              row('Sintomas', q.symptoms.isEmpty ? null : q.symptoms.join(', ')),
+              row(
+                'Sintomas',
+                q.symptoms.isEmpty ? null : q.symptoms.join(', '),
+              ),
               if (q.symptomsStartedAt != null)
-                row('Início dos sintomas', Formatters.date(q.symptomsStartedAt!)),
+                row(
+                  'Início dos sintomas',
+                  Formatters.date(q.symptomsStartedAt!),
+                ),
               if (q.hasFever)
                 row(
                   'Febre',
@@ -709,14 +731,20 @@ class _PreVisitDetailSheet extends StatelessWidget {
               row('Eliminações', q.eliminationNotes),
               row(
                 'Medicamentos em uso',
-                q.currentMedications.isEmpty ? null : q.currentMedications.join(', '),
+                q.currentMedications.isEmpty
+                    ? null
+                    : q.currentMedications.join(', '),
               ),
-              row('Alergias', q.allergies.isEmpty ? null : q.allergies.join(', ')),
+              row(
+                'Alergias',
+                q.allergies.isEmpty ? null : q.allergies.join(', '),
+              ),
               row('Observações', q.additionalNotes),
               Text(
                 'Enviado em ${Formatters.dateTime(q.submittedAt)}',
-                style: theme.textTheme.labelSmall
-                    ?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+                style: theme.textTheme.labelSmall?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
               ),
             ],
           ),
@@ -736,8 +764,7 @@ class _AvailabilitySheet extends ConsumerStatefulWidget {
   const _AvailabilitySheet();
 
   @override
-  ConsumerState<_AvailabilitySheet> createState() =>
-      _AvailabilitySheetState();
+  ConsumerState<_AvailabilitySheet> createState() => _AvailabilitySheetState();
 }
 
 class _AvailabilitySheetState extends ConsumerState<_AvailabilitySheet> {
@@ -753,10 +780,9 @@ class _AvailabilitySheetState extends ConsumerState<_AvailabilitySheet> {
 
   final Map<String, TextEditingController> _controllers =
       <String, TextEditingController>{
-    for (int i = 0; i < 7; i++) '$i': TextEditingController(),
-  };
-  final TextEditingController _duration =
-      TextEditingController(text: '30');
+        for (int i = 0; i < 7; i++) '$i': TextEditingController(),
+      };
+  final TextEditingController _duration = TextEditingController(text: '30');
 
   bool _hydrated = false;
   bool _saving = false;
@@ -809,15 +835,17 @@ class _AvailabilitySheetState extends ConsumerState<_AvailabilitySheet> {
         ref.invalidate(myAvailabilityProvider);
         Navigator.of(context).pop();
       },
-      (Failure f) => ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text(f.message))),
+      (Failure f) => ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(f.message))),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    final AsyncValue<Map<String, List<String>>> availability =
-        ref.watch(myAvailabilityProvider);
+    final AsyncValue<Map<String, List<String>>> availability = ref.watch(
+      myAvailabilityProvider,
+    );
 
     return Padding(
       padding: EdgeInsets.only(
@@ -853,8 +881,7 @@ class _AvailabilitySheetState extends ConsumerState<_AvailabilitySheet> {
                   children: <Widget>[
                     for (int i = 0; i < 7; i++)
                       Padding(
-                        padding:
-                            const EdgeInsets.only(bottom: AppSpacing.md),
+                        padding: const EdgeInsets.only(bottom: AppSpacing.md),
                         child: AppTextField(
                           label: _weekdayLabels[i],
                           controller: _controllers['$i']!,

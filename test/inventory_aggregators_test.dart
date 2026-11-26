@@ -5,11 +5,7 @@ import 'package:pediatria360/features/inventory/domain/inventory_models.dart';
 void main() {
   final DateTime now = DateTime(2026, 6, 1);
 
-  InventoryItem item({
-    required String id,
-    int minQty = 5,
-    int idealQty = 10,
-  }) =>
+  InventoryItem item({required String id, int minQty = 5, int idealQty = 10}) =>
       InventoryItem(
         id: id,
         name: 'Item $id',

@@ -18,73 +18,77 @@ import '../../../shared/domain/entities/app_user.dart';
 import '../../../shared/domain/entities/gamification.dart';
 import '../../auth/presentation/providers/auth_providers.dart';
 
-final StreamProvider<List<Badge>> badgesProvider =
-    StreamProvider<List<Badge>>((Ref ref) {
+final StreamProvider<List<Badge>> badgesProvider = StreamProvider<List<Badge>>((
+  Ref ref,
+) {
   return ref
       .watch(firestoreProvider)
       .collection(FirestorePaths.badges)
       .snapshots()
       .map(
         (QuerySnapshot<Map<String, dynamic>> s) => s.docs
-            .map((QueryDocumentSnapshot<Map<String, dynamic>> d) =>
-                Badge.fromMap(d.id, d.data()))
+            .map(
+              (QueryDocumentSnapshot<Map<String, dynamic>> d) =>
+                  Badge.fromMap(d.id, d.data()),
+            )
             .toList(growable: false),
       );
 });
 
 final StreamProvider<List<EarnedBadge>> earnedBadgesProvider =
     StreamProvider<List<EarnedBadge>>((Ref ref) {
-  final String? uid = ref.watch(currentUserProvider)?.uid;
-  if (uid == null) {
-    return Stream<List<EarnedBadge>>.value(const <EarnedBadge>[]);
-  }
+      final String? uid = ref.watch(currentUserProvider)?.uid;
+      if (uid == null) {
+        return Stream<List<EarnedBadge>>.value(const <EarnedBadge>[]);
+      }
 
-  return ref
-      .watch(firestoreProvider)
-      .collection(FirestorePaths.users)
-      .doc(uid)
-      .collection('earned_badges')
-      .snapshots()
-      .map(
-        (QuerySnapshot<Map<String, dynamic>> s) => s.docs
-            .map(
-              (QueryDocumentSnapshot<Map<String, dynamic>> d) => EarnedBadge(
-                badgeId: d.id,
-                earnedAt:
-                    (d.data()['earnedAt'] as Timestamp?)?.toDate() ??
-                        DateTime.now(),
-              ),
-            )
-            .toList(growable: false),
-      );
-});
+      return ref
+          .watch(firestoreProvider)
+          .collection(FirestorePaths.users)
+          .doc(uid)
+          .collection('earned_badges')
+          .snapshots()
+          .map(
+            (QuerySnapshot<Map<String, dynamic>> s) => s.docs
+                .map(
+                  (QueryDocumentSnapshot<Map<String, dynamic>> d) =>
+                      EarnedBadge(
+                        badgeId: d.id,
+                        earnedAt:
+                            (d.data()['earnedAt'] as Timestamp?)?.toDate() ??
+                            DateTime.now(),
+                      ),
+                )
+                .toList(growable: false),
+          );
+    });
 
 final StreamProvider<List<LeaderboardEntry>> leaderboardProvider =
     StreamProvider<List<LeaderboardEntry>>((Ref ref) {
-  final String? uid = ref.watch(currentUserProvider)?.uid;
+      final String? uid = ref.watch(currentUserProvider)?.uid;
 
-  return ref
-      .watch(firestoreProvider)
-      .collection(FirestorePaths.leaderboard)
-      .orderBy('position')
-      .limit(50)
-      .snapshots()
-      .map(
-        (QuerySnapshot<Map<String, dynamic>> s) => s.docs.map(
-          (QueryDocumentSnapshot<Map<String, dynamic>> d) {
-            final Map<String, dynamic> data = d.data();
-            return LeaderboardEntry(
-              uid: d.id,
-              displayName: (data['displayName'] as String?) ?? 'Usuário',
-              xp: (data['xp'] as num?)?.toInt() ?? 0,
-              position: (data['position'] as num?)?.toInt() ?? 0,
-              photoUrl: data['photoUrl'] as String?,
-              isCurrentUser: d.id == uid,
-            );
-          },
-        ).toList(growable: false),
-      );
-});
+      return ref
+          .watch(firestoreProvider)
+          .collection(FirestorePaths.leaderboard)
+          .orderBy('position')
+          .limit(50)
+          .snapshots()
+          .map(
+            (QuerySnapshot<Map<String, dynamic>> s) => s.docs
+                .map((QueryDocumentSnapshot<Map<String, dynamic>> d) {
+                  final Map<String, dynamic> data = d.data();
+                  return LeaderboardEntry(
+                    uid: d.id,
+                    displayName: (data['displayName'] as String?) ?? 'Usuário',
+                    xp: (data['xp'] as num?)?.toInt() ?? 0,
+                    position: (data['position'] as num?)?.toInt() ?? 0,
+                    photoUrl: data['photoUrl'] as String?,
+                    isCurrentUser: d.id == uid,
+                  );
+                })
+                .toList(growable: false),
+          );
+    });
 
 class GamificationScreen extends ConsumerWidget {
   const GamificationScreen({super.key});
@@ -94,8 +98,9 @@ class GamificationScreen extends ConsumerWidget {
     final ThemeData theme = Theme.of(context);
     final AppUser? user = ref.watch(currentUserProvider);
     final AsyncValue<List<Badge>> badges = ref.watch(badgesProvider);
-    final AsyncValue<List<EarnedBadge>> earned =
-        ref.watch(earnedBadgesProvider);
+    final AsyncValue<List<EarnedBadge>> earned = ref.watch(
+      earnedBadgesProvider,
+    );
 
     if (user == null) return const Scaffold(body: LoadingState());
 
@@ -188,7 +193,8 @@ class GamificationScreen extends ConsumerWidget {
                               return const EmptyState(
                                 icon: Icons.military_tech_outlined,
                                 title: 'Nenhuma medalha cadastrada',
-                                message: 'As medalhas são configuradas pelo '
+                                message:
+                                    'As medalhas são configuradas pelo '
                                     'painel administrativo.',
                               );
                             }
@@ -199,16 +205,16 @@ class GamificationScreen extends ConsumerWidget {
                               itemCount: list.length,
                               gridDelegate:
                                   const SliverGridDelegateWithFixedCrossAxisCount(
-                                crossAxisCount: 3,
-                                crossAxisSpacing: AppSpacing.md,
-                                mainAxisSpacing: AppSpacing.md,
-                                childAspectRatio: 0.82,
-                              ),
+                                    crossAxisCount: 3,
+                                    crossAxisSpacing: AppSpacing.md,
+                                    mainAxisSpacing: AppSpacing.md,
+                                    childAspectRatio: 0.82,
+                                  ),
                               itemBuilder: (BuildContext context, int index) =>
                                   _BadgeTile(
-                                badge: list[index],
-                                earned: earnedIds.contains(list[index].id),
-                              ),
+                                    badge: list[index],
+                                    earned: earnedIds.contains(list[index].id),
+                                  ),
                             );
                           },
                         ),
@@ -261,8 +267,10 @@ class _LevelCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
-                    Text('Nível ${user.level}',
-                        style: theme.textTheme.titleLarge),
+                    Text(
+                      'Nível ${user.level}',
+                      style: theme.textTheme.titleLarge,
+                    ),
                     Text(
                       '${user.xp} XP acumulado',
                       style: theme.textTheme.bodySmall,
@@ -345,21 +353,21 @@ class _BadgeTile extends StatelessWidget {
   final bool earned;
 
   Color get _tierColor => switch (badge.tier) {
-        BadgeTier.bronze => AppColors.badgeBronze,
-        BadgeTier.silver => AppColors.badgeSilver,
-        BadgeTier.gold => AppColors.honey,
-        BadgeTier.platinum => AppColors.petrolSoft,
-      };
+    BadgeTier.bronze => AppColors.badgeBronze,
+    BadgeTier.silver => AppColors.badgeSilver,
+    BadgeTier.gold => AppColors.honey,
+    BadgeTier.platinum => AppColors.petrolSoft,
+  };
 
   IconData get _icon => switch (badge.icon) {
-        'vaccine' => Icons.vaccines_rounded,
-        'growth' => Icons.show_chart_rounded,
-        'book' => Icons.menu_book_rounded,
-        'fire' => Icons.local_fire_department_rounded,
-        'school' => Icons.school_rounded,
-        'heart' => Icons.favorite_rounded,
-        _ => Icons.military_tech_rounded,
-      };
+    'vaccine' => Icons.vaccines_rounded,
+    'growth' => Icons.show_chart_rounded,
+    'book' => Icons.menu_book_rounded,
+    'fire' => Icons.local_fire_department_rounded,
+    'school' => Icons.school_rounded,
+    'heart' => Icons.favorite_rounded,
+    _ => Icons.military_tech_rounded,
+  };
 
   @override
   Widget build(BuildContext context) {
@@ -435,11 +443,14 @@ class _BadgeTile extends StatelessWidget {
     // Só a medalha conquistada anima. Animar tudo tiraria o sentido de
     // conquista de quem realmente ganhou.
     return earned
-        ? tile.animate().fadeIn(duration: AppMotion.normal).scale(
-              begin: const Offset(0.94, 0.94),
-              end: const Offset(1, 1),
-              curve: AppMotion.enter,
-            )
+        ? tile
+              .animate()
+              .fadeIn(duration: AppMotion.normal)
+              .scale(
+                begin: const Offset(0.94, 0.94),
+                end: const Offset(1, 1),
+                curve: AppMotion.enter,
+              )
         : tile;
   }
 }
@@ -451,8 +462,9 @@ class LeaderboardScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final ThemeData theme = Theme.of(context);
-    final AsyncValue<List<LeaderboardEntry>> entries =
-        ref.watch(leaderboardProvider);
+    final AsyncValue<List<LeaderboardEntry>> entries = ref.watch(
+      leaderboardProvider,
+    );
 
     return Scaffold(
       appBar: AppBar(

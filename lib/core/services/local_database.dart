@@ -25,6 +25,7 @@ class LocalDatabase {
   final Database _db;
 
   static const String dbName = 'pediatria360.db';
+
   /// Versão do schema local.
   ///
   /// v2: tabela `sync_log` (histórico de sincronização) e coluna
@@ -159,9 +160,7 @@ class LocalDatabase {
       )
     ''');
 
-    batch.execute(
-      'CREATE INDEX idx_sync_log_at ON $tableSyncLog(at DESC)',
-    );
+    batch.execute('CREATE INDEX idx_sync_log_at ON $tableSyncLog(at DESC)');
 
     batch.execute('''
       CREATE TABLE $tableSyncState (
@@ -216,11 +215,7 @@ class LocalDatabase {
   // ------------------------------------------------------------------ CRUD
 
   Future<void> upsert(String table, Map<String, Object?> row) async {
-    await _db.insert(
-      table,
-      row,
-      conflictAlgorithm: ConflictAlgorithm.replace,
-    );
+    await _db.insert(table, row, conflictAlgorithm: ConflictAlgorithm.replace);
   }
 
   Future<void> upsertAll(String table, List<Map<String, Object?>> rows) async {
@@ -239,15 +234,14 @@ class LocalDatabase {
     String? orderBy,
     int? limit,
     int? offset,
-  }) =>
-      _db.query(
-        table,
-        where: where,
-        whereArgs: whereArgs,
-        orderBy: orderBy,
-        limit: limit,
-        offset: offset,
-      );
+  }) => _db.query(
+    table,
+    where: where,
+    whereArgs: whereArgs,
+    orderBy: orderBy,
+    limit: limit,
+    offset: offset,
+  );
 
   Future<Map<String, Object?>?> queryById(String table, String id) async {
     final List<Map<String, Object?>> rows = await _db.query(
@@ -286,19 +280,15 @@ class LocalDatabase {
     required OutboxOperation operation,
     required Map<String, dynamic> payload,
   }) async {
-    await _db.insert(
-      tableOutbox,
-      <String, Object?>{
-        'id': id,
-        'entity': entity,
-        'entity_id': entityId,
-        'operation': operation.name,
-        'payload': jsonEncode(payload),
-        'created_at': DateTime.now().toUtc().millisecondsSinceEpoch,
-        'attempts': 0,
-      },
-      conflictAlgorithm: ConflictAlgorithm.replace,
-    );
+    await _db.insert(tableOutbox, <String, Object?>{
+      'id': id,
+      'entity': entity,
+      'entity_id': entityId,
+      'operation': operation.name,
+      'payload': jsonEncode(payload),
+      'created_at': DateTime.now().toUtc().millisecondsSinceEpoch,
+      'attempts': 0,
+    }, conflictAlgorithm: ConflictAlgorithm.replace);
   }
 
   Future<List<OutboxEntry>> pendingOutbox({int limit = 50}) async {
@@ -352,9 +342,7 @@ class LocalDatabase {
   }) async {
     final List<Map<String, Object?>> rows = await _db.query(
       tableSyncLog,
-      where: onlyProblems
-          ? 'outcome IN (?, ?, ?)'
-          : null,
+      where: onlyProblems ? 'outcome IN (?, ?, ?)' : null,
       whereArgs: onlyProblems
           ? <Object?>['failed', 'abandoned', 'discardedLocal']
           : null,
@@ -423,14 +411,11 @@ class LocalDatabase {
     );
   }
 
-  Future<void> setLastSyncAt(String entity, DateTime at) => _db.insert(
-        tableSyncState,
-        <String, Object?>{
-          'entity': entity,
-          'last_sync_at': at.toUtc().millisecondsSinceEpoch,
-        },
-        conflictAlgorithm: ConflictAlgorithm.replace,
-      );
+  Future<void> setLastSyncAt(String entity, DateTime at) =>
+      _db.insert(tableSyncState, <String, Object?>{
+        'entity': entity,
+        'last_sync_at': at.toUtc().millisecondsSinceEpoch,
+      }, conflictAlgorithm: ConflictAlgorithm.replace);
 
   Future<void> close() => _db.close();
 }
@@ -453,27 +438,27 @@ class OutboxEntry {
   });
 
   factory OutboxEntry.fromRow(Map<String, Object?> row) => OutboxEntry(
-        id: row['id']! as String,
-        entity: row['entity']! as String,
-        entityId: row['entity_id']! as String,
-        operation: OutboxOperation.values.firstWhere(
-          (OutboxOperation o) => o.name == row['operation'],
-          orElse: () => OutboxOperation.update,
-        ),
-        payload: jsonDecode(row['payload']! as String) as Map<String, dynamic>,
-        createdAt: DateTime.fromMillisecondsSinceEpoch(
-          row['created_at']! as int,
-          isUtc: true,
-        ),
-        attempts: (row['attempts'] as int?) ?? 0,
-        lastAttemptAt: row['last_attempt_at'] == null
-            ? null
-            : DateTime.fromMillisecondsSinceEpoch(
-                row['last_attempt_at']! as int,
-                isUtc: true,
-              ).toLocal(),
-        lastError: row['last_error'] as String?,
-      );
+    id: row['id']! as String,
+    entity: row['entity']! as String,
+    entityId: row['entity_id']! as String,
+    operation: OutboxOperation.values.firstWhere(
+      (OutboxOperation o) => o.name == row['operation'],
+      orElse: () => OutboxOperation.update,
+    ),
+    payload: jsonDecode(row['payload']! as String) as Map<String, dynamic>,
+    createdAt: DateTime.fromMillisecondsSinceEpoch(
+      row['created_at']! as int,
+      isUtc: true,
+    ),
+    attempts: (row['attempts'] as int?) ?? 0,
+    lastAttemptAt: row['last_attempt_at'] == null
+        ? null
+        : DateTime.fromMillisecondsSinceEpoch(
+            row['last_attempt_at']! as int,
+            isUtc: true,
+          ).toLocal(),
+    lastError: row['last_error'] as String?,
+  );
 
   final String id;
   final String entity;

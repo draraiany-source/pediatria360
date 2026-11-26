@@ -42,7 +42,9 @@ class BillingDashboardScreen extends ConsumerWidget {
         foregroundColor: AppColors.navy,
         elevation: 0,
       ),
-      body: ref.watch(billingGuidesProvider).when(
+      body: ref
+          .watch(billingGuidesProvider)
+          .when(
             loading: () => const LoadingState(label: 'Carregando faturamento…'),
             error: (Object e, StackTrace _) => ErrorState(
               failure: ServerFailure(e.toString()),
@@ -166,9 +168,9 @@ class _KpiRow extends StatelessWidget {
           Text(
             value,
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.navy,
-                ),
+              fontWeight: FontWeight.w700,
+              color: AppColors.navy,
+            ),
           ),
         ],
       ),

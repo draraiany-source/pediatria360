@@ -32,8 +32,8 @@ final Provider<FirebaseStorage> firebaseStorageProvider =
 
 final Provider<FirebaseFunctions> firebaseFunctionsProvider =
     Provider<FirebaseFunctions>(
-  (Ref ref) => FirebaseFunctions.instanceFor(region: kFunctionsRegion),
-);
+      (Ref ref) => FirebaseFunctions.instanceFor(region: kFunctionsRegion),
+    );
 
 final Provider<AnalyticsService> analyticsProvider = Provider<AnalyticsService>(
   (Ref ref) => AnalyticsService(FirebaseAnalytics.instance),
@@ -61,21 +61,20 @@ final Provider<Dio> dioProvider = Provider<Dio>((Ref ref) {
 
 final Provider<ConnectivityService> connectivityServiceProvider =
     Provider<ConnectivityService>((Ref ref) {
-  final ConnectivityService service = ConnectivityService();
-  ref.onDispose(service.dispose);
-  return service;
-});
+      final ConnectivityService service = ConnectivityService();
+      ref.onDispose(service.dispose);
+      return service;
+    });
 
 /// `true` quando ha rede. A UI observa isto para exibir o `OfflineBanner` e o
 /// `SyncService` para drenar a outbox.
-final StreamProvider<bool> connectivityProvider = StreamProvider<bool>(
-  (Ref ref) async* {
-    final ConnectivityService service =
-        ref.watch(connectivityServiceProvider);
-    yield service.isOnline;
-    yield* service.onStatusChange;
-  },
-);
+final StreamProvider<bool> connectivityProvider = StreamProvider<bool>((
+  Ref ref,
+) async* {
+  final ConnectivityService service = ref.watch(connectivityServiceProvider);
+  yield service.isOnline;
+  yield* service.onStatusChange;
+});
 
 final Provider<bool> isOnlineProvider = Provider<bool>(
   (Ref ref) => ref.watch(connectivityProvider).value ?? true,
@@ -100,14 +99,14 @@ final Provider<LocalDatabase?> localDatabaseProvider = Provider<LocalDatabase?>(
 
 final Provider<RemoteConfigService> remoteConfigProvider =
     Provider<RemoteConfigService>(
-  (Ref ref) => throw UnimplementedError(
-    'remoteConfigProvider precisa ser sobrescrito no bootstrap.',
-  ),
-);
+      (Ref ref) => throw UnimplementedError(
+        'remoteConfigProvider precisa ser sobrescrito no bootstrap.',
+      ),
+    );
 
 final Provider<NotificationService> notificationServiceProvider =
     Provider<NotificationService>(
-  (Ref ref) => throw UnimplementedError(
-    'notificationServiceProvider precisa ser sobrescrito no bootstrap.',
-  ),
-);
+      (Ref ref) => throw UnimplementedError(
+        'notificationServiceProvider precisa ser sobrescrito no bootstrap.',
+      ),
+    );

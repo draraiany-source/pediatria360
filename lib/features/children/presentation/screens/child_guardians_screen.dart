@@ -22,34 +22,35 @@ class ChildGuardiansScreen extends ConsumerStatefulWidget {
 
 class _ChildGuardiansScreenState extends ConsumerState<ChildGuardiansScreen> {
   Future<void> _openEditor({ChildGuardianLink? existing}) async {
-    final ChildGuardianLink? saved = await showModalBottomSheet<ChildGuardianLink>(
-      context: context,
-      isScrollControlled: true,
-      builder: (BuildContext ctx) => _GuardianEditorSheet(
-        child: widget.child,
-        existing: existing,
-      ),
-    );
+    final ChildGuardianLink? saved =
+        await showModalBottomSheet<ChildGuardianLink>(
+          context: context,
+          isScrollControlled: true,
+          builder: (BuildContext ctx) =>
+              _GuardianEditorSheet(child: widget.child, existing: existing),
+        );
     if (saved == null || !mounted) return;
-    final Result<void> result =
-        await ref.read(childGuardiansControllerProvider.notifier).upsert(saved);
+    final Result<void> result = await ref
+        .read(childGuardiansControllerProvider.notifier)
+        .upsert(saved);
     if (!mounted) return;
     result.fold(
-      (_) => ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Responsavel salvo.')),
-      ),
-      (Failure f) => ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(f.message)),
-      ),
+      (_) => ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Responsavel salvo.'))),
+      (Failure f) => ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(f.message))),
     );
   }
 
   @override
   Widget build(BuildContext context) {
     final AsyncValue<List<ChildGuardianLink>> async = ref.watch(
-      childGuardiansProvider(
-        (ownerId: widget.child.ownerId, childId: widget.child.id),
-      ),
+      childGuardiansProvider((
+        ownerId: widget.child.ownerId,
+        childId: widget.child.id,
+      )),
     );
 
     return Scaffold(
@@ -62,13 +63,12 @@ class _ChildGuardiansScreenState extends ConsumerState<ChildGuardiansScreen> {
       body: async.when(
         loading: () => const LoadingState(label: 'Carregando responsaveis...'),
         error: (Object e, StackTrace st) => ErrorState(
-          failure: e is Failure
-              ? e
-              : ServerFailure(e.toString()),
+          failure: e is Failure ? e : ServerFailure(e.toString()),
           onRetry: () => ref.invalidate(
-            childGuardiansProvider(
-              (ownerId: widget.child.ownerId, childId: widget.child.id),
-            ),
+            childGuardiansProvider((
+              ownerId: widget.child.ownerId,
+              childId: widget.child.id,
+            )),
           ),
         ),
         data: (List<ChildGuardianLink> links) {
@@ -95,7 +95,9 @@ class _ChildGuardiansScreenState extends ConsumerState<ChildGuardiansScreen> {
                   borderRadius: BorderRadius.circular(12),
                   side: BorderSide(
                     color: pending
-                        ? Theme.of(context).colorScheme.error.withValues(alpha: 0.4)
+                        ? Theme.of(
+                            context,
+                          ).colorScheme.error.withValues(alpha: 0.4)
                         : Theme.of(context).dividerColor,
                   ),
                 ),
@@ -125,8 +127,9 @@ class _ChildGuardiansScreenState extends ConsumerState<ChildGuardiansScreen> {
                       if (!context.mounted) return;
                       r.fold(
                         (_) {},
-                        (Failure f) => ScaffoldMessenger.of(context)
-                            .showSnackBar(SnackBar(content: Text(f.message))),
+                        (Failure f) => ScaffoldMessenger.of(
+                          context,
+                        ).showSnackBar(SnackBar(content: Text(f.message))),
                       );
                     }
                   },
@@ -234,10 +237,8 @@ class _GuardianEditorSheetState extends State<_GuardianEditorSheet> {
               value: _relationship,
               items: GuardianRelationship.values
                   .map(
-                    (GuardianRelationship r) => DropdownMenuItem(
-                      value: r,
-                      child: Text(r.label),
-                    ),
+                    (GuardianRelationship r) =>
+                        DropdownMenuItem(value: r, child: Text(r.label)),
                   )
                   .toList(),
               onChanged: (GuardianRelationship? v) {
@@ -249,10 +250,8 @@ class _GuardianEditorSheetState extends State<_GuardianEditorSheet> {
               value: _status,
               items: GuardianAuthStatus.values
                   .map(
-                    (GuardianAuthStatus s) => DropdownMenuItem(
-                      value: s,
-                      child: Text(s.label),
-                    ),
+                    (GuardianAuthStatus s) =>
+                        DropdownMenuItem(value: s, child: Text(s.label)),
                   )
                   .toList(),
               onChanged: (GuardianAuthStatus? v) {
@@ -298,8 +297,8 @@ class _GuardianEditorSheetState extends State<_GuardianEditorSheet> {
                     childId: widget.child.id,
                     relationship: _relationship,
                     status: _status,
-                    createdAt: widget.existing?.createdAt ??
-                        DateTime.now().toUtc(),
+                    createdAt:
+                        widget.existing?.createdAt ?? DateTime.now().toUtc(),
                     displayName: _name.text.trim(),
                     email: _email.text.trim(),
                     canViewData: _view,

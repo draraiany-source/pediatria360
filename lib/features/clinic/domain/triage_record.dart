@@ -28,7 +28,8 @@ class TriageRecord {
       childId: (map['childId'] as String?) ?? '',
       professionalId: (map['professionalId'] as String?) ?? '',
       recordedBy: (map['recordedBy'] as String?) ?? '',
-      recordedAt: DateTime.tryParse((map['recordedAt'] as String?) ?? '') ??
+      recordedAt:
+          DateTime.tryParse((map['recordedAt'] as String?) ?? '') ??
           DateTime.fromMillisecondsSinceEpoch(0),
       weightKg: (map['weightKg'] as num?)?.toDouble(),
       heightCm: (map['heightCm'] as num?)?.toDouble(),
@@ -72,24 +73,24 @@ class TriageRecord {
   }
 
   Map<String, dynamic> toMap() => <String, dynamic>{
-        'id': id,
-        'appointmentId': appointmentId,
-        'childId': childId,
-        'professionalId': professionalId,
-        'recordedBy': recordedBy,
-        'recordedAt': recordedAt.toIso8601String(),
-        'weightKg': weightKg,
-        'heightCm': heightCm,
-        'headCircumferenceCm': headCircumferenceCm,
-        'temperatureC': temperatureC,
-        'heartRate': heartRate,
-        'respiratoryRate': respiratoryRate,
-        'spo2': spo2,
-        'systolicBp': systolicBp,
-        'diastolicBp': diastolicBp,
-        'glucoseMgDl': glucoseMgDl,
-        'painScore': painScore,
-        'notes': notes,
-        if (bmi != null) 'bmi': bmi,
-      };
+    'id': id,
+    'appointmentId': appointmentId,
+    'childId': childId,
+    'professionalId': professionalId,
+    'recordedBy': recordedBy,
+    'recordedAt': recordedAt.toIso8601String(),
+    'weightKg': weightKg,
+    'heightCm': heightCm,
+    'headCircumferenceCm': headCircumferenceCm,
+    'temperatureC': temperatureC,
+    'heartRate': heartRate,
+    'respiratoryRate': respiratoryRate,
+    'spo2': spo2,
+    'systolicBp': systolicBp,
+    'diastolicBp': diastolicBp,
+    'glucoseMgDl': glucoseMgDl,
+    'painScore': painScore,
+    'notes': notes,
+    if (bmi != null) 'bmi': bmi,
+  };
 }

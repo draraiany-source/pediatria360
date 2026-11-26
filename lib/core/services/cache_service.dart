@@ -23,11 +23,7 @@ class CacheService {
   }
 
   /// Grava [value] sob [key], com validade opcional.
-  Future<void> write(
-    String key,
-    Object value, {
-    Duration? ttl,
-  }) async {
+  Future<void> write(String key, Object value, {Duration? ttl}) async {
     try {
       final Map<String, dynamic> envelope = <String, dynamic>{
         'v': value,
@@ -52,8 +48,7 @@ class CacheService {
       final int? ttl = envelope['ttl'] as int?;
 
       if (ttl != null) {
-        final int age =
-            DateTime.now().toUtc().millisecondsSinceEpoch - ts;
+        final int age = DateTime.now().toUtc().millisecondsSinceEpoch - ts;
         if (age > ttl) {
           _box.delete(key);
           return null;

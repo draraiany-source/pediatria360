@@ -25,7 +25,8 @@ String clinicalLoadErrorMessage(Object error) {
         'Entre com uma conta profissional verificada.';
   }
   final String raw = error.toString();
-  if (raw.contains('failed-precondition') || raw.contains('requires an index')) {
+  if (raw.contains('failed-precondition') ||
+      raw.contains('requires an index')) {
     return 'Índice do Firestore ainda não está pronto. '
         'Aguarde alguns minutos ou peça ao admin para publicar os índices.';
   }

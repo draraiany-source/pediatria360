@@ -53,8 +53,10 @@ class FinanceAccess {
     required AppUser? user,
     required ClinicMembership? clinicMembership,
   }) {
-    final FinanceAccessLevel l =
-        level(user: user, clinicMembership: clinicMembership);
+    final FinanceAccessLevel l = level(
+      user: user,
+      clinicMembership: clinicMembership,
+    );
     return l == FinanceAccessLevel.full ||
         l == FinanceAccessLevel.viewOwnProduction ||
         l == FinanceAccessLevel.registerPayment;
@@ -72,9 +74,12 @@ class FinanceAccess {
     required AppUser? user,
     required ClinicMembership? clinicMembership,
   }) {
-    final FinanceAccessLevel l =
-        level(user: user, clinicMembership: clinicMembership);
-    return l == FinanceAccessLevel.full || l == FinanceAccessLevel.registerPayment;
+    final FinanceAccessLevel l = level(
+      user: user,
+      clinicMembership: clinicMembership,
+    );
+    return l == FinanceAccessLevel.full ||
+        l == FinanceAccessLevel.registerPayment;
   }
 
   static bool canViewReceivable({
@@ -82,8 +87,10 @@ class FinanceAccess {
     required ClinicMembership? clinicMembership,
     required FinanceReceivable receivable,
   }) {
-    final FinanceAccessLevel l =
-        level(user: user, clinicMembership: clinicMembership);
+    final FinanceAccessLevel l = level(
+      user: user,
+      clinicMembership: clinicMembership,
+    );
     if (l == FinanceAccessLevel.full ||
         l == FinanceAccessLevel.registerPayment) {
       return true;
@@ -98,8 +105,7 @@ class FinanceAccess {
   static bool canViewPatientFinance({
     required AppUser? user,
     required ClinicMembership? clinicMembership,
-  }) =>
-      canViewDashboard(user: user, clinicMembership: clinicMembership);
+  }) => canViewDashboard(user: user, clinicMembership: clinicMembership);
 
   /// Responsavel: recibos apenas do proprio filho (patientId = childId).
   static bool parentCanViewReceipt({

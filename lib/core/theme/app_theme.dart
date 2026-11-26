@@ -37,15 +37,11 @@ class AppTheme {
       onPrimaryContainer: isDark ? AppColors.darkInk : AppColors.navy,
       secondary: AppColors.teal,
       onSecondary: Colors.white,
-      secondaryContainer: isDark
-          ? const Color(0xFF0D3D38)
-          : AppColors.softTeal,
+      secondaryContainer: isDark ? const Color(0xFF0D3D38) : AppColors.softTeal,
       onSecondaryContainer: isDark ? AppColors.darkInk : AppColors.tealDeep,
       tertiary: AppColors.moduleLibrary,
       onTertiary: Colors.white,
-      tertiaryContainer: isDark
-          ? const Color(0xFF2A2150)
-          : AppColors.softLilac,
+      tertiaryContainer: isDark ? const Color(0xFF2A2150) : AppColors.softLilac,
       onTertiaryContainer: isDark ? AppColors.darkInk : AppColors.navy,
       error: AppColors.danger,
       onError: Colors.white,
@@ -110,8 +106,8 @@ class AppTheme {
         shadowColor: scheme.shadow,
         margin: EdgeInsets.zero,
         shape: RoundedRectangleBorder(
-          borderRadius: AppRadius.mdAll,
-          side: BorderSide(color: line.withValues(alpha: 0.55)),
+          borderRadius: AppRadius.lgAll,
+          side: BorderSide(color: line.withValues(alpha: 0.45)),
         ),
       ),
       dividerTheme: DividerThemeData(color: line, thickness: 1, space: 1),

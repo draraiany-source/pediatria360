@@ -19,6 +19,50 @@ const AI_DISCLAIMER =
 
 const NOT_INFORMED = "Nao informado";
 
+/** Teto diário por profissional. Estruturar a transcrição chama o modelo. */
+const VOICE_DRAFT_DAILY_LIMIT = 60;
+
+/**
+ * Cota diária de `structureVoiceDraft`. Sem isso, um loop no cliente
+ * dispara a API sem teto. Falha com `resource-exhausted` antes da chamada.
+ */
+async function checkVoiceDraftQuota(
+  uid: string
+): Promise<admin.firestore.DocumentReference> {
+  const ref = db()
+    .collection("users")
+    .doc(uid)
+    .collection("voice_draft_usage")
+    .doc(new Date().toISOString().slice(0, 10));
+
+  const snap = await ref.get();
+  const used = (snap.data()?.count as number) ?? 0;
+
+  if (used >= VOICE_DRAFT_DAILY_LIMIT) {
+    throw new HttpsError(
+      "resource-exhausted",
+      `Limite de ${VOICE_DRAFT_DAILY_LIMIT} estruturacoes de consulta por voz ` +
+        "hoje atingido. Renova amanha."
+    );
+  }
+
+  return ref;
+}
+
+/** Só depois de a API responder. Falha de rede não consome o limite. */
+async function consumeVoiceDraftQuota(
+  ref: admin.firestore.DocumentReference
+): Promise<void> {
+  await ref.set(
+    {
+      count: admin.firestore.FieldValue.increment(1),
+      limit: VOICE_DRAFT_DAILY_LIMIT,
+      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    },
+    { merge: true }
+  );
+}
+
 async function requireVerifiedProfessional(uid: string | undefined) {
   if (!uid) throw new HttpsError("unauthenticated", "Entre para continuar.");
 
@@ -255,8 +299,11 @@ export const structureVoiceDraft = onCall(
       .trim();
 
     let draft = emptyDraft(template);
+    let voiceQuotaRef: admin.firestore.DocumentReference | null = null;
+    let voiceApiSucceeded = false;
 
     if (transcriptText.length > 0) {
+      voiceQuotaRef = await checkVoiceDraftQuota(actor.uid);
       const system = `Voce extrai dados clinicos de uma transcricao pediatrica em pt-BR.
 REGRAS RIGIDAS:
 - NUNCA invente fatos, sintomas, doses, CIDs ou exames nao ditos.
@@ -306,6 +353,7 @@ Modelo de evolucao pedido: ${template}.`;
           );
         }
 
+        voiceApiSucceeded = true;
         const payload = (await response.json()) as {
           content: { type: string; text?: string }[];
         };
@@ -366,6 +414,10 @@ Modelo de evolucao pedido: ${template}.`;
         logger.error("structureVoiceDraft erro", error);
         // Mantem rascunho vazio com Nao informado — nao inventa.
       }
+    }
+
+    if (voiceQuotaRef && voiceApiSucceeded) {
+      await consumeVoiceDraftQuota(voiceQuotaRef);
     }
 
     await ref.update({

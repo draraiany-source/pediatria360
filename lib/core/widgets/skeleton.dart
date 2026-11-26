@@ -14,16 +14,11 @@ class Skeleton extends StatelessWidget {
 
   /// Linha de texto.
   const Skeleton.line({double width = double.infinity, Key? key})
-      : this(width: width, height: 14, key: key);
+    : this(width: width, height: 14, key: key);
 
   /// Circulo (avatares).
   const Skeleton.circle({double size = 48, Key? key})
-      : this(
-          width: size,
-          height: size,
-          radius: AppRadius.pillAll,
-          key: key,
-        );
+    : this(width: size, height: size, radius: AppRadius.pillAll, key: key);
 
   final double width;
   final double height;

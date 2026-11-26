@@ -4,10 +4,7 @@ import 'package:pediatria360/features/courses/presentation/providers/courses_pro
 import 'package:pediatria360/shared/domain/entities/app_user.dart';
 import 'package:pediatria360/shared/domain/entities/course.dart';
 
-Course course({
-  bool requiresPlan = false,
-  bool professionalOnly = false,
-}) =>
+Course course({bool requiresPlan = false, bool professionalOnly = false}) =>
     Course(
       id: 'c1',
       title: 'Curso',
@@ -19,30 +16,29 @@ Course course({
     );
 
 Lesson lesson({bool isFree = false}) => Lesson(
-      id: 'l1',
-      courseId: 'c1',
-      title: 'Aula',
-      order: 1,
-      kind: LessonKind.video,
-      isFree: isFree,
-    );
+  id: 'l1',
+  courseId: 'c1',
+  title: 'Aula',
+  order: 1,
+  kind: LessonKind.video,
+  isFree: isFree,
+);
 
 AppUser user({
   UserPlan plan = UserPlan.free,
   UserRole role = UserRole.parent,
   bool verified = false,
   DateTime? planExpiresAt,
-}) =>
-    AppUser(
-      uid: 'u1',
-      email: 'a@b.c',
-      name: 'Ana Silva',
-      role: role,
-      plan: plan,
-      professionalVerified: verified,
-      planExpiresAt: planExpiresAt,
-      createdAt: DateTime.now(),
-    );
+}) => AppUser(
+  uid: 'u1',
+  email: 'a@b.c',
+  name: 'Ana Silva',
+  role: role,
+  plan: plan,
+  professionalVerified: verified,
+  planExpiresAt: planExpiresAt,
+  createdAt: DateTime.now(),
+);
 
 void main() {
   group('bloqueio de aula', () {
@@ -91,10 +87,7 @@ void main() {
         lockFor(
           course: course(requiresPlan: true),
           lesson: lesson(),
-          user: user(
-            plan: UserPlan.premium,
-            planExpiresAt: DateTime(2020),
-          ),
+          user: user(plan: UserPlan.premium, planExpiresAt: DateTime(2020)),
         ),
         LessonLock.requiresPlan,
       );

@@ -19,20 +19,20 @@ enum ClinicRole {
   patient;
 
   static ClinicRole fromName(String? value) => ClinicRole.values.firstWhere(
-        (ClinicRole r) => r.name == value,
-        orElse: () => ClinicRole.patient,
-      );
+    (ClinicRole r) => r.name == value,
+    orElse: () => ClinicRole.patient,
+  );
 
   String get label => switch (this) {
-        ClinicRole.clinicAdmin => 'Administrador da clinica',
-        ClinicRole.physician => 'Medico',
-        ClinicRole.healthProfessional => 'Outro profissional de saude',
-        ClinicRole.receptionist => 'Recepcionista',
-        ClinicRole.finance => 'Financeiro',
-        ClinicRole.nursing => 'Enfermagem',
-        ClinicRole.technician => 'Tecnico',
-        ClinicRole.patient => 'Paciente',
-      };
+    ClinicRole.clinicAdmin => 'Administrador da clinica',
+    ClinicRole.physician => 'Medico',
+    ClinicRole.healthProfessional => 'Outro profissional de saude',
+    ClinicRole.receptionist => 'Recepcionista',
+    ClinicRole.finance => 'Financeiro',
+    ClinicRole.nursing => 'Enfermagem',
+    ClinicRole.technician => 'Tecnico',
+    ClinicRole.patient => 'Paciente',
+  };
 
   /// Acesso clinico de escrita (prontuario / Rx).
   bool get canAccessClinicalChart =>
@@ -94,7 +94,8 @@ class ClinicOrganization extends Equatable {
       logoUrl: map['logoUrl'] as String?,
       active: (map['active'] as bool?) ?? true,
       plan: (map['plan'] as String?) ?? 'basic',
-      createdAt: DateTime.tryParse((map['createdAt'] as String?) ?? '') ??
+      createdAt:
+          DateTime.tryParse((map['createdAt'] as String?) ?? '') ??
           DateTime.fromMillisecondsSinceEpoch(0),
     );
   }
@@ -113,19 +114,19 @@ class ClinicOrganization extends Equatable {
   final DateTime createdAt;
 
   Map<String, dynamic> toMap() => <String, dynamic>{
-        'id': id,
-        'name': name,
-        'tradeName': tradeName,
-        'cnpj': cnpj,
-        'phone': phone,
-        'whatsapp': whatsapp,
-        'email': email,
-        'address': address,
-        'logoUrl': logoUrl,
-        'active': active,
-        'plan': plan,
-        'createdAt': createdAt.toIso8601String(),
-      };
+    'id': id,
+    'name': name,
+    'tradeName': tradeName,
+    'cnpj': cnpj,
+    'phone': phone,
+    'whatsapp': whatsapp,
+    'email': email,
+    'address': address,
+    'logoUrl': logoUrl,
+    'active': active,
+    'plan': plan,
+    'createdAt': createdAt.toIso8601String(),
+  };
 
   @override
   List<Object?> get props => <Object?>[id, name, cnpj, active, plan];
@@ -157,12 +158,12 @@ class ClinicUnit extends Equatable {
   final bool active;
 
   Map<String, dynamic> toMap() => <String, dynamic>{
-        'id': id,
-        'clinicId': clinicId,
-        'name': name,
-        'address': address,
-        'active': active,
-      };
+    'id': id,
+    'clinicId': clinicId,
+    'name': name,
+    'address': address,
+    'active': active,
+  };
 
   @override
   List<Object?> get props => <Object?>[id, clinicId, name, active];
@@ -196,7 +197,8 @@ class ClinicMembership extends Equatable {
       active: (map['active'] as bool?) ?? true,
       crm: (map['crm'] as String?) ?? '',
       specialty: (map['specialty'] as String?) ?? '',
-      createdAt: DateTime.tryParse((map['createdAt'] as String?) ?? '') ??
+      createdAt:
+          DateTime.tryParse((map['createdAt'] as String?) ?? '') ??
           DateTime.fromMillisecondsSinceEpoch(0),
     );
   }
@@ -221,19 +223,25 @@ class ClinicMembership extends Equatable {
       role == ClinicRole.clinicAdmin && unitIds.isNotEmpty;
 
   Map<String, dynamic> toMap() => <String, dynamic>{
-        'id': id,
-        'clinicId': clinicId,
-        'userId': userId,
-        'role': role.name,
-        'clinicName': clinicName,
-        'unitIds': unitIds,
-        'active': active,
-        'crm': crm,
-        'specialty': specialty,
-        'createdAt': createdAt.toIso8601String(),
-      };
+    'id': id,
+    'clinicId': clinicId,
+    'userId': userId,
+    'role': role.name,
+    'clinicName': clinicName,
+    'unitIds': unitIds,
+    'active': active,
+    'crm': crm,
+    'specialty': specialty,
+    'createdAt': createdAt.toIso8601String(),
+  };
 
   @override
-  List<Object?> get props =>
-      <Object?>[id, clinicId, userId, role, active, unitIds];
+  List<Object?> get props => <Object?>[
+    id,
+    clinicId,
+    userId,
+    role,
+    active,
+    unitIds,
+  ];
 }
