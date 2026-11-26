@@ -33,10 +33,10 @@ certos dos arquivos que o `flutter create` gerou — sem apagar o que o
 comando já colocou lá (identificador do bundle, versão, storyboard etc.).
 
 O script é seguro para repetir: cada inserção verifica se o conteúdo já
-está presente antes de agir. Se algum arquivo tiver uma estrutura
-inesperada (por exemplo, um `Podfile` de uma versão do Flutter que já traz
-`post_install` próprio), ele **para e explica o que fazer manualmente**, em
-vez de arriscar duplicar ou corromper o arquivo.
+está presente antes de agir. Se o `Podfile` do Flutter já traz
+`post_install`, as macros do permission_handler entram nesse bloco, sem
+criar um segundo. Sem o arquivo (o `flutter create` no Linux não gera
+Podfile), o passo é ignorado e Android e web seguem.
 
 Depois de conferir que o build funciona, remova a pasta de origem:
 

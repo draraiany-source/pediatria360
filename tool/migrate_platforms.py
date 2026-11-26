@@ -268,20 +268,36 @@ def merge_info_plist():
     return True
 
 
-def merge_podfile():
-    """ios/Podfile: define a plataforma 13.0 e adiciona o post_install.
+PERMISSION_SNIPPET = """
+    target.build_configurations.each do |config|
+      config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '13.0'
+      config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] ||= [
+        '$(inherited)',
+        'PERMISSION_CAMERA=1',
+        'PERMISSION_PHOTOS=1',
+        'PERMISSION_MICROPHONE=1',
+        'PERMISSION_NOTIFICATIONS=1',
+      ]
+    end"""
 
-    O Podfile padrão do Flutter já pode ter seu próprio bloco `post_install`
-    (varia por versão). Dois blocos `post_install` no mesmo Podfile é erro do
-    CocoaPods, não aviso — por isso o script detecta e para, em vez de
-    duplicar.
+
+def merge_podfile():
+    """ios/Podfile: plataforma 13.0 e macros do permission_handler.
+
+    O Podfile do Flutter 3.32 já traz `post_install`. Um segundo bloco é erro
+    do CocoaPods, então as macros entram dentro do bloco existente. No Linux
+    o `flutter create` não gera Podfile (não há Xcode); Android e web seguem
+    sem esse arquivo.
     """
     step = run("Plataforma iOS 13 e post_install no Podfile")
     dst = path("ios/Podfile")
 
     if not os.path.exists(dst):
-        step.fail("ios/Podfile não existe — `flutter create` rodou?")
-        return False
+        step.skip(
+            "ios/Podfile ausente. No Linux o flutter create não o gera; "
+            "o build de iOS roda no macOS, onde o arquivo existe."
+        )
+        return True
 
     content = open(dst, encoding="utf-8").read()
     backup = dst + ".pre-migration"
@@ -309,23 +325,27 @@ def merge_podfile():
         changed = True
 
     if "PERMISSION_CAMERA=1" in content:
-        step.success(
-            "Plataforma ajustada." if changed else "Já estava correto."
-        )
+        step.success("Plataforma ajustada." if changed else "Já estava correto.")
         if changed:
             with open(dst, "w", encoding="utf-8") as f:
                 f.write(content)
         return True
 
+    needle = "flutter_additional_ios_build_settings(target)"
+    if "post_install do |installer|" in content and needle in content:
+        if not os.path.exists(backup):
+            shutil.copy2(dst, backup)
+        content = content.replace(needle, needle + PERMISSION_SNIPPET, 1)
+        with open(dst, "w", encoding="utf-8") as f:
+            f.write(content)
+        step.success("Macros inseridas no post_install que o Flutter já gerou.")
+        return True
+
     if "post_install do |installer|" in content:
         step.fail(
-            "ios/Podfile já tem um bloco `post_install`. Não duplico — "
-            "acrescente manualmente dentro dele:\n"
-            "  config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '13.0'\n"
-            "  config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] ||= [\n"
-            "    '$(inherited)', 'PERMISSION_CAMERA=1', 'PERMISSION_PHOTOS=1',\n"
-            "    'PERMISSION_MICROPHONE=1', 'PERMISSION_NOTIFICATIONS=1',\n"
-            "  ]"
+            "ios/Podfile já tem post_install, mas sem "
+            "flutter_additional_ios_build_settings(target). "
+            "Não duplico o bloco."
         )
         if changed:
             with open(dst, "w", encoding="utf-8") as f:
@@ -335,23 +355,17 @@ def merge_podfile():
     if not os.path.exists(backup):
         shutil.copy2(dst, backup)
 
-    post_install_block = '''
+    post_install_block = (
+        """
 post_install do |installer|
   installer.pods_project.targets.each do |target|
-    flutter_additional_ios_build_settings(target)
-    target.build_configurations.each do |config|
-      config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '13.0'
-      config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] ||= [
-        '$(inherited)',
-        'PERMISSION_CAMERA=1',
-        'PERMISSION_PHOTOS=1',
-        'PERMISSION_MICROPHONE=1',
-        'PERMISSION_NOTIFICATIONS=1',
-      ]
-    end
+    flutter_additional_ios_build_settings(target)"""
+        + PERMISSION_SNIPPET
+        + """
   end
 end
-'''
+"""
+    )
     content = content.rstrip() + "\n" + post_install_block
     with open(dst, "w", encoding="utf-8") as f:
         f.write(content)
