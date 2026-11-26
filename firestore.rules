@@ -211,6 +211,12 @@ service cloud.firestore {
         allow write: if false;
       }
 
+      // Cota da estruturação da consulta por voz. Escrita só na Function.
+      match /voice_draft_usage/{day} {
+        allow read: if isOwner(uid);
+        allow write: if false;
+      }
+
       // Cota do assistente clínico (dentro do prontuário) — mesmo motivo da
       // acima. Coleção separada porque é uma cota diferente, com teto
       // próprio, não a mesma do chat dos responsáveis.

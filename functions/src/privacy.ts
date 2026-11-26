@@ -267,6 +267,7 @@ export const exportUserData = onCall(
 
     dump.progressoEmCursos = await readSub(`users/${uid}/progress`);
     dump.usoDaIa = await readSub(`users/${uid}/ai_usage`);
+    dump.usoDaConsultaPorVoz = await readSub(`users/${uid}/voice_draft_usage`);
 
     /** Lê uma collection raiz filtrando pelo titular. */
     async function readRoot(
